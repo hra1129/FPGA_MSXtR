@@ -1,0 +1,274 @@
+# vsim -c -t 1ns -do "run.do" tb 
+# Start time: 19:20:07 on Dec 30,2024
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# do run.do
+# CODE 01, a5c3  : LD  BC, a5c3h
+# CODE 11, 5a3c  : LD  DE, 5a3ch
+# CODE 21, 6924  : LD  HL, 6924h
+# CODE dd, 21, 1357: LD  IX, 1357h
+# CODE fd, 21, 7531: LD  IY, 7531h
+# CODE f1        : POP AF <== 9600
+# CODE CB, 40    : BIT 0, B
+# CODE CB, 48    : BIT 1, B
+# CODE CB, 50    : BIT 2, B
+# CODE CB, 58    : BIT 3, B
+# CODE CB, 60    : BIT 4, B
+# CODE CB, 68    : BIT 5, B
+# CODE CB, 70    : BIT 6, B
+# CODE CB, 78    : BIT 7, B
+# CODE CB, 41    : BIT 0, C
+# CODE CB, 49    : BIT 1, C
+# CODE CB, 51    : BIT 2, C
+# CODE CB, 59    : BIT 3, C
+# CODE CB, 61    : BIT 4, C
+# CODE CB, 69    : BIT 5, C
+# CODE CB, 71    : BIT 6, C
+# CODE CB, 79    : BIT 7, C
+# CODE CB, 42    : BIT 0, D
+# CODE CB, 4a    : BIT 1, D
+# CODE CB, 52    : BIT 2, D
+# CODE CB, 5a    : BIT 3, D
+# CODE CB, 62    : BIT 4, D
+# CODE CB, 6a    : BIT 5, D
+# CODE CB, 72    : BIT 6, D
+# CODE CB, 7a    : BIT 7, D
+# CODE CB, 43    : BIT 0, E
+# CODE CB, 4b    : BIT 1, E
+# CODE CB, 53    : BIT 2, E
+# CODE CB, 5b    : BIT 3, E
+# CODE CB, 63    : BIT 4, E
+# CODE CB, 6b    : BIT 5, E
+# CODE CB, 73    : BIT 6, E
+# CODE CB, 7b    : BIT 7, E
+# CODE CB, 44    : BIT 0, H
+# CODE CB, 4c    : BIT 1, H
+# CODE CB, 54    : BIT 2, H
+# CODE CB, 5c    : BIT 3, H
+# CODE CB, 64    : BIT 4, H
+# CODE CB, 6c    : BIT 5, H
+# CODE CB, 74    : BIT 6, H
+# CODE CB, 7c    : BIT 7, H
+# CODE CB, 45    : BIT 0, L
+# CODE CB, 4d    : BIT 1, L
+# CODE CB, 55    : BIT 2, L
+# CODE CB, 5d    : BIT 3, L
+# CODE CB, 65    : BIT 4, L
+# CODE CB, 6d    : BIT 5, L
+# CODE CB, 75    : BIT 6, L
+# CODE CB, 7d    : BIT 7, L
+# CODE CB, 46    : BIT 0, (HL)
+# CODE CB, 4e    : BIT 1, (HL)
+# CODE CB, 56    : BIT 2, (HL)
+# CODE CB, 5e    : BIT 3, (HL)
+# CODE CB, 66    : BIT 4, (HL)
+# CODE CB, 6e    : BIT 5, (HL)
+# CODE CB, 76    : BIT 6, (HL)
+# CODE CB, 7e    : BIT 7, (HL)
+# CODE CB, 47    : BIT 0, A
+# CODE CB, 4f    : BIT 1, A
+# CODE CB, 57    : BIT 2, A
+# CODE CB, 5f    : BIT 3, A
+# CODE CB, 67    : BIT 4, A
+# CODE CB, 6f    : BIT 5, A
+# CODE CB, 77    : BIT 6, A
+# CODE CB, 7f    : BIT 7, A
+# CODE dd, CB, 46, 000: BIT 0, (IX + 00h)
+# CODE dd, CB, 4e, 07f: BIT 1, (IX + 7fh)
+# CODE dd, CB, 56, 080: BIT 2, (IX + 80h)
+# CODE dd, CB, 5e, 0c0: BIT 3, (IX + c0h)
+# CODE dd, CB, 66, 040: BIT 4, (IX + 40h)
+# CODE dd, CB, 6e, 057: BIT 5, (IX + 57h)
+# CODE dd, CB, 76, 0ab: BIT 6, (IX + abh)
+# CODE dd, CB, 7e, 012: BIT 7, (IX + 12h)
+# CODE fd, CB, 46, 000: BIT 0, (IY + 00h)
+# CODE fd, CB, 4e, 07f: BIT 1, (IY + 7fh)
+# CODE fd, CB, 56, 080: BIT 2, (IY + 80h)
+# CODE fd, CB, 5e, 0c0: BIT 3, (IY + c0h)
+# CODE fd, CB, 66, 040: BIT 4, (IY + 40h)
+# CODE fd, CB, 6e, 057: BIT 5, (IY + 57h)
+# CODE fd, CB, 76, 0ab: BIT 6, (IY + abh)
+# CODE fd, CB, 7e, 012: BIT 7, (IY + 12h)
+# CODE CB, 80    : RES 0, B
+# CODE CB, 88    : RES 1, B
+# CODE CB, 90    : RES 2, B
+# CODE CB, 98    : RES 3, B
+# CODE CB, a0    : RES 4, B
+# CODE CB, a8    : RES 5, B
+# CODE CB, b0    : RES 6, B
+# CODE CB, b8    : RES 7, B
+# CODE 06, a5    : LD  B, a5h
+# CODE CB, 81    : RES 0, C
+# CODE CB, 89    : RES 1, C
+# CODE CB, 91    : RES 2, C
+# CODE CB, 99    : RES 3, C
+# CODE CB, a1    : RES 4, C
+# CODE CB, a9    : RES 5, C
+# CODE CB, b1    : RES 6, C
+# CODE CB, b9    : RES 7, C
+# CODE 0e, c3    : LD  C, c3h
+# CODE CB, 82    : RES 0, D
+# CODE CB, 8a    : RES 1, D
+# CODE CB, 92    : RES 2, D
+# CODE CB, 9a    : RES 3, D
+# CODE CB, a2    : RES 4, D
+# CODE CB, aa    : RES 5, D
+# CODE CB, b2    : RES 6, D
+# CODE CB, ba    : RES 7, D
+# CODE 16, 5a    : LD  D, 5ah
+# CODE CB, 83    : RES 0, E
+# CODE CB, 8b    : RES 1, E
+# CODE CB, 93    : RES 2, E
+# CODE CB, 9b    : RES 3, E
+# CODE CB, a3    : RES 4, E
+# CODE CB, ab    : RES 5, E
+# CODE CB, b3    : RES 6, E
+# CODE CB, bb    : RES 7, E
+# CODE 1e, 3c    : LD  E, 3ch
+# CODE CB, 84    : RES 0, H
+# CODE CB, 8c    : RES 1, H
+# CODE CB, 94    : RES 2, H
+# CODE CB, 9c    : RES 3, H
+# CODE CB, a4    : RES 4, H
+# CODE CB, ac    : RES 5, H
+# CODE CB, b4    : RES 6, H
+# CODE CB, bc    : RES 7, H
+# CODE 26, 69    : LD  H, 69h
+# CODE CB, 85    : RES 0, L
+# CODE CB, 8d    : RES 1, L
+# CODE CB, 95    : RES 2, L
+# CODE CB, 9d    : RES 3, L
+# CODE CB, a5    : RES 4, L
+# CODE CB, ad    : RES 5, L
+# CODE CB, b5    : RES 6, L
+# CODE CB, bd    : RES 7, L
+# CODE 2e, 24    : LD  L, 24h
+# CODE CB, 86    : RES 0, (HL)
+# CODE CB, 8e    : RES 1, (HL)
+# CODE CB, 96    : RES 2, (HL)
+# CODE CB, 9e    : RES 3, (HL)
+# CODE CB, a6    : RES 4, (HL)
+# CODE CB, ae    : RES 5, (HL)
+# CODE CB, b6    : RES 6, (HL)
+# CODE CB, be    : RES 7, (HL)
+# CODE CB, 87    : RES 0, A
+# CODE CB, 8f    : RES 1, A
+# CODE CB, 97    : RES 2, A
+# CODE CB, 9f    : RES 3, A
+# CODE CB, a7    : RES 4, A
+# CODE CB, af    : RES 5, A
+# CODE CB, b7    : RES 6, A
+# CODE CB, bf    : RES 7, A
+# CODE 3e, 96    : LD  A, 96h
+# CODE dd, CB, 86, 000: RES 0, (IX + 00h)
+# CODE dd, CB, 8e, 07f: RES 1, (IX + 7fh)
+# CODE dd, CB, 96, 080: RES 2, (IX + 80h)
+# CODE dd, CB, 9e, 0c0: RES 3, (IX + c0h)
+# CODE dd, CB, a6, 040: RES 4, (IX + 40h)
+# CODE dd, CB, ae, 057: RES 5, (IX + 57h)
+# CODE dd, CB, b6, 0ab: RES 6, (IX + abh)
+# CODE dd, CB, be, 012: RES 7, (IX + 12h)
+# CODE fd, CB, 86, 000: RES 0, (IY + 00h)
+# CODE fd, CB, 8e, 07f: RES 1, (IY + 7fh)
+# CODE fd, CB, 96, 080: RES 2, (IY + 80h)
+# CODE fd, CB, 9e, 0c0: RES 3, (IY + c0h)
+# CODE fd, CB, a6, 040: RES 4, (IY + 40h)
+# CODE fd, CB, ae, 057: RES 5, (IY + 57h)
+# CODE fd, CB, b6, 0ab: RES 6, (IY + abh)
+# CODE fd, CB, be, 012: RES 7, (IY + 12h)
+# CODE CB, c0    : SET 0, B
+# CODE CB, c8    : SET 1, B
+# CODE CB, d0    : SET 2, B
+# CODE CB, d8    : SET 3, B
+# CODE CB, e0    : SET 4, B
+# CODE CB, e8    : SET 5, B
+# CODE CB, f0    : SET 6, B
+# CODE CB, f8    : SET 7, B
+# CODE 06, a5    : LD  B, a5h
+# CODE CB, c1    : SET 0, C
+# CODE CB, c9    : SET 1, C
+# CODE CB, d1    : SET 2, C
+# CODE CB, d9    : SET 3, C
+# CODE CB, e1    : SET 4, C
+# CODE CB, e9    : SET 5, C
+# CODE CB, f1    : SET 6, C
+# CODE CB, f9    : SET 7, C
+# CODE 0e, c3    : LD  C, c3h
+# CODE CB, c2    : SET 0, D
+# CODE CB, ca    : SET 1, D
+# CODE CB, d2    : SET 2, D
+# CODE CB, da    : SET 3, D
+# CODE CB, e2    : SET 4, D
+# CODE CB, ea    : SET 5, D
+# CODE CB, f2    : SET 6, D
+# CODE CB, fa    : SET 7, D
+# CODE 16, 5a    : LD  D, 5ah
+# CODE CB, c3    : SET 0, E
+# CODE CB, cb    : SET 1, E
+# CODE CB, d3    : SET 2, E
+# CODE CB, db    : SET 3, E
+# CODE CB, e3    : SET 4, E
+# CODE CB, eb    : SET 5, E
+# CODE CB, f3    : SET 6, E
+# CODE CB, fb    : SET 7, E
+# CODE 1e, 3c    : LD  E, 3ch
+# CODE CB, c4    : SET 0, H
+# CODE CB, cc    : SET 1, H
+# CODE CB, d4    : SET 2, H
+# CODE CB, dc    : SET 3, H
+# CODE CB, e4    : SET 4, H
+# CODE CB, ec    : SET 5, H
+# CODE CB, f4    : SET 6, H
+# CODE CB, fc    : SET 7, H
+# CODE 26, 69    : LD  H, 69h
+# CODE CB, c5    : SET 0, L
+# CODE CB, cd    : SET 1, L
+# CODE CB, d5    : SET 2, L
+# CODE CB, dd    : SET 3, L
+# CODE CB, e5    : SET 4, L
+# CODE CB, ed    : SET 5, L
+# CODE CB, f5    : SET 6, L
+# CODE CB, fd    : SET 7, L
+# CODE 2e, 24    : LD  L, 24h
+# CODE CB, c6    : SET 0, (HL)
+# CODE CB, ce    : SET 1, (HL)
+# CODE CB, d6    : SET 2, (HL)
+# CODE CB, de    : SET 3, (HL)
+# CODE CB, e6    : SET 4, (HL)
+# CODE CB, ee    : SET 5, (HL)
+# CODE CB, f6    : SET 6, (HL)
+# CODE CB, fe    : SET 7, (HL)
+# CODE CB, c7    : SET 0, A
+# CODE CB, cf    : SET 1, A
+# CODE CB, d7    : SET 2, A
+# CODE CB, df    : SET 3, A
+# CODE CB, e7    : SET 4, A
+# CODE CB, ef    : SET 5, A
+# CODE CB, f7    : SET 6, A
+# CODE CB, ff    : SET 7, A
+# CODE 3e, 96    : LD  A, 96h
+# CODE dd, CB, c6, 000: SET 0, (IX + 00h)
+# CODE dd, CB, ce, 07f: SET 1, (IX + 7fh)
+# CODE dd, CB, d6, 080: SET 2, (IX + 80h)
+# CODE dd, CB, de, 0c0: SET 3, (IX + c0h)
+# CODE dd, CB, e6, 040: SET 4, (IX + 40h)
+# CODE dd, CB, ee, 057: SET 5, (IX + 57h)
+# CODE dd, CB, f6, 0ab: SET 6, (IX + abh)
+# CODE dd, CB, fe, 012: SET 7, (IX + 12h)
+# CODE fd, CB, c6, 000: SET 0, (IY + 00h)
+# CODE fd, CB, ce, 07f: SET 1, (IY + 7fh)
+# CODE fd, CB, d6, 080: SET 2, (IY + 80h)
+# CODE fd, CB, de, 0c0: SET 3, (IY + c0h)
+# CODE fd, CB, e6, 040: SET 4, (IY + 40h)
+# CODE fd, CB, ee, 057: SET 5, (IY + 57h)
+# CODE fd, CB, f6, 0ab: SET 6, (IY + abh)
+# CODE fd, CB, fe, 012: SET 7, (IY + 12h)
+# ** Note: $finish    : tb.sv(887)
+#    Time: 962028540 ns  Iteration: 2  Instance: /tb
+# End time: 19:20:10 on Dec 30,2024, Elapsed time: 0:00:03
+# Errors: 0, Warnings: 0

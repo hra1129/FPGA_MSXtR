@@ -1,0 +1,205 @@
+# vsim -c -t 1ns -do "run.do" tb 
+# Start time: 13:01:46 on Dec 30,2024
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# do run.do
+# CODE 06, 12    : LD  B, 12h
+# CODE 0e, 23    : LD  C, 23h
+# CODE 16, 34    : LD  D, 34h
+# CODE 1e, 45    : LD  E, 45h
+# CODE 26, 56    : LD  H, 56h
+# CODE 2e, 67    : LD  L, 67h
+# CODE 3e, 78    : LD  A, 78h
+# CODE 40            : LD  B, B
+# CODE 41            : LD  B, C
+# CODE 42            : LD  B, D
+# CODE 43            : LD  B, E
+# CODE 44            : LD  B, H
+# CODE 45            : LD  B, L
+# CODE 47            : LD  B, A
+# CODE 06, 12    : LD  B, 12h
+# CODE 48            : LD  C, B
+# CODE 49            : LD  C, C
+# CODE 4a            : LD  C, D
+# CODE 4b            : LD  C, E
+# CODE 4c            : LD  C, H
+# CODE 4d            : LD  C, L
+# CODE 4f            : LD  C, A
+# CODE 0e, 23    : LD  C, 23h
+# CODE 50            : LD  D, B
+# CODE 51            : LD  D, C
+# CODE 52            : LD  D, D
+# CODE 53            : LD  D, E
+# CODE 54            : LD  D, H
+# CODE 55            : LD  D, L
+# CODE 57            : LD  D, A
+# CODE 16, 34    : LD  D, 34h
+# CODE 58            : LD  E, B
+# CODE 59            : LD  E, C
+# CODE 5a            : LD  E, D
+# CODE 5b            : LD  E, E
+# CODE 5c            : LD  E, H
+# CODE 5d            : LD  E, L
+# CODE 5f            : LD  E, A
+# CODE 1e, 45    : LD  E, 45h
+# CODE 60            : LD  H, B
+# CODE 61            : LD  H, C
+# CODE 62            : LD  H, D
+# CODE 63            : LD  H, E
+# CODE 64            : LD  H, H
+# CODE 65            : LD  H, L
+# CODE 67            : LD  H, A
+# CODE 26, 56    : LD  H, 56h
+# CODE 68            : LD  L, B
+# CODE 69            : LD  L, C
+# CODE 6a            : LD  L, D
+# CODE 6b            : LD  L, E
+# CODE 6c            : LD  L, H
+# CODE 6d            : LD  L, L
+# CODE 6f            : LD  L, A
+# CODE 2e, 67    : LD  L, 67h
+# CODE 78            : LD  A, B
+# CODE 79            : LD  A, C
+# CODE 7a            : LD  A, D
+# CODE 7b            : LD  A, E
+# CODE 7c            : LD  A, H
+# CODE 7d            : LD  A, L
+# CODE 7f            : LD  A, A
+# CODE 3e, 78    : LD  A, 78h
+# CODE 01, 9a, 89    : LD  BC, 899ah
+# CODE 11, bc, ab    : LD  DE, abbch
+# CODE 21, de, cd    : LD  HL, cddeh
+# CODE dd, 21, f0, ef: LD  IX, eff0h
+# CODE fd, 21, 12, 01: LD  IY, 0112h
+# CODE 21, 34, 12    : LD  HL, 1234h
+# CODE 36, ab        : LD  (HL), abh
+# CODE 21, dc, fe    : LD  HL, fedch
+# CODE 36, 53        : LD  (HL), 53h
+# CODE dd, 21, 54, 76: LD  IX, 7654h
+# CODE fd, 21, 56, 34: LD  IY, 3456h
+# CODE dd, 36, 00, 53: LD  (IX + 00h), 53h
+# CODE dd, 36, 09, a2: LD  (IX + 09h), a2h
+# CODE dd, 36, 7f, be: LD  (IX + 7fh), beh
+# CODE dd, 36, 80, 93: LD  (IX + 80h), 93h
+# CODE fd, 36, 00, 53: LD  (IY + 00h), 53h
+# CODE fd, 36, 09, a2: LD  (IY + 09h), a2h
+# CODE fd, 36, 7f, be: LD  (IY + 7fh), beh
+# CODE fd, 36, 80, 93: LD  (IY + 80h), 93h
+# CODE 21, de, cd    : LD  HL, cddeh
+# CODE dd, 21, f0, ef: LD  IX, eff0h
+# CODE fd, 21, 12, 01: LD  IY, 0112h
+# CODE 70            : LD  (HL), B
+# CODE 71            : LD  (HL), C
+# CODE 72            : LD  (HL), D
+# CODE 73            : LD  (HL), E
+# CODE 74            : LD  (HL), H
+# CODE 75            : LD  (HL), L
+# CODE 77            : LD  (HL), A
+# CODE dd, 70, 00    : LD  (IX + 00h), B
+# CODE dd, 71, 7f    : LD  (IX + 7fh), C
+# CODE dd, 72, 80    : LD  (IX + 80h), D
+# CODE dd, 73, 40    : LD  (IX + 40h), E
+# CODE dd, 74, 15    : LD  (IX + 15h), H
+# CODE dd, 75, 57    : LD  (IX + 57h), L
+# CODE dd, 77, c0    : LD  (IX + c0h), A
+# CODE fd, 70, 00    : LD  (IY + 00h), B
+# CODE fd, 71, 7f    : LD  (IY + 7fh), C
+# CODE fd, 72, 80    : LD  (IY + 80h), D
+# CODE fd, 73, 40    : LD  (IY + 40h), E
+# CODE fd, 74, 15    : LD  (IY + 15h), H
+# CODE fd, 75, 57    : LD  (IY + 57h), L
+# CODE fd, 77, c0    : LD  (IY + c0h), A
+# CODE 06, 12    : LD  B, 12h
+# CODE 0e, 23    : LD  C, 23h
+# CODE 16, 34    : LD  D, 34h
+# CODE 1e, 45    : LD  E, 45h
+# CODE 26, 56    : LD  H, 56h
+# CODE 2e, 67    : LD  L, 67h
+# CODE 3e, 78    : LD  A, 78h
+# CODE 40            : LD  B, B
+# CODE 41            : LD  B, C
+# CODE 42            : LD  B, D
+# CODE 43            : LD  B, E
+# CODE 44            : LD  B, H
+# CODE 45            : LD  B, L
+# CODE 47            : LD  B, A
+# CODE 06, 12    : LD  B, 12h
+# CODE 48            : LD  C, B
+# CODE 49            : LD  C, C
+# CODE 4a            : LD  C, D
+# CODE 4b            : LD  C, E
+# CODE 4c            : LD  C, H
+# CODE 4d            : LD  C, L
+# CODE 4f            : LD  C, A
+# CODE 0e, 23    : LD  C, 23h
+# CODE 50            : LD  D, B
+# CODE 51            : LD  D, C
+# CODE 52            : LD  D, D
+# CODE 53            : LD  D, E
+# CODE 54            : LD  D, H
+# CODE 55            : LD  D, L
+# CODE 57            : LD  D, A
+# CODE 16, 34    : LD  D, 34h
+# CODE 58            : LD  E, B
+# CODE 59            : LD  E, C
+# CODE 5a            : LD  E, D
+# CODE 5b            : LD  E, E
+# CODE 5c            : LD  E, H
+# CODE 5d            : LD  E, L
+# CODE 5f            : LD  E, A
+# CODE 1e, 45    : LD  E, 45h
+# CODE 60            : LD  H, B
+# CODE 61            : LD  H, C
+# CODE 62            : LD  H, D
+# CODE 63            : LD  H, E
+# CODE 64            : LD  H, H
+# CODE 65            : LD  H, L
+# CODE 67            : LD  H, A
+# CODE 26, 56    : LD  H, 56h
+# CODE 68            : LD  L, B
+# CODE 69            : LD  L, C
+# CODE 6a            : LD  L, D
+# CODE 6b            : LD  L, E
+# CODE 6c            : LD  L, H
+# CODE 6d            : LD  L, L
+# CODE 6f            : LD  L, A
+# CODE 2e, 67    : LD  L, 67h
+# CODE 78            : LD  A, B
+# CODE 79            : LD  A, C
+# CODE 7a            : LD  A, D
+# CODE 7b            : LD  A, E
+# CODE 7c            : LD  A, H
+# CODE 7d            : LD  A, L
+# CODE 7f            : LD  A, A
+# CODE 3e, 78    : LD  A, 78h
+# CODE 01, 9a, 89    : LD  BC, 899ah
+# CODE 11, bc, ab    : LD  DE, abbch
+# CODE 21, de, cd    : LD  HL, cddeh
+# CODE dd, 21, f0, ef: LD  IX, eff0h
+# CODE fd, 21, 12, 01: LD  IY, 0112h
+# CODE 21, 34, 12    : LD  HL, 1234h
+# CODE 36, ab        : LD  (HL), abh
+# CODE 21, dc, fe    : LD  HL, fedch
+# CODE 36, 53        : LD  (HL), 53h
+# CODE dd, 21, 54, 76: LD  IX, 7654h
+# CODE fd, 21, 56, 34: LD  IY, 3456h
+# CODE dd, 36, 00, 53: LD  (IX + 00h), 53h
+# CODE dd, 36, 09, a2: LD  (IX + 09h), a2h
+# CODE dd, 36, 7f, be: LD  (IX + 7fh), beh
+# CODE dd, 36, 80, 93: LD  (IX + 80h), 93h
+# CODE fd, 36, 00, 53: LD  (IY + 00h), 53h
+# CODE fd, 36, 09, a2: LD  (IY + 09h), a2h
+# CODE fd, 36, 7f, be: LD  (IY + 7fh), beh
+# CODE fd, 36, 80, 93: LD  (IY + 80h), 93h
+# CODE 21, de, cd    : LD  HL, cddeh
+# CODE dd, 21, f0, ef: LD  IX, eff0h
+# CODE fd, 21, 12, 01: LD  IY, 0112h
+# ** Note: $finish    : tb.sv(1099)
+#    Time: 537261660 ns  Iteration: 2  Instance: /tb
+# End time: 13:01:48 on Dec 30,2024, Elapsed time: 0:00:02
+# Errors: 0, Warnings: 0

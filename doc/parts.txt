@@ -1,1 +1,8 @@
 A/D変換 TI PCM1807 
+https://www.ti.com/product/ja-jp/PCM1807
+
+I/Oエキスパンダー 東芝 TC6381AF
+https://akizukidenshi.com/catalog/g/g103481/
+
+SerialSRAM 2Mbit Microchip 23AA02M (Max 143MHz)
+https://www.microchip.com/en-us/products/memory/serial-sram-and-serial-nvsram

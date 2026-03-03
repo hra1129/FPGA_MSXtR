@@ -1,0 +1,16 @@
+# vsim -c -t 1ns -do "run.do" tb 
+# Start time: 18:31:25 on Dec 26,2024
+# Loading sv_std.std
+# Loading work.tb
+# do run.do
+# f == 1'b0 : false
+# f == 1'b1 : false
+# f == 1'bX : false
+# f != 1'b0 : false
+# f != 1'b1 : false
+# f != 1'bX : false
+# f === 1'bX : true
+# ** Note: $finish    : tb.sv(74)
+#    Time: 10 ns  Iteration: 1  Instance: /tb
+# End time: 18:31:26 on Dec 26,2024, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
