@@ -2,6 +2,26 @@
 //	FPGA_MSXtR_body.v
 //	Copyright (C)2026 Takayuki Hara (HRA!)
 //	
+//	本ソフトウェアおよび本ソフトウェアに基づいて作成された派生物は、以下の条件を
+//	満たす場合に限り、再頒布および使用が許可されます。
+//
+//	1.ソースコード形式で再頒布する場合、上記の著作権表示、本条件一覧、および下記
+//	  免責条項をそのままの形で保持すること。
+//	2.バイナリ形式で再頒布する場合、頒布物に付属のドキュメント等の資料に、上記の
+//	  著作権表示、本条件一覧、および下記免責条項を含めること。
+//	3.書面による事前の許可なしに、本ソフトウェアを販売、および商業的な製品や活動
+//	  に使用しないこと。
+//
+//	本ソフトウェアは、著作権者によって「現状のまま」提供されています。著作権者は、
+//	特定目的への適合性の保証、商品性の保証、またそれに限定されない、いかなる明示
+//	的もしくは暗黙な保証責任も負いません。著作権者は、事由のいかんを問わず、損害
+//	発生の原因いかんを問わず、かつ責任の根拠が契約であるか厳格責任であるか（過失
+//	その他の）不法行為であるかを問わず、仮にそのような損害が発生する可能性を知ら
+//	されていたとしても、本ソフトウェアの使用によって発生した（代替品または代用サ
+//	ービスの調達、使用の喪失、データの喪失、利益の喪失、業務の中断も含め、またそ
+//	れに限定されない）直接損害、間接損害、偶発的な損害、特別損害、懲罰的損害、ま
+//	たは結果損害について、一切責任を負わないものとします。
+//
 //	 Permission is hereby granted, free of charge, to any person obtaining a 
 //	copy of this software and associated documentation files (the "Software"), 
 //	to deal in the Software without restriction, including without limitation 
@@ -39,6 +59,11 @@ module fpga_msxtr_body #(
 	output	[5:0]	lcd_green,				//	PIN32, PIN33, PIN34, PIN35, PIN36, PIN37
 	output	[4:0]	lcd_blue,				//	PIN27, PIN28, PIN29, PIN30, PIN31
 	output			lcd_bl,					//	PIN49
+	//	I/O Expander
+	inout	[7:0]	ioe_dio,				//	PIN31, PIN30, PIN29, PIN26, PIN25, PIN28 PIN27, PIN77
+	output	[2:0]	ioe_sel,				//	PIN86, PIN49, PIN41
+	output			ioe_reset,				//	PIN72
+	output			ioe_clk,				//	PIN71
 	//	SPI (for MICOM_ENABLE = 1) FPGA is master, Micom is slave.
 	output			spi_sys_intr,			//	PIN80
 	input			spi_cs_n,				//	PIN20
@@ -672,8 +697,10 @@ module fpga_msxtr_body #(
 	memory_mapper_inst u_memory_mapper (
 		.reset_n				( w_msx_reset_n			),
 		.clk					( clk42m				),
-		.iorq_n					( iorq_n				),
-		.wr_n					( wr_n					),
+		.bus_cs					( w_mapper_cs			),
+		.bus_write				( w_bus_write			),
+		.bus_valid				( w_bus_valid			),
+		.bus_ready				( w_mapper_ready		),
 		.address				( a						),
 		.wdata					( d						),
 		.mapper_segment			( w_mapper_segment		)
@@ -722,22 +749,4 @@ module fpga_msxtr_body #(
 									  ( w_sltsl32  && (a[15:14] == 2'b01 || a[15:14] == 2'b10)) ? rd_n :				//	Nextor
 									                                                              1'b1;
 
-	// --------------------------------------------------------------------
-	//	System control
-	// --------------------------------------------------------------------
-	system_control u_system_control (
-		.reset_n				( w_msx_reset_n			),
-		.clk					( clk42m				),
-		.iorq_n					( iorq_n				),
-		.wr_n					( wr_n					),
-		.rd_n					( rd_n					),
-		.address				( a						),
-		.wdata					( d						),
-		.rdata					( w_sys_q				),
-		.rdata_en				( w_sys_q_en			),
-		.reg_left_offset		( w_left_offset			),
-		.reg_denominator		( w_denominator			),
-		.reg_normalize			( w_normalize			),
-		.reg_scanline			( w_scanline			)
-	);
 endmodule
