@@ -3,6 +3,40 @@
 <Project>
     <Template>FPGA</Template>
     <Version>5</Version>
-    <Device name="" pn="">gw2ar18-000</Device>
-    <FileList/>
+    <Device name="GW2AR-18" pn="GW2AR-LV18QN88C8/I7">gw2ar18-000</Device>
+    <FileList>
+        <File path="src/FPGA_MSXtR.v" type="file.verilog" enable="1"/>
+        <File path="src/FPGA_MSXtR_body.v" type="file.verilog" enable="1"/>
+        <File path="src/cr800/cr800.v" type="file.verilog" enable="1"/>
+        <File path="src/cr800/cr800_alu.v" type="file.verilog" enable="1"/>
+        <File path="src/cr800/cr800_inst.v" type="file.verilog" enable="1"/>
+        <File path="src/cr800/cr800_mcode.v" type="file.verilog" enable="1"/>
+        <File path="src/cr800/cr800_reg.v" type="file.verilog" enable="1"/>
+        <File path="src/cz80/cz80.v" type="file.verilog" enable="1"/>
+        <File path="src/cz80/cz80_alu.v" type="file.verilog" enable="1"/>
+        <File path="src/cz80/cz80_inst.v" type="file.verilog" enable="1"/>
+        <File path="src/cz80/cz80_mcode.v" type="file.verilog" enable="1"/>
+        <File path="src/cz80/cz80_reg.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_rpll/gowin_rpll.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_rpll/gowin_rpll2.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_rpll/gowin_rpll3.v" type="file.verilog" enable="1"/>
+        <File path="src/kanji_rom/kanji_rom.v" type="file.verilog" enable="1"/>
+        <File path="src/memory_mapper/memory_mapper.v" type="file.verilog" enable="1"/>
+        <File path="src/memory_mapper/memory_mapper_inst.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_dac.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_eg.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_lfo.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_op.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_pg.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_timinggen.v" type="file.verilog" enable="1"/>
+        <File path="src/opll/ikaopll/IKAOPLL_tb.sv" type="file.verilog" enable="1"/>
+        <File path="src/opll/opll.v" type="file.verilog" enable="1"/>
+        <File path="src/ppi/ppi.v" type="file.verilog" enable="1"/>
+        <File path="src/ppi/ppi_inst.v" type="file.verilog" enable="1"/>
+        <File path="src/sdram/ip_sdram_tangnano20k_c.v" type="file.verilog" enable="1"/>
+        <File path="src/ssg/ssg.v" type="file.verilog" enable="1"/>
+    </FileList>
 </Project>

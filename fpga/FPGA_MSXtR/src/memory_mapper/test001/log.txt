@@ -1,21 +1,21 @@
 # vsim -c -t 1ns -do "run.do" tb 
-# Start time: 18:13:41 on Nov 10,2024
+# Start time: 21:38:24 on Mar 04,2026
 # Loading sv_std.std
 # Loading work.tb
 # Loading work.memory_mapper_inst
 # Loading work.memory_mapper
 # do run.do
 # <<TEST001>> Mapper Register Write Test
-# <<TEST002>> Mapper Register Read Test
-# [OK] read( 00fc ) == 12
-# [OK] read( 00fd ) == 23
-# [OK] read( 00fe ) == 34
-# [OK] read( 00ff ) == 45
+# <<TEST002>> Mapper Segment Verify Test
+# [OK] segment( 0 ) == 12
+# [OK] segment( 1 ) == 23
+# [OK] segment( 2 ) == 34
+# [OK] segment( 3 ) == 45
 # <<TEST003>> Mapper Register Protect Test
-# [OK] read( 00fc ) == 12
-# [OK] read( 00fd ) == 23
-# [OK] read( 00fe ) == 34
-# [OK] read( 00ff ) == 45
+# [OK] segment( 0 ) == 12
+# [OK] segment( 1 ) == 23
+# [OK] segment( 2 ) == 34
+# [OK] segment( 3 ) == 45
 # <<TEST004>> Mapper Segment Test
 # [OK] segment( 0 ) == 12
 # [OK] segment( 1 ) == 23
@@ -33,7 +33,7 @@
 # [OK] segment( 2 ) == ec
 # [OK] segment( 1 ) == db
 # [OK] segment( 0 ) == ca
-# ** Note: $finish    : tb.sv(210)
-#    Time: 1903140 ns  Iteration: 1  Instance: /tb
-# End time: 18:13:42 on Nov 10,2024, Elapsed time: 0:00:01
+# ** Note: $finish    : tb.sv(188)
+#    Time: 2316360 ns  Iteration: 1  Instance: /tb
+# End time: 21:38:25 on Mar 04,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0

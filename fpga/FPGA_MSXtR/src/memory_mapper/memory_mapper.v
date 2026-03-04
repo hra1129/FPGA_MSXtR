@@ -58,10 +58,11 @@
 module memory_mapper(
 	input					reset_n,
 	input					clk,
-	input					iorq_n,
-	input					wr_n,
-	input		[1:0]		address,
-	input		[7:0]		wdata,
+	input					bus_cs,
+	input					bus_write,
+	input					bus_valid,
+	input		[1:0]		bus_address,
+	input		[7:0]		bus_wdata,
 	output		[7:0]		page0_segment,
 	output		[7:0]		page1_segment,
 	output		[7:0]		page2_segment,
@@ -79,8 +80,8 @@ module memory_mapper(
 		if( !reset_n ) begin
 			ff_page0_segment <= 8'd3;
 		end
-		else if( !iorq_n && !wr_n && (address == 2'd0) ) begin
-			ff_page0_segment <= wdata;
+		else if( bus_cs && bus_write && (bus_address == 2'd0) ) begin
+			ff_page0_segment <= bus_wdata;
 		end
 		else begin
 			//	hold
@@ -91,8 +92,8 @@ module memory_mapper(
 		if( !reset_n ) begin
 			ff_page1_segment <= 8'd2;
 		end
-		else if( !iorq_n && !wr_n && (address == 2'd1) ) begin
-			ff_page1_segment <= wdata;
+		else if( bus_cs && bus_write && (bus_address == 2'd1) ) begin
+			ff_page1_segment <= bus_wdata;
 		end
 		else begin
 			//	hold
@@ -103,8 +104,8 @@ module memory_mapper(
 		if( !reset_n ) begin
 			ff_page2_segment <= 8'd1;
 		end
-		else if( !iorq_n && !wr_n && (address == 2'd2) ) begin
-			ff_page2_segment <= wdata;
+		else if( bus_cs && bus_write && (bus_address == 2'd2) ) begin
+			ff_page2_segment <= bus_wdata;
 		end
 		else begin
 			//	hold
@@ -115,8 +116,8 @@ module memory_mapper(
 		if( !reset_n ) begin
 			ff_page3_segment <= 8'd0;
 		end
-		else if( !iorq_n && !wr_n && (address == 2'd3) ) begin
-			ff_page3_segment <= wdata;
+		else if( bus_cs && bus_write && (bus_address == 2'd3) ) begin
+			ff_page3_segment <= bus_wdata;
 		end
 		else begin
 			//	hold

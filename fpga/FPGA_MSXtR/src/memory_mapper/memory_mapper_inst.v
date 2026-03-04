@@ -58,14 +58,15 @@
 module memory_mapper_inst(
 	input					reset_n,
 	input					clk,
-	input					iorq_n,
-	input					wr_n,
-	input		[15:0]		address,
-	input		[7:0]		wdata,
+	input					bus_cs,
+	input					bus_write,
+	input					bus_valid,
+	output					bus_ready,
+	input		[15:0]		bus_address,
+	input		[7:0]		bus_wdata,
 	output		[7:0]		mapper_segment
 );
 	localparam				c_port_number = 8'hFC;
-	wire					w_decode;
 	wire		[7:0]		w_page0_segment;
 	wire		[7:0]		w_page1_segment;
 	wire		[7:0]		w_page2_segment;
@@ -74,11 +75,10 @@ module memory_mapper_inst(
 	// --------------------------------------------------------------------
 	//	Address decode
 	// --------------------------------------------------------------------
-	assign w_decode			= ( { address[7:2], 2'b00 } == c_port_number ) ? iorq_n : 1'b1;
-
-	assign mapper_segment	= ( address[15:14] == 2'd0 ) ? w_page0_segment :
-							  ( address[15:14] == 2'd1 ) ? w_page1_segment :
-							  ( address[15:14] == 2'd2 ) ? w_page2_segment : w_page3_segment;
+	assign mapper_segment	= ( bus_address[15:14] == 2'd0 ) ? w_page0_segment :
+							  ( bus_address[15:14] == 2'd1 ) ? w_page1_segment :
+							  ( bus_address[15:14] == 2'd2 ) ? w_page2_segment : w_page3_segment;
+	assign bus_ready		= 1'b1;	//	always ready (no wait state)
 
 	// --------------------------------------------------------------------
 	//	System Register body
@@ -86,10 +86,11 @@ module memory_mapper_inst(
 	memory_mapper u_memory_mapper(
 		.reset_n			( reset_n			),
 		.clk				( clk				),
-		.iorq_n				( w_decode			),
-		.wr_n				( wr_n				),
-		.address			( address[1:0]		),
-		.wdata				( wdata				),
+		.bus_cs				( bus_cs			),
+		.bus_write			( bus_write			),
+		.bus_valid			( bus_valid			),
+		.bus_address		( bus_address[1:0]	),
+		.bus_wdata			( bus_wdata			),
 		.page0_segment		( w_page0_segment	),
 		.page1_segment		( w_page1_segment	),
 		.page2_segment		( w_page2_segment	),

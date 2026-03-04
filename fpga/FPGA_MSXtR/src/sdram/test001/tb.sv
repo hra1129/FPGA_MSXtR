@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 //	Test of ip_sdram.v
-//	Copyright (C)2024 Takayuki Hara (HRA!)
+//	Copyright (C)2025 Takayuki Hara (HRA!)
 //	
 //	本ソフトウェアおよび本ソフトウェアに基づいて作成された派生物は、以下の条件を
 //	満たす場合に限り、再頒布および使用が許可されます。
@@ -54,17 +54,21 @@
 // --------------------------------------------------------------------
 
 module tb ();
-	localparam		clk_base	= 1_000_000_000/108_000;	//	ps
-	reg				n_reset;
+	localparam		TIMEOUT_COUNT	= 50;
+	longint			clk_base		= 64'd1_000_000_000_000 / 64'd85_909_080;	//	ps
+	reg				reset_n;
+	reg				clk21m;				//	21.47727MHz
+	reg		[1:0]	ff_21m;
 	reg				clk;				//	85.90908MHz
 	reg				clk_sdram;			//	85.90908MHz
-	wire			sdram_busy;
-	reg				dh_clk;				//	10.738635MHz: VideoDHClk
-	reg				dl_clk;				//	 5.369318MHz: VideoDLClk
-	reg		[22:0]	address;
-	reg				is_write;			//	0:Read, 1:Write
-	reg		[ 7:0]	wdata;
-	wire	[15:0]	rdata;
+	wire			sdram_init_busy;
+	reg		[22:0]	bus_address;
+	reg				bus_valid;
+	reg				bus_write;
+	reg				bus_refresh;
+	reg		[ 7:0]	bus_wdata;
+	wire	[15:0]	bus_rdata;
+	wire			bus_rdata_en;
 	wire			O_sdram_clk;
 	wire			O_sdram_cke;
 	wire			O_sdram_cs_n;		// chip select
@@ -81,17 +85,17 @@ module tb ();
 	//	DUT
 	// --------------------------------------------------------------------
 	ip_sdram u_sdram_controller (
-		.n_reset			( n_reset			),
+		.reset_n			( reset_n			),
 		.clk				( clk				),
 		.clk_sdram			( clk				),
-		.enable_state		( ff_video_clk		),
-		.sdram_busy			( sdram_busy		),
-		.dh_clk				( dh_clk			),
-		.dl_clk				( dl_clk			),
-		.address			( address			),
-		.is_write			( is_write			),
-		.wdata				( wdata				),
-		.rdata				( rdata				),
+		.sdram_init_busy	( sdram_init_busy	),
+		.bus_address		( bus_address		),
+		.bus_valid			( bus_valid			),
+		.bus_write			( bus_write			),
+		.bus_refresh		( bus_refresh		),
+		.bus_wdata			( bus_wdata			),
+		.bus_rdata			( bus_rdata			),
+		.bus_rdata_en		( bus_rdata_en		),
 		.O_sdram_clk		( O_sdram_clk		),
 		.O_sdram_cke		( O_sdram_cke		),
 		.O_sdram_cs_n		( O_sdram_cs_n		),
@@ -127,26 +131,9 @@ module tb ();
 	end
 
 	always @( posedge clk ) begin
-		ff_video_clk <= ff_video_clk + 2'd1;
+		ff_21m <= ff_21m + 2'd1;
 	end
-
-	always @( posedge clk ) begin
-		if( sdram_busy ) begin
-			//	hold
-		end
-		else if( ff_video_clk == 2'b11 ) begin
-			dh_clk <= ~dh_clk;
-		end
-	end
-
-	always @( posedge clk ) begin
-		if( sdram_busy ) begin
-			//	hold
-		end
-		else if( (ff_video_clk == 2'b11) && !dh_clk ) begin
-			dl_clk <= ~dl_clk;
-		end
-	end
+	assign clk21m	= ff_21m[1];
 
 	// --------------------------------------------------------------------
 	//	Tasks
@@ -155,21 +142,22 @@ module tb ();
 		input	[22:0]	p_address,
 		input	[7:0]	p_data
 	);
-		address		<= p_address;
-		wdata		<= p_data;
-		is_write	<= 1'b1;
-		forever begin
-			if( dl_clk && dh_clk && (ff_video_clk == 2'b00) ) begin
-				break;
-			end
-			@( posedge clk );
-		end
-		repeat( 4 ) @( posedge clk );
+		int timeout;
 
-		address		<= 0;
-		wdata		<= 0;
-		is_write	<= 1'b0;
-		repeat( 12 ) @( posedge clk );
+		@( posedge clk21m );
+		bus_address		<= p_address;
+		bus_wdata		<= p_data;
+		bus_write		<= 1'b1;
+		bus_valid		<= 1'b1;
+		@( posedge clk21m );
+
+		$display( "[%t] write( 0x%06X, 0x%02X )", $realtime, p_address, p_data );
+		bus_address		<= 0;
+		bus_wdata		<= 0;
+		bus_write		<= 1'b0;
+		bus_valid		<= 1'b0;
+		@( posedge clk21m );
+		$display( "-- done" );
 	endtask: write_data
 
 	// --------------------------------------------------------------------
@@ -177,44 +165,67 @@ module tb ();
 		input	[22:0]	p_address,
 		input	[15:0]	p_data
 	);
-		int time_out;
+		int timeout;
 
-		address		<= p_address;
-		is_write	<= 1'b0;
-		forever begin
-			if( dl_clk && dh_clk && (ff_video_clk == 2'b00) ) begin
-				break;
-			end
-			@( posedge clk );
+		@( posedge clk21m );
+		bus_address		<= p_address;
+		bus_write		<= 1'b0;
+		bus_valid		<= 1'b1;
+		@( posedge clk21m );
+
+		$display( "[%t] read( 0x%06X )", $realtime, p_address );
+		bus_valid		<= 1'b0;
+		timeout			<= 0;
+		while( !bus_rdata_en && (timeout < TIMEOUT_COUNT) ) begin
+			@( posedge clk21m );
+			timeout++;
 		end
-		repeat( 16 ) @( posedge clk );
+		@( posedge clk21m );
+		assert( p_data == bus_rdata );
+		if( p_data == bus_rdata ) begin
+			$display( "-- done (0x%04X)", bus_rdata );
+		end
+		else begin
+			$display( "[ERROR] no match (0x%04X != 0x%04X(ref))", bus_rdata, p_data );
+		end
 	endtask: read_data
+
+	// --------------------------------------------------------------------
+	task exec_refresh(
+	);
+		@( posedge clk21m );
+		bus_refresh		<= 1'b1;
+		@( posedge clk21m );
+		bus_refresh		<= 1'b0;
+		@( posedge clk21m );
+	endtask: exec_refresh
 
 	// --------------------------------------------------------------------
 	//	Test bench
 	// --------------------------------------------------------------------
 	initial begin
-		n_reset = 0;
+		ff_21m = 0;
+		reset_n = 0;
 		clk = 0;
 		clk_sdram = 1;
-		is_write = 0;
-		address = 0;
-		wdata = 0;
-		ff_video_clk = 0;
-
-		dh_clk = 0;
-		dl_clk = 1;
+		bus_write = 0;
+		bus_valid = 0;
+		bus_address = 0;
+		bus_wdata = 0;
+		bus_refresh = 0;
 
 		@( negedge clk );
 		@( negedge clk );
 		@( posedge clk );
 
-		n_reset			= 1;
+		reset_n			= 1;
 		@( posedge clk );
 
-		while( sdram_busy ) begin
+		$display( "Wait initialization of SDRAM" );
+		while( sdram_init_busy ) begin
 			@( posedge clk );
 		end
+		$display( "Finished initialization" );
 
 		repeat( 16 ) @( posedge clk );
 		repeat( 7 ) @( posedge clk );
@@ -232,10 +243,14 @@ module tb ();
 		read_data(  'h000001, 'h2312 );
 		read_data(  'h000002, 'h4534 );
 		read_data(  'h000003, 'h4534 );
-		read_data(  'h000000, 'h6756 );
-		read_data(  'h000001, 'h6756 );
-		read_data(  'h000002, 'h8978 );
-		read_data(  'h000003, 'h8978 );
+		read_data(  'h000004, 'h6756 );
+		read_data(  'h000005, 'h6756 );
+		read_data(  'h000006, 'h8978 );
+		read_data(  'h000007, 'h8978 );
+
+		exec_refresh();
+		exec_refresh();
+		exec_refresh();
 
 		repeat( 12 ) @( posedge clk );
 		$finish;

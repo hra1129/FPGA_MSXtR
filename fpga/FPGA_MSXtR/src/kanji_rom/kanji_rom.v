@@ -2,7 +2,7 @@
 //	kanji_rom.v
 //	 Kanji ROM top entity
 //
-//	Copyright (C) 2024 Takayuki Hara
+//	Copyright (C) 2026 Takayuki Hara
 //
 //	本ソフトウェアおよび本ソフトウェアに基づいて作成された派生物は、以下の条件を
 //	満たす場合に限り、再頒布および使用が許可されます。
@@ -58,41 +58,49 @@
 module kanji_rom(
 	input					reset_n,
 	input					clk,
-	input					iorq_n,
-	input					wr_n,
-	input					rd_n,
-	input		[1:0]		address,			//	D8h, D9h, DAh, DBh
-	input		[7:0]		wdata,
-	output		[17:0]		kanji_rom_address,
-	output					kanji_rom_address_en
+	input					bus_cs,
+	input					bus_write,
+	input					bus_valid,
+	output					bus_ready,
+	input		[1:0]		bus_address,			//	D8h, D9h, DAh, DBh
+	input		[7:0]		bus_wdata,
+	output		[7:0]		bus_rdata,
+	output					bus_rdata_en,
+	output		[17:0]		kanji_address,
+	output					kanji_valid,
+	input					kanji_ready,
+	input		[7:0]		kanji_rdata,
+	input					kanji_rdata_en
 );
-	reg						ff_iorq_n;
-	reg						ff_wr_n;
-	reg						ff_rd_n;
-	wire					w_wr;
-	wire					w_rd;
+	reg						ff_write;
+	reg						ff_valid;
+	wire					w_write;
+	wire					w_read;
 	reg			[16:0]		ff_jis1_address;
 	reg			[16:0]		ff_jis2_address;
-	reg						ff_kanji_rom_address_en;
+	reg						ff_kanji_valid;
 
 	// --------------------------------------------------------------------
 	//	Access timing
 	// --------------------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_iorq_n <= 1'b1;
-			ff_wr_n <= 1'b1;
-			ff_rd_n <= 1'b1;
+			ff_write <= 1'b0;
+			ff_valid <= 1'b0;
+		end
+		else if( bus_cs && bus_valid ) begin
+			ff_write <= bus_write;
+			ff_valid <= bus_valid;
 		end
 		else begin
-			ff_iorq_n <= iorq_n;
-			ff_wr_n <= wr_n;
-			ff_rd_n <= rd_n;
+			ff_write <= 1'b0;
+			ff_valid <= 1'b0;
 		end
 	end
 
-	assign w_wr		= (!ff_iorq_n && !ff_wr_n &&  wr_n);
-	assign w_rd		= (!iorq_n    &&  ff_rd_n && !rd_n);
+	assign w_write		= ( ff_write && ff_valid && bus_address[0]);
+	assign w_read		= (!ff_write && ff_valid && bus_address[0]);
+	assign bus_ready	= 1'b1;		//	always ready
 
 	// --------------------------------------------------------------------
 	//	JIS1
@@ -101,17 +109,17 @@ module kanji_rom(
 		if( !reset_n ) begin
 			ff_jis1_address <= 17'd0;
 		end
-		else if( w_wr ) begin
-			case( address )
+		else if( w_write ) begin
+			case( bus_address )
 			2'd0:
 				begin
 					ff_jis1_address[4:0]	<= 5'd0;
-					ff_jis1_address[10: 5]	<= wdata[5:0];
+					ff_jis1_address[10: 5]	<= bus_wdata[5:0];
 				end
 			2'd1:
 				begin
 					ff_jis1_address[4:0]	<= 5'd0;
-					ff_jis1_address[16:11]	<= wdata[5:0];
+					ff_jis1_address[16:11]	<= bus_wdata[5:0];
 				end
 			default:
 				begin
@@ -119,7 +127,7 @@ module kanji_rom(
 				end
 			endcase
 		end
-		else if( !address[1] && ff_kanji_rom_address_en ) begin
+		else if( !bus_address[1] && ff_kanji_valid ) begin
 			ff_jis1_address <= ff_jis1_address + 17'd1;
 		end
 		else begin
@@ -134,17 +142,17 @@ module kanji_rom(
 		if( !reset_n ) begin
 			ff_jis2_address <= 17'd0;
 		end
-		else if( w_wr ) begin
-			case( address )
+		else if( w_write ) begin
+			case( bus_address )
 			2'd2:
 				begin
 					ff_jis2_address[4:0]	<= 5'd0;
-					ff_jis2_address[10: 5]	<= wdata[5:0];
+					ff_jis2_address[10: 5]	<= bus_wdata[5:0];
 				end
 			2'd3:
 				begin
 					ff_jis2_address[4:0]	<= 5'd0;
-					ff_jis2_address[16:11]	<= wdata[5:0];
+					ff_jis2_address[16:11]	<= bus_wdata[5:0];
 				end
 			default:
 				begin
@@ -152,7 +160,7 @@ module kanji_rom(
 				end
 			endcase
 		end
-		else if( address[1] && ff_kanji_rom_address_en ) begin
+		else if( bus_address[1] && ff_kanji_valid ) begin
 			ff_jis2_address <= ff_jis2_address + 17'd1;
 		end
 		else begin
@@ -165,19 +173,19 @@ module kanji_rom(
 	// --------------------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_kanji_rom_address_en <= 1'b0;
+			ff_kanji_valid <= 1'b0;
 		end
-		else if( w_rd && address[0] ) begin
-			ff_kanji_rom_address_en <= 1'b1;
+		else if( w_read && bus_address[0] ) begin
+			ff_kanji_valid <= 1'b1;
 		end
 		else begin
-			ff_kanji_rom_address_en <= 1'b0;
+			ff_kanji_valid <= 1'b0;
 		end
 	end
 
 	// --------------------------------------------------------------------
 	//	Output assignment
 	// --------------------------------------------------------------------
-	assign kanji_rom_address		= ( address[1] == 1'b0 ) ? { 1'b0, ff_jis1_address } : { 1'b1, ff_jis2_address };
-	assign kanji_rom_address_en		= ff_kanji_rom_address_en;
+	assign kanji_address		= ( bus_address[1] == 1'b0 ) ? { 1'b0, ff_jis1_address } : { 1'b1, ff_jis2_address };
+	assign kanji_valid			= ff_kanji_valid;
 endmodule
