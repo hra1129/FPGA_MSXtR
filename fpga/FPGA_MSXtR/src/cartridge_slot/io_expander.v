@@ -1,6 +1,6 @@
-﻿//
-//	cartridge_slot.v
-//	MSX Cartridge Slot
+//
+//	io_expander.v
+//	I/O Expander for MSX Cartridge Slot
 //
 //	Copyright (C) 2026 Takayuki Hara
 //
@@ -55,31 +55,135 @@
 //
 //-----------------------------------------------------------------------------
 
-module cartridge_slot (
-	input			clk,			//	42.95454MHz
+module io_expander (
+	input			clk85m,			//	85.90908MHz
 	input			reset_n,
 	//	Internal BUS
-	input			sltsl1,
-	input			sltsl2,
-	input	[15:0]	bus_address,
-	input	[7:0]	bus_wdata,
-	output	[7:0]	bus_rdata,
-	output			bus_rdata_en,
+	input			sltsl1_n,
+	input			slt1_cs1_n,
+	input			slt1_cs2_n,
+	input			slt1_cs12_n,
+	input			sltsl2_n,
+	input			slt2_cs1_n,
+	input			slt2_cs2_n,
+	input			slt2_cs12_n,
+	input			m1_n,
+	input			iorq_n,
+	input			merq_n,
+	input			wr_n,
+	input			rd_n,
+	input			rfsh_n,
+	output			wait_n,
+	output			int_n,
+	input	[15:0]	address,
+	input	[7:0]	wdata,
+	output	[7:0]	rdata,
+	input			joy1_com,
+	input			joy2_com,
+	output	[5:0]	joy1,
+	output	[5:0]	joy2,
 	//	I/O Expander I/F
 	output			ioe_reset,
 	output			ioe_clk,
 	output	[2:0]	ioe_sel,
 	inout	[7:0]	ioe_dio
 );
-	reg		[15:0]	ff_slot_a;
-	reg		[7:0]	ff_slot_do;
-	reg		[7:0]	ff_slot_di;
-	reg				ff_slot_sltsl1;
-	reg				ff_slot_sltsl2;
-	reg				ff_slot_wr_n;
-	reg				ff_slot_rd_n;
-	reg				ff_slot_merq_n;
-	reg				ff_slot_iorq_n;
-	reg				ff_slot_rfsh_n;
-	reg				ff_slot_m1_n;
+	reg		[4:0]	ff_state;
+	reg				ff_busdir;
+	reg				ff_busrq;
+	reg		[7:0]	ff_ioe_do;
+	reg				ff_ioe_clk;
+	reg		[2:0]	ff_ioe_sel;
+	reg				ff_wait_n;
+	reg				ff_int_n;
+	reg		[7:0]	ff_rdata;
+	reg		[5:0]	ff_joy1;
+	reg		[5:0]	ff_joy2;
+
+	// ---------------------------------------------------------
+	//	State machine
+	// ---------------------------------------------------------
+	always @( posedge clk85m ) begin
+		if( !reset_n ) begin
+			ff_state <= 5'd0;
+		end
+		else begin
+			ff_state <= ff_state + 5'd1;
+		end
+	end
+
+	always @( posedge clk85m ) begin
+		if( !reset_n ) begin
+			ff_ioe_sel <= 3'd0;
+		end
+		else begin
+			case( ff_state )
+				5'd0: begin
+					ff_ioe_clk <= 1'b0;
+					//	Cycle 0
+					ff_ioe_do <= address[15:8];
+				end
+				5'd2: begin
+					ff_ioe_sel <= 3'd1;
+				end
+				5'd3: begin
+					//	Cycle 1
+					ff_ioe_do <= address[7:0];
+				end
+				5'd5: begin
+					ff_ioe_sel <= 3'd2;
+				end
+				5'd6: begin
+					//	Cycle 2
+					ff_ioe_do <= { wr_n, rd_n, merq_n, iorq_n, m1_n, rfsh_n, sltsl1_n, slt1_cs12_n };
+				end
+				5'd8: begin
+					ff_ioe_sel <= 3'd3;
+				end
+				5'd9: begin
+					//	Cycle 3
+					ff_ioe_do <= { slt1_cs2_n, slt1_cs1_n, sltsl2_n, slt2_cs12_n, slt2_cs2_n, slt2_cs1_n, joy1_com, joy2_com };
+				end
+				5'd11:	begin
+					ff_ioe_sel <= 3'd4;
+				end
+				5'd12: begin
+					ff_ioe_clk <= 1'b1;
+					//	Cycle 4
+					ff_ioe_do <= wdata;
+				end
+				5'd14: begin
+					ff_ioe_sel <= 3'd5;
+				end
+				5'd17: begin
+					ff_ioe_sel <= 3'd6;
+					//	Cycle 5
+					ff_rdata <= ioe_dio;
+				end
+				5'd20: begin
+					ff_ioe_sel <= 3'd7;
+					//	Cycle 6
+					{ ff_busdir, ff_int_n, ff_wait_n, ff_busrq, ff_joy2[2], ff_joy2[3], ff_joy2[4], ff_joy2[5] } <= ioe_dio;
+				end
+				5'd23: begin
+					ff_ioe_sel <= 3'd0;
+					//	Cycle 7
+					{ ff_joy1[0], ff_joy1[1], ff_joy1[2], ff_joy1[3], ff_joy1[4], ff_joy1[5], ff_joy2[0], ff_joy2[1] } <= ioe_dio;
+				end
+				default: begin
+					//	hold
+				end
+			endcase
+		end
+	end
+
+	assign wait_n		= ff_wait_n;
+	assign int_n		= ff_int_n;
+	assign rdata		= ff_rdata;
+	assign joy1			= ff_joy1;
+	assign joy2			= ff_joy2;
+
+	assign ioe_reset	= reset_n;
+	assign ioe_clk		= ff_ioe_clk;
+	assign ioe_sel		= ff_ioe_sel;
 endmodule

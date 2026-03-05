@@ -54,6 +54,14 @@
    "Type" : "verilog"
   },
   {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/gowin_rpll/gowin_rpll2.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/gowin_rpll/gowin_rpll3.v",
+   "Type" : "verilog"
+  },
+  {
    "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/kanji_rom/kanji_rom.v",
    "Type" : "verilog"
   },
@@ -126,12 +134,9 @@
    "Type" : "verilog"
   },
   {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/gowin_rpll/gowin_rpll2.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/gowin_rpll/gowin_rpll3.v",
-   "Type" : "verilog"
+   "Library" : "work",
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/hdmi_tx/src/hdmi_tx_gw.vhd",
+   "Type" : "vhdl"
   }
  ],
  "IncludePath" : [

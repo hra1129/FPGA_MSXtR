@@ -38,5 +38,6 @@
         <File path="src/ppi/ppi_inst.v" type="file.verilog" enable="1"/>
         <File path="src/sdram/ip_sdram_tangnano20k_c.v" type="file.verilog" enable="1"/>
         <File path="src/ssg/ssg.v" type="file.verilog" enable="1"/>
+        <File path="src/hdmi_tx/src/hdmi_tx_gw.vhd" type="file.vhdl" enable="1"/>
     </FileList>
 </Project>

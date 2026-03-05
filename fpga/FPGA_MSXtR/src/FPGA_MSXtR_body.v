@@ -749,4 +749,47 @@ module fpga_msxtr_body #(
 									  ( w_sltsl32  && (a[15:14] == 2'b01 || a[15:14] == 2'b10)) ? rd_n :				//	Nextor
 									                                                              1'b1;
 
+	// --------------------------------------------------------------------
+	//	HDMI
+	// --------------------------------------------------------------------
+	hdmi_tx #(
+		.DEVICE_FAMILY		( "MAX 10"			),
+		.CLOCK_FREQUENCY	( 27.000			),		//	Input clock frequency (MHz)
+		.ENCODE_MODE		( "HDMI"			),		//	HDMI
+		.USE_EXTCONTROL		( "ON"				),		//	Use control port (External HDMI timing generator)
+		.SYNC_POLARITY		( "NEGATIVE"		),		//	Invert HSYNC/VSYNC to send
+		.SCANMODE			( "AUTO"			),		//	Displays decides
+		.PICTUREASPECT		( "NONE"			),		//	Picture aspect ratio information not present
+		.FORMATASPECT		( "AUTO"			),		//	Same as picture
+		.PICTURESCALING		( "FIT"				),		//	Picture has been scaled H and V
+		.COLORSPACE			( "RGB"				),		//	RGB888 (Fixed at Full range)
+		.YCC_DATARANGE		( "LIMITED"			),		//	Limited data range(16-235,240)
+		.CONTENTTYPE		( "GRAPHICS"		),		//	for PC use(IT Content)
+		.REPETITION			( 0					),		//	Pixel Repetition Factor (0-9)
+		.VIDEO_CODE			( 0					),		//	Video Information Codes (1-59, 0=No data)
+		.USE_AUDIO_PACKET	( "ON"				),		//	Use Audio sample packet
+		.AUDIO_FREQUENCY	( 48.0				),		//	Audio sampling frequency (KHz)
+		.PCMFIFO_DEPTH		( 8					),		//	Sample data fifo depth : 8=256word(35sample)
+		.CATEGORY_CODE		( 8'h00				)
+	) u_hdmi_tx (
+		.reset				( ~reset_n3			),		//	active high
+		.clk				( clk27m			),		//	27MHz pixel clock
+		.clk_x5				( clk135m			),		//	135MHz = 5 * 27MHz
+		.cc_swap			( 					),		//	Type-C AltMode swap option
+		.control			( w_hdmicontrol		),		//	HDMI control from video_syncgen
+		.active				( w_active			),		//	Pixel data active
+		.r_data				( w_cb_rout			),		//	R
+		.g_data				( w_cb_gout			),		//	G
+		.b_data				( w_cb_bout			),		//	B
+		.hsync				( w_hsync			),		//	Horizontal sync
+		.vsync				( w_vsync			),		//	Vertical sync
+		.pcm_fs				( w_pcm_fs			),		//	sound
+		.pcm_l				( w_pcm_l			),		//	sound
+		.pcm_r				( w_pcm_r			),		//	sound
+		.data				( tmds_d_p			),		//	TMDS data
+		.data_n				( 					),		//	TMDS data (inverted)
+		.clock				( tmds_clk_p		),		//	TMDS clock
+		.clock_n			( 					)		//	TMDS clock (inverted)
+	);
+
 endmodule
