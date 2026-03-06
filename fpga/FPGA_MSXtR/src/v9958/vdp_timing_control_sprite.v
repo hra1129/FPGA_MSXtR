@@ -130,8 +130,6 @@ module vdp_timing_control_sprite (
 	wire				w_vp_vram_valid;
 	wire		[17:0]	w_ic_vram_address;
 	wire				w_ic_vram_valid;
-	wire		[7:0]	w_x;
-	wire		[7:0]	w_mgx;
 	wire		[7:0]	w_y;
 	wire		[7:0]	w_mgy;
 	wire		[7:0]	w_info_mgx;
@@ -258,7 +256,6 @@ module vdp_timing_control_sprite (
 		.makeup_plane								( w_makeup_plane							),
 		.plane_x									( w_plane_x									),
 		.color										( w_color									),
-		.mgx										( w_info_mgx								),
 		.color_plane_x_en							( w_color_plane_x_en						),
 		.pattern									( w_pattern									),
 		.pattern_left_en							( w_pattern_left_en							),
@@ -301,26 +298,9 @@ module vdp_timing_control_sprite (
 		.pattern									( w_pattern									),
 		.pattern_left_en							( w_pattern_left_en							),
 		.pattern_right_en							( w_pattern_right_en						),
-		.x											( w_x										),
-		.mgx										( w_mgx										),
-		.sample_x									( w_sample_x								),
 		.display_color								( display_color								),
 		.display_color_transparent					( display_color_transparent					),
 		.display_color_en							( display_color_en							)
-	);
-
-	// --------------------------------------------------------------------
-	//	Divider
-	// --------------------------------------------------------------------
-	assign w_divider_x		= w_x | w_y;
-	assign w_divider_mgx	= w_mgx | w_mgy;
-	vdp_sprite_divide_table u_divide_table (
-		.reset_n									( reset_n									),
-		.clk										( clk										),
-		.x											( w_divider_x								),
-		.reg_mgx									( w_divider_mgx								),
-		.bit_shift									( w_bit_shift								),
-		.sample_x									( w_sample_x								)
 	);
 
 endmodule

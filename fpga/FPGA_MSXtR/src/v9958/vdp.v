@@ -89,18 +89,7 @@ module vdp (
 	output		[7:0]	display_b,
 
 	// Force Highspeed Mode
-	input				force_highspeed,
-
-	// debug pulse
-	input		[ 1:0]	button,
-	output				pulse0,
-	output				pulse1,
-	output				pulse2,
-	output				pulse3,
-	output				pulse4,
-	output				pulse5,
-	output				pulse6,
-	output				pulse7
+	input				force_highspeed
 );
 	wire		[11:0]	w_h_count;
 	wire		[ 9:0]	w_v_count;

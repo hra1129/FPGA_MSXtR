@@ -79,10 +79,6 @@ module vdp_sprite_makeup_pixel (
 	input		[31:0]	pattern,
 	input				pattern_left_en,
 	input				pattern_right_en,
-	//	to/from divider
-	output		[7:0]	x,
-	output		[7:0]	mgx,
-	input		[6:0]	sample_x,
 	//	to color_palette
 	output		[7:0]	display_color,
 	output		[1:0]	display_color_transparent,
@@ -123,14 +119,6 @@ module vdp_sprite_makeup_pixel (
 	reg			[7:0]	ff_color5;
 	reg			[7:0]	ff_color6;
 	reg			[7:0]	ff_color7;
-	reg			[7:0]	ff_color8;
-	reg			[7:0]	ff_color9;
-	reg			[7:0]	ff_color10;
-	reg			[7:0]	ff_color11;
-	reg			[7:0]	ff_color12;
-	reg			[7:0]	ff_color13;
-	reg			[7:0]	ff_color14;
-	reg			[7:0]	ff_color15;
 	wire		[7:0]	w_color;
 	reg			[9:0]	ff_x0;
 	reg			[9:0]	ff_x1;
@@ -140,30 +128,6 @@ module vdp_sprite_makeup_pixel (
 	reg			[9:0]	ff_x5;
 	reg			[9:0]	ff_x6;
 	reg			[9:0]	ff_x7;
-	reg			[9:0]	ff_x8;
-	reg			[9:0]	ff_x9;
-	reg			[9:0]	ff_x10;
-	reg			[9:0]	ff_x11;
-	reg			[9:0]	ff_x12;
-	reg			[9:0]	ff_x13;
-	reg			[9:0]	ff_x14;
-	reg			[9:0]	ff_x15;
-	reg			[7:0]	ff_mgx0;
-	reg			[7:0]	ff_mgx1;
-	reg			[7:0]	ff_mgx2;
-	reg			[7:0]	ff_mgx3;
-	reg			[7:0]	ff_mgx4;
-	reg			[7:0]	ff_mgx5;
-	reg			[7:0]	ff_mgx6;
-	reg			[7:0]	ff_mgx7;
-	reg			[7:0]	ff_mgx8;
-	reg			[7:0]	ff_mgx9;
-	reg			[7:0]	ff_mgx10;
-	reg			[7:0]	ff_mgx11;
-	reg			[7:0]	ff_mgx12;
-	reg			[7:0]	ff_mgx13;
-	reg			[7:0]	ff_mgx14;
-	reg			[7:0]	ff_mgx15;
 	wire		[9:0]	w_x;
 	wire		[3:0]	w_sub_phase;
 	wire				w_active;
@@ -210,7 +174,6 @@ module vdp_sprite_makeup_pixel (
 	reg			[4:0]	ff_current_plane1;
 	reg			[4:0]	ff_current_plane2;
 	reg			[4:0]	ff_current_plane3;
-	wire		[7:0]	w_mgx;
 
 	// --------------------------------------------------------------------
 	//	Latch information for visible sprite planes
@@ -306,48 +269,6 @@ module vdp_sprite_makeup_pixel (
 			3'd6:		ff_x6	<= plane_x;
 			3'd7:		ff_x7	<= plane_x;
 			default:	ff_x0	<= plane_x;
-			endcase
-		end
-	end
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_mgx0		<= 8'd0;
-			ff_mgx1		<= 8'd0;
-			ff_mgx2		<= 8'd0;
-			ff_mgx3		<= 8'd0;
-			ff_mgx4		<= 8'd0;
-			ff_mgx5		<= 8'd0;
-			ff_mgx6		<= 8'd0;
-			ff_mgx7		<= 8'd0;
-			ff_mgx8		<= 8'd0;
-			ff_mgx9		<= 8'd0;
-			ff_mgx10	<= 8'd0;
-			ff_mgx11	<= 8'd0;
-			ff_mgx12	<= 8'd0;
-			ff_mgx13	<= 8'd0;
-			ff_mgx14	<= 8'd0;
-			ff_mgx15	<= 8'd0;
-		end
-		else if( color_plane_x_en ) begin
-			case( makeup_plane )
-			4'd0:		ff_mgx0		<= info_mgx;
-			4'd1:		ff_mgx1		<= info_mgx;
-			4'd2:		ff_mgx2		<= info_mgx;
-			4'd3:		ff_mgx3		<= info_mgx;
-			4'd4:		ff_mgx4		<= info_mgx;
-			4'd5:		ff_mgx5		<= info_mgx;
-			4'd6:		ff_mgx6		<= info_mgx;
-			4'd7:		ff_mgx7		<= info_mgx;
-			4'd8:		ff_mgx8		<= info_mgx;
-			4'd9:		ff_mgx9		<= info_mgx;
-			4'd10:		ff_mgx10	<= info_mgx;
-			4'd11:		ff_mgx11	<= info_mgx;
-			4'd12:		ff_mgx12	<= info_mgx;
-			4'd13:		ff_mgx13	<= info_mgx;
-			4'd14:		ff_mgx14	<= info_mgx;
-			4'd15:		ff_mgx15	<= info_mgx;
-			default:	ff_mgx0		<= info_mgx;
 			endcase
 		end
 	end
@@ -506,32 +427,10 @@ module vdp_sprite_makeup_pixel (
 			ff_x7
 	);
 
-	assign w_mgx		= func_byte_selector(
-			ff_current_plane,
-			ff_mgx0,
-			ff_mgx1,
-			ff_mgx2,
-			ff_mgx3,
-			ff_mgx4,
-			ff_mgx5,
-			ff_mgx6,
-			ff_mgx7,
-			ff_mgx8,
-			ff_mgx9,
-			ff_mgx10,
-			ff_mgx11,
-			ff_mgx12,
-			ff_mgx13,
-			ff_mgx14,
-			ff_mgx15
-	);
-
 	// --------------------------------------------------------------------
 	//	w_sub_phase: 0
 	// --------------------------------------------------------------------
 	assign w_offset_x		= screen_pos_x[13:4] - w_x;
-	assign x				= ff_active ? w_offset_x[7:0] : 8'd0;
-	assign mgx				= ff_active ? w_mgx : 8'd0;
 	assign w_overflow12		= ( !reg_sprite_16x16 && !reg_sprite_magify ) ?   w_offset_x[9:3]:			// 8x8 normal
 	                 		  (  reg_sprite_16x16 &&  reg_sprite_magify ) ? { w_offset_x[9:5], 2'd0 }:	// 16x16 magnify
 	                 		                                                { w_offset_x[9:4], 1'd0 };	// 8x8 magnify or 16x16 normal

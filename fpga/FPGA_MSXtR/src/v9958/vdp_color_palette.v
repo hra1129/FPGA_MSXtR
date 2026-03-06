@@ -57,7 +57,7 @@
 
 module vdp_color_palette (
 	input				reset_n,
-	input				clk,					//	42.95454MHz
+	input				clk,
 
 	input		[5:0]	screen_pos_x,
 	input		[1:0]	pixel_phase_x,
@@ -83,7 +83,7 @@ module vdp_color_palette (
 	input				reg_yae_mode,
 	input				reg_color0_opaque,
 	input		[7:0]	reg_backdrop_color,
-	input				reg_ext_palette_mode,
+	input				reg_ext_palette_mode
 );
 	localparam			c_mode_g1	= 5'b000_00;	//	Graphic1 (SCREEN1)
 	localparam			c_mode_g2	= 5'b001_00;	//	Graphic2 (SCREEN2)

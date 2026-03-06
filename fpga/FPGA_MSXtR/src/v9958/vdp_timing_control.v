@@ -121,13 +121,7 @@ module vdp_timing_control (
 	input		[7:0]	reg_text_back_color,
 	input		[7:0]	reg_backdrop_color,
 	input				reg_left_mask,
-	input				reg_scroll_planes,
-	input				reg_sprite_nonR23_mode,
-	input				reg_interrupt_line_nonR23_mode,
-	input				reg_sprite_mode3,
-	input				reg_sprite16_mode,
-	input				reg_flat_interlace_mode,
-	input				reg_sprite_priority_shuffle
+	input				reg_scroll_planes
 );
 	wire		[13:0]	w_screen_pos_x;			//	signed   (Coordinates not affected by scroll register)
 	wire		[ 9:0]	w_screen_pos_y;			//	signed   (Coordinates not affected by scroll register)
@@ -181,7 +175,6 @@ module vdp_timing_control (
 		.reg_interleaving_mode						( reg_interleaving_mode						),
 		.reg_flat_interlace_mode					( reg_flat_interlace_mode					),
 		.reg_blink_period							( reg_blink_period							),
-		.reg_interrupt_line_nonR23_mode				( reg_interrupt_line_nonR23_mode			),
 		.horizontal_offset_l						( w_horizontal_offset_l						),
 		.horizontal_offset_h						( w_horizontal_offset_h						),
 		.interleaving_page							( w_interleaving_page						),
@@ -263,10 +256,6 @@ module vdp_timing_control (
 		.reg_sprite_disable							( reg_sprite_disable						),
 		.reg_sprite_attribute_table_base			( reg_sprite_attribute_table_base			),
 		.reg_sprite_pattern_generator_table_base	( reg_sprite_pattern_generator_table_base	),
-		.reg_left_mask								( reg_left_mask								),
-		.reg_sprite_nonR23_mode						( reg_sprite_nonR23_mode					),
-		.reg_sprite_mode3							( reg_sprite_mode3							),
-		.reg_sprite16_mode							( reg_sprite16_mode							),
-		.reg_sprite_priority_shuffle				( reg_sprite_priority_shuffle				)
+		.reg_left_mask								( reg_left_mask								)
 	);
 endmodule

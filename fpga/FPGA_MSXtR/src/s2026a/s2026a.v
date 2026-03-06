@@ -1,6 +1,6 @@
 //
-// s1990.v
-//   S1990 device
+// s2026a.v
+//   s2026a device
 //   Revision 1.02
 //
 // Copyright (c) 2026 Takayuki Hara.
@@ -49,14 +49,14 @@
 //
 //	04th,December,2019 Modified by t.hara
 //	 - Converted to VerilogHDL from VHDL
-//	 - File name changed to s1990.v from systemtimer.vhd
-//	 - Entity name changed to s1990 from system_timer
+//	 - File name changed to s2026a.v from systemtimer.vhd
+//	 - Entity name changed to s2026a from system_timer
 //
 //	xx,xx,2007 First release (System Timer) by t.hara
 //	 - System Timer for MSXturboR (3.911usec increment freerun counter)
 //
 
-module s1990 (
+module s2026a (
 	input			clk,
 	input			reset,
 	input			mem,

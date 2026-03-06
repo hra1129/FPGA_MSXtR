@@ -35,6 +35,7 @@ module tb ();
 	reg						joy2_com;
 	wire		[5:0]		joy1;
 	wire		[5:0]		joy2;
+	wire					pre_clk3_579m;
 	//	I/O Expander I/F
 	wire					ioe_reset;
 	wire					ioe_clk;
@@ -81,7 +82,8 @@ module tb ();
 		.ioe_reset			( ioe_reset			),
 		.ioe_clk			( ioe_clk			),
 		.ioe_sel			( ioe_sel			),
-		.ioe_dio			( ioe_dio			)
+		.ioe_dio			( ioe_dio			),
+		.pre_clk3_579m		( pre_clk3_579m		)
 	);
 
 	// --------------------------------------------------------------------
@@ -390,7 +392,7 @@ module tb ();
 		tb_ioe_dio		= 8'b11001010;
 		@( posedge clk85m );		//	state 23 arrives
 
-		wait_for_state( 5'd24 );
+		wait_for_state( 5'd0 );
 		check_ioe_sel( 3'd0, "Cycle0 wrap ioe_sel" );
 		tb_ioe_dio_en	= 1'b0;
 
