@@ -65,7 +65,7 @@ module vdp_sprite_select_visible_planes (
 	input				screen_v_active,
 	input				screen_h_active,
 
-	output		[17:0]	vram_address,
+	output		[16:0]	vram_address,
 	output				vram_valid,
 	input		[31:0]	vram_rdata,
 	input				vram_interleave,
@@ -86,11 +86,7 @@ module vdp_sprite_select_visible_planes (
 	input				reg_sprite_disable,
 	input				reg_sprite_magify,
 	input				reg_sprite_16x16,
-	input		[17:7]	reg_sprite_attribute_table_base,
-	input				reg_sprite_nonR23_mode,
-	input				reg_sprite_mode3,
-	input				reg_sprite16_mode,
-	input				reg_sprite_priority_shuffle
+	input		[16:7]	reg_sprite_attribute_table_base
 );
 	//	Phase
 	wire		[9:0]	w_screen_pos_x;
@@ -120,33 +116,29 @@ module vdp_sprite_select_visible_planes (
 	wire				w_invisible;
 	wire				w_selected_full;
 	wire		[9:0]	w_finish_line;
-	wire		[17:0]	w_sprite_mode1_attribute;
-	wire		[17:0]	w_sprite_mode2_attribute;
-	wire		[17:0]	w_sprite_mode2_attribute_i;
-	wire		[17:0]	w_sprite_mode3_attribute;
+	wire		[16:0]	w_sprite_mode1_attribute;
+	wire		[16:0]	w_sprite_mode2_attribute;
+	wire		[16:0]	w_sprite_mode2_attribute_i;
 	reg					ff_sprite_overmap;
 	reg			[4:0]	ff_sprite_overmap_id;
 
 	// --------------------------------------------------------------------
 	//	Phase
 	// --------------------------------------------------------------------
-	assign w_sprite_mode1_attribute		= { reg_sprite_attribute_table_base[17:7],        ff_current_plane_num[4:0], 2'd0 };
-	assign w_sprite_mode2_attribute		= { reg_sprite_attribute_table_base[17:9], 2'b00, ff_current_plane_num[4:0], 2'd0 };
-	assign w_sprite_mode2_attribute_i	= { reg_sprite_attribute_table_base[17:9], 2'b00, ff_current_plane_num[4:1], 1'b0, 2'd1 };
-	assign w_sprite_mode3_attribute		= { reg_sprite_attribute_table_base[17:9], (reg_sprite_attribute_table_base[8:7] & ff_current_plane_num[5:4]), ff_current_plane_num[3:0], 3'd0 };
+	assign w_sprite_mode1_attribute		= { reg_sprite_attribute_table_base[16:7],        ff_current_plane_num[4:0], 2'd0 };
+	assign w_sprite_mode2_attribute		= { reg_sprite_attribute_table_base[16:9], 2'b00, ff_current_plane_num[4:0], 2'd0 };
+	assign w_sprite_mode2_attribute_i	= { reg_sprite_attribute_table_base[16:9], 2'b00, ff_current_plane_num[4:1], 1'b0, 2'd1 };
 
 	assign w_screen_pos_x			= screen_pos_x[13:4];
 	assign w_phase					= w_screen_pos_x[2:0];
 	assign w_sub_phase				= screen_pos_x[3:0];
 	assign vram_address				= ff_vram_valid ? 
-										(reg_sprite_mode3               ? w_sprite_mode3_attribute  :
-										(w_phase[2] && vram_interleave) ? w_sprite_mode2_attribute_i:
-										(    sprite_mode2               ? w_sprite_mode2_attribute  : w_sprite_mode1_attribute)) :18'd0;
+										((w_phase[2] && vram_interleave) ? w_sprite_mode2_attribute_i:
+										(    sprite_mode2               ? w_sprite_mode2_attribute  : w_sprite_mode1_attribute)) :17'd0;
 	assign w_selected_full			= ff_select_finish | (
-										(reg_sprite_mode3 || reg_sprite16_mode) ? ff_selected_count[4]:
 										     sprite_mode2                       ? (ff_selected_count[4] | ff_selected_count[3] | ff_plane_count[5]): 
 										                                          (ff_selected_count[4] | ff_selected_count[3] | ff_selected_count[2] | ff_plane_count[5]) );
-	assign w_finish_line			= (reg_sprite_mode3 || sprite_mode2) ? 10'd216: 10'd208;
+	assign w_finish_line			= sprite_mode2 ? 10'd216: 10'd208;
 
 	// --------------------------------------------------------------------
 	//	Read VRAM request for sprite attribute table
@@ -155,23 +147,8 @@ module vdp_sprite_select_visible_planes (
 		if( !reset_n ) begin
 			ff_current_plane_num_start <= 6'd0;
 		end
-		else if( !reg_sprite_priority_shuffle ) begin
-			//	シャッフルしないモード
-			ff_current_plane_num_start <= 6'd0;
-		end
 		else begin
-			//	シャッフルするモード
-			if( screen_pos_y == 9'h1FF ) begin
-				if( screen_pos_x == 14'h3FFF ) begin
-					if( vram_interleave ) begin
-						ff_current_plane_num_start[5:1]	<= ff_current_plane_num_start[5:1] + 5'd9;
-						ff_current_plane_num_start[0]	<= 1'b0;
-					end
-					else begin
-						ff_current_plane_num_start <= ff_current_plane_num_start + 6'd17;
-					end
-				end
-			end
+			ff_current_plane_num_start <= 6'd0;
 		end
 	end
 
@@ -190,16 +167,16 @@ module vdp_sprite_select_visible_planes (
 		else if( w_phase == 3'd2 && w_sub_phase == 4'd0 ) begin
 			if( screen_pos_x[13:7] == 7'd0 ) begin
 				ff_plane_count			<= 6'd0;
-				ff_current_plane_num	<= reg_sprite_priority_shuffle ? ff_current_plane_num_start: 6'd0;
+				ff_current_plane_num	<= 6'd0;
 				ff_vram_valid			<= 1'b1;
 			end
 			else begin
 				ff_plane_count			<= ff_plane_count + 6'd1;
 				if( vram_interleave ) begin
-					ff_current_plane_num	<= ff_current_plane_num + (reg_sprite_priority_shuffle ? 6'd37: 6'd1 );
+					ff_current_plane_num	<= ff_current_plane_num + 6'd1;
 				end
 				else begin
-					ff_current_plane_num	<= ff_current_plane_num + (reg_sprite_priority_shuffle ? 6'd19: 6'd1 );
+					ff_current_plane_num	<= ff_current_plane_num + 6'd1;
 				end
 				ff_vram_valid			<= ~w_selected_full;
 			end
@@ -210,7 +187,7 @@ module vdp_sprite_select_visible_planes (
 				ff_current_plane_num	<= ff_current_plane_num + 6'd1;
 			end
 			else begin
-				ff_current_plane_num	<= ff_current_plane_num + (reg_sprite_priority_shuffle ? 6'd19: 6'd1 );
+				ff_current_plane_num	<= ff_current_plane_num + 6'd1;
 			end
 			ff_vram_valid			<= ~w_selected_full;
 		end
@@ -274,17 +251,17 @@ module vdp_sprite_select_visible_planes (
 	//		Phase#5 (!w_phase[1]): ff_attribute2
 	// --------------------------------------------------------------------
 	assign w_attribute		= w_phase[1] ? ff_attribute1: ff_attribute2;
-	assign w_y				= reg_sprite_mode3 ? w_attribute[9:0] : { 2'd0, w_attribute[7:0] };
+	assign w_y				= { 2'd0, w_attribute[7:0] };
 	assign w_mgy			= w_attribute[23:16];
 
-	assign w_pixel_pos_y	= reg_sprite_nonR23_mode ? screen_pos_y     : { 1'b0, pixel_pos_y };
+	assign w_pixel_pos_y	= { 1'b0, pixel_pos_y };
 	assign w_offset_y		= { w_pixel_pos_y[8], w_pixel_pos_y } - w_y;
-	assign w_attribute_y	= reg_sprite_mode3 ? w_offset_y[7:0]: ( reg_sprite_magify ? { 3'd0, w_offset_y[4:1] }: { 3'd0, w_offset_y[3:0] } );
+	assign w_attribute_y	= reg_sprite_magify ? { 3'd0, w_offset_y[4:1] }: { 3'd0, w_offset_y[3:0] };
 
 	assign w_invisible12	= (!reg_sprite_16x16 && !reg_sprite_magify) ?   w_offset_y[7:3]        : 
 	                  		  (!reg_sprite_16x16 || !reg_sprite_magify) ? { w_offset_y[7:4], 1'd0 }: { w_offset_y[7:5], 2'd0 };
 	assign w_invisible3		= (w_mgy == 8'd0) ? (w_offset_y[9:8] != 2'd0): ( { 2'd0, w_mgy } <= w_offset_y );
-	assign w_invisible		= reg_sprite_mode3 ? w_invisible3: (w_invisible12 != 5'd0);
+	assign w_invisible		= (w_invisible12 != 5'd0);
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -304,7 +281,7 @@ module vdp_sprite_select_visible_planes (
 		end
 		else if( w_phase == 3'd3 ) begin
 			if( w_sub_phase == 4'd7 ) begin
-				if( w_y == w_finish_line && !reg_sprite_priority_shuffle ) begin
+				if( w_y == w_finish_line ) begin
 					ff_select_finish		<= 1'b1;
 					ff_selected_en1			<= 1'b0;
 				end
@@ -321,7 +298,7 @@ module vdp_sprite_select_visible_planes (
 		end
 		else if( w_phase == 3'd5 ) begin
 			if( w_sub_phase == 4'd7 ) begin
-				if( w_y == w_finish_line && !reg_sprite_priority_shuffle ) begin
+				if( w_y == w_finish_line ) begin
 					ff_select_finish		<= 1'b1;
 					ff_selected_en2			<= 1'b0;
 				end
@@ -375,7 +352,7 @@ module vdp_sprite_select_visible_planes (
 									  (w_phase == 3'd7 && w_sub_phase == 4'd15) ? ff_selected_en2: 1'b0;
 
 	assign w_selected_plane_num		= (w_phase[0] == 1'b0) ? ff_selected_plane_num1: ff_selected_plane_num2;
-	assign selected_plane_num		= reg_sprite_mode3 ? w_selected_plane_num : { 1'b0, w_selected_plane_num[4:0] };
+	assign selected_plane_num		= { 1'b0, w_selected_plane_num[4:0] };
 	assign selected_attribute		= (w_phase[0] == 1'b0) ? ff_attribute1: ff_attribute2;
 	assign selected_count			= ff_selected_count;
 

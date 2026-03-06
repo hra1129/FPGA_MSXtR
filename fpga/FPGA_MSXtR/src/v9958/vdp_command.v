@@ -58,7 +58,7 @@ module vdp_command (
 	input				reset_n,
 	input				clk,
 	//	VRAM interface
-	output		[17:0]	command_vram_address,
+	output		[16:0]	command_vram_address,
 	output				command_vram_valid,
 	input				command_vram_ready,
 	output				command_vram_write,
@@ -84,8 +84,7 @@ module vdp_command (
 	input				reg_command_enable,
 	input				reg_command_high_speed_mode,
 	input				reg_ext_command_mode,
-	output				vram_access_mask,
-	output				intr_command_end
+	output				vram_access_mask
 );
 	localparam	c_hmmc		= 4'b1111;
 	localparam	c_ymmm		= 4'b1110;
@@ -196,7 +195,7 @@ module vdp_command (
 	reg			[3:0]	ff_command;
 	reg					ff_start;
 
-	reg			[17:0]	ff_cache_vram_address;
+	reg			[16:0]	ff_cache_vram_address;
 	reg					ff_cache_vram_valid;
 	wire				w_cache_vram_ready;
 	reg					ff_cache_vram_write;
@@ -209,10 +208,10 @@ module vdp_command (
 	wire		[1:0]	w_bpp;					//	c_bpp_Xbit
 	wire				w_512pixel;
 	reg					ff_512pixel;
-	wire		[17:0]	w_address_s_pre;
-	wire		[17:0]	w_address_d_pre;
-	wire		[17:0]	w_address_s;
-	wire		[17:0]	w_address_d;
+	wire		[16:0]	w_address_s_pre;
+	wire		[16:0]	w_address_d_pre;
+	wire		[16:0]	w_address_s;
+	wire		[16:0]	w_address_d;
 	wire		[12:0]	w_next_nyb;
 	wire		[9:0]	w_next;
 	wire		[11:0]	w_next_sx;
@@ -230,11 +229,7 @@ module vdp_command (
 	wire				w_sx_overflow;
 	wire				w_dx_overflow;
 	wire				w_dy_overflow;
-	reg			[2:0]	ff_bit_count;
-	reg			[7:0]	ff_fore_color;
-	reg			[17:0]	ff_font_address;
-    reg         [7:0]   ff_bit_pattern;
-    reg					ff_finish_flag;
+	reg					ff_finish_flag;
 
 	localparam			c_state_idle				= 5'd0;
 	localparam			c_state_stop				= 5'd1;
@@ -273,7 +268,6 @@ module vdp_command (
 	reg					ff_count_valid;
 	reg			[7:0]	ff_wait_counter;
 	reg			[5:0]	ff_wait_count;
-	reg					ff_command_end;
 
 	// --------------------------------------------------------------------
 	//	Mode select
@@ -305,25 +299,8 @@ module vdp_command (
 	                  			  (ff_screen_mode[c_g6]) ? { ff_dy[ 9:0], ff_dx[ 8: 1] }:	// SCREEN7, 256byte/line, 2pixel/byte, 256line * 4page
 	                  			                           { ff_dy[ 9:0], ff_dx[ 7: 0] };	// SCREEN8, 256byte/line, 1pixel/byte, 256line * 4page
 
-	assign w_address_s			= vram_interleave ? { w_address_s_pre[17], w_address_s_pre[0], w_address_s_pre[16:1] }: w_address_s_pre;
-	assign w_address_d			= vram_interleave ? { w_address_d_pre[17], w_address_d_pre[0], w_address_d_pre[16:1] }: w_address_d_pre;
-
-	// --------------------------------------------------------------------
-	//	Command complete interrupt
-	// --------------------------------------------------------------------
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_command_end <= 1'b0;
-		end
-		else if( ff_state == c_state_finish ) begin
-			ff_command_end <= w_cache_flush_end;
-		end
-		else begin
-			ff_command_end <= 1'b0;
-		end
-	end
-
-	assign intr_command_end		= ff_command_end;
+	assign w_address_s			= vram_interleave ? { w_address_s_pre[0], w_address_s_pre[16:1] }: w_address_s_pre;
+	assign w_address_d			= vram_interleave ? { w_address_d_pre[0], w_address_d_pre[16:1] }: w_address_d_pre;
 
 	// --------------------------------------------------------------------
 	//	Source position registers
@@ -342,27 +319,6 @@ module vdp_command (
 		end
 		else if( ff_start ) begin
 			reg_sx[11:9] <= 3'd0;
-		end
-	end
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_font_address	<= 18'd0;
-		end
-		else if( register_write && register_num == 6'd32 ) begin
-			ff_font_address[7:0]	<= register_data;
-		end
-		else if( register_write && register_num == 6'd33 ) begin
-			ff_font_address[15:8]	<= register_data;
-		end
-		else if( register_write && register_num == 6'd34 ) begin
-			ff_font_address[17:16]	<= register_data[1:0];
-		end
-		else if( ff_cache_vram_valid ) begin
-			//	hold
-		end
-		else if( ff_count_valid && ff_bit_count == 3'd0 ) begin
-			ff_font_address	<= ff_font_address + 18'd1;
 		end
 	end
 
@@ -466,11 +422,9 @@ module vdp_command (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_dx <= 9'd0;
-			ff_bit_count <= 3'd0;
 		end
 		else if( ff_start ) begin
 			ff_dx	<= reg_dx;
-			ff_bit_count <= 3'd7;
 		end
 		else if( !ff_command_execute || ff_cache_vram_valid ) begin
 			//	hold
@@ -491,11 +445,9 @@ module vdp_command (
 			else begin
 				if( w_nx_end || w_sx_overflow || w_dx_overflow ) begin
 					ff_dx	<= reg_dx;
-					ff_bit_count <= 3'd7;
 				end
 				else begin
 					ff_dx <= w_next_dx[8:0];
-					ff_bit_count <= ff_bit_count - 3'd1;
 				end
 			end
 		end
@@ -734,7 +686,6 @@ module vdp_command (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_transfer_ready		<= 1'b0;
-			ff_fore_color			<= 8'd0;
 		end
 		else if( register_write && (register_num == 6'd44) ) begin
 			//	lmmc, hmmc, が VRAM へ書き終えるまで、転送禁止 (CPU→R#44)

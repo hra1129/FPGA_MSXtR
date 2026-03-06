@@ -24,7 +24,7 @@ module tb ();
 
 	wire			int_n;
 
-	wire	[17:2]	vram_address;
+	wire	[16:2]	vram_address;
 	wire			vram_write;
 	wire			vram_valid;
 	wire	[31:0]	vram_wdata;

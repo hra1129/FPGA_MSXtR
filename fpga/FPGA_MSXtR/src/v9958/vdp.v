@@ -71,7 +71,7 @@ module vdp (
 
 	output				int_n,
 
-	output		[17:2]	vram_address,
+	output		[16:2]	vram_address,
 	output				vram_write,
 	output				vram_valid,
 	output		[31:0]	vram_wdata,
@@ -98,7 +98,6 @@ module vdp (
 	wire		[ 1:0]	w_pixel_phase_x;
 	wire				w_intr_line;
 	wire				w_intr_frame;
-	wire				w_intr_command_end;
 	wire				w_clear_line_interrupt;
 
 	wire		[7:0]	w_upscan_r;
@@ -227,7 +226,6 @@ module vdp (
 		.int_n										( int_n										),
 		.intr_line									( w_intr_line								),
 		.intr_frame									( w_intr_frame								),
-		.intr_command_end							( w_intr_command_end						),
 		.clear_line_interrupt						( w_clear_line_interrupt					),
 		.palette_valid								( w_palette_valid							),
 		.palette_num								( w_palette_num								),
@@ -284,8 +282,7 @@ module vdp (
 		.reg_command_enable							( reg_command_enable						),
 		.reg_horizontal_offset_l					( reg_horizontal_offset_l					),
 		.reg_horizontal_offset_h					( reg_horizontal_offset_h					),
-		.reg_command_high_speed_mode				( reg_command_high_speed_mode				),
-		.button										( button									)
+		.reg_command_high_speed_mode				( reg_command_high_speed_mode				)
 	);
 
 	// --------------------------------------------------------------------
@@ -384,9 +381,8 @@ module vdp (
 		.reg_command_enable							( reg_command_enable						),
 		.reg_command_high_speed_mode				( reg_command_high_speed_mode				),
 		.reg_ext_command_mode						( reg_ext_command_mode						),
-		.reg_vram256k_mode							( reg_vram256k_mode							),
-		.vram_access_mask							( w_vram_access_mask						),
-		.intr_command_end							( w_intr_command_end						)
+
+		.vram_access_mask							( w_vram_access_mask						)
 	);
 
 	// --------------------------------------------------------------------
@@ -457,8 +453,7 @@ module vdp (
 		.reg_yae_mode								( reg_yae_mode								),
 		.reg_color0_opaque							( reg_color0_opaque							),
 		.reg_backdrop_color							( reg_backdrop_color						),
-		.reg_ext_palette_mode						( reg_ext_palette_mode						),
-		.reg_sprite_mode3							( reg_sprite_mode3							)
+		.reg_ext_palette_mode					( reg_ext_palette_mode						)
 	);
 
 	// --------------------------------------------------------------------

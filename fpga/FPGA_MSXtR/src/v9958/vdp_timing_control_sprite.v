@@ -64,7 +64,7 @@ module vdp_timing_control_sprite (
 	input		[7:0]	pixel_pos_y,
 	input				screen_v_active,
 
-	output		[17:0]	vram_address,
+	output		[16:0]	vram_address,
 	output				vram_valid,
 	input		[31:0]	vram_rdata,
 	input		[7:0]	vram_rdata8,
@@ -90,13 +90,9 @@ module vdp_timing_control_sprite (
 	input				reg_sprite_magify,
 	input				reg_sprite_16x16,
 	input				reg_sprite_disable,
-	input   	[17:7]	reg_sprite_attribute_table_base,
-	input   	[17:11]	reg_sprite_pattern_generator_table_base,
-	input				reg_left_mask,
-	input				reg_sprite_nonR23_mode,
-	input				reg_sprite_mode3,
-	input				reg_sprite16_mode,
-	input				reg_sprite_priority_shuffle
+	input   	[16:7]	reg_sprite_attribute_table_base,
+	input   	[16:11]	reg_sprite_pattern_generator_table_base,
+	input				reg_left_mask
 );
 	localparam			c_mode_g3	= 5'b010_00;	//	Graphic3 (SCREEN4)
 	localparam			c_mode_g4	= 5'b011_00;	//	Graphic4 (SCREEN5)
@@ -106,7 +102,6 @@ module vdp_timing_control_sprite (
 	wire				w_sprite_disable;
 	reg					ff_screen_v_active;
 	reg					ff_screen_h_active;
-	reg					ff_sprite_priority_shuffle;
 
 	assign w_sprite_disable	= reg_sprite_disable | sprite_off;
 
@@ -125,10 +120,10 @@ module vdp_timing_control_sprite (
 	wire		[31:0]	w_pattern;
 	wire				w_pattern_left_en;
 	wire				w_pattern_right_en;
-	wire		[3:0]	w_makeup_plane;
-	wire		[17:0]	w_vp_vram_address;
+	wire		[2:0]	w_makeup_plane;
+	wire		[16:0]	w_vp_vram_address;
 	wire				w_vp_vram_valid;
-	wire		[17:0]	w_ic_vram_address;
+	wire		[16:0]	w_ic_vram_address;
 	wire				w_ic_vram_valid;
 	wire		[7:0]	w_y;
 	wire		[7:0]	w_mgy;
@@ -187,15 +182,6 @@ module vdp_timing_control_sprite (
 		end
 	end
 
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_sprite_priority_shuffle <= 1'b0;
-		end
-		else if( screen_pos_x[13:0] == 14'h3FFF ) begin
-			ff_sprite_priority_shuffle <= reg_sprite_priority_shuffle;
-		end
-	end
-
 	// --------------------------------------------------------------------
 	//	Select visible planes
 	// --------------------------------------------------------------------
@@ -224,11 +210,7 @@ module vdp_timing_control_sprite (
 		.reg_sprite_disable							( w_sprite_disable							),
 		.reg_sprite_magify							( reg_sprite_magify							),
 		.reg_sprite_16x16							( reg_sprite_16x16							),
-		.reg_sprite_attribute_table_base			( reg_sprite_attribute_table_base			),
-		.reg_sprite_nonR23_mode						( reg_sprite_nonR23_mode					),
-		.reg_sprite_mode3							( reg_sprite_mode3							),
-		.reg_sprite16_mode							( reg_sprite16_mode							),
-		.reg_sprite_priority_shuffle				( ff_sprite_priority_shuffle				)
+		.reg_sprite_attribute_table_base			( reg_sprite_attribute_table_base			)
 	);
 
 	// --------------------------------------------------------------------
@@ -256,6 +238,7 @@ module vdp_timing_control_sprite (
 		.makeup_plane								( w_makeup_plane							),
 		.plane_x									( w_plane_x									),
 		.color										( w_color									),
+		.mgx										( w_info_mgx								),
 		.color_plane_x_en							( w_color_plane_x_en						),
 		.pattern									( w_pattern									),
 		.pattern_left_en							( w_pattern_left_en							),
@@ -265,8 +248,7 @@ module vdp_timing_control_sprite (
 		.reg_sprite_magify							( reg_sprite_magify							),
 		.reg_sprite_16x16							( reg_sprite_16x16							),
 		.reg_sprite_pattern_generator_table_base	( reg_sprite_pattern_generator_table_base	),
-		.reg_sprite_attribute_table_base			( reg_sprite_attribute_table_base			),
-		.reg_sprite_mode3							( reg_sprite_mode3							)
+		.reg_sprite_attribute_table_base			( reg_sprite_attribute_table_base			)
 	);
 
 	// --------------------------------------------------------------------
@@ -288,7 +270,6 @@ module vdp_timing_control_sprite (
 		.reg_color0_opaque							( reg_color0_opaque							),
 		.reg_sprite_magify							( reg_sprite_magify							),
 		.reg_sprite_16x16							( reg_sprite_16x16							),
-		.reg_sprite_mode3							( reg_sprite_mode3							),
 		.selected_count								( w_selected_count							),
 		.makeup_plane								( w_makeup_plane							),
 		.plane_x									( w_plane_x									),

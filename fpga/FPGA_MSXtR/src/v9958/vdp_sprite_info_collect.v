@@ -64,7 +64,7 @@ module vdp_sprite_info_collect (
 	input				screen_v_active,
 	input				screen_h_active,
 
-	output		[17:0]	vram_address,
+	output		[16:0]	vram_address,
 	output				vram_valid,
 	input		[7:0]	vram_rdata8,
 	input		[31:0]	vram_rdata,
@@ -80,7 +80,7 @@ module vdp_sprite_info_collect (
 	output		[1:0]	bit_shift,
 	input		[6:0]	sample_y,
 	//	to makeup_pixel
-	output		[3:0]	makeup_plane,
+	output		[2:0]	makeup_plane,
 	output		[7:0]	color,
 	output		[9:0]	plane_x,
 	output		[7:0]	mgx,
@@ -93,9 +93,8 @@ module vdp_sprite_info_collect (
 	input				reg_display_on,
 	input				reg_sprite_magify,
 	input				reg_sprite_16x16,
-	input		[17:11]	reg_sprite_pattern_generator_table_base,
-	input		[17:7]	reg_sprite_attribute_table_base,
-	input				reg_sprite_mode3
+	input		[16:11]	reg_sprite_pattern_generator_table_base,
+	input		[16:7]	reg_sprite_attribute_table_base
 );
 	reg			[37:0]	ff_selected_ram [0:15];
 	wire		[37:0]	w_selected_d;
@@ -120,7 +119,7 @@ module vdp_sprite_info_collect (
 	wire		[4:0]	w_next_plane;
 	reg			[1:0]	ff_state;				//	#0=info read, #1=pattern left read, #2=pattern right read, #3=color read
 	wire		[3:0]	w_sub_phase;			//	Sub phase #0...#15
-	reg			[17:0]	ff_vram_address;
+	reg			[16:0]	ff_vram_address;
 	reg					ff_vram_valid;
 	reg					ff_active;
 	reg					ff_sprite_mode2;
@@ -272,14 +271,9 @@ module vdp_sprite_info_collect (
 			case( ff_state )
 			2'd0:
 				if( w_sub_phase == 4'd0 ) begin
-					if( reg_sprite_mode3 ) begin
-						//	Request 2nd attribute
-						ff_vram_address		<= { reg_sprite_attribute_table_base[17:9], (reg_sprite_attribute_table_base[8:7] & w_selected_plane_num[5:4]), w_selected_plane_num[3:0], 3'd4 };
-						ff_vram_valid		<= 1'b1;
-					end
-					else if( ff_sprite_mode2 ) begin
+					if( ff_sprite_mode2 ) begin
 						//	Request color address
-						ff_vram_address		<= { reg_sprite_attribute_table_base[17:10], 1'b0, (reg_sprite_attribute_table_base[8:7] & w_selected_plane_num[4:3]), w_selected_plane_num[2:0], w_selected_y[3:0] };
+						ff_vram_address		<= { reg_sprite_attribute_table_base[16:10], 1'b0, (reg_sprite_attribute_table_base[8:7] & w_selected_plane_num[4:3]), w_selected_plane_num[2:0], w_selected_y[3:0] };
 						ff_vram_valid		<= 1'b1;
 					end
 					else begin
@@ -291,18 +285,12 @@ module vdp_sprite_info_collect (
 				end
 			2'd1:
 				if( w_sub_phase == 4'd0 ) begin
-					if( reg_sprite_mode3 ) begin
-						//	Latch 2nd attribute and Request pattern left address
-						ff_vram_address		<= { reg_sprite_pattern_generator_table_base, 11'd0 } + { w_pattern_address, 3'd0 };
+					//	Latch color and Request pattern left address
+					if( reg_sprite_16x16 ) begin
+						ff_vram_address		<= { reg_sprite_pattern_generator_table_base, w_selected_m12_pattern[7:2], 1'b0, w_selected_y[3:0] };
 					end
 					else begin
-						//	Latch color and Request pattern left address
-						if( reg_sprite_16x16 ) begin
-							ff_vram_address		<= { reg_sprite_pattern_generator_table_base, w_selected_m12_pattern[7:2], 1'b0, w_selected_y[3:0] };
-						end
-						else begin
-							ff_vram_address		<= { reg_sprite_pattern_generator_table_base, w_selected_m12_pattern, w_selected_y[2:0] };
-						end
+						ff_vram_address		<= { reg_sprite_pattern_generator_table_base, w_selected_m12_pattern, w_selected_y[2:0] };
 					end
 					ff_vram_valid		<= 1'b1;
 				end
@@ -311,20 +299,13 @@ module vdp_sprite_info_collect (
 				end
 			2'd2:
 				if( w_sub_phase == 4'd0 ) begin
-					if( reg_sprite_mode3 ) begin
-						//	Latch left pattern and request pattern right address
-						ff_vram_address		<= { reg_sprite_pattern_generator_table_base, 11'd0 } + { w_pattern_address, 3'd4 };
+					//	Latch left pattern and request pattern right address
+					if( reg_sprite_16x16 ) begin
+						ff_vram_address		<= { reg_sprite_pattern_generator_table_base, w_selected_m12_pattern[7:2], 1'b1, w_selected_y[3:0] };
 						ff_vram_valid		<= 1'b1;
 					end
 					else begin
-						//	Latch left pattern and request pattern right address
-						if( reg_sprite_16x16 ) begin
-							ff_vram_address		<= { reg_sprite_pattern_generator_table_base, w_selected_m12_pattern[7:2], 1'b1, w_selected_y[3:0] };
-							ff_vram_valid		<= 1'b1;
-						end
-						else begin
-							ff_vram_valid		<= 1'b0;
-						end
+						ff_vram_valid		<= 1'b0;
 					end
 				end
 				else if( w_sub_phase == 4'd14 ) begin
@@ -347,16 +328,15 @@ module vdp_sprite_info_collect (
 	assign mgy				= ff_active ? w_selected_m3_mgy: 8'd0;
 	assign bit_shift		= ff_active ? w_selected_m3_bit_shift: 2'd0;
 
-	assign vram_address		= ff_vram_valid ? ff_vram_address: 18'd0;
+	assign vram_address		= ff_vram_valid ? ff_vram_address: 17'd0;
 	assign vram_valid		= ff_vram_valid;
 
-	assign makeup_plane		= ff_current_plane[3:0];
-	assign color			= (reg_sprite_mode3 || !sprite_mode2) ? w_selected_color: vram_rdata8;
-	assign plane_x			= ff_active ? (reg_sprite_mode3 ? w_selected_m3_x: { 2'd0, w_selected_m12_x }) : 10'd0;
+	assign makeup_plane		= ff_current_plane[2:0];
+	assign color			= !sprite_mode2 ? w_selected_color: vram_rdata8;
+	assign plane_x			= ff_active ? { 2'd0, w_selected_m12_x } : 10'd0;
 	assign mgx				= ff_active ? w_selected_m3_mgx : 8'd0;
 	assign color_plane_x_en	= (ff_active && w_sub_phase == 4'd15 && ff_state == 2'd1);
-	assign pattern			= reg_sprite_mode3 ? vram_rdata:
-	              			  (ff_state == 2'd2 && !reg_sprite_16x16) ? 32'd0: { 24'd0, vram_rdata8 };
+	assign pattern			= (ff_state == 2'd2 && !reg_sprite_16x16) ? 32'd0: { 24'd0, vram_rdata8 };
 	assign pattern_left_en	= (ff_active && w_sub_phase == 4'd14 && ff_state == 2'd1);
 	assign pattern_right_en	= (ff_active && w_sub_phase == 4'd14 && ff_state == 2'd2);
 endmodule

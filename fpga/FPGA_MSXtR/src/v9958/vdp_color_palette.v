@@ -125,14 +125,14 @@ module vdp_color_palette (
 	reg			[7:0]	ff_vdp_g;
 	reg			[7:0]	ff_vdp_b;
 	wire				w_palette_valid;
-	wire		[7:0]	w_palette_num;
-	wire		[4:0]	w_palette_r;
-	wire		[4:0]	w_palette_g;
-	wire		[4:0]	w_palette_b;
+	wire		[3:0]	w_palette_num;
+	wire		[2:0]	w_palette_r;
+	wire		[2:0]	w_palette_g;
+	wire		[2:0]	w_palette_b;
 	reg			[8:0]	ff_palette_num;
-	reg			[4:0]	ff_palette_r;
-	reg			[4:0]	ff_palette_g;
-	reg			[4:0]	ff_palette_b;
+	reg			[2:0]	ff_palette_r;
+	reg			[2:0]	ff_palette_g;
+	reg			[2:0]	ff_palette_b;
 	wire				w_high_resolution;
 	reg			[8:0]	ff_display_color_delay0;	//	{ palette_flag(1bit), pixel_byte(8bit) }
 	reg			[8:0]	ff_display_color_delay1;	//	{ palette_flag(1bit), pixel_byte(8bit) }
@@ -168,35 +168,35 @@ module vdp_color_palette (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_palette_num	= 9'd0;
-			ff_palette_r	= 5'd0;
-			ff_palette_g	= 5'd0;
-			ff_palette_b	= 5'd0;
+			ff_palette_r	= 3'd0;
+			ff_palette_g	= 3'd0;
+			ff_palette_b	= 3'd0;
 		end
 		else if( ff_palette_num[8] == 1'b0 ) begin
 			case( ff_palette_num[3:0] )
-			4'd0:	begin ff_palette_r = { 5'b00000 }; ff_palette_b = { 5'b00000 }; ff_palette_g = { 5'b00000 }; end	//	color#1
-			4'd1:	begin ff_palette_r = { 5'b00100 }; ff_palette_b = { 5'b00100 }; ff_palette_g = { 5'b11011 }; end	//	color#2
-			4'd2:	begin ff_palette_r = { 5'b01101 }; ff_palette_b = { 5'b01101 }; ff_palette_g = { 5'b11111 }; end	//	color#3
-			4'd3:	begin ff_palette_r = { 5'b00100 }; ff_palette_b = { 5'b11111 }; ff_palette_g = { 5'b00100 }; end	//	color#4
-			4'd4:	begin ff_palette_r = { 5'b01001 }; ff_palette_b = { 5'b11111 }; ff_palette_g = { 5'b01101 }; end	//	color#5
-			4'd5:	begin ff_palette_r = { 5'b10110 }; ff_palette_b = { 5'b00100 }; ff_palette_g = { 5'b00100 }; end	//	color#6
-			4'd6:	begin ff_palette_r = { 5'b01001 }; ff_palette_b = { 5'b11111 }; ff_palette_g = { 5'b11011 }; end	//	color#7
-			4'd7:	begin ff_palette_r = { 5'b11111 }; ff_palette_b = { 5'b00100 }; ff_palette_g = { 5'b00100 }; end	//	color#8
-			4'd8:	begin ff_palette_r = { 5'b11111 }; ff_palette_b = { 5'b01101 }; ff_palette_g = { 5'b01101 }; end	//	color#9
-			4'd9:	begin ff_palette_r = { 5'b11011 }; ff_palette_b = { 5'b00100 }; ff_palette_g = { 5'b11011 }; end	//	color#10
-			4'd10:	begin ff_palette_r = { 5'b11011 }; ff_palette_b = { 5'b01101 }; ff_palette_g = { 5'b11011 }; end	//	color#11
-			4'd11:	begin ff_palette_r = { 5'b00100 }; ff_palette_b = { 5'b00100 }; ff_palette_g = { 5'b10010 }; end	//	color#12
-			4'd12:	begin ff_palette_r = { 5'b11011 }; ff_palette_b = { 5'b10110 }; ff_palette_g = { 5'b01001 }; end	//	color#13
-			4'd13:	begin ff_palette_r = { 5'b10110 }; ff_palette_b = { 5'b10110 }; ff_palette_g = { 5'b10110 }; end	//	color#14
-			4'd14:	begin ff_palette_r = { 5'b11111 }; ff_palette_b = { 5'b11111 }; ff_palette_g = { 5'b11111 }; end	//	color#15
-			4'd15:	begin ff_palette_r = { 5'b00000 }; ff_palette_b = { 5'b00000 }; ff_palette_g = { 5'b00000 }; end	//	initialize
+			4'd0:	begin ff_palette_r = 3'b000; ff_palette_b = 3'b000; ff_palette_g = 3'b000; end	//	color#1
+			4'd1:	begin ff_palette_r = 3'b001; ff_palette_b = 3'b001; ff_palette_g = 3'b110; end	//	color#2
+			4'd2:	begin ff_palette_r = 3'b011; ff_palette_b = 3'b011; ff_palette_g = 3'b111; end	//	color#3
+			4'd3:	begin ff_palette_r = 3'b001; ff_palette_b = 3'b111; ff_palette_g = 3'b001; end	//	color#4
+			4'd4:	begin ff_palette_r = 3'b010; ff_palette_b = 3'b111; ff_palette_g = 3'b011; end	//	color#5
+			4'd5:	begin ff_palette_r = 3'b101; ff_palette_b = 3'b001; ff_palette_g = 3'b001; end	//	color#6
+			4'd6:	begin ff_palette_r = 3'b010; ff_palette_b = 3'b111; ff_palette_g = 3'b110; end	//	color#7
+			4'd7:	begin ff_palette_r = 3'b111; ff_palette_b = 3'b001; ff_palette_g = 3'b001; end	//	color#8
+			4'd8:	begin ff_palette_r = 3'b111; ff_palette_b = 3'b011; ff_palette_g = 3'b011; end	//	color#9
+			4'd9:	begin ff_palette_r = 3'b110; ff_palette_b = 3'b001; ff_palette_g = 3'b110; end	//	color#10
+			4'd10:	begin ff_palette_r = 3'b110; ff_palette_b = 3'b011; ff_palette_g = 3'b110; end	//	color#11
+			4'd11:	begin ff_palette_r = 3'b001; ff_palette_b = 3'b001; ff_palette_g = 3'b100; end	//	color#12
+			4'd12:	begin ff_palette_r = 3'b110; ff_palette_b = 3'b101; ff_palette_g = 3'b010; end	//	color#13
+			4'd13:	begin ff_palette_r = 3'b101; ff_palette_b = 3'b101; ff_palette_g = 3'b101; end	//	color#14
+			4'd14:	begin ff_palette_r = 3'b111; ff_palette_b = 3'b111; ff_palette_g = 3'b111; end	//	color#15
+			4'd15:	begin ff_palette_r = 3'b000; ff_palette_b = 3'b000; ff_palette_g = 3'b000; end	//	initialize
 			endcase
 			ff_palette_num <= ff_palette_num + 9'd1;
 		end
 	end
 
 	assign w_palette_valid	= ff_palette_num[8] ? palette_valid : 1'b1;
-	assign w_palette_num	= ff_palette_num[8] ? palette_num : ff_palette_num[7:0];
+	assign w_palette_num	= ff_palette_num[8] ? palette_num : ff_palette_num[3:0];
 	assign w_palette_r		= ff_palette_num[8] ? palette_r : ff_palette_r;
 	assign w_palette_g		= ff_palette_num[8] ? palette_g : ff_palette_g;
 	assign w_palette_b		= ff_palette_num[8] ? palette_b : ff_palette_b;
@@ -473,7 +473,7 @@ module vdp_color_palette (
 		.palette_r				( w_palette_r			),
 		.palette_g				( w_palette_g			),
 		.palette_b				( w_palette_b			),
-		.display_color			( ff_display_color		),
+		.display_color			( ff_display_color[3:0]	),
 		.display_color_oe		( ff_display_color_oe	),
 		.display_r				( w_display_r16			),
 		.display_g				( w_display_g16			),

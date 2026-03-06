@@ -85,7 +85,6 @@ module vdp_timing_control_ssg (
 	input				reg_interleaving_mode,
 	input				reg_flat_interlace_mode,
 	input		[7:0]	reg_blink_period,
-	input				reg_interrupt_line_nonR23_mode,
 	output		[2:0]	horizontal_offset_l,
 	output		[8:3]	horizontal_offset_h,
 	output				interleaving_page,
@@ -321,7 +320,7 @@ module vdp_timing_control_ssg (
 	// --------------------------------------------------------------------
 	//	line interrupt
 	// --------------------------------------------------------------------
-	assign w_intr_line_y		= reg_interrupt_line_nonR23_mode ? w_screen_pos_y[7:0]: w_pixel_pos_y;
+	assign w_intr_line_y		= w_pixel_pos_y;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
