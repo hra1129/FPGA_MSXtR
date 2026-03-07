@@ -69,20 +69,28 @@ module s2026a (
 	output			bus_write,
 	output			bus_valid,
 	output	[7:0]	bus_wdata,
+	input			bus_mapper_ready,
 	input	[7:0]	bus_ppi_rdata,
 	input			bus_ppi_rdata_en,
+	input			bus_ppi_ready,
 	input	[7:0]	bus_rtc_rdata,
 	input			bus_rtc_rdata_en,
+	input			bus_rtc_ready,
 	input	[7:0]	bus_cartridge_rdata,
 	input			bus_cartridge_rdata_en,
+	input			bus_cartridge_ready,
 	input	[7:0]	bus_ssg_rdata,
 	input			bus_ssg_rdata_en,
+	input			bus_ssg_ready,
 	input	[7:0]	bus_kanji_rdata,
 	input			bus_kanji_rdata_en,
+	input			bus_kanji_ready,
 	input	[7:0]	bus_megarom1_rdata,
 	input			bus_megarom1_rdata_en,
+	input			bus_megarom1_ready,
 	input	[7:0]	bus_megarom2_rdata,
 	input			bus_megarom2_rdata_en,
+	input			bus_megarom2_ready,
 	output			processor_mode,
 	output			rom_mode,
 	input	[7:0]	primary_slot,
@@ -252,7 +260,7 @@ module s2026a (
 
 	//--------------------------------------------------------------
 	//	3.911usec generator for System Timer
-	//		10.738635MHz : 42•ªü = 85.90908MHz : 336•ªü
+	//		10.738635MHz : 42ï¿½ï¿½ï¿½ï¿½ = 85.90908MHz : 336ï¿½ï¿½ï¿½ï¿½
 	//--------------------------------------------------------------
 	assign w_3_911usec = ( ff_div_counter == 9'd0 ) ? 1'b1 : 1'b0;
 

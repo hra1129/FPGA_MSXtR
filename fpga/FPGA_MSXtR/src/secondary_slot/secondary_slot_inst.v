@@ -2,7 +2,7 @@
 //	secondary_slot_inst.v
 //	 Secondary slot top entity
 //
-//	Copyright (C) 2024 Takayuki Hara
+//	Copyright (C) 2026 Takayuki Hara
 //
 //	本ソフトウェアおよび本ソフトウェアに基づいて作成された派生物は、以下の条件を
 //	満たす場合に限り、再頒布および使用が許可されます。
@@ -58,14 +58,14 @@
 module secondary_slot_inst(
 	input					reset_n,
 	input					clk,
-	input					sltsl,
-	input					mreq_n,
-	input					wr_n,
-	input					rd_n,
-	input		[15:0]		address,
-	input		[7:0]		wdata,
-	output		[7:0]		rdata,
-	output					rdata_en,
+	input					bus_cs,
+	input					bus_write,
+	input					bus_valid,
+	output					bus_ready,
+	input		[15:0]		bus_address,
+	input		[7:0]		bus_wdata,
+	output		[7:0]		bus_rdata,
+	output					bus_rdata_en,
 	//	Expanded slot select
 	output					sltsl_ext0,
 	output					sltsl_ext1,
@@ -82,7 +82,7 @@ module secondary_slot_inst(
 	// --------------------------------------------------------------------
 	//	Address decoder
 	// --------------------------------------------------------------------
-	assign w_decode_secondary_slot_register		= (address == 16'hFFFF) ? 1'b1 : 1'b0;
+	assign w_decode_secondary_slot_register		= (bus_address == 16'hFFFF) ? 1'b1 : 1'b0;
 
 	// --------------------------------------------------------------------
 	//	Secondary slot register
@@ -91,8 +91,8 @@ module secondary_slot_inst(
 		if( !reset_n ) begin
 			ff_secondary_slot <= 8'd0;
 		end
-		else if( sltsl && !mreq_n && !wr_n && w_decode_secondary_slot_register ) begin
-			ff_secondary_slot <= wdata;
+		else if( bus_cs && bus_write && bus_valid && w_decode_secondary_slot_register ) begin
+			ff_secondary_slot <= bus_wdata;
 		end
 		else begin
 			//	hold
@@ -106,7 +106,7 @@ module secondary_slot_inst(
 		if( !reset_n ) begin
 			ff_rdata <= 8'd0;
 		end
-		else if( sltsl && !mreq_n && !rd_n && w_decode_secondary_slot_register ) begin
+		else if( bus_cs && !bus_write && bus_valid && w_decode_secondary_slot_register ) begin
 			ff_rdata <= ~ff_secondary_slot;
 		end
 		else begin
@@ -118,7 +118,7 @@ module secondary_slot_inst(
 		if( !reset_n ) begin
 			ff_rdata_en <= 1'b0;
 		end
-		else if( sltsl && !mreq_n && !rd_n && w_decode_secondary_slot_register ) begin
+		else if( bus_cs && !bus_write && bus_valid && w_decode_secondary_slot_register ) begin
 			ff_rdata_en <= 1'b1;
 		end
 		else begin
@@ -129,14 +129,15 @@ module secondary_slot_inst(
 	// --------------------------------------------------------------------
 	//	Output assignment
 	// --------------------------------------------------------------------
-	assign rdata		= ff_rdata;
-	assign rdata_en		= ff_rdata_en;
+	assign bus_rdata	= ff_rdata;
+	assign bus_rdata_en	= ff_rdata_en;
+	assign bus_ready	= 1'b1;
 
-	assign w_page_slot	= (address[15:14] == 2'd0) ? ff_secondary_slot[1:0] : 
-						  (address[15:14] == 2'd1) ? ff_secondary_slot[3:2] : 
-						  (address[15:14] == 2'd2) ? ff_secondary_slot[5:4] : ff_secondary_slot[7:6];
+	assign w_page_slot	= (bus_address[15:14] == 2'd0) ? ff_secondary_slot[1:0] : 
+						  (bus_address[15:14] == 2'd1) ? ff_secondary_slot[3:2] : 
+						  (bus_address[15:14] == 2'd2) ? ff_secondary_slot[5:4] : ff_secondary_slot[7:6];
 
-	assign w_sltsl		= sltsl & ~w_decode_secondary_slot_register;
+	assign w_sltsl		= bus_cs & ~w_decode_secondary_slot_register;
 
 	assign sltsl_ext0	= (w_page_slot == 2'd0) ? w_sltsl : 1'b0;
 	assign sltsl_ext1	= (w_page_slot == 2'd1) ? w_sltsl : 1'b0;

@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //	Test of secondary_slot_inst.v
 //	Copyright (C)2024 Takayuki Hara (HRA!)
 //	
@@ -57,14 +57,14 @@ module tb ();
 	localparam		clk_base	= 1_000_000_000/85_909;	//	ps
 	reg						reset_n;
 	reg						clk;
-	reg						sltsl;
-	reg						mreq_n;
-	reg						wr_n;
-	reg						rd_n;
-	reg			[15:0]		address;
-	reg			[7:0]		wdata;
-	wire		[7:0]		rdata;
-	wire					rdata_en;
+	reg						bus_cs;
+	reg						bus_write;
+	reg						bus_valid;
+	wire					bus_ready;
+	reg			[15:0]		bus_address;
+	reg			[7:0]		bus_wdata;
+	wire		[7:0]		bus_rdata;
+	wire					bus_rdata_en;
 	wire					sltsl_ext0;
 	wire					sltsl_ext1;
 	wire					sltsl_ext2;
@@ -76,14 +76,14 @@ module tb ();
 	secondary_slot_inst u_secondary_slot_inst (
 		.reset_n			( reset_n			),
 		.clk				( clk				),
-		.sltsl				( sltsl				),
-		.mreq_n				( mreq_n			),
-		.wr_n				( wr_n				),
-		.rd_n				( rd_n				),
-		.address			( address			),
-		.wdata				( wdata				),
-		.rdata				( rdata				),
-		.rdata_en			( rdata_en			),
+		.bus_cs				( bus_cs			),
+		.bus_write			( bus_write			),
+		.bus_valid			( bus_valid			),
+		.bus_ready			( bus_ready			),
+		.bus_address		( bus_address		),
+		.bus_wdata			( bus_wdata			),
+		.bus_rdata			( bus_rdata			),
+		.bus_rdata_en		( bus_rdata_en		),
 		.sltsl_ext0			( sltsl_ext0		),
 		.sltsl_ext1			( sltsl_ext1		),
 		.sltsl_ext2			( sltsl_ext2		),
@@ -104,18 +104,14 @@ module tb ();
 		input	[15:0]	p_address,
 		input	[7:0]	p_data
 	);
-		int count;
-
-		count			<= 0;
-		sltsl			<= 1'b1;
-		mreq_n			<= 1'b0;
-		wr_n			<= 1'b0;
-		address			<= p_address;
-		wdata			<= p_data;
+		bus_cs			<= 1'b1;
+		bus_write		<= 1'b1;
+		bus_valid		<= 1'b1;
+		bus_address		<= p_address;
+		bus_wdata		<= p_data;
 		@( posedge clk );
-		sltsl			<= 1'b0;
-		mreq_n			<= 1'b1;
-		wr_n			<= 1'b1;
+		bus_cs			<= 1'b0;
+		bus_valid		<= 1'b0;
 		@( posedge clk );
 	endtask : reg_write
 
@@ -127,26 +123,24 @@ module tb ();
 		int count;
 
 		count			<= 0;
-		sltsl			<= 1'b1;
-		mreq_n			<= 1'b0;
-		rd_n			<= 1'b0;
-		address			<= p_address;
-		wdata			<= 8'd0;
+		bus_cs			<= 1'b1;
+		bus_write		<= 1'b0;
+		bus_valid		<= 1'b1;
+		bus_address		<= p_address;
 		@( posedge clk );
 
-		sltsl			<= 1'b0;
-		mreq_n			<= 1'b1;
-		rd_n			<= 1'b1;
-		while( !rdata_en && count < 5 ) begin
+		bus_cs			<= 1'b0;
+		bus_valid		<= 1'b0;
+		while( !bus_rdata_en && count < 5 ) begin
 			count	<= count + 1;
 			@( posedge clk );
 		end
 
-		if( rdata == p_reference_data ) begin
+		if( bus_rdata == p_reference_data ) begin
 			$display( "[OK] read( %04X ) == %02X", p_address, p_reference_data );
 		end
 		else begin
-			$display( "[NG] read( %04X ) == %02X != %02X", p_address, p_reference_data, rdata );
+			$display( "[NG] read( %04X ) == %02X != %02X", p_address, p_reference_data, bus_rdata );
 		end
 		@( posedge clk );
 	endtask : reg_read
@@ -156,11 +150,10 @@ module tb ();
 		input	[15:0]	p_address,
 		input	[3:0]	p_sltsl
 	);
-		sltsl		<= 1'b1;
-		mreq_n		<= 1'b0;
-		wr_n		<= 1'b1;
-		rd_n		<= 1'b1;
-		address		<= p_address;
+		bus_cs		<= 1'b1;
+		bus_write	<= 1'b0;
+		bus_valid	<= 1'b0;
+		bus_address	<= p_address;
 		@( posedge clk );
 
 		if( p_sltsl == { sltsl_ext3, sltsl_ext2, sltsl_ext1, sltsl_ext0 } ) begin
@@ -169,6 +162,7 @@ module tb ();
 		else begin
 			$display( "[NG] SLTSL == %02X != %02X", p_sltsl, { sltsl_ext3, sltsl_ext2, sltsl_ext1, sltsl_ext0 } );
 		end
+		bus_cs		<= 1'b0;
 		@( posedge clk );
 	endtask : check_sltsl
 
@@ -178,12 +172,11 @@ module tb ();
 	initial begin
 		reset_n				= 0;
 		clk					= 0;
-		sltsl				= 0;
-		mreq_n				= 1;
-		wr_n				= 0;
-		rd_n				= 1;
-		address				= 0;
-		wdata				= 0;
+		bus_cs				= 0;
+		bus_write			= 0;
+		bus_valid			= 0;
+		bus_address			= 0;
+		bus_wdata			= 0;
 
 		@( negedge clk );
 		@( negedge clk );

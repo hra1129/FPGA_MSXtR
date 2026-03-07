@@ -52,7 +52,7 @@
 
 module rtc (
 	input			clk,
-	input			reset,
+	input			reset_n,
 	input			enable,
 	input			bus_cs,
 	input			bus_write,
@@ -90,7 +90,7 @@ module rtc (
 	reg		[1:0]	reg_leap		= 2'b0;			// 2'b00 leap year, 2'b01 ... 2'b11 other year
 
 	// RAM
-	reg		[3:0]	ff_memory[0:31];
+	reg		[3:0]	ff_memory[0:63];
 	wire			w_write;
 	wire			w_memory_we;
 	wire	[5:0]	w_memory_address;
@@ -102,22 +102,22 @@ module rtc (
 	// -------------------------------------------------------------
 	// rtc register read
 	// -------------------------------------------------------------
-	assign w_bus_rdata = (             reg_index   == 4'hD  && bus_address[0] == 1'b1 ) ? { 4'b1111		, reg_mode		} :
-					( { reg_mode[1:0], reg_index } == 6'h00 && bus_address[0] == 1'b1 ) ? { 4'b1111		, reg_sec[3:0]	} :
-					( { reg_mode[1:0], reg_index } == 6'h01 && bus_address[0] == 1'b1 ) ? { 5'b11110	, reg_sec[6:4]	} :
-					( { reg_mode[1:0], reg_index } == 6'h02 && bus_address[0] == 1'b1 ) ? { 4'b1111		, reg_min[3:0]	} :
-					( { reg_mode[1:0], reg_index } == 6'h03 && bus_address[0] == 1'b1 ) ? { 5'b11110	, reg_min[6:4]	} :
-					( { reg_mode[1:0], reg_index } == 6'h04 && bus_address[0] == 1'b1 ) ? { 4'b1111		, reg_hou[3:0]	} :
-					( { reg_mode[1:0], reg_index } == 6'h05 && bus_address[0] == 1'b1 ) ? { 6'b111100	, reg_hou[5:4]	} :
-					( { reg_mode[1:0], reg_index } == 6'h06 && bus_address[0] == 1'b1 ) ? { 5'b11110	, reg_wee[2:0]	} :
-					( { reg_mode[1:0], reg_index } == 6'h07 && bus_address[0] == 1'b1 ) ? { 4'b1111		, reg_day[3:0]	} :
-					( { reg_mode[1:0], reg_index } == 6'h08 && bus_address[0] == 1'b1 ) ? { 6'b111100	, reg_day[5:4]	} :
-					( { reg_mode[1:0], reg_index } == 6'h09 && bus_address[0] == 1'b1 ) ? { 4'b1111		, reg_mon[3:0]	} :
-					( { reg_mode[1:0], reg_index } == 6'h0A && bus_address[0] == 1'b1 ) ? { 7'b1111000	, reg_mon[4]	} :
-					( { reg_mode[1:0], reg_index } == 6'h0B && bus_address[0] == 1'b1 ) ? { 4'b1111		, reg_yea[3:0]	} :
-					( { reg_mode[1:0], reg_index } == 6'h0C && bus_address[0] == 1'b1 ) ? { 4'b1111		, reg_yea[7:4]	} :
-					( { reg_mode[1:0], reg_index } == 6'b1B && bus_address[0] == 1'b1 ) ? { 6'b111100	, reg_leap		} :
-					(                                          bus_address[0] == 1'b1 ) ? { 4'b1111		, ff_memory_rdata	} : 8'hFF;
+	assign w_bus_rdata = (             reg_index   == 4'hD  && bus_address == 1'b1 ) ? { 4'b1111	, reg_mode		} :
+					( { reg_mode[1:0], reg_index } == 6'h00 && bus_address == 1'b1 ) ? { 4'b1111	, reg_sec[3:0]	} :
+					( { reg_mode[1:0], reg_index } == 6'h01 && bus_address == 1'b1 ) ? { 5'b11110	, reg_sec[6:4]	} :
+					( { reg_mode[1:0], reg_index } == 6'h02 && bus_address == 1'b1 ) ? { 4'b1111	, reg_min[3:0]	} :
+					( { reg_mode[1:0], reg_index } == 6'h03 && bus_address == 1'b1 ) ? { 5'b11110	, reg_min[6:4]	} :
+					( { reg_mode[1:0], reg_index } == 6'h04 && bus_address == 1'b1 ) ? { 4'b1111	, reg_hou[3:0]	} :
+					( { reg_mode[1:0], reg_index } == 6'h05 && bus_address == 1'b1 ) ? { 6'b111100	, reg_hou[5:4]	} :
+					( { reg_mode[1:0], reg_index } == 6'h06 && bus_address == 1'b1 ) ? { 5'b11110	, reg_wee[2:0]	} :
+					( { reg_mode[1:0], reg_index } == 6'h07 && bus_address == 1'b1 ) ? { 4'b1111	, reg_day[3:0]	} :
+					( { reg_mode[1:0], reg_index } == 6'h08 && bus_address == 1'b1 ) ? { 6'b111100	, reg_day[5:4]	} :
+					( { reg_mode[1:0], reg_index } == 6'h09 && bus_address == 1'b1 ) ? { 4'b1111	, reg_mon[3:0]	} :
+					( { reg_mode[1:0], reg_index } == 6'h0A && bus_address == 1'b1 ) ? { 7'b1111000	, reg_mon[4]	} :
+					( { reg_mode[1:0], reg_index } == 6'h0B && bus_address == 1'b1 ) ? { 4'b1111	, reg_yea[3:0]	} :
+					( { reg_mode[1:0], reg_index } == 6'h0C && bus_address == 1'b1 ) ? { 4'b1111	, reg_yea[7:4]	} :
+					( { reg_mode[1:0], reg_index } == 6'h1B && bus_address == 1'b1 ) ? { 6'b111100	, reg_leap		} :
+					(                                          bus_address == 1'b1 ) ? { 4'b1111	, ff_memory_rdata	} : 8'hFF;
 
 	// -------------------------------------------------------------
 	// request and ack
@@ -129,6 +129,7 @@ module rtc (
 
 	assign bus_rdata	= ff_bus_rdata;
 	assign bus_rdata_en	= ff_bus_rdata_en;
+	assign bus_ready	= 1'b1;
 
 	// -------------------------------------------------------------
 	// RTC register write
@@ -136,11 +137,11 @@ module rtc (
 	assign w_lfsr_d0 = ~(ff_1sec_cnt[21] ^ ff_1sec_cnt[20]);
 
 	always @( posedge clk ) begin
-		if( w_write == 1'b1 && bus_address[0] == 1'b0 ) begin
+		if( w_write == 1'b1 && bus_address == 1'b0 ) begin
 			// register pointer
 			reg_index <= bus_wdata[3:0];
 		end
-		else if( w_write == 1'b1 && bus_address[0] == 1'b1 ) begin
+		else if( w_write == 1'b1 && bus_address == 1'b1 ) begin
 			// Rtc registers
 			if( reg_mode[1:0] == 2'd0 ) begin
 				case( reg_index )
@@ -280,7 +281,7 @@ module rtc (
 	// backup memory emulation
 	// -------------------------------------------------------------
 	assign w_memory_address	= { reg_mode[1:0], reg_index };
-	assign w_memory_we		= w_write & bus_address[0];
+	assign w_memory_we		= w_write & bus_address;
 
 	always @( posedge clk ) begin
 		if( w_memory_we ) begin
