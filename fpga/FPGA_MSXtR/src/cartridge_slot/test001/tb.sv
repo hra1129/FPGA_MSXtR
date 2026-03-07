@@ -31,13 +31,14 @@ module tb ();
 	reg			[15:0]		address;
 	reg			[7:0]		wdata;
 	wire		[7:0]		rdata;
+	wire					pause;
 	reg						joy1_com;
 	reg						joy2_com;
 	wire		[5:0]		joy1;
 	wire		[5:0]		joy2;
-	wire					pre_clk3_579m;
+	wire					toggle_clk3_579m;
 	//	I/O Expander I/F
-	wire					ioe_reset;
+	wire					ioe_reset_n;
 	wire					ioe_clk;
 	wire		[2:0]		ioe_sel;
 	wire		[7:0]		ioe_dio;
@@ -75,15 +76,16 @@ module tb ();
 		.address			( address			),
 		.wdata				( wdata				),
 		.rdata				( rdata				),
+		.pause				( pause				),
 		.joy1_com			( joy1_com			),
 		.joy2_com			( joy2_com			),
 		.joy1				( joy1				),
 		.joy2				( joy2				),
-		.ioe_reset			( ioe_reset			),
+		.ioe_reset_n		( ioe_reset_n		),
 		.ioe_clk			( ioe_clk			),
 		.ioe_sel			( ioe_sel			),
 		.ioe_dio			( ioe_dio			),
-		.pre_clk3_579m		( pre_clk3_579m		)
+		.toggle_clk3_579m	( toggle_clk3_579m	)
 	);
 
 	// --------------------------------------------------------------------
@@ -246,11 +248,11 @@ module tb ();
 		//	TEST001: Reset check
 		// ================================================================
 		$display( "<<TEST001>> Reset output check" );
-		if( ioe_reset === 1'b1 ) begin
-			$display( "[OK] ioe_reset = 1 after reset released" );
+		if( ioe_reset_n === 1'b1 ) begin
+			$display( "[OK] ioe_reset_n = 1 after reset released" );
 		end
 		else begin
-			$display( "[NG] ioe_reset = %b, expected 1", ioe_reset );
+			$display( "[NG] ioe_reset_n = %b, expected 1", ioe_reset_n );
 			err_count++;
 		end
 
@@ -482,11 +484,11 @@ module tb ();
 		@( posedge clk85m );
 		@( posedge clk85m );
 
-		if( ioe_reset === 1'b0 ) begin
-			$display( "[OK] ioe_reset = 0 during reset" );
+		if( ioe_reset_n === 1'b0 ) begin
+			$display( "[OK] ioe_reset_n = 0 during reset" );
 		end
 		else begin
-			$display( "[NG] ioe_reset = %b, expected 0", ioe_reset );
+			$display( "[NG] ioe_reset_n = %b, expected 0", ioe_reset_n );
 			err_count++;
 		end
 
@@ -501,11 +503,11 @@ module tb ();
 		reset_n = 1'b1;
 		@( posedge clk85m );
 
-		if( ioe_reset === 1'b1 ) begin
-			$display( "[OK] ioe_reset = 1 after reset released" );
+		if( ioe_reset_n === 1'b1 ) begin
+			$display( "[OK] ioe_reset_n = 1 after reset released" );
 		end
 		else begin
-			$display( "[NG] ioe_reset = %b, expected 1", ioe_reset );
+			$display( "[NG] ioe_reset_n = %b, expected 1", ioe_reset_n );
 			err_count++;
 		end
 

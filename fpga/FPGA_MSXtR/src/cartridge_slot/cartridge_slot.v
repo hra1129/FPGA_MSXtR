@@ -59,6 +59,7 @@ module cartridge_slot (
 	input			clk85m,			//	85.90908MHz
 	input			reset_n,
 	//	Internal BUS
+	input			bus_cs,
 	input			bus_sltsl1,
 	input			bus_sltsl2,
 	input			bus_m1,
@@ -88,10 +89,46 @@ module cartridge_slot (
 	output	[15:0]	address,
 	output	[7:0]	wdata,
 	input	[7:0]	rdata,
+	output			pause,
 	output			joy1_com,
 	output			joy2_com,
 	input	[5:0]	joy1,
 	input	[5:0]	joy2,
-	input			pre_clk3_579m
+	input			toggle_clk3_579m
 );
+
+	io_expander u_io_expander (
+		.clk85m					( clk85m					),
+		.reset_n				( reset_n					),
+		.sltsl1_n				( sltsl1_n					),
+		.slt1_cs1_n				( slt1_cs1_n				),
+		.slt1_cs2_n				( slt1_cs2_n				),
+		.slt1_cs12_n			( slt1_cs12_n				),
+		.sltsl2_n				( sltsl2_n					),
+		.slt2_cs1_n				( slt2_cs1_n				),
+		.slt2_cs2_n				( slt2_cs2_n				),
+		.slt2_cs12_n			( slt2_cs12_n				),
+		.m1_n					( m1_n						),
+		.iorq_n					( iorq_n					),
+		.merq_n					( merq_n					),
+		.wr_n					( wr_n						),
+		.rd_n					( rd_n						),
+		.rfsh_n					( rfsh_n					),
+		.wait_n					( wait_n					),
+		.int_n					( int_n						),
+		.address				( address					),
+		.wdata					( wdata						),
+		.rdata					( rdata						),
+		.joy1_com				( joy1_com					),
+		.joy2_com				( joy2_com					),
+		.joy1					( joy1						),
+		.joy2					( joy2						),
+		.pause					( pause						),
+		.ioe_reset				( ioe_reset					),
+		.ioe_clk				( ioe_clk					),
+		.ioe_sel				( ioe_sel					),
+		.ioe_dio				( ioe_dio					),
+		.toggle_clk3_579m		( toggle_clk3_579m			),
+	);
+
 endmodule

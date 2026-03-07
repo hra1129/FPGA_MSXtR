@@ -82,12 +82,13 @@ module io_expander (
 	input			joy2_com,
 	output	[5:0]	joy1,
 	output	[5:0]	joy2,
+	output			pause,
 	//	I/O Expander I/F
-	output			ioe_reset,
+	output			ioe_reset_n,
 	output			ioe_clk,
 	output	[2:0]	ioe_sel,
 	inout	[7:0]	ioe_dio,
-	output			pre_clk3_579m
+	output			toggle_clk3_579m
 );
 	reg		[7:0]	ff_ioe_do;
 	reg				ff_ioe_clk;
@@ -95,7 +96,7 @@ module io_expander (
 	reg				ff_ioe_in;
 	reg		[4:0]	ff_state;
 	reg				ff_busdir;
-	reg				ff_busrq;
+	reg				ff_pause;
 	reg				ff_wait_n;
 	reg				ff_int_n;
 	reg		[7:0]	ff_rdata;
@@ -175,7 +176,7 @@ module io_expander (
 				5'd20: begin
 					ff_ioe_sel <= 3'd7;
 					//	Cycle 6
-					{ ff_busdir, ff_int_n, ff_wait_n, ff_busrq, ff_joy2[2], ff_joy2[3], ff_joy2[4], ff_joy2[5] } <= ioe_dio;
+					{ ff_busdir, ff_int_n, ff_wait_n, ff_pause, ff_joy2[2], ff_joy2[3], ff_joy2[4], ff_joy2[5] } <= ioe_dio;
 				end
 				5'd23: begin
 					ff_ioe_sel <= 3'd0;
@@ -194,11 +195,12 @@ module io_expander (
 	assign rdata			= ff_rdata;
 	assign joy1				= ff_joy1;
 	assign joy2				= ff_joy2;
+	assign pause			= ff_pause;
 
-	assign ioe_reset		= reset_n;
+	assign ioe_reset_n		= reset_n;
 	assign ioe_clk			= ff_ioe_clk;
 	assign ioe_sel			= ff_ioe_sel;
 	assign ioe_dio			= ff_ioe_in ? 8'hZZ : ff_ioe_do;
 
-	assign pre_clk3_579m	= (ff_state == 5'd0);
+	assign toggle_clk3_579m	= (ff_state == 5'd0 || ff_state == 5'd12);
 endmodule

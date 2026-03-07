@@ -58,13 +58,14 @@
 module ppi(
 	input					reset_n,
 	input					clk,
-	input					iorq_n,
-	input					wr_n,
-	input					rd_n,
-	input		[1:0]		address,
-	input		[7:0]		wdata,
-	output		[7:0]		rdata,
-	output					rdata_en,
+	input					bus_cs,
+	input					bus_write,
+	input					bus_valid,
+	output					bus_ready,
+	input		[1:0]		bus_address,
+	input		[7:0]		bus_wdata,
+	output		[7:0]		bus_rdata,
+	output					bus_rdata_en,
 	//	Primary slot
 	output		[7:0]		primary_slot,
 	//	keyboard I/F
@@ -78,8 +79,8 @@ module ppi(
 );
 	reg			[7:0]		ff_port_a;
 	reg			[7:0]		ff_port_c;
-	reg			[7:0]		ff_rdata;
-	reg						ff_rdata_en;
+	reg			[7:0]		ff_bus_rdata;
+	reg						ff_bus_rdata_en;
 
 	// --------------------------------------------------------------------
 	//	PortA: Primary Slot Register
@@ -88,8 +89,8 @@ module ppi(
 		if( !reset_n ) begin
 			ff_port_a <= 8'd0;
 		end
-		else if( !iorq_n && !wr_n && (address == 2'b00) ) begin
-			ff_port_a <= wdata;
+		else if( bus_cs && bus_write && bus_valid && (bus_address == 2'b00) ) begin
+			ff_port_a <= bus_wdata;
 		end
 		else begin
 			//	hold
@@ -103,21 +104,21 @@ module ppi(
 		if( !reset_n ) begin
 			ff_port_c <= 8'b01110000;
 		end
-		else if( !iorq_n && !wr_n && (address == 2'b10) ) begin
-			ff_port_c <= wdata;
+		else if( bus_cs && bus_write && bus_valid && (bus_address == 2'b10) ) begin
+			ff_port_c <= bus_wdata;
 		end
-		else if( !iorq_n && !wr_n && (address == 2'b11) ) begin
-			if( wdata[7] == 1'b0 ) begin
-				case( wdata[3:1] )
-				3'd0:		ff_port_c[0] <= wdata[0];
-				3'd1:		ff_port_c[1] <= wdata[0];
-				3'd2:		ff_port_c[2] <= wdata[0];
-				3'd3:		ff_port_c[3] <= wdata[0];
-				3'd4:		ff_port_c[4] <= wdata[0];
-				3'd5:		ff_port_c[5] <= wdata[0];
-				3'd6:		ff_port_c[6] <= wdata[0];
-				3'd7:		ff_port_c[7] <= wdata[0];
-				default:	ff_port_c[0] <= wdata[0];
+		else if( bus_cs && bus_write && bus_valid && (bus_address == 2'b11) ) begin
+			if( bus_wdata[7] == 1'b0 ) begin
+				case( bus_wdata[3:1] )
+				3'd0:		ff_port_c[0] <= bus_wdata[0];
+				3'd1:		ff_port_c[1] <= bus_wdata[0];
+				3'd2:		ff_port_c[2] <= bus_wdata[0];
+				3'd3:		ff_port_c[3] <= bus_wdata[0];
+				3'd4:		ff_port_c[4] <= bus_wdata[0];
+				3'd5:		ff_port_c[5] <= bus_wdata[0];
+				3'd6:		ff_port_c[6] <= bus_wdata[0];
+				3'd7:		ff_port_c[7] <= bus_wdata[0];
+				default:	ff_port_c[0] <= bus_wdata[0];
 				endcase
 			end
 			else begin
@@ -134,39 +135,40 @@ module ppi(
 	// --------------------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_rdata <= 8'd0;
+			ff_bus_rdata <= 8'd0;
 		end
-		else if( !iorq_n && !rd_n ) begin
-			case( address )
-			2'd0:		ff_rdata <= ff_port_a;
-			2'd1:		ff_rdata <= matrix_x;
-			2'd2:		ff_rdata <= ff_port_c;
-			2'd3:		ff_rdata <= 8'h82;
-			default:	ff_rdata <= 8'd0;
+		else if( bus_cs && !bus_write && bus_valid ) begin
+			case( bus_address )
+			2'd0:		ff_bus_rdata <= ff_port_a;
+			2'd1:		ff_bus_rdata <= matrix_x;
+			2'd2:		ff_bus_rdata <= ff_port_c;
+			2'd3:		ff_bus_rdata <= 8'h82;
+			default:	ff_bus_rdata <= 8'd0;
 			endcase
 		end
 		else begin
-			ff_rdata <= 8'd0;
+			ff_bus_rdata <= 8'd0;
 		end
 	end
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_rdata_en <= 1'b0;
+			ff_bus_rdata_en <= 1'b0;
 		end
-		else if( !iorq_n && !rd_n ) begin
-			ff_rdata_en <= 1'b1;
+		else if( bus_cs && !bus_write && bus_valid ) begin
+			ff_bus_rdata_en <= 1'b1;
 		end
 		else begin
-			ff_rdata_en <= 1'b0;
+			ff_bus_rdata_en <= 1'b0;
 		end
 	end
 
 	// --------------------------------------------------------------------
 	//	Output assignment
 	// --------------------------------------------------------------------
-	assign rdata					= ff_rdata;
-	assign rdata_en					= ff_rdata_en;
+	assign bus_ready				= 1'b1;
+	assign bus_rdata				= ff_bus_rdata;
+	assign bus_rdata_en				= ff_bus_rdata_en;
 
 	assign primary_slot				= ff_port_a;
 	assign matrix_y					= ff_port_c[3:0];

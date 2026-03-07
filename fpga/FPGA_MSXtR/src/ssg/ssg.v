@@ -2,7 +2,7 @@
 //	ssg.v
 //	SSG (YM2149. AY-3-8910 Compatible Processor)
 //
-//	Copyright (C) 2024 Takayuki Hara
+//	Copyright (C) 2024-2026 Takayuki Hara
 //
 //	本ソフトウェアおよび本ソフトウェアに基づいて作成された派生物は、以下の条件を
 //	満たす場合に限り、再頒布および使用が許可されます。
@@ -59,13 +59,14 @@ module ssg (
 	input			clk,
 	input			reset_n,
 	input			enable,
-	input			iorq_n,
-	input			wr_n,
-	input			rd_n,
-	input	[1:0]	address,
-	input	[7:0]	wdata,
-	output	[7:0]	rdata,
-	output			rdata_en,
+	input			bus_cs,
+	input			bus_valid,
+	input			bus_write,
+	output			bus_ready,
+	input	[1:0]	bus_address,
+	input	[7:0]	bus_wdata,
+	output	[7:0]	bus_rdata,
+	output			bus_rdata_en,
 
 	inout	[5:0]	ssg_ioa,
 	output	[2:0]	ssg_iob,
@@ -84,7 +85,7 @@ module ssg (
 	reg		[7:0]	ff_port_b;
 
 	reg		[4:0]	ff_ssg_state;
-	reg		[3:0]	ff_ssg_register_ptr;
+	reg		[7:0]	ff_ssg_register_ptr;
 
 	reg		[11:0]	ff_ssg_ch_a_counter;
 	reg		[11:0]	ff_ssg_ch_b_counter;
@@ -126,43 +127,44 @@ module ssg (
 
 	reg		[11:0]	ff_ssg_mixer;
 	reg		[11:0]	ff_sound_out;
-	reg				ff_iorq_n;
-	reg				ff_wr_n;
-	reg				ff_rd_n;
+	reg				ff_bus_valid;
+	reg				ff_bus_write;
 	wire			w_wr;
 	wire			w_rd;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_iorq_n	<= 1'b1;
-			ff_wr_n		<= 1'b1;
+			ff_bus_valid	<= 1'b0;
+			ff_bus_write	<= 1'b0;
+			ff_bus_ready	<= 1'b1;
+		end
+		else if( ff_bus_ready ) begin
+			ff_bus_valid	<= bus_cs & bus_valid;
+			ff_bus_write	<= bus_write;
+			ff_bus_ready	<= ~(bus_cs & bus_valid);
+		end
+		else if( ff_bus_write ) begin
+			ff_bus_ready	<= 1'b1;
+		end
+		else if( ff_rdata_en ) begin
+			ff_bus_ready	<= 1'b1;
 		end
 		else begin
-			ff_iorq_n	<= iorq_n;
-			ff_wr_n		<= wr_n;
-		end
-	end
-
-	always @( posedge clk ) begin
-		if( ff_wr_n == 1'b0 ) begin
-			ff_wdata	<= wdata;
-		end
-	end
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_rd_n		<= 1'b1;
-		end
-		else if( !enable ) begin
 			//	hold
 		end
-		else begin
-			ff_rd_n		<= rd_n;
+	end
+
+	always @( posedge clk ) begin
+		if( bus_cs & bus_valid & bus_write ) begin
+			ff_wdata		<= bus_wdata;
 		end
 	end
 
-	assign w_wr		= (!ff_iorq_n && !ff_wr_n &&  wr_n);
-	assign w_rd		= (!iorq_n    &&  ff_rd_n && !rd_n);
+	assign w_wr			= ff_bus_valid &  ff_bus_write;
+	assign w_rd			= ff_bus_valid & !ff_bus_write;
+	assign bus_ready	= ff_bus_ready;
+	assign bus_rdata	= ff_rdata;
+	assign bus_rdata_en	= ff_rdata_en;
 
 	//--------------------------------------------------------------
 	// Miscellaneous control / clock enable (divider)
@@ -197,16 +199,13 @@ module ssg (
 		if( !reset_n ) begin
 			ff_port_b <= 8'd0;
 		end
-		else if( w_wr && address == 2'd1 && ff_ssg_register_ptr == 4'd15 ) begin
+		else if( w_wr && address == 2'd1 && ff_ssg_register_ptr == 8'd15 ) begin
 			ff_port_b <= ff_wdata;
 		end
 		else begin
 			//	hold
 		end
 	end
-
-	assign rdata				= ff_rdata;
-	assign rdata_en				= ff_rdata_en;
 
 	assign ssg_iob[0]			= ff_port_b[4];
 	assign ssg_iob[1]			= ff_port_b[5];
@@ -240,22 +239,22 @@ module ssg (
 		else if( w_rd ) begin
 			if( address == 2'd2 ) begin
 				case( ff_ssg_register_ptr )
-				4'd0:		ff_rdata <= ff_ssg_ch_a_frequency[7:0];
-				4'd1:		ff_rdata <= { 4'd0, ff_ssg_ch_a_frequency[11:8] };
-				4'd2:		ff_rdata <= ff_ssg_ch_b_frequency[7:0];
-				4'd3:		ff_rdata <= { 4'd0, ff_ssg_ch_b_frequency[11:8] };
-				4'd4:		ff_rdata <= ff_ssg_ch_c_frequency[7:0];
-				4'd5:		ff_rdata <= { 4'd0, ff_ssg_ch_c_frequency[11:8] };
-				4'd6:		ff_rdata <= { 3'd0, ff_ssg_noise_frequency };
-				4'd7:		ff_rdata <= { 2'd2, ff_ssg_ch_select };
-				4'd8:		ff_rdata <= { 3'd0, ff_ssg_ch_a_volume };
-				4'd9:		ff_rdata <= { 3'd0, ff_ssg_ch_b_volume };
-				4'd10:		ff_rdata <= { 3'd0, ff_ssg_ch_c_volume };
-				4'd11:		ff_rdata <= ff_ssg_envelope_frequency[7:0];
-				4'd12:		ff_rdata <= ff_ssg_envelope_frequency[15:8];
-				4'd13:		ff_rdata <= { 4'd0, ff_continue, ff_attack, ff_alternate, ff_hold };
-				4'd14:		ff_rdata <= ff_port_a;
-				4'd15:		ff_rdata <= ff_port_b;
+				8'd0:		ff_rdata <= ff_ssg_ch_a_frequency[7:0];
+				8'd1:		ff_rdata <= { 4'd0, ff_ssg_ch_a_frequency[11:8] };
+				8'd2:		ff_rdata <= ff_ssg_ch_b_frequency[7:0];
+				8'd3:		ff_rdata <= { 4'd0, ff_ssg_ch_b_frequency[11:8] };
+				8'd4:		ff_rdata <= ff_ssg_ch_c_frequency[7:0];
+				8'd5:		ff_rdata <= { 4'd0, ff_ssg_ch_c_frequency[11:8] };
+				8'd6:		ff_rdata <= { 3'd0, ff_ssg_noise_frequency };
+				8'd7:		ff_rdata <= { 2'd2, ff_ssg_ch_select };
+				8'd8:		ff_rdata <= { 3'd0, ff_ssg_ch_a_volume };
+				8'd9:		ff_rdata <= { 3'd0, ff_ssg_ch_b_volume };
+				8'd10:		ff_rdata <= { 3'd0, ff_ssg_ch_c_volume };
+				8'd11:		ff_rdata <= ff_ssg_envelope_frequency[7:0];
+				8'd12:		ff_rdata <= ff_ssg_envelope_frequency[15:8];
+				8'd13:		ff_rdata <= { 4'd0, ff_continue, ff_attack, ff_alternate, ff_hold };
+				8'd14:		ff_rdata <= ff_port_a;
+				8'd15:		ff_rdata <= ff_port_b;
 				default:	ff_rdata <= 8'hFF;
 				endcase
 			end
@@ -273,7 +272,7 @@ module ssg (
 	//--------------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_ssg_register_ptr			<= 4'd0;
+			ff_ssg_register_ptr			<= 8'd0;
 			ff_ssg_ch_a_frequency		<= 12'hFFF;
 			ff_ssg_ch_b_frequency		<= 12'hFFF;
 			ff_ssg_ch_c_frequency		<= 12'hFFF;
@@ -290,24 +289,24 @@ module ssg (
 			ff_ssg_envelope_req			<= 1'b0;
 		end
 		else if( w_wr && address == 2'd0 ) begin
-			ff_ssg_register_ptr <= ff_wdata[3:0];
+			ff_ssg_register_ptr <= ff_wdata;
 		end
 		else if( w_wr && address == 2'd1 ) begin
 			case( ff_ssg_register_ptr )
-			4'd0:		ff_ssg_ch_a_frequency[7:0]		<= ff_wdata;
-			4'd1:		ff_ssg_ch_a_frequency[11:8]		<= ff_wdata[3:0];
-			4'd2:		ff_ssg_ch_b_frequency[7:0]		<= ff_wdata;
-			4'd3:		ff_ssg_ch_b_frequency[11:8]		<= ff_wdata[3:0];
-			4'd4:		ff_ssg_ch_c_frequency[7:0]		<= ff_wdata;
-			4'd5:		ff_ssg_ch_c_frequency[11:8]		<= ff_wdata[3:0];
-			4'd6:		ff_ssg_noise_frequency			<= ff_wdata[4:0];
-			4'd7:		ff_ssg_ch_select				<= ff_wdata[5:0];
-			4'd8:		ff_ssg_ch_a_volume				<= ff_wdata[4:0];
-			4'd9:		ff_ssg_ch_b_volume				<= ff_wdata[4:0];
-			4'd10:		ff_ssg_ch_c_volume				<= ff_wdata[4:0];
-			4'd11:		ff_ssg_envelope_frequency[7:0]	<= ff_wdata;
-			4'd12:		ff_ssg_envelope_frequency[15:8]	<= ff_wdata;
-			4'd13:
+			8'd0:		ff_ssg_ch_a_frequency[7:0]		<= ff_wdata;
+			8'd1:		ff_ssg_ch_a_frequency[11:8]		<= ff_wdata[3:0];
+			8'd2:		ff_ssg_ch_b_frequency[7:0]		<= ff_wdata;
+			8'd3:		ff_ssg_ch_b_frequency[11:8]		<= ff_wdata[3:0];
+			8'd4:		ff_ssg_ch_c_frequency[7:0]		<= ff_wdata;
+			8'd5:		ff_ssg_ch_c_frequency[11:8]		<= ff_wdata[3:0];
+			8'd6:		ff_ssg_noise_frequency			<= ff_wdata[4:0];
+			8'd7:		ff_ssg_ch_select				<= ff_wdata[5:0];
+			8'd8:		ff_ssg_ch_a_volume				<= ff_wdata[4:0];
+			8'd9:		ff_ssg_ch_b_volume				<= ff_wdata[4:0];
+			8'd10:		ff_ssg_ch_c_volume				<= ff_wdata[4:0];
+			8'd11:		ff_ssg_envelope_frequency[7:0]	<= ff_wdata;
+			8'd12:		ff_ssg_envelope_frequency[15:8]	<= ff_wdata;
+			8'd13:
 				begin
 					ff_hold							<= ff_wdata[0];
 					ff_alternate					<= ff_wdata[1];

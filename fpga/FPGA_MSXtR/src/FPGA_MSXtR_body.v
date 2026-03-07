@@ -108,29 +108,12 @@ module fpga_msxtr_body #(
 	reg		[2:0]	ff_delay = 3'd7;
 	reg				ff_reset_n = 1'b0;
 	reg				ff_clock_div = 1'b0;
-	reg		[3:0]	ff_cpu_clock_div = 4'b0;
-	reg		[3:0]	ff_psg_clock_div = 4'b0;
+	reg		[3:0]	ff_3_579mhz_clock_div = 4'b0;
 	wire			w_enable;
-	wire			w_cpu_enable;
-	wire			w_psg_enable;
+	wire			w_3_579mhz;
 
 	wire			wait_n;
 	wire			int_n;
-	wire			nmi_n;
-	wire			busrq_n;
-	wire			m1_n;
-	wire			mreq_n;
-	wire			iorq_n;
-	wire			rd_n;
-	wire			wr_n;
-	wire			rfsh_n;
-	wire			halt_n;
-	wire			busak_n;
-	wire	[15:0]	a;
-	wire	[7:0]	d;
-	reg		[7:0]	ff_d;
-	wire	[7:0]	w_uart_q;
-	wire			w_uart_q_en;
 
 	wire			w_sdram_mreq_n;
 	wire			w_sdram_wr_n;
@@ -199,8 +182,8 @@ module fpga_msxtr_body #(
 	wire	[7:0]	w_ppi_q;
 	wire			w_ppi_q_en;
 	wire			w_psg_cs_n;
-	wire	[7:0]	w_psg_q;
-	wire			w_psg_q_en;
+	wire	[7:0]	w_psg_rdata;
+	wire			w_psg_rdata_en;
 	wire			w_keyboard_type;
 	wire			w_keyboard_kana_led_off;
 	wire	[11:0]	w_ssg_sound_out;
@@ -266,39 +249,21 @@ module fpga_msxtr_body #(
 
 	always @( posedge clk42m ) begin
 		if( !ff_reset_n ) begin
-			ff_cpu_clock_div <= 4'd0;
+			ff_3_579mhz_clock_div <= 4'd0;
 		end
 		else if( w_cpu_freeze ) begin
-			ff_cpu_clock_div <= 4'd0;
+			ff_3_579mhz_clock_div <= 4'd0;
 		end
 		else begin
-			if( ff_cpu_clock_div == 4'd11 ) begin
-				ff_cpu_clock_div <= 4'd0;
+			if( ff_3_579mhz_clock_div == 4'd11 ) begin
+				ff_3_579mhz_clock_div <= 4'd0;
 			end
 			else begin
-				ff_cpu_clock_div <= ff_cpu_clock_div + 4'd1;
+				ff_3_579mhz_clock_div <= ff_3_579mhz_clock_div + 4'd1;
 			end
 		end
 	end
-	assign w_cpu_enable		= (ff_cpu_clock_div == 4'd11 && !w_sdram_init_busy && !w_cpu_freeze);
-
-	always @( posedge clk42m ) begin
-		if( !ff_reset_n ) begin
-			ff_psg_clock_div <= 4'd0;
-		end
-		else if( w_cpu_freeze ) begin
-			ff_psg_clock_div <= 4'd0;
-		end
-		else begin
-			if( ff_psg_clock_div == 4'd11 ) begin
-				ff_psg_clock_div <= 4'd0;
-			end
-			else begin
-				ff_psg_clock_div <= ff_psg_clock_div + 4'd1;
-			end
-		end
-	end
-	assign w_psg_enable		= (ff_psg_clock_div == 4'd11 && !w_sdram_init_busy && !w_cpu_freeze);
+	assign w_3_579mhz		= (ff_3_579mhz_clock_div == 4'd11 && !w_sdram_init_busy && !w_cpu_freeze);
 
 	// --------------------------------------------------------------------
 	//	reset
@@ -321,13 +286,15 @@ module fpga_msxtr_body #(
 	// --------------------------------------------------------------------
 	//	Z80 core
 	// --------------------------------------------------------------------
+
+	//	Legasy compatible CPU core
 	cz80_inst u_z80 (
 		.reset_n				( w_msx_reset_n				),
 		.clk_n					( clk42m					),
-		.enable					( w_cpu_enable				),
+		.enable					( w_3_579mhz				),
 		.wait_n					( wait_n					),
 		.int_n					( int_n						),
-		.nmi_n					( nmi_n						),
+		.nmi_n					( 1'b1						),
 		.busrq_n				( w_z80_busrq_n				),
 		.m1_n					( w_z80_m1_n				),
 		.mreq_n					( w_z80_mreq_n				),
@@ -341,13 +308,14 @@ module fpga_msxtr_body #(
 		.d						( w_z80_d					)
 	);
 
+	//	Highspeed CPU core
 	cr800_inst u_r800 (
 		.reset_n				( w_msx_reset_n				),
 		.clk_n					( clk42m					),
 		.enable					( 1'b1						),
 		.wait_n					( wait_n					),
 		.int_n					( int_n						),
-		.nmi_n					( nmi_n						),
+		.nmi_n					( 1'b1						),
 		.busrq_n				( w_r800_busrq_n			),
 		.m1_n					( w_r800_m1_n				),
 		.mreq_n					( w_r800_mreq_n				),
@@ -361,40 +329,72 @@ module fpga_msxtr_body #(
 		.d						( w_r800_d					)
 	);
 
-	assign wait_n	= 1'b1;
-	assign nmi_n	= 1'b1;
-	assign busrq_n	= 1'b1;
-	assign d		= ( !rd_n ) ? ff_d : 8'hzz;
-
-	always @( posedge clk ) begin
-		if( w_sdram_q_en ) begin
-			ff_d <= w_sdram_q;
-		end
-		else if( w_vdp_q_en ) begin
-			ff_d <= w_vdp_q;
-		end
-		else if( w_expslt0_q_en ) begin
-			ff_d <= w_expslt0_q;
-		end
-		else if( w_expslt3_q_en ) begin
-			ff_d <= w_expslt3_q;
-		end
-		else if( w_ppi_q_en ) begin
-			ff_d <= w_ppi_q;
-		end
-		else if( w_psg_q_en ) begin
-			ff_d <= w_psg_q;
-		end
-		else if( w_sys_q_en ) begin
-			ff_d <= w_sys_q;
-		end
-		else if( rd_n ) begin
-			ff_d <= 8'hFF;
-		end
-		else begin
-			//	hold
-		end
-	end
+	//	System Controller
+	s2026a u_s2026a (
+		.reset_n				( w_msx_reset_n				),
+		.clk_n					( clk42m					),
+		.wait_n					( wait_n					),
+		.z80_busrq_n			( w_z80_busrq_n				),
+		.z80_m1_n				( w_z80_m1_n				),
+		.z80_mreq_n				( w_z80_mreq_n				),
+		.z80_iorq_n				( w_z80_iorq_n				),
+		.z80_rd_n				( w_z80_rd_n				),
+		.z80_wr_n				( w_z80_wr_n				),
+		.z80_rfsh_n				( w_z80_rfsh_n				),
+		.z80_halt_n				( w_z80_halt_n				),
+		.z80_busak_n			( w_z80_busak_n				),
+		.z80_a					( w_z80_a					),
+		.z80_d					( w_z80_d					),
+		.r800_busrq_n			( w_r800_busrq_n			),
+		.r800_m1_n				( w_r800_m1_n				),
+		.r800_mreq_n			( w_r800_mreq_n				),
+		.r800_iorq_n			( w_r800_iorq_n				),
+		.r800_rd_n				( w_r800_rd_n				),
+		.r800_wr_n				( w_r800_wr_n				),
+		.r800_rfsh_n			( w_r800_rfsh_n				),
+		.r800_halt_n			( w_r800_halt_n				),
+		.r800_busak_n			( w_r800_busak_n			),
+		.r800_a					( w_r800_a					),
+		.r800_d					( w_r800_d					),
+		.mapper_cs				( w_mapper_cs				),
+		.ppi_cs					( w_ppi_cs					),
+		.rtc_cs					( w_rtc_cs					),
+		.cartridge_cs			( w_cartridge_cs			),
+		.ssg_cs					( w_ssg_cs					),
+		.opll_cs				( w_opll_cs					),
+		.kanji_cs				( w_kanji_cs				),
+		.megarom1_cs			( w_megarom1_cs				),
+		.megarom2_cs			( w_megarom2_cs				),
+		.bus_m1					( w_bus_m1					),
+		.bus_io					( w_bus_io					),
+		.bus_write				( w_bus_write				),
+		.bus_valid				( w_bus_valid				),
+		.bus_wdata				( w_bus_wdata				),
+		.bus_ppi_rdata			( w_bus_ppi_rdata			),
+		.bus_ppi_rdata_en		( w_bus_ppi_rdata_en		),
+		.bus_rtc_rdata			( w_bus_rtc_rdata			),
+		.bus_rtc_rdata_en		( w_bus_rtc_rdata_en		),
+		.bus_cartridge_rdata	( w_bus_cartridge_rdata		),
+		.bus_cartridge_rdata_en	( w_bus_cartridge_rdata_en	),
+		.bus_ssg_rdata			( w_bus_ssg_rdata			),
+		.bus_ssg_rdata_en		( w_bus_ssg_rdata_en		),
+		.bus_kanji_rdata		( w_bus_kanji_rdata			),
+		.bus_kanji_rdata_en		( w_bus_kanji_rdata_en		),
+		.bus_megarom1_rdata		( w_bus_megarom1_rdata		),
+		.bus_megarom1_rdata_en	( w_bus_megarom1_rdata_en	),
+		.bus_megarom2_rdata		( w_bus_megarom2_rdata		),
+		.bus_megarom2_rdata_en	( w_bus_megarom2_rdata_en	),
+		.processor_mode			( w_processor_mode			),
+		.rom_mode				( w_rom_mode				),
+		.primary_slot			( w_primary_slot			),
+		.secondary_slot0		( w_secondary_slot0			),
+		.secondary_slot3		( w_secondary_slot3			),
+		.megarom1_en			( w_megarom1_en				),
+		.megarom2_en			( w_megarom2_en				),
+		.sw_internal_firmware	( 1'b0						),
+		.kanji1_en				( w_kanji1_en				),
+		.kanji2_en				( w_kanji2_en				)
+	);
 
 	// --------------------------------------------------------------------
 	//	PPI
@@ -469,14 +469,15 @@ module fpga_msxtr_body #(
 	ssg u_ssg (
 		.clk					( clk42m					),
 		.reset_n				( w_msx_reset_n				),
-		.enable					( w_psg_enable				),
-		.iorq_n					( w_psg_cs_n				),
-		.wr_n					( wr_n						),
-		.rd_n					( rd_n						),
-		.address				( a[1:0]					),
-		.wdata					( d							),
-		.rdata					( w_psg_q					),
-		.rdata_en				( w_psg_q_en				),
+		.enable					( w_3_579mhz				),
+		.bus_cs					( w_ssg_cs					),
+		.bus_valid				( w_bus_valid				),
+		.bus_write				( w_bus_write				),
+		.bus_ready				( w_ssg_ready				),
+		.bus_address			( w_bus_address[1:0]		),
+		.bus_wdata				( w_bus_wdata				),
+		.bus_rdata				( w_psg_rdata				),
+		.bus_rdata_en			( w_psg_rdata_en			),
 		.ssg_ioa				( ssg_ioa					),
 		.ssg_iob				( ssg_iob					),
 		.keyboard_type			( w_keyboard_type			),
