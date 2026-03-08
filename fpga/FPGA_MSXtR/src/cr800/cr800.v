@@ -60,7 +60,7 @@
 //	-- Some minor bug fixes.
 //-----------------------------------------------------------------------------
 
-module cz80 (
+module cr800 (
 	input			reset_n		,
 	input			clk_n		,
 	input			cen			,

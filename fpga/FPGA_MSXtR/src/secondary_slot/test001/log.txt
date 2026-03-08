@@ -1,5 +1,5 @@
 # vsim -c -t 1ns -do "run.do" tb 
-# Start time: 22:58:52 on Mar 07,2026
+# Start time: 23:09:50 on Mar 07,2026
 # Loading sv_std.std
 # Loading work.tb
 # Loading work.secondary_slot_inst
@@ -22,5 +22,5 @@
 # [OK] SLTSL == 01
 # ** Note: $finish    : tb.sv(215)
 #    Time: 739140 ns  Iteration: 1  Instance: /tb
-# End time: 22:58:53 on Mar 07,2026, Elapsed time: 0:00:01
+# End time: 23:09:51 on Mar 07,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0

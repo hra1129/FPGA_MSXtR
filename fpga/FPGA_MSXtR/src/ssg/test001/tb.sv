@@ -31,13 +31,14 @@ module tb ();
 	reg						reset_n;
 	reg						clk;
 	wire					enable;			//	21.47727MHz pulse
-	reg						iorq_n;
-	reg						wr_n;
-	reg						rd_n;
-	reg			[15:0]		address;
-	reg			[7:0]		wdata;
-	wire		[7:0]		rdata;
-	wire					rdata_en;
+	reg						bus_cs;
+	reg						bus_valid;
+	reg						bus_write;
+	wire					bus_ready;
+	reg			[1:0]		bus_address;
+	reg			[7:0]		bus_wdata;
+	wire		[7:0]		bus_rdata;
+	wire					bus_rdata_en;
 	wire		[5:0]		w_ssg_ioa;
 	reg			[5:0]		ssg_ioa;
 	wire		[2:0]		ssg_iob;
@@ -57,13 +58,14 @@ module tb ();
 	.reset_n			( reset_n			),
 	.clk				( clk				),
 	.enable				( enable			),
-	.iorq_n				( iorq_n			),
-	.wr_n				( wr_n				),
-	.rd_n				( rd_n				),
-	.address			( address[1:0]		),
-	.wdata				( wdata				),
-	.rdata				( rdata				),
-	.rdata_en			( rdata_en			),
+	.bus_cs				( bus_cs			),
+	.bus_valid			( bus_valid			),
+	.bus_write			( bus_write			),
+	.bus_ready			( bus_ready			),
+	.bus_address		( bus_address		),
+	.bus_wdata			( bus_wdata			),
+	.bus_rdata			( bus_rdata			),
+	.bus_rdata_en		( bus_rdata_en		),
 	.ssg_ioa			( w_ssg_ioa			),
 	.ssg_iob			( ssg_iob			),
 	.keyboard_type		( keyboard_type		),
@@ -102,8 +104,8 @@ module tb ();
 		if( !reset_n ) begin
 			ff_rdata <= 8'h00;
 		end
-		else if( rdata_en ) begin
-			ff_rdata <= rdata;
+		else if( bus_rdata_en ) begin
+			ff_rdata <= bus_rdata;
 		end
 	end
 
@@ -111,54 +113,50 @@ module tb ();
 	//	Tasks
 	// --------------------------------------------------------------------
 	task write_reg(
-		input	[15:0]	_address,
+		input	[1:0]	_address,
 		input	[7:0]	_wdata
 	);
-		$display( "write_reg( 0x%04X, 0x%02X )", _address, _wdata );
-		address		<= _address;
-		wdata		<= _wdata;
-		iorq_n		<= 1'b0;
-		wr_n		<= 1'b0;
+		$display( "write_reg( %0d, 0x%02X )", _address, _wdata );
+		bus_address	<= _address;
+		bus_wdata	<= _wdata;
+		bus_cs		<= 1'b1;
+		bus_valid	<= 1'b1;
+		bus_write	<= 1'b1;
 		@( posedge clk );
-		@( posedge clk );
+		while( !bus_ready ) @( posedge clk );
 
-		iorq_n		<= 1'b1;
-		wr_n		<= 1'b1;
-		address		<= 0;
-		wdata		<= 0;
-		@( posedge clk );
-		@( posedge clk );
-		@( posedge clk );
-		@( posedge clk );
+		bus_cs		<= 1'b0;
+		bus_valid	<= 1'b0;
+		bus_write	<= 1'b0;
+		bus_address	<= 0;
+		bus_wdata	<= 0;
 		@( posedge clk );
 		@( posedge clk );
 	endtask: write_reg
 
 	// --------------------------------------------------------------------
 	task read_reg(
-		input	[15:0]	_address,
+		input	[1:0]	_address,
 		input	[7:0]	_rdata
 	);
-		int time_out;
-
-		$display( "read_reg( 0x%04X, 0x%02X )", _address, _rdata );
-		address		<= _address;
-		iorq_n		<= 1'b0;
+		$display( "read_reg( %0d, 0x%02X )", _address, _rdata );
+		bus_address	<= _address;
+		bus_cs		<= 1'b1;
+		bus_valid	<= 1'b1;
+		bus_write	<= 1'b0;
 		@( posedge clk );
-		rd_n		<= 1'b0;
-		repeat( 16 ) @( negedge clk );
+		while( !bus_ready ) @( posedge clk );
 
-		iorq_n		<= 1'b1;
-		rd_n		<= 1'b1;
+		bus_cs		<= 1'b0;
+		bus_valid	<= 1'b0;
+		bus_address	<= 0;
 		@( posedge clk );
 
 		assert( ff_rdata == _rdata );
 		if( ff_rdata != _rdata ) begin
-			$display( "-- p_data = %08X (ref: %08X)", rdata, _rdata );
+			$display( "-- p_data = %08X (ref: %08X)", bus_rdata, _rdata );
 		end
 
-		@( posedge clk );
-		@( posedge clk );
 		@( posedge clk );
 		@( posedge clk );
 	endtask: read_reg
@@ -169,8 +167,8 @@ module tb ();
 		input	[7:0]	_ssg_wdata
 	);
 		$display( "Write SSG Register#%d <= 0x%02X;", _ssg_register_num, _ssg_wdata );
-		write_reg( 16'h00A0, { 4'd0, _ssg_register_num } );
-		write_reg( 16'h00A1, _ssg_wdata );
+		write_reg( 2'b00, { 4'd0, _ssg_register_num } );
+		write_reg( 2'b01, _ssg_wdata );
 	endtask: write_ssg_reg
 
 	// --------------------------------------------------------------------
@@ -181,11 +179,11 @@ module tb ();
 		reset_n			= 0;
 		clk				= 1;
 
-		iorq_n			= 1;
-		wr_n			= 1;
-		rd_n			= 1;
-		address			= 0;
-		wdata			= 0;
+		bus_cs			= 0;
+		bus_valid		= 0;
+		bus_write		= 0;
+		bus_address		= 0;
+		bus_wdata		= 0;
 		keyboard_type	= 0;
 		cmt_read		= 0;
 
@@ -357,15 +355,15 @@ module tb ();
 		// --------------------------------------------------------------------
 		test_no = 11;
 		write_ssg_reg( 15, 8'b00000000 );
-		write_reg( 0, 14 );
+		write_reg( 2'b00, 14 );
 		ssg_ioa = 6'b101010;
-		read_reg( 2, ssg_ioa );
+		read_reg( 2'b10, ssg_ioa );
 		ssg_ioa = 6'b010101;
-		read_reg( 2, ssg_ioa );
+		read_reg( 2'b10, ssg_ioa );
 		ssg_ioa = 6'b110011;
-		read_reg( 2, ssg_ioa );
+		read_reg( 2'b10, ssg_ioa );
 		ssg_ioa = 6'b111000;
-		read_reg( 2, ssg_ioa );
+		read_reg( 2'b10, ssg_ioa );
 		$finish;
 	end
 endmodule

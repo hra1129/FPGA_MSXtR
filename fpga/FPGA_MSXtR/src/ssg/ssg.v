@@ -1,4 +1,4 @@
-﻿//
+//
 //	ssg.v
 //	SSG (YM2149. AY-3-8910 Compatible Processor)
 //
@@ -129,6 +129,7 @@ module ssg (
 	reg		[11:0]	ff_sound_out;
 	reg				ff_bus_valid;
 	reg				ff_bus_write;
+	reg				ff_bus_ready;
 	wire			w_wr;
 	wire			w_rd;
 
@@ -199,7 +200,7 @@ module ssg (
 		if( !reset_n ) begin
 			ff_port_b <= 8'd0;
 		end
-		else if( w_wr && address == 2'd1 && ff_ssg_register_ptr == 8'd15 ) begin
+		else if( w_wr && bus_address == 2'd1 && ff_ssg_register_ptr == 8'd15 ) begin
 			ff_port_b <= ff_wdata;
 		end
 		else begin
@@ -237,7 +238,7 @@ module ssg (
 			//	hold
 		end
 		else if( w_rd ) begin
-			if( address == 2'd2 ) begin
+			if( bus_address == 2'd2 ) begin
 				case( ff_ssg_register_ptr )
 				8'd0:		ff_rdata <= ff_ssg_ch_a_frequency[7:0];
 				8'd1:		ff_rdata <= { 4'd0, ff_ssg_ch_a_frequency[11:8] };
@@ -288,10 +289,10 @@ module ssg (
 			ff_continue					<= 1'b1;
 			ff_ssg_envelope_req			<= 1'b0;
 		end
-		else if( w_wr && address == 2'd0 ) begin
+		else if( w_wr && bus_address == 2'd0 ) begin
 			ff_ssg_register_ptr <= ff_wdata;
 		end
-		else if( w_wr && address == 2'd1 ) begin
+		else if( w_wr && bus_address == 2'd1 ) begin
 			case( ff_ssg_register_ptr )
 			8'd0:		ff_ssg_ch_a_frequency[7:0]		<= ff_wdata;
 			8'd1:		ff_ssg_ch_a_frequency[11:8]		<= ff_wdata[3:0];

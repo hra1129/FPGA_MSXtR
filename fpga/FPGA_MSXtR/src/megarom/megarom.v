@@ -1,4 +1,4 @@
-﻿//
+//
 //	megarom.v
 //	Multi MegaROM Controller
 //

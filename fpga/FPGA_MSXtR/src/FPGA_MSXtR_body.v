@@ -83,12 +83,12 @@ module fpga_msxtr_body #(
 	//	SPI for SerialSRAM and External SerialFlashROM
 	output			srom_cs_n,				//	PIN79
 	output			sram_cs_n,				//	PIN75
-	input			smem_clk,				//	PIN74
-	input	[3:0]	smem_sio,				//	PIN16, PIN15, PIN73, PIN85
+	output			smem_clk,				//	PIN74
+	inout	[3:0]	smem_sio,				//	PIN16, PIN15, PIN73, PIN85
 	//	SPI for Internal SerialFlashROM
 	output			config_cs_n,			//	PIN
-	input			config_clk,				//	PIN
-	input	[3:0]	config_sio,				//	PIN, PIN, PIN, PIN
+	output			config_clk,				//	PIN
+	inout	[3:0]	config_sio,				//	PIN, PIN, PIN, PIN
 	//	SDRAM
 	output			O_sdram_clk,			//	Internal
 	output			O_sdram_cke,			//	Internal
@@ -115,43 +115,119 @@ module fpga_msxtr_body #(
 	wire			wait_n;
 	wire			int_n;
 
+	wire 			w_z80_busrq_n;
+	wire 			w_z80_m1_n;
+	wire 			w_z80_mreq_n;
+	wire 			w_z80_iorq_n;
+	wire 			w_z80_rd_n;
+	wire 			w_z80_wr_n;
+	wire 			w_z80_rfsh_n;
+	wire 			w_z80_halt_n;
+	wire 			w_z80_busak_n;
+	wire	[15:0]	w_z80_a;
+	wire	[7:0]	w_z80_d;
+	wire 			w_r800_busrq_n;
+	wire 			w_r800_m1_n;
+	wire 			w_r800_mreq_n;
+	wire 			w_r800_iorq_n;
+	wire 			w_r800_rd_n;
+	wire 			w_r800_wr_n;
+	wire 			w_r800_rfsh_n;
+	wire 			w_r800_halt_n;
+	wire 			w_r800_busak_n;
+	wire	[15:0]	w_r800_a;
+	wire	[7:0]	w_r800_d;
+	wire 			w_bus_m1;
+	wire 			w_bus_io;
+	wire 			w_bus_write;
+	wire 			w_bus_valid;
+	wire	[15:0]	w_bus_address;
+	wire	[7:0]	w_bus_wdata;
+	wire			w_bus_mapper_ready;
+	wire	[7:0]	w_bus_ppi_rdata;
+	wire			w_bus_ppi_rdata_en;
+	wire			w_bus_ppi_ready;
+	wire	[7:0]	w_bus_rtc_rdata;
+	wire			w_bus_rtc_rdata_en;
+	wire			w_bus_rtc_ready;
+	wire	[7:0]	w_bus_cartridge_rdata;
+	wire			w_bus_cartridge_rdata_en;
+	wire			w_bus_cartridge_ready;
+	wire	[7:0]	w_bus_ssg_rdata;
+	wire			w_bus_ssg_rdata_en;
+	wire			w_bus_ssg_ready;
+	wire	[7:0]	w_bus_kanji_rdata;
+	wire			w_bus_kanji_rdata_en;
+	wire			w_bus_kanji_ready;
+	wire	[7:0]	w_bus_megarom1_rdata;
+	wire			w_bus_megarom1_rdata_en;
+	wire			w_bus_megarom1_ready;
+	wire	[7:0]	w_bus_megarom2_rdata;
+	wire			w_bus_megarom2_rdata_en;
+	wire			w_bus_megarom2_ready;
+	wire			w_processor_mode;
+	wire			w_rom_mode;
+	wire	[7:0]	w_primary_slot;
+	wire	[7:0]	w_secondary_slot0;
+	wire	[7:0]	w_secondary_slot3;
+	wire			w_megarom1_en;
+	wire			w_megarom2_en;
+	wire			w_kanji1_en;
+	wire			w_kanji2_en;
+	wire			w_mapper_cs;
+
 	wire			w_sdram_mreq_n;
 	wire			w_sdram_wr_n;
 	wire			w_sdram_rd_n;
 	wire			w_sdram_init_busy;
-	wire			w_sdram_busy;
 	wire	[22:0]	w_sdram_address;
 	wire	[7:0]	w_sdram_q;
 	wire			w_sdram_q_en;
 	wire	[7:0]	w_sdram_d;
+	wire			w_sdram_bus_valid;
+	wire			w_sdram_bus_write;
+	wire			w_sdram_bus_refresh;
+	wire	[31:0]	w_sdram_bus_wdata;
+	wire	[3:0]	w_sdram_bus_wdata_mask;
+	wire	[31:0]	w_sdram_bus_rdata;
 
-	wire			w_vram_read_n;
-	wire			w_vram_write_n;
-	wire	[13:0]	w_vram_address;
-	wire	[7:0]	w_vram_wdata;
-	wire	[7:0]	w_vram_rdata;
+	wire	[16:2]	w_vram_address;
+	wire			w_vram_write;
+	wire			w_vram_valid;
+	wire	[31:0]	w_vram_wdata;
+	wire	[3:0]	w_vram_wdata_mask;
+	wire	[31:0]	w_vram_rdata;
 	wire			w_vram_rdata_en;
-	reg		[7:0]	ff_vram_rdata;
+	wire			w_vram_refresh;
+
+	wire	[7:0]	w_ssram_rdata;
+	wire			w_ssram_rdata_en;
 
 	wire	[7:0]	w_video_r;
 	wire	[7:0]	w_video_g;
 	wire	[7:0]	w_video_b;
 
-	wire	[1:0]	w_vdp_enable_state;
 	wire			w_vdp_cs_n;
 	wire	[7:0]	w_vdp_q;
 	wire			w_vdp_q_en;
-	wire			w_vdp_enable;
-	wire	[5:0]	w_vdp_r;
-	wire	[5:0]	w_vdp_g;
-	wire	[5:0]	w_vdp_b;
-	wire	[10:0]	w_vdp_hcounter;
-	wire	[10:0]	w_vdp_vcounter;
-	wire			w_dh_clk;
-	wire			w_dl_clk;
+	wire			w_vdp_ready;
+	wire			w_display_hs;
+	wire			w_display_vs;
+	wire			w_display_en;
 
 	wire			w_msx_reset_n;
 	wire			w_cpu_freeze;
+
+	wire	[15:0]	a;
+	wire	[7:0]	d;
+	wire			iorq_n;
+	wire			wr_n;
+	wire			rd_n;
+	wire			mreq_n;
+	wire			rfsh_n;
+
+	wire	[5:0]	ssg_ioa;
+	wire	[2:0]	ssg_iob;
 
 	wire			w_ppi_cs_n;
 	wire	[3:0]	w_matrix_y;
@@ -181,9 +257,9 @@ module fpga_msxtr_body #(
 	wire	[7:0]	w_spi_d;
 	wire	[7:0]	w_ppi_q;
 	wire			w_ppi_q_en;
-	wire			w_psg_cs_n;
-	wire	[7:0]	w_psg_rdata;
-	wire			w_psg_rdata_en;
+	wire			w_ssg_cs_n;
+	wire	[7:0]	w_ssg_rdata;
+	wire			w_ssg_rdata_en;
 	wire			w_keyboard_type;
 	wire			w_keyboard_kana_led_off;
 	wire	[11:0]	w_ssg_sound_out;
@@ -206,9 +282,11 @@ module fpga_msxtr_body #(
 	wire			w_megarom2_rdata_en;
 	wire			w_megarom2_mem_cs_n;
 
-	wire			w_kanji_iorq_n;
 	wire	[17:0]	w_kanji_address;
 	wire			w_kanji_en;
+	wire			w_kanji_ready;
+	wire	[7:0]	w_kanji_rdata;
+	wire			w_kanji_rdata_en;
 
 	wire	[7:0]	w_mapper_segment;
 
@@ -217,22 +295,40 @@ module fpga_msxtr_body #(
 	wire	[7:0]	w_left_offset;
 	wire	[7:0]	w_denominator;
 	wire	[7:0]	w_normalize;
+	wire			w_scanline;
+
+	wire	[3:0]	w_hdmicontrol;
+	wire			w_active;
+	wire	[7:0]	w_cb_rout;
+	wire	[7:0]	w_cb_gout;
+	wire	[7:0]	w_cb_bout;
+	wire			w_hsync;
+	wire			w_vsync;
+	wire			w_pcm_fs;
+	wire	[15:0]	w_pcm_l;
+	wire	[15:0]	w_pcm_r;
+	wire	[2:0]	tmds_d_p;
+	wire			tmds_clk_p;
+	wire			reset_n3;
+
+	assign config_cs_n  = 1'b1;			//	PIN
+	assign config_clk   = 1'b1;			//	PIN
 
 	// --------------------------------------------------------------------
 	//	clock
 	// --------------------------------------------------------------------
-	Gowin_PLL u_pll (
+	Gowin_rPLL u_pll (
 		.clkout			( clk85m		),		//	output clkout	85.90908MHz
 		.clkoutd		( clk42m		),		//	output clkoutd	42.95454MHz
 		.clkin			( clk14m		)		//	input clkin		14.31818MHz
 	);
 
-	Gowin_PLL2 u_pll2 (
+	Gowin_rPLL2 u_pll2 (
 		.clkout			( clk257m		),		//	output clkout	257.72724MHz
 		.clkin			( clk14m		)		//	input clkin		14.31818MHz
 	);
 
-	Gowin_PLL3 u_pll3 (
+	Gowin_rPLL3 u_pll3 (
 		.clkout			( clk135m		),		//	output clkout	135MHz
 		.clkin			( clk27m		)		//	input clkin		27MHz
 	);
@@ -283,6 +379,8 @@ module fpga_msxtr_body #(
 		end
 	end
 
+	assign w_msx_reset_n		= ff_reset_n & ~w_sdram_init_busy;
+
 	// --------------------------------------------------------------------
 	//	Z80 core
 	// --------------------------------------------------------------------
@@ -332,7 +430,7 @@ module fpga_msxtr_body #(
 	//	System Controller
 	s2026a u_s2026a (
 		.reset_n				( w_msx_reset_n				),
-		.clk_n					( clk42m					),
+		.clk85m					( clk85m					),
 		.wait_n					( wait_n					),
 		.z80_busrq_n			( w_z80_busrq_n				),
 		.z80_m1_n				( w_z80_m1_n				),
@@ -340,7 +438,6 @@ module fpga_msxtr_body #(
 		.z80_iorq_n				( w_z80_iorq_n				),
 		.z80_rd_n				( w_z80_rd_n				),
 		.z80_wr_n				( w_z80_wr_n				),
-		.z80_rfsh_n				( w_z80_rfsh_n				),
 		.z80_halt_n				( w_z80_halt_n				),
 		.z80_busak_n			( w_z80_busak_n				),
 		.z80_a					( w_z80_a					),
@@ -351,7 +448,6 @@ module fpga_msxtr_body #(
 		.r800_iorq_n			( w_r800_iorq_n				),
 		.r800_rd_n				( w_r800_rd_n				),
 		.r800_wr_n				( w_r800_wr_n				),
-		.r800_rfsh_n			( w_r800_rfsh_n				),
 		.r800_halt_n			( w_r800_halt_n				),
 		.r800_busak_n			( w_r800_busak_n			),
 		.r800_a					( w_r800_a					),
@@ -370,6 +466,7 @@ module fpga_msxtr_body #(
 		.bus_write				( w_bus_write				),
 		.bus_valid				( w_bus_valid				),
 		.bus_wdata				( w_bus_wdata				),
+		.bus_address			( w_bus_address				),
 		.bus_mapper_ready		( w_bus_mapper_ready		),
 		.bus_ppi_rdata			( w_bus_ppi_rdata			),
 		.bus_ppi_rdata_en		( w_bus_ppi_rdata_en		),
@@ -403,6 +500,15 @@ module fpga_msxtr_body #(
 		.kanji1_en				( w_kanji1_en				),
 		.kanji2_en				( w_kanji2_en				)
 	);
+
+	//	Active CPU bus mux (selected by processor_mode: 0=Z80, 1=R800)
+	assign a			= w_processor_mode ? w_r800_a       : w_z80_a;
+	assign d			= w_processor_mode ? w_r800_d       : w_z80_d;
+	assign iorq_n		= w_processor_mode ? w_r800_iorq_n  : w_z80_iorq_n;
+	assign wr_n			= w_processor_mode ? w_r800_wr_n    : w_z80_wr_n;
+	assign rd_n			= w_processor_mode ? w_r800_rd_n    : w_z80_rd_n;
+	assign mreq_n		= w_processor_mode ? w_r800_mreq_n  : w_z80_mreq_n;
+	assign rfsh_n		= w_processor_mode ? w_r800_rfsh_n  : w_z80_rfsh_n;
 
 	// --------------------------------------------------------------------
 	//	PPI
@@ -497,8 +603,8 @@ module fpga_msxtr_body #(
 		.bus_ready				( w_bus_ssg_ready			),
 		.bus_address			( w_bus_address[1:0]		),
 		.bus_wdata				( w_bus_wdata				),
-		.bus_rdata				( w_psg_rdata				),
-		.bus_rdata_en			( w_psg_rdata_en			),
+		.bus_rdata				( w_bus_ssg_rdata			),
+		.bus_rdata_en			( w_bus_ssg_rdata_en		),
 		.ssg_ioa				( ssg_ioa					),
 		.ssg_iob				( ssg_iob					),
 		.keyboard_type			( w_keyboard_type			),
@@ -506,7 +612,6 @@ module fpga_msxtr_body #(
 		.kana_led				( w_keyboard_kana_led_off	),
 		.sound_out				( w_ssg_sound_out			)
 	);
-	assign w_psg_cs_n				= !( !iorq_n && ( { a[7:2], 2'd0 } == 8'hA0 ) );
 
 	// --------------------------------------------------------------------
 	//	OPLL
@@ -543,119 +648,124 @@ module fpga_msxtr_body #(
 		{ 2'd0, w_megarom2_sound, 3'd0 };
 
 	// --------------------------------------------------------------------
-	//	V9918 clone
+	//	V9958 clone
 	// --------------------------------------------------------------------
-	vdp_inst u_v9918 (
-		.clk					( clk42m				),
+	vdp u_v9958 (
+		.clk					( clk85m				),
 		.reset_n				( w_msx_reset_n			),
 		.initial_busy			( 1'b0					),
-		.iorq_n					( w_vdp_cs_n			),
-		.wr_n					( wr_n					),
-		.rd_n					( rd_n					),
-		.address				( a[0]					),
-		.rdata					( w_vdp_q				),		//	[ 7: 0];
-		.rdata_en				( w_vdp_q_en			),
-		.wdata					( d						),		//	[ 7: 0];
-		.int_n					( int_n					),		
-		.p_dram_oe_n			( w_vram_read_n			),		
-		.p_dram_we_n			( w_vram_write_n		),		
-		.p_dram_address			( w_vram_address		),		//	[13: 0];
-		.p_dram_rdata			( ff_vram_rdata			),		//	[ 7: 0];
-		.p_dram_wdata			( w_vram_wdata			),		//	[ 7: 0];
-		.p_vdp_enable			( w_vdp_enable			),
-		.p_vdp_r				( w_vdp_r				),		//	[ 5: 0];
-		.p_vdp_g				( w_vdp_g				),		//	[ 5: 0];
-		.p_vdp_b				( w_vdp_b				),		//	[ 5: 0];
-		.p_vdp_hcounter			( w_vdp_hcounter		),
-		.p_vdp_vcounter			( w_vdp_vcounter		),
-		.p_video_dh_clk			( w_dh_clk				),
-		.p_video_dl_clk			( w_dl_clk				)
+		.bus_address			( w_bus_address[1:0]	),
+		.bus_ioreq				( ~w_vdp_cs_n			),
+		.bus_write				( w_bus_write			),
+		.bus_valid				( w_bus_valid			),
+		.bus_ready				( w_vdp_ready			),
+		.bus_wdata				( w_bus_wdata			),
+		.bus_rdata				( w_vdp_q				),
+		.bus_rdata_en			( w_vdp_q_en			),
+		.int_n					( int_n					),
+		.vram_address			( w_vram_address		),
+		.vram_write				( w_vram_write			),
+		.vram_valid				( w_vram_valid			),
+		.vram_wdata				( w_vram_wdata			),
+		.vram_wdata_mask		( w_vram_wdata_mask		),
+		.vram_rdata				( w_vram_rdata			),
+		.vram_rdata_en			( w_vram_rdata_en		),
+		.vram_refresh			( w_vram_refresh		),
+		.display_hs				( w_display_hs			),
+		.display_vs				( w_display_vs			),
+		.display_en				( w_display_en			),
+		.display_r				( w_video_r				),
+		.display_g				( w_video_g				),
+		.display_b				( w_video_b				),
+		.force_highspeed		( ~w_processor_mode		)
     );
 
 	assign w_vdp_cs_n				= !( !iorq_n && ( { a[7:1], 1'd0 } == 8'h98 ) );
 
 	// --------------------------------------------------------------------
-	//	Video output
+	//	VRAM用 SerialSRAM
 	// --------------------------------------------------------------------
-	video_out #(
-		.hs_positive			( 1'b0					),		//	If video_hs is positive logic, set to 1.
-		.vs_positive			( 1'b0					)		//	If video_vs is positive logic, set to 1.
-	) u_video_out (
-		.clk					( clk42m				),
-		.reset_n				( w_msx_reset_n			),
-		.enable					( w_vdp_enable			),
-		.vdp_r					( w_vdp_r				),
-		.vdp_g					( w_vdp_g				),
-		.vdp_b					( w_vdp_b				),
-		.vdp_hcounter			( w_vdp_hcounter		),
-		.vdp_vcounter			( w_vdp_vcounter		),
-		.video_clk				( lcd_clk				),
-		.video_de				( lcd_de				),
-		.video_hs				( lcd_hsync				),
-		.video_vs				( lcd_vsync				),
-		.video_r				( w_video_r				),
-		.video_g				( w_video_g				),
-		.video_b				( w_video_b				),
-		.reg_left_offset		( w_left_offset			),
-		.reg_denominator		( w_denominator			),
-		.reg_normalize			( w_normalize			),
-		.reg_scanline			( w_scanline			)
+	ssram u_ssram (
+		.clk					( clk85m					),
+		.clk_258m				( clk257m					),
+		.reset_n				( ff_reset_n				),
+		.address				( { 2'd0, w_vram_address[16:2], 2'd0 } ),
+		.valid					( w_vram_valid				),
+		.ready					(							),
+		.write					( w_vram_write				),
+		.wdata					( w_vram_wdata[7:0]			),
+		.rdata					( w_ssram_rdata				),
+		.rdata_en				( w_ssram_rdata_en			),
+		//	Burst write interface
+		.burst_start			( 1'b0						),
+		.burst_address			( 19'd0						),
+		.burst_length			( 17'd0						),
+		.burst_wdata			( 8'd0						),
+		.burst_wdata_en			( 1'b0						),
+		.burst_active			(							),
+		//	SPI SRAM I/F
+		.sram_sclk				( smem_clk					),
+		.sram_ce_n				( sram_cs_n					),
+		.sram_sio				( smem_sio					)
 	);
 
+	assign w_vram_rdata		= { 24'd0, w_ssram_rdata };
+	assign w_vram_rdata_en	= w_ssram_rdata_en;
+
+	// --------------------------------------------------------------------
+	//	Video output
+	// --------------------------------------------------------------------
+	assign lcd_clk					= clk42m;
+	assign lcd_de					= w_display_en;
+	assign lcd_hsync				= w_display_hs;
+	assign lcd_vsync				= w_display_vs;
 	assign lcd_red					= w_video_r[7:3];
 	assign lcd_green				= { w_video_g[7:3], 1'b0 };
 	assign lcd_blue					= w_video_b[7:3];
 	assign lcd_bl					= !w_cpu_freeze;
 
 	// --------------------------------------------------------------------
-	//	VRAM
-	// --------------------------------------------------------------------
-	ip_ram u_vram (
-		.clk					( clk42m				),
-		.n_cs					( 1'b0					),
-		.n_wr					( w_vram_write_n		),
-		.n_rd					( w_vram_read_n			),
-		.address				( w_vram_address		),
-		.wdata					( w_vram_wdata			),
-		.rdata					( w_vram_rdata			),
-		.rdata_en				( w_vram_rdata_en		)
-	);
-
-	always @( posedge clk42m ) begin
-		if( w_vram_rdata_en ) begin
-			ff_vram_rdata <= w_vram_rdata;
-		end
-	end
-
-	// --------------------------------------------------------------------
 	//	SDRAM
 	// --------------------------------------------------------------------
 	ip_sdram u_sdram (
-		.reset_n				( ff_reset_n			),
-		.clk					( clk					),
-		.clk_sdram				( clk					),
-		.sdram_init_busy		( w_sdram_init_busy		),
-		.sdram_busy				( w_sdram_busy			),
-		.cpu_freeze				( w_cpu_freeze			),
-		.mreq_n					( w_sdram_mreq_n		),
-		.address				( w_sdram_address		),
-		.wr_n					( w_sdram_wr_n			),
-		.rd_n					( w_sdram_rd_n			),
-		.rfsh_n					( rfsh_n				),
-		.wdata					( w_sdram_d				),
-		.rdata					( w_sdram_q				),
-		.rdata_en				( w_sdram_q_en			),
-		.O_sdram_clk			( O_sdram_clk			),
-		.O_sdram_cke			( O_sdram_cke			),
-		.O_sdram_cs_n			( O_sdram_cs_n			),
-		.O_sdram_cas_n			( O_sdram_cas_n			),
-		.O_sdram_ras_n			( O_sdram_ras_n			),
-		.O_sdram_wen_n			( O_sdram_wen_n			),
-		.IO_sdram_dq			( IO_sdram_dq			),
-		.O_sdram_addr			( O_sdram_addr			),
-		.O_sdram_ba				( O_sdram_ba			),
-		.O_sdram_dqm			( O_sdram_dqm			)
+		.reset_n				( ff_reset_n				),
+		.clk					( clk85m					),
+		.clk_sdram				( clk85m					),
+		.sdram_init_busy		( w_sdram_init_busy			),
+		.bus_address			( w_sdram_address[22:2]		),
+		.bus_valid				( w_sdram_bus_valid			),
+		.bus_write				( w_sdram_bus_write			),
+		.bus_refresh			( w_sdram_bus_refresh		),
+		.bus_wdata				( w_sdram_bus_wdata			),
+		.bus_wdata_mask			( w_sdram_bus_wdata_mask		),
+		.bus_rdata				( w_sdram_bus_rdata			),
+		.bus_rdata_en			( w_sdram_q_en				),
+		.O_sdram_clk			( O_sdram_clk				),
+		.O_sdram_cke			( O_sdram_cke				),
+		.O_sdram_cs_n			( O_sdram_cs_n				),
+		.O_sdram_cas_n			( O_sdram_cas_n				),
+		.O_sdram_ras_n			( O_sdram_ras_n				),
+		.O_sdram_wen_n			( O_sdram_wen_n				),
+		.IO_sdram_dq			( IO_sdram_dq				),
+		.O_sdram_addr			( O_sdram_addr				),
+		.O_sdram_ba				( O_sdram_ba				),
+		.O_sdram_dqm			( O_sdram_dqm				)
 	);
+
+	//	SDRAM bus interface conversion (byte <-> 32bit)
+	assign w_sdram_bus_valid		= ~w_sdram_mreq_n & rfsh_n & (~w_sdram_wr_n | ~w_sdram_rd_n);
+	assign w_sdram_bus_write		= ~w_sdram_wr_n;
+	assign w_sdram_bus_refresh	= ~mreq_n & ~rfsh_n;
+	assign w_sdram_bus_wdata		= { w_sdram_d, w_sdram_d, w_sdram_d, w_sdram_d };
+	assign w_sdram_bus_wdata_mask= (w_sdram_address[1:0] == 2'd0) ? 4'b1110 :
+								  (w_sdram_address[1:0] == 2'd1) ? 4'b1101 :
+								  (w_sdram_address[1:0] == 2'd2) ? 4'b1011 : 4'b0111;
+	assign w_sdram_q			= (w_sdram_address[1:0] == 2'd0) ? w_sdram_bus_rdata[7:0] :
+								  (w_sdram_address[1:0] == 2'd1) ? w_sdram_bus_rdata[15:8] :
+								  (w_sdram_address[1:0] == 2'd2) ? w_sdram_bus_rdata[23:16] : w_sdram_bus_rdata[31:24];
+
+	//	TODO: w_cpu_freeze should come from micom_connect module
+	assign w_cpu_freeze			= 1'b0;
 
 	// --------------------------------------------------------------------
 	//	KanjiROM
@@ -663,16 +773,25 @@ module fpga_msxtr_body #(
 	kanji_rom u_kanji_rom (
 		.reset_n				( w_msx_reset_n			),
 		.clk					( clk42m				),
-		.iorq_n					( w_kanji_iorq_n		),
-		.wr_n					( wr_n					),
-		.rd_n					( rd_n					),
-		.address				( a[1:0]				),
-		.wdata					( d						),
-		.kanji_rom_address		( w_kanji_address		),
-		.kanji_rom_address_en	( w_kanji_en			)
+		.bus_cs					( w_kanji_cs			),
+		.bus_write				( w_bus_write			),
+		.bus_valid				( w_bus_valid			),
+		.bus_ready				( w_bus_kanji_ready		),
+		.bus_address			( w_bus_address[1:0]	),
+		.bus_wdata				( w_bus_wdata			),
+		.bus_rdata				( w_bus_kanji_rdata		),
+		.bus_rdata_en			( w_bus_kanji_rdata_en	),
+		.kanji_address			( w_kanji_address		),
+		.kanji_valid			( w_kanji_en			),
+		.kanji_ready			( w_kanji_ready			),
+		.kanji_rdata			( w_kanji_rdata			),
+		.kanji_rdata_en			( w_kanji_rdata_en		)
 	);
 
-	assign w_kanji_iorq_n	= ( { a[7:2], 2'b00 } == 8'hD8 ) ? iorq_n : 1'b1;
+	//	TODO: Proper SDRAM arbitration for kanji data path
+	assign w_kanji_ready	= 1'b1;
+	assign w_kanji_rdata	= w_sdram_q;
+	assign w_kanji_rdata_en	= w_sdram_q_en & w_kanji_en;
 
 	// --------------------------------------------------------------------
 	//	MegaROM Controller
@@ -723,8 +842,8 @@ module fpga_msxtr_body #(
 		.bus_write				( w_bus_write			),
 		.bus_valid				( w_bus_valid			),
 		.bus_ready				( w_bus_mapper_ready	),
-		.address				( a						),
-		.wdata					( d						),
+		.bus_address			( w_bus_address			),
+		.bus_wdata				( w_bus_wdata			),
 		.mapper_segment			( w_mapper_segment		)
 	);
 

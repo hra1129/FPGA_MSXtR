@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-synthesis-project>
+<Project>
+    <Version>beta</Version>
+    <Device id="GW2AR-18" package="QFN88" speed="8" partNumber="GW2AR-LV18QN88C8/I7"/>
+    <FileList>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\FPGA_MSXtR.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\FPGA_MSXtR_body.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cr800\cr800.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cr800\cr800_alu.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cr800\cr800_inst.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cr800\cr800_mcode.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cr800\cr800_reg.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cz80\cz80.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cz80\cz80_alu.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cz80\cz80_inst.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cz80\cz80_mcode.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\cz80\cz80_reg.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\gowin_rpll\gowin_rpll.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\gowin_rpll\gowin_rpll2.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\gowin_rpll\gowin_rpll3.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\kanji_rom\kanji_rom.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\memory_mapper\memory_mapper.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\memory_mapper\memory_mapper_inst.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_dac.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_eg.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_lfo.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_op.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_pg.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_primitives.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_reg.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_timinggen.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\opll.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\ppi\ppi.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\sdram\ip_sdram_tangnano20k_c.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\ssg\ssg.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\rtc\rtc.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\secondary_slot\secondary_slot_inst.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\i2s_audio\i2s_audio.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_color_palette.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_color_palette_ram.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_command.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_command_cache.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_cpu_interface.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_sprite_info_collect.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_sprite_makeup_pixel.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_sprite_select_visible_planes.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_timing_control.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_timing_control_screen_mode.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_timing_control_sprite.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_timing_control_ssg.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_upscan.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_upscan_line_buffer.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_video_double_buffer.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_video_out.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_video_out_bilinear.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_video_ram_line_buffer.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_vram_interface.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_double_buffer.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_out.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_out_bilinear.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_out_hmag.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_ram_line_buffer.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\ssram\ssram.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\megarom\megarom_wo_scc.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\hdmi_tx\src\hdmi_tx_gw.vhd" type="vhdl"/>
+    </FileList>
+    <OptionList>
+        <Option type="disable_insert_pad" value="0"/>
+        <Option type="global_freq" value="14.318"/>
+        <Option type="looplimit" value="20000"/>
+        <Option type="output_file" value="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\impl\gwsynthesis\FPGA_MSXtR.vg"/>
+        <Option type="print_all_synthesis_warning" value="0"/>
+        <Option type="ram_rw_check" value="0"/>
+        <Option type="top_module" value="fpga_msxtr"/>
+        <Option type="vcc" value="1.0"/>
+        <Option type="verilog_language" value="verilog-2001"/>
+        <Option type="vhdl_language" value="vhdl-1993"/>
+    </OptionList>
+</Project>

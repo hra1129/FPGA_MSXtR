@@ -129,7 +129,7 @@ module cr800_inst (
 		end
 	end
 
-	cz80 u_cz80 (
+	cr800 u_cz80 (
 		.reset_n		( reset_n			),
 		.clk_n			( clk_n				),
 		.cen			( enable			),

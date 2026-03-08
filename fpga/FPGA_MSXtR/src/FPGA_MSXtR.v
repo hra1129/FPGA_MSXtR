@@ -54,12 +54,12 @@ module fpga_msxtr (
 	//	SPI for SerialSRAM and External SerialFlashROM
 	output			srom_cs_n,				//	PIN79
 	output			sram_cs_n,				//	PIN75
-	input			smem_clk,				//	PIN74
-	input	[3:0]	smem_sio,				//	PIN16, PIN15, PIN73, PIN85
+	output			smem_clk,				//	PIN74
+	inout	[3:0]	smem_sio,				//	PIN16, PIN15, PIN73, PIN85
 	//	SPI for Internal SerialFlashROM
 	output			config_cs_n,			//	PIN
-	input			config_clk,				//	PIN
-	input	[3:0]	config_sio,				//	PIN, PIN, PIN, PIN
+	output			config_clk,				//	PIN
+	inout	[3:0]	config_sio,				//	PIN, PIN, PIN, PIN
 	//	SDRAM
 	output			O_sdram_clk,			//	Internal
 	output			O_sdram_cke,			//	Internal
@@ -88,7 +88,7 @@ module fpga_msxtr (
 		.lcd_green				( lcd_green				),
 		.lcd_blue				( lcd_blue				),
 		.lcd_bl					( lcd_bl				),
-		.ioe_dio				( 8'dz					),
+		.ioe_dio				( 						),
 		.ioe_sel				( 						),
 		.ioe_reset				( 						),
 		.ioe_clk				( 						),
@@ -110,8 +110,8 @@ module fpga_msxtr (
 		.smem_clk				( smem_clk				),
 		.smem_sio				( smem_sio				),
 		.config_cs_n			( config_cs_n			),
-		config_clk				( config_clk			),
-		config_sio				( config_sio			),
+		.config_clk				( config_clk			),
+		.config_sio				( config_sio			),
 		.O_sdram_clk			( O_sdram_clk			),
 		.O_sdram_cke			( O_sdram_cke			),
 		.O_sdram_cs_n			( O_sdram_cs_n			),
