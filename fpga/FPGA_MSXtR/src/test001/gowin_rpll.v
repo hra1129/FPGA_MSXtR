@@ -7,7 +7,7 @@
 // ====================================================================
 //	Gowin_PLL: 85.90908MHz + 42.95454MHz from 14.31818MHz
 // ====================================================================
-module Gowin_PLL (
+module Gowin_rPLL (
 	output			clkout,
 	output			clkoutd,
 	input			clkin
@@ -28,7 +28,7 @@ endmodule
 // ====================================================================
 //	Gowin_PLL2: 257.72724MHz from 14.31818MHz
 // ====================================================================
-module Gowin_PLL2 (
+module Gowin_rPLL2 (
 	output			clkout,
 	input			clkin
 );
@@ -43,7 +43,7 @@ endmodule
 // ====================================================================
 //	Gowin_PLL3: 135MHz from 27MHz
 // ====================================================================
-module Gowin_PLL3 (
+module Gowin_rPLL3 (
 	output			clkout,
 	input			clkin
 );

@@ -62,7 +62,15 @@
    "Type" : "verilog"
   },
   {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/i2s_audio/i2s_audio.v",
+   "Type" : "verilog"
+  },
+  {
    "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/kanji_rom/kanji_rom.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/megarom/megarom_wo_scc.v",
    "Type" : "verilog"
   },
   {
@@ -118,11 +126,7 @@
    "Type" : "verilog"
   },
   {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/sdram/ip_sdram_tangnano20k_c.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ssg/ssg.v",
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/rtc/rtc.v",
    "Type" : "verilog"
   },
   {
@@ -130,7 +134,7 @@
    "Type" : "verilog"
   },
   {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/rtc/rtc.v",
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/sdram/ip_sdram_tangnano20k_c.v",
    "Type" : "verilog"
   },
   {
@@ -138,7 +142,11 @@
    "Type" : "verilog"
   },
   {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/i2s_audio/i2s_audio.v",
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ssg/ssg.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ssram/ssram.v",
    "Type" : "verilog"
   },
   {
@@ -155,10 +163,6 @@
   },
   {
    "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/v9958/vdp_command.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/v9958/vdp_command_cache.v",
    "Type" : "verilog"
   },
   {
@@ -219,34 +223,6 @@
   },
   {
    "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/v9958/vdp_vram_interface.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/video_out/video_double_buffer.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/video_out/video_out.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/video_out/video_out_bilinear.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/video_out/video_out_hmag.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/video_out/video_ram_line_buffer.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ssram/ssram.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/megarom/megarom_wo_scc.v",
    "Type" : "verilog"
   },
   {

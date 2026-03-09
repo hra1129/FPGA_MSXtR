@@ -13,7 +13,7 @@ module ssram (
 	output			ready,
 	input			write,
 	input	[7:0]	wdata,
-	output	[7:0]	rdata,
+	output	[15:0]	rdata,
 	output			rdata_en,
 	//	Burst write interface
 	input			burst_start,		//	Start burst write (clk domain pulse)
@@ -53,9 +53,11 @@ module ssram (
 	localparam		c_state_read0		= 5'd23;
 	localparam		c_state_read1		= 5'd24;
 	localparam		c_state_read2		= 5'd25;
-	localparam		c_state_burst_write0	= 5'd26;
-	localparam		c_state_burst_write1	= 5'd27;
-	localparam		c_state_burst_finish	= 5'd28;
+	localparam		c_state_read3		= 5'd26;
+	localparam		c_state_read4		= 5'd27;
+	localparam		c_state_burst_write0	= 5'd28;
+	localparam		c_state_burst_write1	= 5'd29;
+	localparam		c_state_burst_finish	= 5'd30;
 
 	reg				ff_ready;
 	reg				ff_valid_d0;
@@ -63,7 +65,7 @@ module ssram (
 	wire			w_valid;
 	reg		[18:0]	ff_address;
 	reg		[7:0]	ff_wdata;
-	reg		[7:0]	ff_rdata;
+	reg		[15:0]	ff_rdata;
 	reg				ff_rdata_en;
 	reg				ff_read_complete;		// Toggle signal for read complete
 	reg				ff_read_complete_sync1;
@@ -451,6 +453,12 @@ module ssram (
 				ff_state		<= c_state_read2;
 			end
 			c_state_read2: begin
+				ff_state		<= c_state_read3;
+			end
+			c_state_read3: begin
+				ff_state		<= c_state_read4;
+			end
+			c_state_read4: begin
 				ff_state		<= c_state_idle;
 				ff_ce_n			<= 1'b1;
 				ff_read			<= 1'b0;
@@ -491,14 +499,20 @@ module ssram (
 	// Sample read data on SCLK rising edge
 	always @( posedge clk_258m ) begin
 		if( !reset_n ) begin
-			ff_rdata <= 8'd0;
+			ff_rdata <= 16'd0;
 		end
 		else if( w_sclk_sample ) begin
 			if( ff_state == c_state_read0 ) begin
-				ff_rdata[7:4] <= sram_sio;
+				ff_rdata[ 7: 4] <= sram_sio;
 			end
 			else if( ff_state == c_state_read1 ) begin
-				ff_rdata[3:0] <= sram_sio;
+				ff_rdata[ 3: 0] <= sram_sio;
+			end
+			else if( ff_state == c_state_read2 ) begin
+				ff_rdata[15:12] <= sram_sio;
+			end
+			else if( ff_state == c_state_read3 ) begin
+				ff_rdata[11: 8] <= sram_sio;
 			end
 		end
 	end

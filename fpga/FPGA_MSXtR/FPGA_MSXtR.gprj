@@ -46,7 +46,6 @@
         <File path="src/v9958/vdp_color_palette.v" type="file.verilog" enable="1"/>
         <File path="src/v9958/vdp_color_palette_ram.v" type="file.verilog" enable="1"/>
         <File path="src/v9958/vdp_command.v" type="file.verilog" enable="1"/>
-        <File path="src/v9958/vdp_command_cache.v" type="file.verilog" enable="1"/>
         <File path="src/v9958/vdp_cpu_interface.v" type="file.verilog" enable="1"/>
         <File path="src/v9958/vdp_sprite_info_collect.v" type="file.verilog" enable="1"/>
         <File path="src/v9958/vdp_sprite_makeup_pixel.v" type="file.verilog" enable="1"/>
@@ -62,11 +61,6 @@
         <File path="src/v9958/vdp_video_out_bilinear.v" type="file.verilog" enable="1"/>
         <File path="src/v9958/vdp_video_ram_line_buffer.v" type="file.verilog" enable="1"/>
         <File path="src/v9958/vdp_vram_interface.v" type="file.verilog" enable="1"/>
-        <File path="src/video_out/video_double_buffer.v" type="file.verilog" enable="1"/>
-        <File path="src/video_out/video_out.v" type="file.verilog" enable="1"/>
-        <File path="src/video_out/video_out_bilinear.v" type="file.verilog" enable="1"/>
-        <File path="src/video_out/video_out_hmag.v" type="file.verilog" enable="1"/>
-        <File path="src/video_out/video_ram_line_buffer.v" type="file.verilog" enable="1"/>
         <File path="src/hdmi_tx/src/hdmi_tx_gw.vhd" type="file.vhdl" enable="1"/>
     </FileList>
 </Project>

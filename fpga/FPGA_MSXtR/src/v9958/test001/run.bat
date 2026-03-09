@@ -3,7 +3,6 @@ vlog ..\vdp.v
 vlog ..\vdp_color_palette.v
 vlog ..\vdp_color_palette_ram.v
 vlog ..\vdp_command.v
-vlog ..\vdp_command_cache.v
 vlog ..\vdp_cpu_interface.v
 vlog ..\vdp_sprite_info_collect.v
 vlog ..\vdp_sprite_makeup_pixel.v

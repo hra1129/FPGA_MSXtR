@@ -70,7 +70,7 @@ module vdp_color_palette (
 
 	input		[7:0]	display_color_screen_mode,
 	input				display_color_screen_mode_en,
-	input		[7:0]	display_color_sprite,
+	input		[3:0]	display_color_sprite,
 	input		[1:0]	display_color_sprite_transparent,
 	input				display_color_sprite_en,
 
@@ -82,8 +82,7 @@ module vdp_color_palette (
 	input				reg_yjk_mode,
 	input				reg_yae_mode,
 	input				reg_color0_opaque,
-	input		[7:0]	reg_backdrop_color,
-	input				reg_ext_palette_mode
+	input		[7:0]	reg_backdrop_color
 );
 	localparam			c_mode_g1	= 5'b000_00;	//	Graphic1 (SCREEN1)
 	localparam			c_mode_g2	= 5'b001_00;	//	Graphic2 (SCREEN2)
@@ -157,7 +156,7 @@ module vdp_color_palette (
 	reg			[4:0]	ff_yjk_b;
 	reg					ff_yjk_rgb_en;
     wire        [8:0]   w_display_color;
-	reg			[7:0]	ff_display_color_sprite;
+	reg			[3:0]	ff_display_color_sprite;
 	reg			[1:0]	ff_display_color_sprite_transparent;
 	reg					ff_display_color_sprite_en;
 	reg					ff_display_color_screen_mode_en;
@@ -412,7 +411,7 @@ module vdp_color_palette (
 		else if( screen_pos_x[3:0] == 4'd1 ) begin
 			//	Sprite
 			if( w_g5_mode ) begin
-				ff_display_color <= { ff_display_color_sprite[7:4], 2'd0, ff_display_color_sprite[3:2] };
+				ff_display_color <= { 6'd0, ff_display_color_sprite[3:2] };
 			end
 			else begin
 				ff_display_color <= ff_display_color_sprite;
@@ -451,10 +450,10 @@ module vdp_color_palette (
 		else if( w_high_resolution && screen_pos_x[3:0] == 4'd9 ) begin
 			//	Sprite
 			if( w_g5_mode ) begin
-				ff_display_color <= { ff_display_color_sprite[7:4], 2'd0, ff_display_color_sprite[1:0] };
+				ff_display_color <= { 6'd0, ff_display_color_sprite[1:0] };
 			end
 			else begin
-				ff_display_color <= ff_display_color_sprite;
+				ff_display_color <= { 4'd0, ff_display_color_sprite };
 			end
 			ff_display_color_oe <= 1'b1;
 		end

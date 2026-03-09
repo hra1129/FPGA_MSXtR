@@ -71,12 +71,11 @@ module vdp (
 
 	output				int_n,
 
-	output		[16:2]	vram_address,
+	output		[16:0]	vram_address,
 	output				vram_write,
 	output				vram_valid,
-	output		[31:0]	vram_wdata,
-	output		[3:0]	vram_wdata_mask,
-	input		[31:0]	vram_rdata,
+	output		[7:0]	vram_wdata,
+	input		[15:0]	vram_rdata,
 	input				vram_rdata_en,
 	output				vram_refresh,
 
@@ -88,11 +87,19 @@ module vdp (
 	output		[7:0]	display_g,
 	output		[7:0]	display_b,
 
+	// raw video output (for external video_out)
+	output		[10:0]	vdp_hcounter,
+	output		[10:0]	vdp_vcounter,
+	output		[7:0]	vdp_r,
+	output		[7:0]	vdp_g,
+	output		[7:0]	vdp_b,
+
 	// Force Highspeed Mode
 	input				force_highspeed
 );
 	wire		[11:0]	w_h_count;
 	wire		[ 9:0]	w_v_count;
+
 	wire		[13:0]	w_screen_pos_x;
 	wire		[ 9:0]	w_screen_pos_y;
 	wire		[ 1:0]	w_pixel_phase_x;
@@ -142,9 +149,9 @@ module vdp (
 	wire				w_command_vram_valid;
 	wire				w_command_vram_ready;
 	wire				w_command_vram_write;
-	wire		[31:0]	w_command_vram_wdata;
+	wire		[7:0]	w_command_vram_wdata;
 	wire		[3:0]	w_command_vram_wdata_mask;
-	wire		[31:0]	w_command_vram_rdata;
+	wire		[15:0]	w_command_vram_rdata;
 	wire				w_command_vram_rdata_en;
 
 	wire				w_clear_sprite_collision;
@@ -362,7 +369,6 @@ module vdp (
 		.command_vram_ready							( w_command_vram_ready						),
 		.command_vram_write							( w_command_vram_write						),
 		.command_vram_wdata							( w_command_vram_wdata						),
-		.command_vram_wdata_mask					( w_command_vram_wdata_mask					),
 		.command_vram_rdata							( w_command_vram_rdata						),
 		.command_vram_rdata_en						( w_command_vram_rdata_en					),
 		.register_write								( w_register_write							),
@@ -406,7 +412,6 @@ module vdp (
 		.command_vram_ready							( w_command_vram_ready						),
 		.command_vram_write							( w_command_vram_write						),
 		.command_vram_wdata							( w_command_vram_wdata						),
-		.command_vram_wdata_mask					( w_command_vram_wdata_mask					),
 		.command_vram_rdata							( w_command_vram_rdata						),
 		.command_vram_rdata_en						( w_command_vram_rdata_en					),
 		.cpu_vram_address							( w_cpu_vram_address						),
@@ -420,7 +425,6 @@ module vdp (
 		.vram_valid									( vram_valid								),
 		.vram_write									( vram_write								),
 		.vram_wdata									( vram_wdata								),
-		.vram_wdata_mask							( vram_wdata_mask							),
 		.vram_rdata									( vram_rdata								),
 		.vram_rdata_en								( vram_rdata_en								),
 		.pre_vram_refresh							( w_pre_vram_refresh						),
@@ -452,8 +456,7 @@ module vdp (
 		.reg_yjk_mode								( reg_yjk_mode								),
 		.reg_yae_mode								( reg_yae_mode								),
 		.reg_color0_opaque							( reg_color0_opaque							),
-		.reg_backdrop_color							( reg_backdrop_color						),
-		.reg_ext_palette_mode					( reg_ext_palette_mode						)
+		.reg_backdrop_color							( reg_backdrop_color						)
 	);
 
 	// --------------------------------------------------------------------
@@ -483,13 +486,13 @@ module vdp (
 	vdp_video_out u_video_out (
 		.clk										( clk										),
 		.reset_n									( reset_n									),
-		.h_count									( w_h_count									),
-		.v_count									( w_v_count									),
+		.h_count									( vdp_hcounter								),
+		.v_count									( vdp_vcounter								),
 		.has_scanline								( 1'b1										),
 		.field										( w_status_field							),
-		.vdp_r										( w_upscan_r								),
-		.vdp_g										( w_upscan_g								),
-		.vdp_b										( w_upscan_b								),
+		.vdp_r										( vdp_r										),
+		.vdp_g										( vdp_g										),
+		.vdp_b										( vdp_b										),
 		.display_hs									( display_hs								),
 		.display_vs									( display_vs								),
 		.display_en									( display_en								),

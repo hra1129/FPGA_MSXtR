@@ -89,6 +89,9 @@ module fpga_msxtr_body #(
 	output			config_cs_n,			//	PIN
 	output			config_clk,				//	PIN
 	inout	[3:0]	config_sio,				//	PIN, PIN, PIN, PIN
+	//	HDMI
+	output			tmds_clk_p,				//	(PIN33/34)
+	output	[2:0]	tmds_d_p,				//	(PIN39/40), (PIN37/38), (PIN35/36)
 	//	SDRAM
 	output			O_sdram_clk,			//	Internal
 	output			O_sdram_cke,			//	Internal
@@ -112,8 +115,8 @@ module fpga_msxtr_body #(
 	wire			w_enable;
 	wire			w_3_579mhz;
 
-	wire			wait_n;
-	wire			int_n;
+	wire			w_wait_n;
+	wire			w_int_n;
 
 	wire 			w_z80_busrq_n;
 	wire 			w_z80_m1_n;
@@ -191,29 +194,34 @@ module fpga_msxtr_body #(
 	wire	[3:0]	w_sdram_bus_wdata_mask;
 	wire	[31:0]	w_sdram_bus_rdata;
 
-	wire	[16:2]	w_vram_address;
+	wire	[16:0]	w_vram_address;
 	wire			w_vram_write;
 	wire			w_vram_valid;
 	wire	[31:0]	w_vram_wdata;
 	wire	[3:0]	w_vram_wdata_mask;
-	wire	[31:0]	w_vram_rdata;
+	wire	[15:0]	w_vram_rdata;
 	wire			w_vram_rdata_en;
-	wire			w_vram_refresh;
 
-	wire	[7:0]	w_ssram_rdata;
+	wire	[15:0]	w_ssram_rdata;
 	wire			w_ssram_rdata_en;
 
 	wire	[7:0]	w_video_r;
 	wire	[7:0]	w_video_g;
 	wire	[7:0]	w_video_b;
 
-	wire			w_vdp_cs_n;
-	wire	[7:0]	w_vdp_q;
-	wire			w_vdp_q_en;
+	wire			w_vdp_cs;
+	wire	[7:0]	w_vdp_rdata;
+	wire			w_vdp_rdata_en;
 	wire			w_vdp_ready;
 	wire			w_display_hs;
 	wire			w_display_vs;
 	wire			w_display_en;
+
+	wire	[10:0]	w_vdp_hcounter;
+	wire	[10:0]	w_vdp_vcounter;
+	wire	[5:0]	w_vdp_r;
+	wire	[5:0]	w_vdp_g;
+	wire	[5:0]	w_vdp_b;
 
 	wire			w_msx_reset_n;
 	wire			w_cpu_freeze;
@@ -307,8 +315,6 @@ module fpga_msxtr_body #(
 	wire			w_pcm_fs;
 	wire	[15:0]	w_pcm_l;
 	wire	[15:0]	w_pcm_r;
-	wire	[2:0]	tmds_d_p;
-	wire			tmds_clk_p;
 	wire			reset_n3;
 
 	assign config_cs_n  = 1'b1;			//	PIN
@@ -390,8 +396,8 @@ module fpga_msxtr_body #(
 		.reset_n				( w_msx_reset_n				),
 		.clk_n					( clk42m					),
 		.enable					( w_3_579mhz				),
-		.wait_n					( wait_n					),
-		.int_n					( int_n						),
+		.wait_n					( w_wait_n					),
+		.int_n					( w_int_n					),
 		.nmi_n					( 1'b1						),
 		.busrq_n				( w_z80_busrq_n				),
 		.m1_n					( w_z80_m1_n				),
@@ -411,8 +417,8 @@ module fpga_msxtr_body #(
 		.reset_n				( w_msx_reset_n				),
 		.clk_n					( clk42m					),
 		.enable					( 1'b1						),
-		.wait_n					( wait_n					),
-		.int_n					( int_n						),
+		.wait_n					( w_wait_n					),
+		.int_n					( w_int_n					),
 		.nmi_n					( 1'b1						),
 		.busrq_n				( w_r800_busrq_n			),
 		.m1_n					( w_r800_m1_n				),
@@ -427,11 +433,13 @@ module fpga_msxtr_body #(
 		.d						( w_r800_d					)
 	);
 
+	assign w_int_n = 1'b1;
+
 	//	System Controller
 	s2026a u_s2026a (
 		.reset_n				( w_msx_reset_n				),
 		.clk85m					( clk85m					),
-		.wait_n					( wait_n					),
+		.wait_n					( w_wait_n					),
 		.z80_busrq_n			( w_z80_busrq_n				),
 		.z80_m1_n				( w_z80_m1_n				),
 		.z80_mreq_n				( w_z80_mreq_n				),
@@ -455,6 +463,7 @@ module fpga_msxtr_body #(
 		.mapper_cs				( w_mapper_cs				),
 		.ppi_cs					( w_ppi_cs					),
 		.rtc_cs					( w_rtc_cs					),
+		.vdp_cs					( w_vdp_cs					),
 		.cartridge_cs			( w_cartridge_cs			),
 		.ssg_cs					( w_ssg_cs					),
 		.opll_cs				( w_opll_cs					),
@@ -474,6 +483,9 @@ module fpga_msxtr_body #(
 		.bus_rtc_rdata			( w_bus_rtc_rdata			),
 		.bus_rtc_rdata_en		( w_bus_rtc_rdata_en		),
 		.bus_rtc_ready			( w_bus_rtc_ready			),
+		.bus_vdp_rdata			( w_vdp_rdata				),
+		.bus_vdp_rdata_en		( w_vdp_rdata_en			),
+		.bus_vdp_ready			( w_vdp_ready				),
 		.bus_cartridge_rdata	( w_bus_cartridge_rdata		),
 		.bus_cartridge_rdata_en	( w_bus_cartridge_rdata_en	),
 		.bus_cartridge_ready	( w_bus_cartridge_ready		),
@@ -510,220 +522,221 @@ module fpga_msxtr_body #(
 	assign mreq_n		= w_processor_mode ? w_r800_mreq_n  : w_z80_mreq_n;
 	assign rfsh_n		= w_processor_mode ? w_r800_rfsh_n  : w_z80_rfsh_n;
 
-	// --------------------------------------------------------------------
-	//	PPI
-	// --------------------------------------------------------------------
-	ppi u_ppi (
-		.reset_n				( w_msx_reset_n				),
-		.clk					( clk42m					),
-		.bus_cs					( w_ppi_cs					),
-		.bus_write				( w_bus_write				),
-		.bus_valid				( w_bus_valid				),
-		.bus_ready				( w_bus_ppi_ready			),
-		.bus_address			( w_bus_address[1:0]		),
-		.bus_wdata				( w_bus_wdata				),
-		.bus_rdata				( w_bus_ppi_rdata			),
-		.bus_rdata_en			( w_bus_ppi_rdata_en		),
-		.primary_slot			( w_primary_slot			),
-		.matrix_y				( w_matrix_y				),
-		.matrix_x				( w_matrix_x				),
-		.cmt_motor_off			( w_cmt_motor_off			),
-		.cmt_write_signal		( w_cmt_write_signal		),
-		.keyboard_caps_led_off	( w_keyboard_caps_led_off	),
-		.click_sound			( w_click_sound				)
-	);
-
-	// --------------------------------------------------------------------
-	//	RTC
-	// --------------------------------------------------------------------
-	rtc u_rtc (
-		.clk					( clk85m					),
-		.reset_n				( ff_reset_n				),
-		.enable					( w_enable					),
-		.bus_cs					( w_rtc_cs					),
-		.bus_write				( w_bus_write				),
-		.bus_valid				( w_bus_valid				),
-		.bus_ready				( w_bus_rtc_ready			),
-		.bus_address			( w_bus_address[0]			),
-		.bus_wdata				( w_bus_wdata				),
-		.bus_rdata				( w_bus_rtc_rdata			),
-		.bus_rdata_en			( w_bus_rtc_rdata_en		)
-	);
-
-	// --------------------------------------------------------------------
-	//	Expansion Slot#0-X
-	// --------------------------------------------------------------------
-	secondary_slot_inst u_exp_slot0 (
-		.reset_n				( w_msx_reset_n				),
-		.clk					( clk42m					),
-		.bus_cs					( w_sltsl0					),
-		.bus_write				( w_bus_write				),
-		.bus_valid				( w_bus_valid				),
-		.bus_ready				( w_bus_expslt0_ready		),
-		.bus_address			( w_bus_address				),
-		.bus_wdata				( w_bus_wdata				),
-		.bus_rdata				( w_expslt0_q				),
-		.bus_rdata_en			( w_expslt0_q_en			),
-		.sltsl_ext0				( w_sltsl00					),
-		.sltsl_ext1				( w_sltsl01					),
-		.sltsl_ext2				( w_sltsl02					),
-		.sltsl_ext3				( w_sltsl03					)
-	);
-
-	// --------------------------------------------------------------------
-	//	Expansion Slot#3-X
-	// --------------------------------------------------------------------
-	secondary_slot_inst u_exp_slot3 (
-		.reset_n				( w_msx_reset_n				),
-		.clk					( clk42m					),
-		.bus_cs					( w_sltsl3					),
-		.bus_write				( w_bus_write				),
-		.bus_valid				( w_bus_valid				),
-		.bus_ready				( w_bus_expslt3_ready		),
-		.bus_address			( w_bus_address				),
-		.bus_wdata				( w_bus_wdata				),
-		.bus_rdata				( w_expslt3_q				),
-		.bus_rdata_en			( w_expslt3_q_en			),
-		.sltsl_ext0				( w_sltsl30					),
-		.sltsl_ext1				( w_sltsl31					),
-		.sltsl_ext2				( w_sltsl32					),
-		.sltsl_ext3				( w_sltsl33					)
-	);
-
-	// --------------------------------------------------------------------
-	//	SSG
-	// --------------------------------------------------------------------
-	ssg u_ssg (
-		.clk					( clk42m					),
-		.reset_n				( w_msx_reset_n				),
-		.enable					( w_3_579mhz				),
-		.bus_cs					( w_ssg_cs					),
-		.bus_valid				( w_bus_valid				),
-		.bus_write				( w_bus_write				),
-		.bus_ready				( w_bus_ssg_ready			),
-		.bus_address			( w_bus_address[1:0]		),
-		.bus_wdata				( w_bus_wdata				),
-		.bus_rdata				( w_bus_ssg_rdata			),
-		.bus_rdata_en			( w_bus_ssg_rdata_en		),
-		.ssg_ioa				( ssg_ioa					),
-		.ssg_iob				( ssg_iob					),
-		.keyboard_type			( w_keyboard_type			),
-		.cmt_read				( 1'b0						),
-		.kana_led				( w_keyboard_kana_led_off	),
-		.sound_out				( w_ssg_sound_out			)
-	);
-
-	// --------------------------------------------------------------------
-	//	OPLL
-	// --------------------------------------------------------------------
-	ip_opll u_opll (
-		.reset_n				( w_msx_reset_n				),
-		.clk					( clk42m					),
-		.iorq_n					( iorq_n					),
-		.wr_n					( wr_n						),
-		.address				( a							),
-		.wdata					( d							),
-		.sound_out				( w_opll_sound_out			)
-	);
-
-	// --------------------------------------------------------------------
-	//	Audio out
-	// --------------------------------------------------------------------
-	i2s_audio u_audio (
-		.clk					( clk42m					),
-		.reset_n				( w_msx_reset_n				),
-		.sound_in				( w_sound_in				),
-		.i2s_audio_en			( i2s_audio_en				),
-		.i2s_audio_din			( i2s_audio_din				),
-		.i2s_audio_lrclk		( i2s_audio_lrclk			),
-		.i2s_audio_bclk			( i2s_audio_bclk			)
-	);
-
-	//	signed 16bit mono
-	assign w_sound_in	= 
-		{ w_opll_sound_out } +
-		{ 4'd0, w_click_sound, 12'd0 } + 
-		{ 2'd0, w_ssg_sound_out, 2'd0 } + 
-		{ 2'd0, w_megarom1_sound, 3'd0 } +
-		{ 2'd0, w_megarom2_sound, 3'd0 };
-
-	// --------------------------------------------------------------------
-	//	V9958 clone
-	// --------------------------------------------------------------------
-	vdp u_v9958 (
-		.clk					( clk85m				),
-		.reset_n				( w_msx_reset_n			),
-		.initial_busy			( 1'b0					),
-		.bus_address			( w_bus_address[1:0]	),
-		.bus_ioreq				( ~w_vdp_cs_n			),
-		.bus_write				( w_bus_write			),
-		.bus_valid				( w_bus_valid			),
-		.bus_ready				( w_vdp_ready			),
-		.bus_wdata				( w_bus_wdata			),
-		.bus_rdata				( w_vdp_q				),
-		.bus_rdata_en			( w_vdp_q_en			),
-		.int_n					( int_n					),
-		.vram_address			( w_vram_address		),
-		.vram_write				( w_vram_write			),
-		.vram_valid				( w_vram_valid			),
-		.vram_wdata				( w_vram_wdata			),
-		.vram_wdata_mask		( w_vram_wdata_mask		),
-		.vram_rdata				( w_vram_rdata			),
-		.vram_rdata_en			( w_vram_rdata_en		),
-		.vram_refresh			( w_vram_refresh		),
-		.display_hs				( w_display_hs			),
-		.display_vs				( w_display_vs			),
-		.display_en				( w_display_en			),
-		.display_r				( w_video_r				),
-		.display_g				( w_video_g				),
-		.display_b				( w_video_b				),
-		.force_highspeed		( ~w_processor_mode		)
-    );
-
-	assign w_vdp_cs_n				= !( !iorq_n && ( { a[7:1], 1'd0 } == 8'h98 ) );
-
-	// --------------------------------------------------------------------
-	//	VRAM用 SerialSRAM
-	// --------------------------------------------------------------------
-	ssram u_ssram (
-		.clk					( clk85m					),
-		.clk_258m				( clk257m					),
-		.reset_n				( ff_reset_n				),
-		.address				( { 2'd0, w_vram_address[16:2], 2'd0 } ),
-		.valid					( w_vram_valid				),
-		.ready					(							),
-		.write					( w_vram_write				),
-		.wdata					( w_vram_wdata[7:0]			),
-		.rdata					( w_ssram_rdata				),
-		.rdata_en				( w_ssram_rdata_en			),
-		//	Burst write interface
-		.burst_start			( 1'b0						),
-		.burst_address			( 19'd0						),
-		.burst_length			( 17'd0						),
-		.burst_wdata			( 8'd0						),
-		.burst_wdata_en			( 1'b0						),
-		.burst_active			(							),
-		//	SPI SRAM I/F
-		.sram_sclk				( smem_clk					),
-		.sram_ce_n				( sram_cs_n					),
-		.sram_sio				( smem_sio					)
-	);
-
-	assign w_vram_rdata		= { 24'd0, w_ssram_rdata };
-	assign w_vram_rdata_en	= w_ssram_rdata_en;
-
-	// --------------------------------------------------------------------
-	//	Video output
-	// --------------------------------------------------------------------
-	assign lcd_clk					= clk42m;
-	assign lcd_de					= w_display_en;
-	assign lcd_hsync				= w_display_hs;
-	assign lcd_vsync				= w_display_vs;
-	assign lcd_red					= w_video_r[7:3];
-	assign lcd_green				= { w_video_g[7:3], 1'b0 };
-	assign lcd_blue					= w_video_b[7:3];
-	assign lcd_bl					= !w_cpu_freeze;
-
+//	// --------------------------------------------------------------------
+//	//	PPI
+//	// --------------------------------------------------------------------
+//	ppi u_ppi (
+//		.reset_n				( w_msx_reset_n				),
+//		.clk					( clk42m					),
+//		.bus_cs					( w_ppi_cs					),
+//		.bus_write				( w_bus_write				),
+//		.bus_valid				( w_bus_valid				),
+//		.bus_ready				( w_bus_ppi_ready			),
+//		.bus_address			( w_bus_address[1:0]		),
+//		.bus_wdata				( w_bus_wdata				),
+//		.bus_rdata				( w_bus_ppi_rdata			),
+//		.bus_rdata_en			( w_bus_ppi_rdata_en		),
+//		.primary_slot			( w_primary_slot			),
+//		.matrix_y				( w_matrix_y				),
+//		.matrix_x				( w_matrix_x				),
+//		.cmt_motor_off			( w_cmt_motor_off			),
+//		.cmt_write_signal		( w_cmt_write_signal		),
+//		.keyboard_caps_led_off	( w_keyboard_caps_led_off	),
+//		.click_sound			( w_click_sound				)
+//	);
+//
+//	// --------------------------------------------------------------------
+//	//	RTC
+//	// --------------------------------------------------------------------
+//	rtc u_rtc (
+//		.clk					( clk85m					),
+//		.reset_n				( ff_reset_n				),
+//		.enable					( w_enable					),
+//		.bus_cs					( w_rtc_cs					),
+//		.bus_write				( w_bus_write				),
+//		.bus_valid				( w_bus_valid				),
+//		.bus_ready				( w_bus_rtc_ready			),
+//		.bus_address			( w_bus_address[0]			),
+//		.bus_wdata				( w_bus_wdata				),
+//		.bus_rdata				( w_bus_rtc_rdata			),
+//		.bus_rdata_en			( w_bus_rtc_rdata_en		)
+//	);
+//
+//	// --------------------------------------------------------------------
+//	//	Expansion Slot#0-X
+//	// --------------------------------------------------------------------
+//	secondary_slot_inst u_exp_slot0 (
+//		.reset_n				( w_msx_reset_n				),
+//		.clk					( clk42m					),
+//		.bus_cs					( w_sltsl0					),
+//		.bus_write				( w_bus_write				),
+//		.bus_valid				( w_bus_valid				),
+//		.bus_ready				( w_bus_expslt0_ready		),
+//		.bus_address			( w_bus_address				),
+//		.bus_wdata				( w_bus_wdata				),
+//		.bus_rdata				( w_expslt0_q				),
+//		.bus_rdata_en			( w_expslt0_q_en			),
+//		.sltsl_ext0				( w_sltsl00					),
+//		.sltsl_ext1				( w_sltsl01					),
+//		.sltsl_ext2				( w_sltsl02					),
+//		.sltsl_ext3				( w_sltsl03					)
+//	);
+//
+//	// --------------------------------------------------------------------
+//	//	Expansion Slot#3-X
+//	// --------------------------------------------------------------------
+//	secondary_slot_inst u_exp_slot3 (
+//		.reset_n				( w_msx_reset_n				),
+//		.clk					( clk42m					),
+//		.bus_cs					( w_sltsl3					),
+//		.bus_write				( w_bus_write				),
+//		.bus_valid				( w_bus_valid				),
+//		.bus_ready				( w_bus_expslt3_ready		),
+//		.bus_address			( w_bus_address				),
+//		.bus_wdata				( w_bus_wdata				),
+//		.bus_rdata				( w_expslt3_q				),
+//		.bus_rdata_en			( w_expslt3_q_en			),
+//		.sltsl_ext0				( w_sltsl30					),
+//		.sltsl_ext1				( w_sltsl31					),
+//		.sltsl_ext2				( w_sltsl32					),
+//		.sltsl_ext3				( w_sltsl33					)
+//	);
+//
+//	// --------------------------------------------------------------------
+//	//	SSG
+//	// --------------------------------------------------------------------
+//	ssg u_ssg (
+//		.clk					( clk42m					),
+//		.reset_n				( w_msx_reset_n				),
+//		.enable					( w_3_579mhz				),
+//		.bus_cs					( w_ssg_cs					),
+//		.bus_valid				( w_bus_valid				),
+//		.bus_write				( w_bus_write				),
+//		.bus_ready				( w_bus_ssg_ready			),
+//		.bus_address			( w_bus_address[1:0]		),
+//		.bus_wdata				( w_bus_wdata				),
+//		.bus_rdata				( w_bus_ssg_rdata			),
+//		.bus_rdata_en			( w_bus_ssg_rdata_en		),
+//		.ssg_ioa				( ssg_ioa					),
+//		.ssg_iob				( ssg_iob					),
+//		.keyboard_type			( w_keyboard_type			),
+//		.cmt_read				( 1'b0						),
+//		.kana_led				( w_keyboard_kana_led_off	),
+//		.sound_out				( w_ssg_sound_out			)
+//	);
+//
+//	// --------------------------------------------------------------------
+//	//	OPLL
+//	// --------------------------------------------------------------------
+//	ip_opll u_opll (
+//		.reset_n				( w_msx_reset_n				),
+//		.clk					( clk42m					),
+//		.iorq_n					( iorq_n					),
+//		.wr_n					( wr_n						),
+//		.address				( a							),
+//		.wdata					( d							),
+//		.sound_out				( w_opll_sound_out			)
+//	);
+//
+//	// --------------------------------------------------------------------
+//	//	Audio out
+//	// --------------------------------------------------------------------
+//	i2s_audio u_audio (
+//		.clk					( clk42m					),
+//		.reset_n				( w_msx_reset_n				),
+//		.sound_in				( w_sound_in				),
+//		.i2s_audio_en			( i2s_audio_en				),
+//		.i2s_audio_din			( i2s_audio_din				),
+//		.i2s_audio_lrclk		( i2s_audio_lrclk			),
+//		.i2s_audio_bclk			( i2s_audio_bclk			)
+//	);
+//
+//	//	signed 16bit mono
+//	assign w_sound_in	= 
+//		{ w_opll_sound_out } +
+//		{ 4'd0, w_click_sound, 12'd0 } + 
+//		{ 2'd0, w_ssg_sound_out, 2'd0 } + 
+//		{ 2'd0, w_megarom1_sound, 3'd0 } +
+//		{ 2'd0, w_megarom2_sound, 3'd0 };
+//
+//	// --------------------------------------------------------------------
+//	//	V9958 clone
+//	// --------------------------------------------------------------------
+//	vdp u_v9958 (
+//		.clk					( clk85m				),
+//		.reset_n				( w_msx_reset_n			),
+//		.initial_busy			( 1'b0					),
+//		.bus_address			( w_bus_address[1:0]	),
+//		.bus_ioreq				( w_vdp_cs				),
+//		.bus_write				( w_bus_write			),
+//		.bus_valid				( w_bus_valid			),
+//		.bus_ready				( w_vdp_ready			),
+//		.bus_wdata				( w_bus_wdata			),
+//		.bus_rdata				( w_vdp_rdata			),
+//		.bus_rdata_en			( w_vdp_rdata_en		),
+//		.int_n					( w_int_n				),
+//		.vram_address			( w_vram_address		),
+//		.vram_write				( w_vram_write			),
+//		.vram_valid				( w_vram_valid			),
+//		.vram_wdata				( w_vram_wdata			),
+//		.vram_rdata				( w_vram_rdata			),
+//		.vram_rdata_en			( w_vram_rdata_en		),
+//		.vram_refresh			( 						),
+//		.display_hs				( w_display_hs			),
+//		.display_vs				( w_display_vs			),
+//		.display_en				( w_display_en			),
+//		.display_r				( w_video_r				),
+//		.display_g				( w_video_g				),
+//		.display_b				( w_video_b				),
+//		.vdp_hcounter			( w_vdp_hcounter		),
+//		.vdp_vcounter			( w_vdp_vcounter		),
+//		.vdp_r					( w_vdp_r				),
+//		.vdp_g					( w_vdp_g				),
+//		.vdp_b					( w_vdp_b				),
+//		.force_highspeed		( ~w_processor_mode		)
+//    );
+//
+//	assign w_vdp_cs_n				= !( !iorq_n && ( { a[7:1], 1'd0 } == 8'h98 ) );
+//
+//	// --------------------------------------------------------------------
+//	//	VRAM用 SerialSRAM
+//	// --------------------------------------------------------------------
+//	ssram u_ssram (
+//		.clk					( clk85m					),
+//		.clk_258m				( clk257m					),
+//		.reset_n				( ff_reset_n				),
+//		.address				( { 2'd0, w_vram_address }	),
+//		.valid					( w_vram_valid				),
+//		.ready					(							),
+//		.write					( w_vram_write				),
+//		.wdata					( w_vram_wdata[7:0]			),
+//		.rdata					( w_ssram_rdata				),
+//		.rdata_en				( w_ssram_rdata_en			),
+//		//	Burst write interface
+//		.burst_start			( 1'b0						),
+//		.burst_address			( 19'd0						),
+//		.burst_length			( 17'd0						),
+//		.burst_wdata			( 8'd0						),
+//		.burst_wdata_en			( 1'b0						),
+//		.burst_active			(							),
+//		//	SPI SRAM I/F
+//		.sram_sclk				( smem_clk					),
+//		.sram_ce_n				( sram_cs_n					),
+//		.sram_sio				( smem_sio					)
+//	);
+//
+//	assign w_vram_rdata		= w_ssram_rdata;
+//	assign w_vram_rdata_en	= w_ssram_rdata_en;
+//
+//	assign lcd_clk					= clk42m;
+//	assign lcd_de					= w_display_en;
+//	assign lcd_hsync				= w_display_hs;
+//	assign lcd_vsync				= w_display_vs;
+//	assign lcd_red					= w_video_r[7:3];
+//	assign lcd_green				= { w_video_g[7:3], 1'b0 };
+//	assign lcd_blue					= w_video_b[7:3];
+//	assign lcd_bl					= !w_cpu_freeze;
+//
 	// --------------------------------------------------------------------
 	//	SDRAM
 	// --------------------------------------------------------------------
@@ -737,7 +750,7 @@ module fpga_msxtr_body #(
 		.bus_write				( w_sdram_bus_write			),
 		.bus_refresh			( w_sdram_bus_refresh		),
 		.bus_wdata				( w_sdram_bus_wdata			),
-		.bus_wdata_mask			( w_sdram_bus_wdata_mask		),
+		.bus_wdata_mask			( w_sdram_bus_wdata_mask	),
 		.bus_rdata				( w_sdram_bus_rdata			),
 		.bus_rdata_en			( w_sdram_q_en				),
 		.O_sdram_clk			( O_sdram_clk				),
@@ -767,170 +780,170 @@ module fpga_msxtr_body #(
 	//	TODO: w_cpu_freeze should come from micom_connect module
 	assign w_cpu_freeze			= 1'b0;
 
-	// --------------------------------------------------------------------
-	//	KanjiROM
-	// --------------------------------------------------------------------
-	kanji_rom u_kanji_rom (
-		.reset_n				( w_msx_reset_n			),
-		.clk					( clk42m				),
-		.bus_cs					( w_kanji_cs			),
-		.bus_write				( w_bus_write			),
-		.bus_valid				( w_bus_valid			),
-		.bus_ready				( w_bus_kanji_ready		),
-		.bus_address			( w_bus_address[1:0]	),
-		.bus_wdata				( w_bus_wdata			),
-		.bus_rdata				( w_bus_kanji_rdata		),
-		.bus_rdata_en			( w_bus_kanji_rdata_en	),
-		.kanji_address			( w_kanji_address		),
-		.kanji_valid			( w_kanji_en			),
-		.kanji_ready			( w_kanji_ready			),
-		.kanji_rdata			( w_kanji_rdata			),
-		.kanji_rdata_en			( w_kanji_rdata_en		)
-	);
-
-	//	TODO: Proper SDRAM arbitration for kanji data path
-	assign w_kanji_ready	= 1'b1;
-	assign w_kanji_rdata	= w_sdram_q;
-	assign w_kanji_rdata_en	= w_sdram_q_en & w_kanji_en;
-
-	// --------------------------------------------------------------------
-	//	MegaROM Controller
-	// --------------------------------------------------------------------
-	megarom_wo_scc u_megarom_slot1 (
-		.clk					( clk42m				),
-		.reset_n				( w_msx_reset_n			),
-		.sltsl					( w_sltsl1				),
-		.mreq_n					( mreq_n				),
-		.wr_n					( wr_n					),
-		.rd_n					( rd_n					),
-		.address				( a						),
-		.wdata					( d						),
-		.rdata					( w_megarom1_rdata		),
-		.rdata_en				( w_megarom1_rdata_en	),
-		.mem_cs_n				( w_megarom1_mem_cs_n	),
-		.megarom_rd_n			( w_megarom1_rd_n		),
-		.megarom_address		( w_megarom1_address	),
-		.mode					( w_megarom1_mode		),
-		.sound_out				( w_megarom1_sound		)
-	);
-
-	megarom_wo_scc u_megarom_slot2 (
-		.clk					( clk42m				),
-		.reset_n				( w_msx_reset_n			),
-		.sltsl					( w_sltsl2				),
-		.mreq_n					( mreq_n				),
-		.wr_n					( wr_n					),
-		.rd_n					( rd_n					),
-		.address				( a						),
-		.wdata					( d						),
-		.rdata					( w_megarom2_rdata		),
-		.rdata_en				( w_megarom2_rdata_en	),
-		.mem_cs_n				( w_megarom2_mem_cs_n	),
-		.megarom_rd_n			( w_megarom2_rd_n		),
-		.megarom_address		( w_megarom2_address	),
-		.mode					( w_megarom2_mode		),
-		.sound_out				( w_megarom2_sound		)
-	);
-
-	// --------------------------------------------------------------------
-	//	Memory mapper
-	// --------------------------------------------------------------------
-	memory_mapper_inst u_memory_mapper (
-		.reset_n				( w_msx_reset_n			),
-		.clk					( clk42m				),
-		.bus_cs					( w_mapper_cs			),
-		.bus_write				( w_bus_write			),
-		.bus_valid				( w_bus_valid			),
-		.bus_ready				( w_bus_mapper_ready	),
-		.bus_address			( w_bus_address			),
-		.bus_wdata				( w_bus_wdata			),
-		.mapper_segment			( w_mapper_segment		)
-	);
-
-	// --------------------------------------------------------------------
-	//	SDRAM memory map
-	// --------------------------------------------------------------------
-	assign w_sdram_address[22:13]	= ( w_cpu_freeze                     ) ? w_spi_address[22:13]                   :		//	SDRAM Updater from SPI
-									  ( w_kanji_en                       ) ? {  5'b000_01, w_kanji_address[17:13] } :		//	JIS1/JIS2 KanjiROM
-									  ( w_sltsl30                        ) ? {  1'b1, w_mapper_segment, a[13]     } :		//	MapperRAM
-									  ( w_sltsl1                         ) ? {  2'b01, w_megarom1_address[20:13]  } :		//	MegaROM 2MB
-									  ( w_sltsl2                         ) ? {  3'b001,w_megarom2_address[19:13]  } :		//	MegaROM 1MB
-									  ( w_sltsl03                        ) ? {  8'b000_0011_1,    a[14:13]        } :		//	MSX Logo, ExtBASIC
-									  ( w_sltsl02                        ) ? {  9'b000_0011_01,   a[13]           } :		//	MSX-MUSIC
-									  ( w_sltsl01                        ) ? {  9'b000_0011_00,   a[13]           } :		//	BASIC'N
-									  ( w_sltsl31 && (a[15:14] == 2'b00) ) ? {  8'b000_1000_0,    a[13]           } :		//	SUB-ROM
-									  ( w_sltsl31                        ) ? {  8'b000_0010_1,    a[15], a[13]    } :		//	KanjiBASIC
-									  ( w_sltsl00                        ) ? {  8'b000_0010_0,    a[14:13]        } :		//	MAIN-ROM
-									  ( w_sltsl32                        ) ? {  6'b000_000, 1'b0, a[15:13]        } :		//	BANK#00-07: Nextor
-									                                           10'b000_0000_000;							//	#3-3 N/A
-
-	assign w_sdram_address[12:0]	= w_cpu_freeze ? w_spi_address[12:0]: 
-	                            	  w_kanji_en   ? w_kanji_address[12:0]:
-	                            	                 a[12:0];
-	assign w_sdram_d				= w_cpu_freeze ? w_spi_d            : d;
-
-	assign w_sdram_mreq_n			= ( w_cpu_freeze ) ? w_spi_mreq_n   : 
-									  ( w_kanji_en   ) ? ~w_kanji_en    :		//	JIS1/JIS2 KanjiROM
-									                     mreq_n;
-
-	assign w_sdram_wr_n				= ( w_cpu_freeze ) ? w_spi_mreq_n :							//	SDRAM Updater from SPI
-									  ( w_sltsl30    ) ? wr_n         :							//	MapperRAM
-									                     1'b1;
-
-	assign w_sdram_rd_n				= ( w_kanji_en                                            ) ? ~w_kanji_en :			//	JIS1/JIS2 KanjiROM
-									  ( !iorq_n                                               ) ? 1'b1 :				//	
-									  ( w_sltsl30                                             ) ? rd_n :				//	MapperRAM
-									  ( !w_megarom1_mem_cs_n                                  ) ? w_megarom1_rd_n :		//	MegaROM 1MB
-									  ( !w_megarom2_mem_cs_n                                  ) ? w_megarom2_rd_n :		//	MegaROM 512KB
-									  ( w_sltsl03  && (a[15:14] == 2'b01 || a[15:14] == 2'b10)) ? rd_n :				//	MSX Logo, ExtBASIC
-									  ( w_sltsl02  && (a[15:14] == 2'b01)                     ) ? rd_n :				//	MSX-MUSIC
-									  ( w_sltsl01  && (a[15:14] == 2'b01)                     ) ? rd_n :				//	BASIC'N
-									  ( w_sltsl31                                             ) ? rd_n :				//	SUB-ROM, KanjiBASIC
-									  ( w_sltsl00  && (a[15]    == 1'b0)                      ) ? rd_n :				//	MAIN-ROM
-									  ( w_sltsl32  && (a[15:14] == 2'b01 || a[15:14] == 2'b10)) ? rd_n :				//	Nextor
-									                                                              1'b1;
-
-	// --------------------------------------------------------------------
-	//	HDMI
-	// --------------------------------------------------------------------
-	hdmi_tx #(
-		.DEVICE_FAMILY		( "MAX 10"			),
-		.CLOCK_FREQUENCY	( 27.000			),		//	Input clock frequency (MHz)
-		.ENCODE_MODE		( "HDMI"			),		//	HDMI
-		.USE_EXTCONTROL		( "ON"				),		//	Use control port (External HDMI timing generator)
-		.SYNC_POLARITY		( "NEGATIVE"		),		//	Invert HSYNC/VSYNC to send
-		.SCANMODE			( "AUTO"			),		//	Displays decides
-		.PICTUREASPECT		( "NONE"			),		//	Picture aspect ratio information not present
-		.FORMATASPECT		( "AUTO"			),		//	Same as picture
-		.PICTURESCALING		( "FIT"				),		//	Picture has been scaled H and V
-		.COLORSPACE			( "RGB"				),		//	RGB888 (Fixed at Full range)
-		.YCC_DATARANGE		( "LIMITED"			),		//	Limited data range(16-235,240)
-		.CONTENTTYPE		( "GRAPHICS"		),		//	for PC use(IT Content)
-		.REPETITION			( 0					),		//	Pixel Repetition Factor (0-9)
-		.VIDEO_CODE			( 0					),		//	Video Information Codes (1-59, 0=No data)
-		.USE_AUDIO_PACKET	( "ON"				),		//	Use Audio sample packet
-		.AUDIO_FREQUENCY	( 48.0				),		//	Audio sampling frequency (KHz)
-		.PCMFIFO_DEPTH		( 8					),		//	Sample data fifo depth : 8=256word(35sample)
-		.CATEGORY_CODE		( 8'h00				)
-	) u_hdmi_tx (
-		.reset				( ~reset_n3			),		//	active high
-		.clk				( clk27m			),		//	27MHz pixel clock
-		.clk_x5				( clk135m			),		//	135MHz = 5 * 27MHz
-		.cc_swap			( 					),		//	Type-C AltMode swap option
-		.control			( w_hdmicontrol		),		//	HDMI control from video_syncgen
-		.active				( w_active			),		//	Pixel data active
-		.r_data				( w_cb_rout			),		//	R
-		.g_data				( w_cb_gout			),		//	G
-		.b_data				( w_cb_bout			),		//	B
-		.hsync				( w_hsync			),		//	Horizontal sync
-		.vsync				( w_vsync			),		//	Vertical sync
-		.pcm_fs				( w_pcm_fs			),		//	sound
-		.pcm_l				( w_pcm_l			),		//	sound
-		.pcm_r				( w_pcm_r			),		//	sound
-		.data				( tmds_d_p			),		//	TMDS data
-		.data_n				( 					),		//	TMDS data (inverted)
-		.clock				( tmds_clk_p		),		//	TMDS clock
-		.clock_n			( 					)		//	TMDS clock (inverted)
-	);
+//	// --------------------------------------------------------------------
+//	//	KanjiROM
+//	// --------------------------------------------------------------------
+//	kanji_rom u_kanji_rom (
+//		.reset_n				( w_msx_reset_n			),
+//		.clk					( clk42m				),
+//		.bus_cs					( w_kanji_cs			),
+//		.bus_write				( w_bus_write			),
+//		.bus_valid				( w_bus_valid			),
+//		.bus_ready				( w_bus_kanji_ready		),
+//		.bus_address			( w_bus_address[1:0]	),
+//		.bus_wdata				( w_bus_wdata			),
+//		.bus_rdata				( w_bus_kanji_rdata		),
+//		.bus_rdata_en			( w_bus_kanji_rdata_en	),
+//		.kanji_address			( w_kanji_address		),
+//		.kanji_valid			( w_kanji_en			),
+//		.kanji_ready			( w_kanji_ready			),
+//		.kanji_rdata			( w_kanji_rdata			),
+//		.kanji_rdata_en			( w_kanji_rdata_en		)
+//	);
+//
+//	//	TODO: Proper SDRAM arbitration for kanji data path
+//	assign w_kanji_ready	= 1'b1;
+//	assign w_kanji_rdata	= w_sdram_q;
+//	assign w_kanji_rdata_en	= w_sdram_q_en & w_kanji_en;
+//
+//	// --------------------------------------------------------------------
+//	//	MegaROM Controller
+//	// --------------------------------------------------------------------
+//	megarom_wo_scc u_megarom_slot1 (
+//		.clk					( clk42m				),
+//		.reset_n				( w_msx_reset_n			),
+//		.sltsl					( w_sltsl1				),
+//		.mreq_n					( mreq_n				),
+//		.wr_n					( wr_n					),
+//		.rd_n					( rd_n					),
+//		.address				( a						),
+//		.wdata					( d						),
+//		.rdata					( w_megarom1_rdata		),
+//		.rdata_en				( w_megarom1_rdata_en	),
+//		.mem_cs_n				( w_megarom1_mem_cs_n	),
+//		.megarom_rd_n			( w_megarom1_rd_n		),
+//		.megarom_address		( w_megarom1_address	),
+//		.mode					( w_megarom1_mode		),
+//		.sound_out				( w_megarom1_sound		)
+//	);
+//
+//	megarom_wo_scc u_megarom_slot2 (
+//		.clk					( clk42m				),
+//		.reset_n				( w_msx_reset_n			),
+//		.sltsl					( w_sltsl2				),
+//		.mreq_n					( mreq_n				),
+//		.wr_n					( wr_n					),
+//		.rd_n					( rd_n					),
+//		.address				( a						),
+//		.wdata					( d						),
+//		.rdata					( w_megarom2_rdata		),
+//		.rdata_en				( w_megarom2_rdata_en	),
+//		.mem_cs_n				( w_megarom2_mem_cs_n	),
+//		.megarom_rd_n			( w_megarom2_rd_n		),
+//		.megarom_address		( w_megarom2_address	),
+//		.mode					( w_megarom2_mode		),
+//		.sound_out				( w_megarom2_sound		)
+//	);
+//
+//	// --------------------------------------------------------------------
+//	//	Memory mapper
+//	// --------------------------------------------------------------------
+//	memory_mapper_inst u_memory_mapper (
+//		.reset_n				( w_msx_reset_n			),
+//		.clk					( clk42m				),
+//		.bus_cs					( w_mapper_cs			),
+//		.bus_write				( w_bus_write			),
+//		.bus_valid				( w_bus_valid			),
+//		.bus_ready				( w_bus_mapper_ready	),
+//		.bus_address			( w_bus_address			),
+//		.bus_wdata				( w_bus_wdata			),
+//		.mapper_segment			( w_mapper_segment		)
+//	);
+//
+//	// --------------------------------------------------------------------
+//	//	SDRAM memory map
+//	// --------------------------------------------------------------------
+//	assign w_sdram_address[22:13]	= ( w_cpu_freeze                     ) ? w_spi_address[22:13]                   :		//	SDRAM Updater from SPI
+//									  ( w_kanji_en                       ) ? {  5'b000_01, w_kanji_address[17:13] } :		//	JIS1/JIS2 KanjiROM
+//									  ( w_sltsl30                        ) ? {  1'b1, w_mapper_segment, a[13]     } :		//	MapperRAM
+//									  ( w_sltsl1                         ) ? {  2'b01, w_megarom1_address[20:13]  } :		//	MegaROM 2MB
+//									  ( w_sltsl2                         ) ? {  3'b001,w_megarom2_address[19:13]  } :		//	MegaROM 1MB
+//									  ( w_sltsl03                        ) ? {  8'b000_0011_1,    a[14:13]        } :		//	MSX Logo, ExtBASIC
+//									  ( w_sltsl02                        ) ? {  9'b000_0011_01,   a[13]           } :		//	MSX-MUSIC
+//									  ( w_sltsl01                        ) ? {  9'b000_0011_00,   a[13]           } :		//	BASIC'N
+//									  ( w_sltsl31 && (a[15:14] == 2'b00) ) ? {  8'b000_1000_0,    a[13]           } :		//	SUB-ROM
+//									  ( w_sltsl31                        ) ? {  8'b000_0010_1,    a[15], a[13]    } :		//	KanjiBASIC
+//									  ( w_sltsl00                        ) ? {  8'b000_0010_0,    a[14:13]        } :		//	MAIN-ROM
+//									  ( w_sltsl32                        ) ? {  6'b000_000, 1'b0, a[15:13]        } :		//	BANK#00-07: Nextor
+//									                                           10'b000_0000_000;							//	#3-3 N/A
+//
+//	assign w_sdram_address[12:0]	= w_cpu_freeze ? w_spi_address[12:0]: 
+//	                            	  w_kanji_en   ? w_kanji_address[12:0]:
+//	                            	                 a[12:0];
+//	assign w_sdram_d				= w_cpu_freeze ? w_spi_d            : d;
+//
+//	assign w_sdram_mreq_n			= ( w_cpu_freeze ) ? w_spi_mreq_n   : 
+//									  ( w_kanji_en   ) ? ~w_kanji_en    :		//	JIS1/JIS2 KanjiROM
+//									                     mreq_n;
+//
+//	assign w_sdram_wr_n				= ( w_cpu_freeze ) ? w_spi_mreq_n :							//	SDRAM Updater from SPI
+//									  ( w_sltsl30    ) ? wr_n         :							//	MapperRAM
+//									                     1'b1;
+//
+//	assign w_sdram_rd_n				= ( w_kanji_en                                            ) ? ~w_kanji_en :			//	JIS1/JIS2 KanjiROM
+//									  ( !iorq_n                                               ) ? 1'b1 :				//	
+//									  ( w_sltsl30                                             ) ? rd_n :				//	MapperRAM
+//									  ( !w_megarom1_mem_cs_n                                  ) ? w_megarom1_rd_n :		//	MegaROM 1MB
+//									  ( !w_megarom2_mem_cs_n                                  ) ? w_megarom2_rd_n :		//	MegaROM 512KB
+//									  ( w_sltsl03  && (a[15:14] == 2'b01 || a[15:14] == 2'b10)) ? rd_n :				//	MSX Logo, ExtBASIC
+//									  ( w_sltsl02  && (a[15:14] == 2'b01)                     ) ? rd_n :				//	MSX-MUSIC
+//									  ( w_sltsl01  && (a[15:14] == 2'b01)                     ) ? rd_n :				//	BASIC'N
+//									  ( w_sltsl31                                             ) ? rd_n :				//	SUB-ROM, KanjiBASIC
+//									  ( w_sltsl00  && (a[15]    == 1'b0)                      ) ? rd_n :				//	MAIN-ROM
+//									  ( w_sltsl32  && (a[15:14] == 2'b01 || a[15:14] == 2'b10)) ? rd_n :				//	Nextor
+//									                                                              1'b1;
+//
+//	// --------------------------------------------------------------------
+//	//	HDMI
+//	// --------------------------------------------------------------------
+//	hdmi_tx #(
+//		.DEVICE_FAMILY		( "MAX 10"			),
+//		.CLOCK_FREQUENCY	( 27.000			),		//	Input clock frequency (MHz)
+//		.ENCODE_MODE		( "HDMI"			),		//	HDMI
+//		.USE_EXTCONTROL		( "ON"				),		//	Use control port (External HDMI timing generator)
+//		.SYNC_POLARITY		( "NEGATIVE"		),		//	Invert HSYNC/VSYNC to send
+//		.SCANMODE			( "AUTO"			),		//	Displays decides
+//		.PICTUREASPECT		( "NONE"			),		//	Picture aspect ratio information not present
+//		.FORMATASPECT		( "AUTO"			),		//	Same as picture
+//		.PICTURESCALING		( "FIT"				),		//	Picture has been scaled H and V
+//		.COLORSPACE			( "RGB"				),		//	RGB888 (Fixed at Full range)
+//		.YCC_DATARANGE		( "LIMITED"			),		//	Limited data range(16-235,240)
+//		.CONTENTTYPE		( "GRAPHICS"		),		//	for PC use(IT Content)
+//		.REPETITION			( 0					),		//	Pixel Repetition Factor (0-9)
+//		.VIDEO_CODE			( 0					),		//	Video Information Codes (1-59, 0=No data)
+//		.USE_AUDIO_PACKET	( "ON"				),		//	Use Audio sample packet
+//		.AUDIO_FREQUENCY	( 48.0				),		//	Audio sampling frequency (KHz)
+//		.PCMFIFO_DEPTH		( 8					),		//	Sample data fifo depth : 8=256word(35sample)
+//		.CATEGORY_CODE		( 8'h00				)
+//	) u_hdmi_tx (
+//		.reset				( ~reset_n3			),		//	active high
+//		.clk				( clk27m			),		//	27MHz pixel clock
+//		.clk_x5				( clk135m			),		//	135MHz = 5 * 27MHz
+//		.cc_swap			( 					),		//	Type-C AltMode swap option
+//		.control			( w_hdmicontrol		),		//	HDMI control from video_syncgen
+//		.active				( w_active			),		//	Pixel data active
+//		.r_data				( w_video_r			),		//	R
+//		.g_data				( w_video_g			),		//	G
+//		.b_data				( w_video_b			),		//	B
+//		.hsync				( w_display_hs		),		//	Horizontal sync
+//		.vsync				( w_display_vs		),		//	Vertical sync
+//		.pcm_fs				( w_pcm_fs			),		//	sound
+//		.pcm_l				( w_pcm_l			),		//	sound
+//		.pcm_r				( w_pcm_r			),		//	sound
+//		.data				( tmds_d_p			),		//	TMDS data
+//		.data_n				( 					),		//	TMDS data (inverted)
+//		.clock				( tmds_clk_p		),		//	TMDS clock
+//		.clock_n			( 					)		//	TMDS clock (inverted)
+//	);
 
 endmodule

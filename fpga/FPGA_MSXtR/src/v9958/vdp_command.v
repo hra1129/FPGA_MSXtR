@@ -62,9 +62,8 @@ module vdp_command (
 	output				command_vram_valid,
 	input				command_vram_ready,
 	output				command_vram_write,
-	output		[31:0]	command_vram_wdata,
-	output		[3:0]	command_vram_wdata_mask,
-	input		[31:0]	command_vram_rdata,
+	output		[7:0]	command_vram_wdata,
+	input		[15:0]	command_vram_rdata,
 	input				command_vram_rdata_en,
 	//	CPU interface
 	input				register_write,
@@ -202,7 +201,6 @@ module vdp_command (
 	reg			[7:0]	ff_cache_vram_wdata;
 	wire		[7:0]	w_cache_vram_rdata;
 	wire				w_cache_vram_rdata_en;
-	reg					ff_cache_flush_start;
 	wire				w_cache_flush_end;
 	wire				w_effective_mode;
 	wire		[1:0]	w_bpp;					//	c_bpp_Xbit
@@ -906,7 +904,6 @@ module vdp_command (
 		if( !reset_n ) begin
 			ff_state					<= c_state_idle;
 			ff_cache_vram_address		<= 17'd0;
-			ff_cache_flush_start		<= 1'b0;
 			ff_cache_vram_valid			<= 1'b0;
 			ff_cache_vram_write			<= 1'b0;
 			ff_cache_vram_wdata			<= 8'd0;
@@ -920,7 +917,6 @@ module vdp_command (
 			ff_source					<= ff_color;
 			ff_count_valid				<= 1'b0;
 			ff_border_detect_request	<= 1'b0;
-			ff_cache_flush_start		<= 1'b0;
 			ff_cache_vram_valid			<= 1'b0;
 			ff_wait_count				<= 6'd0;
 			ff_xsel						<= 2'd0;
@@ -952,14 +948,12 @@ module vdp_command (
 			//	STOP command --------------------------------------------------
 			c_state_stop: begin
 				//	Activate cache flush and wait for it to complete.
-				ff_cache_flush_start	<= 1'b1;
 				ff_state				<= c_state_finish;
 			end
 			//	POINT command -------------------------------------------------
 			c_state_point: begin
 				if( ff_sx[16] && !ff_512pixel ) begin
 					//	Go to finish state when start position is outside of screen.
-					ff_cache_flush_start	<= 1'b1;
 					ff_state				<= c_state_finish;
 				end
 				else begin
@@ -977,7 +971,6 @@ module vdp_command (
 			c_state_pset: begin
 				if( ff_dx[8] && !ff_512pixel ) begin
 					//	Go to finish state when start position is outside of screen.
-					ff_cache_flush_start	<= 1'b1;
 					ff_state				<= c_state_finish;
 				end
 				else begin
@@ -1043,7 +1036,6 @@ module vdp_command (
 					ff_state					<= c_state_srch_next;
 				end
 				else begin
-					ff_cache_flush_start		<= 1'b1;
 					ff_state					<= c_state_finish;
 					ff_border_detect_request	<= 1'b1;
 				end
@@ -1058,7 +1050,6 @@ module vdp_command (
 			c_state_line: begin
 				if( ff_dx[8] && !ff_512pixel ) begin
 					//	Go to finish state when start position is outside of screen.
-					ff_cache_flush_start	<= 1'b1;
 					ff_state				<= c_state_finish;
 					ff_count_valid			<= 1'b0;
 				end
@@ -1396,7 +1387,6 @@ module vdp_command (
 					if( reg_command_high_speed_mode || ff_wait_count == 6'd0 ) begin
 						//	Activate cache flush and wait for it to complete.
 						ff_state				<= ff_next_state;
-						ff_cache_flush_start	<= (ff_next_state == c_state_finish);
 					end
 					else begin
 						//	Go to c_state_compatible_wait for compatible speed mode.
@@ -1413,7 +1403,6 @@ module vdp_command (
 				ff_wait_counter			<= ff_wait_counter - 8'd1;
 				if( ff_wait_counter == 8'd0 ) begin
 					ff_state				<= ff_next_state;
-					ff_cache_flush_start	<= (ff_next_state == c_state_finish);
 				end
 			end
 
@@ -1421,18 +1410,11 @@ module vdp_command (
 			c_state_pre_finish: begin
 				ff_count_valid			<= 1'b0;
 				ff_state				<= c_state_finish;
-				ff_cache_flush_start	<= 1'b1;
 			end
 			c_state_finish: begin
 				//	Wait until the cache flush is complete.
-				ff_cache_vram_valid		<= 1'b0;
-				ff_cache_vram_write		<= 1'b0;
-				ff_cache_vram_wdata		<= 8'd0;
-				ff_cache_flush_start	<= 1'b0;
-				if( w_cache_flush_end ) begin
-					ff_state					<= c_state_idle;
-					ff_border_detect_request	<= 1'b0;
-				end
+				ff_state					<= c_state_idle;
+				ff_border_detect_request	<= 1'b0;
 			end
 			default: begin
 				ff_state <= c_state_idle;
@@ -1507,28 +1489,14 @@ module vdp_command (
 	// --------------------------------------------------------------------
 	//	VRAM Access Cache
 	// --------------------------------------------------------------------
-	vdp_command_cache u_cache (
-		.reset_n						( reset_n						),
-		.clk							( clk							),
-		.start							( ff_start						),
-		.cache_vram_address				( ff_cache_vram_address			),
-		.cache_vram_valid				( ff_cache_vram_valid			),
-		.cache_vram_ready				( w_cache_vram_ready			),
-		.cache_vram_write				( ff_cache_vram_write			),
-		.cache_vram_wdata				( ff_cache_vram_wdata			),
-		.cache_vram_rdata				( w_cache_vram_rdata			),
-		.cache_vram_rdata_en			( w_cache_vram_rdata_en			),
-		.cache_flush_start				( ff_cache_flush_start			),
-		.cache_flush_end				( w_cache_flush_end				),
-		.command_vram_address			( command_vram_address			),
-		.command_vram_valid				( command_vram_valid			),
-		.command_vram_ready				( command_vram_ready			),
-		.command_vram_write				( command_vram_write			),
-		.command_vram_wdata				( command_vram_wdata			),
-		.command_vram_wdata_mask		( command_vram_wdata_mask		),
-		.command_vram_rdata				( command_vram_rdata			),
-		.command_vram_rdata_en			( command_vram_rdata_en			)
-	);
+	assign command_vram_address		= ff_cache_vram_address;
+	assign command_vram_valid		= ff_cache_vram_valid;
+	assign w_cache_vram_ready		= command_vram_ready;
+	assign command_vram_write		= ff_cache_vram_write;
+	assign command_vram_wdata		= ff_cache_vram_wdata;
+	assign w_cache_vram_rdata		= command_vram_rdata;
+	assign w_cache_vram_rdata_en	= command_vram_rdata_en;
+	assign w_cache_flush_end		= (ff_state == c_state_finish);
 
 	// --------------------------------------------------------------------
 	//	Status registers

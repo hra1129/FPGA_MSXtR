@@ -65,20 +65,19 @@ module vdp_vram_interface (
 
 	input		[16:0]	screen_mode_vram_address,
 	input				screen_mode_vram_valid,
-	output		[31:0]	screen_mode_vram_rdata,
+	output		[15:0]	screen_mode_vram_rdata,
 
 	input		[16:0]	sprite_vram_address,
 	input				sprite_vram_valid,
-	output		[31:0]	sprite_vram_rdata,
+	output		[15:0]	sprite_vram_rdata,
 	output		[7:0]	sprite_vram_rdata8,
 
 	input		[16:0]	command_vram_address,
 	input				command_vram_valid,
 	output				command_vram_ready,
 	input				command_vram_write,
-	input		[31:0]	command_vram_wdata,
-	input		[3:0]	command_vram_wdata_mask,
-	output		[31:0]	command_vram_rdata,
+	input		[7:0]	command_vram_wdata,
+	output		[15:0]	command_vram_rdata,
 	output				command_vram_rdata_en,
 
 	input		[16:0]	cpu_vram_address,
@@ -89,12 +88,11 @@ module vdp_vram_interface (
 	output		[7:0]	cpu_vram_rdata,
 	output				cpu_vram_rdata_en,
 
-	output		[16:2]	vram_address,
+	output		[16:0]	vram_address,
 	output				vram_valid,
 	output				vram_write,
-	output		[31:0]	vram_wdata,
-	output		[3:0]	vram_wdata_mask,
-	input		[31:0]	vram_rdata,
+	output		[7:0]	vram_wdata,
+	input		[15:0]	vram_rdata,
 	input				vram_rdata_en,
 	input				pre_vram_refresh,
 	output				vram_refresh
@@ -112,16 +110,14 @@ module vdp_vram_interface (
 	wire		[16:0]	w_screen_mode_vram_address;
 	wire		[16:0]	w_command_vram_address;
 	reg			[16:0]	ff_vram_address;
-	reg			[1:0]	ff_vram_byte_sel;
 	reg					ff_vram_valid;
 	reg					ff_vram_write;
-	reg			[31:0]	ff_vram_wdata;
-	reg			[3:0]	ff_vram_wdata_mask;
+	reg			[7:0]	ff_vram_wdata;
 	reg			[2:0]	ff_vram_rdata_sel;
 	reg			[2:0]	ff_vram_rdata_sel_d1;
 	wire		[7:0]	w_rdata8;
-	reg			[31:0]	ff_screen_mode_vram_rdata;
-	reg			[31:0]	ff_sprite_vram_rdata;
+	reg			[15:0]	ff_screen_mode_vram_rdata;
+	reg			[15:0]	ff_sprite_vram_rdata;
 	reg			[7:0]	ff_sprite_vram_rdata8;
 	reg			[7:0]	ff_cpu_vram_rdata;
 	reg					ff_cpu_vram_rdata_en;
@@ -233,20 +229,13 @@ module vdp_vram_interface (
 					ff_vram_address		<= w_cpu_vram_address;
 					ff_vram_valid		<= 1'b1;
 					ff_vram_write		<= cpu_vram_write;
-					ff_vram_wdata		<= { cpu_vram_wdata, cpu_vram_wdata, cpu_vram_wdata, cpu_vram_wdata };
-					case( w_cpu_vram_address[1:0] )
-					2'd0:	ff_vram_wdata_mask	<= 4'b1110;
-					2'd1:	ff_vram_wdata_mask	<= 4'b1101;
-					2'd2:	ff_vram_wdata_mask	<= 4'b1011;
-					2'd3:	ff_vram_wdata_mask	<= 4'b0111;
-					endcase
+					ff_vram_wdata		<= cpu_vram_wdata;
 				end
 				else if( command_vram_valid && (is_access_timming_a || is_access_timming_b) ) begin
 					ff_vram_address		<= w_command_vram_address;
 					ff_vram_valid		<= 1'b1;
 					ff_vram_write		<= command_vram_write;
 					ff_vram_wdata		<= command_vram_wdata;
-					ff_vram_wdata_mask	<= command_vram_wdata_mask;
 				end
 			end
 		end
@@ -257,29 +246,14 @@ module vdp_vram_interface (
 	                         	  is_access_timming_a ? ~(screen_mode_vram_valid | sprite_vram_valid) :
 	                         	  is_access_timming_b ? ~cpu_vram_valid : 1'b0;
 
-	function [7:0] func_rdata_sel(
-		input	[1:0]	address,
-		input	[31:0]	rdata
-	);
-		case( address )
-		2'd0:		func_rdata_sel = rdata[ 7: 0];
-		2'd1:		func_rdata_sel = rdata[15: 8];
-		2'd2:		func_rdata_sel = rdata[23:16];
-		2'd3:		func_rdata_sel = rdata[31:24];
-		default:	func_rdata_sel = 8'dx;
-		endcase
-	endfunction
-
-	assign w_rdata8 = func_rdata_sel( ff_vram_byte_sel, vram_rdata );
+	assign w_rdata8 = vram_rdata[7:0];
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_vram_rdata_sel_d1	<= 2'd0;
-			ff_vram_byte_sel		<= 2'd0;
 		end
 		else if( h_count == c_timming_a || h_count == c_timming_b ) begin
 			ff_vram_rdata_sel_d1	<= ff_vram_rdata_sel;
-			ff_vram_byte_sel		<= ff_vram_address[1:0];
 		end
 	end
 
@@ -314,10 +288,9 @@ module vdp_vram_interface (
 	assign command_vram_rdata		= ff_command_vram_rdata;
 	assign command_vram_rdata_en	= ff_command_vram_rdata_en;
 
-	assign vram_address				= ff_vram_address[16:2];
+	assign vram_address				= ff_vram_address;
 	assign vram_valid				= ff_vram_valid;
 	assign vram_write				= ff_vram_write;
 	assign vram_wdata				= ff_vram_wdata;
-	assign vram_wdata_mask			= ff_vram_wdata_mask;
 	assign vram_refresh				= ff_vram_refresh_pulse;
 endmodule

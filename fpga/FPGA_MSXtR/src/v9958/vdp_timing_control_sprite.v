@@ -66,7 +66,7 @@ module vdp_timing_control_sprite (
 
 	output		[16:0]	vram_address,
 	output				vram_valid,
-	input		[31:0]	vram_rdata,
+	input		[15:0]	vram_rdata,
 	input		[7:0]	vram_rdata8,
 	input				vram_interleave,
 
@@ -109,7 +109,7 @@ module vdp_timing_control_sprite (
 	//	Wire declarations
 	// --------------------------------------------------------------------
 	wire				w_selected_en;
-	wire		[5:0]	w_selected_plane_num;
+	wire		[4:0]	w_selected_plane_num;
 	wire		[31:0]	w_selected_attribute;
 	wire		[4:0]	w_selected_count;
 	wire				w_start_info_collect;
@@ -126,13 +126,8 @@ module vdp_timing_control_sprite (
 	wire		[16:0]	w_ic_vram_address;
 	wire				w_ic_vram_valid;
 	wire		[7:0]	w_y;
-	wire		[7:0]	w_mgy;
 	wire		[7:0]	w_info_mgx;
 	wire		[1:0]	w_transparent;
-	wire		[7:0]	w_divider_x;
-	wire		[7:0]	w_divider_mgx;
-	wire		[1:0]	w_bit_shift;
-	wire		[6:0]	w_sample_x;
 	wire		[13:0]	w_screen_pos_x;
 
 	// --------------------------------------------------------------------
@@ -195,7 +190,7 @@ module vdp_timing_control_sprite (
 		.screen_h_active							( ff_screen_h_active						),
 		.vram_address								( w_vp_vram_address							),
 		.vram_valid									( w_vp_vram_valid							),
-		.vram_rdata									( vram_rdata								),
+		.vram_rdata									( vram_rdata8								),
 		.vram_interleave							( vram_interleave							),
 		.selected_en								( w_selected_en								),
 		.selected_plane_num							( w_selected_plane_num						),
@@ -226,15 +221,11 @@ module vdp_timing_control_sprite (
 		.vram_address								( w_ic_vram_address							),
 		.vram_valid									( w_ic_vram_valid							),
 		.vram_rdata8								( vram_rdata8								),
-		.vram_rdata									( vram_rdata								),
 		.selected_en								( w_selected_en								),
 		.selected_plane_num							( w_selected_plane_num						),
 		.selected_attribute							( w_selected_attribute						),
 		.selected_count								( w_selected_count							),
 		.y											( w_y										),
-		.mgy										( w_mgy										),
-		.bit_shift									( w_bit_shift								),
-		.sample_y									( w_sample_x								),
 		.makeup_plane								( w_makeup_plane							),
 		.plane_x									( w_plane_x									),
 		.color										( w_color									),

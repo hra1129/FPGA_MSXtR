@@ -58,6 +58,7 @@ module s2026a (
 	output			mapper_cs,
 	output			ppi_cs,
 	output			rtc_cs,
+	output			vdp_cs,
 	output			cartridge_cs,
 	output			ssg_cs,
 	output			opll_cs,
@@ -77,6 +78,9 @@ module s2026a (
 	input	[7:0]	bus_rtc_rdata,
 	input			bus_rtc_rdata_en,
 	input			bus_rtc_ready,
+	input	[7:0]	bus_vdp_rdata,
+	input			bus_vdp_rdata_en,
+	input			bus_vdp_ready,
 	input	[7:0]	bus_cartridge_rdata,
 	input			bus_cartridge_rdata_en,
 	input			bus_cartridge_ready,
@@ -128,6 +132,7 @@ module s2026a (
 	reg				ff_mapper_cs;
 	reg				ff_ppi_cs;
 	reg				ff_rtc_cs;
+	reg				ff_vdp_cs;
 	reg				ff_cartridge_cs;
 	reg				ff_ssg_cs;
 	reg				ff_opll_cs;
@@ -201,6 +206,7 @@ module s2026a (
 		ff_mapper_cs		<= (!ff_mreq_n && (w_primary_slot == 2'd3) && (w_secondary_slot3 == 2'd0));
 		ff_ppi_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hA8 ));
 		ff_rtc_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'hB4 ));
+		ff_vdp_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:3], 3'd0} == 8'h98 ));
 		ff_cartridge_cs		<= (!ff_mreq_n && ((!megarom1_en && w_primary_slot == 2'd1) || (!megarom2_en && w_primary_slot == 2'd2)));
 		ff_ssg_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hA0 ));
 		ff_opll_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'h7C ));
@@ -237,6 +243,10 @@ module s2026a (
 		end
 		else if( bus_rtc_rdata_en ) begin
 			ff_bus_rdata	<= bus_rtc_rdata;
+			ff_bus_rdata_en	<= 1'b1;
+		end
+		else if( bus_vdp_rdata_en ) begin
+			ff_bus_rdata	<= bus_vdp_rdata;
 			ff_bus_rdata_en	<= 1'b1;
 		end
 		else if( bus_cartridge_rdata_en ) begin
