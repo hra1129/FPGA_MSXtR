@@ -66,22 +66,6 @@
    "Type" : "verilog"
   },
   {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/kanji_rom/kanji_rom.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/megarom/megarom_wo_scc.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/memory_mapper/memory_mapper.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/memory_mapper/memory_mapper_inst.v",
-   "Type" : "verilog"
-  },
-  {
    "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
    "Type" : "verilog"
   },
@@ -122,10 +106,6 @@
    "Type" : "verilog"
   },
   {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ppi/ppi.v",
-   "Type" : "verilog"
-  },
-  {
    "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/rtc/rtc.v",
    "Type" : "verilog"
   },
@@ -135,10 +115,6 @@
   },
   {
    "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/sdram/ip_sdram_tangnano20k_c.v",
-   "Type" : "verilog"
-  },
-  {
-   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/secondary_slot/secondary_slot_inst.v",
    "Type" : "verilog"
   },
   {
@@ -223,6 +199,34 @@
   },
   {
    "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/v9958/vdp_vram_interface.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_cpu_select.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_kanjirom.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_megaemu.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_megarom.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_memory_mapper.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_ppi.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_secondary_slot.v",
    "Type" : "verilog"
   },
   {

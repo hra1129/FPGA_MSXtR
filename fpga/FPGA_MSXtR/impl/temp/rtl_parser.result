@@ -1,5 +1,559 @@
 [
  {
+  "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR.v",
+  "InstLine" : 24,
+  "InstName" : "fpga_msxtr",
+  "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR.v",
+  "ModuleLine" : 24,
+  "ModuleName" : "fpga_msxtr",
+  "SubInsts" : [
+   {
+    "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR.v",
+    "InstLine" : 79,
+    "InstName" : "u_body",
+    "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR_body.v",
+    "ModuleLine" : 44,
+    "ModuleName" : "fpga_msxtr_body",
+    "SubInsts" : [
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR_body.v",
+      "InstLine" : 326,
+      "InstName" : "u_pll",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/gowin_rpll/gowin_rpll.v",
+      "ModuleLine" : 9,
+      "ModuleName" : "Gowin_rPLL"
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR_body.v",
+      "InstLine" : 332,
+      "InstName" : "u_pll2",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/gowin_rpll/gowin_rpll2.v",
+      "ModuleLine" : 9,
+      "ModuleName" : "Gowin_rPLL2"
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR_body.v",
+      "InstLine" : 337,
+      "InstName" : "u_pll3",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/gowin_rpll/gowin_rpll3.v",
+      "ModuleLine" : 9,
+      "ModuleName" : "Gowin_rPLL3"
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR_body.v",
+      "InstLine" : 395,
+      "InstName" : "u_z80",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80_inst.v",
+      "ModuleLine" : 63,
+      "ModuleName" : "cz80_inst",
+      "SubInsts" : [
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80_inst.v",
+        "InstLine" : 132,
+        "InstName" : "u_cz80",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80.v",
+        "ModuleLine" : 63,
+        "ModuleName" : "cz80",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80.v",
+          "InstLine" : 237,
+          "InstName" : "u_mcode",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80_mcode.v",
+          "ModuleLine" : 63,
+          "ModuleName" : "cz80_mcode"
+         },
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80.v",
+          "InstLine" : 296,
+          "InstName" : "u_alu",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80_alu.v",
+          "ModuleLine" : 63,
+          "ModuleName" : "cz80_alu"
+         },
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80.v",
+          "InstLine" : 784,
+          "InstName" : "u_regs",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cz80/cz80_reg.v",
+          "ModuleLine" : 55,
+          "ModuleName" : "cz80_registers"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR_body.v",
+      "InstLine" : 416,
+      "InstName" : "u_r800",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800_inst.v",
+      "ModuleLine" : 63,
+      "ModuleName" : "cr800_inst",
+      "SubInsts" : [
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800_inst.v",
+        "InstLine" : 132,
+        "InstName" : "u_cz80",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800.v",
+        "ModuleLine" : 63,
+        "ModuleName" : "cr800",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800.v",
+          "InstLine" : 237,
+          "InstName" : "u_mcode",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800_mcode.v",
+          "ModuleLine" : 63,
+          "ModuleName" : "cr800_mcode"
+         },
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800.v",
+          "InstLine" : 296,
+          "InstName" : "u_alu",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800_alu.v",
+          "ModuleLine" : 63,
+          "ModuleName" : "cr800_alu"
+         },
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800.v",
+          "InstLine" : 784,
+          "InstName" : "u_regs",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/cr800/cr800_reg.v",
+          "ModuleLine" : 55,
+          "ModuleName" : "cr800_registers"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR_body.v",
+      "InstLine" : 439,
+      "InstName" : "u_s2026a",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+      "ModuleLine" : 34,
+      "ModuleName" : "s2026a",
+      "SubInsts" : [
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 236,
+        "InstName" : "u_cpu_select",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_cpu_select.v",
+        "ModuleLine" : 34,
+        "ModuleName" : "s2026a_cpu_select"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 577,
+        "InstName" : "u_secondary_slot0",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_secondary_slot.v",
+        "ModuleLine" : 58,
+        "ModuleName" : "s2026a_secondary_slot"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 598,
+        "InstName" : "u_secondary_slot3",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_secondary_slot.v",
+        "ModuleLine" : 58,
+        "ModuleName" : "s2026a_secondary_slot"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 619,
+        "InstName" : "u_memory_mapper",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_memory_mapper.v",
+        "ModuleLine" : 48,
+        "ModuleName" : "s2026a_memory_mapper"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 636,
+        "InstName" : "u_ppi",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_ppi.v",
+        "ModuleLine" : 34,
+        "ModuleName" : "s2026a_ppi"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 659,
+        "InstName" : "u_kanjirom",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_kanjirom.v",
+        "ModuleLine" : 34,
+        "ModuleName" : "s2026a_kanjirom"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 678,
+        "InstName" : "u_megarom",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_megarom.v",
+        "ModuleLine" : 34,
+        "ModuleName" : "s2026a_megarom"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 699,
+        "InstName" : "u_slot1_megaemu",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_megaemu.v",
+        "ModuleLine" : 34,
+        "ModuleName" : "s2026a_megaemu"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a.v",
+        "InstLine" : 725,
+        "InstName" : "u_slot2_megaemu",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/s2026a/s2026a_megaemu.v",
+        "ModuleLine" : 34,
+        "ModuleName" : "s2026a_megaemu"
+       }
+      ]
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/FPGA_MSXtR_body.v",
+      "InstLine" : 691,
+      "InstName" : "u_sdram",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/sdram/ip_sdram_tangnano20k_c.v",
+      "ModuleLine" : 57,
+      "ModuleName" : "ip_sdram"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/i2s_audio/i2s_audio.v",
+  "InstLine" : 58,
+  "InstName" : "i2s_audio",
+  "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/i2s_audio/i2s_audio.v",
+  "ModuleLine" : 58,
+  "ModuleName" : "i2s_audio"
+ },
+ {
+  "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/opll.v",
+  "InstLine" : 7,
+  "InstName" : "ip_opll",
+  "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/opll.v",
+  "ModuleLine" : 7,
+  "ModuleName" : "ip_opll",
+  "SubInsts" : [
+   {
+    "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/opll.v",
+    "InstLine" : 53,
+    "InstName" : "u_ikaopll",
+    "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "IKAOPLL",
+    "SubInsts" : [
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
+      "InstLine" : 133,
+      "InstName" : "u_TIMINGGEN",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_timinggen.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "IKAOPLL_timinggen"
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
+      "InstLine" : 170,
+      "InstName" : "u_REG",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "IKAOPLL_reg",
+      "SubInsts" : [
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 71,
+        "InstName" : "u_sync_addrreg",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 467,
+        "ModuleName" : "IKAOPLL_rw_synchronizer"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 75,
+        "InstName" : "u_sync_datareg",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 467,
+        "ModuleName" : "IKAOPLL_rw_synchronizer"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 250,
+        "InstName" : "u_fnum_lsbs",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 525,
+        "ModuleName" : "IKAOPLL_d9reg",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+          "InstLine" : 538,
+          "InstName" : "u_d9reg",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+          "ModuleLine" : 31,
+          "ModuleName" : "IKAOPLL_sr"
+         }
+        ]
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 253,
+        "InstName" : "u_fnum_msb",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 525,
+        "ModuleName" : "IKAOPLL_d9reg",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+          "InstLine" : 538,
+          "InstName" : "u_d9reg",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+          "ModuleLine" : 31,
+          "ModuleName" : "IKAOPLL_sr"
+         }
+        ]
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 256,
+        "InstName" : "u_block",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 525,
+        "ModuleName" : "IKAOPLL_d9reg",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+          "InstLine" : 538,
+          "InstName" : "u_d9reg",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+          "ModuleLine" : 31,
+          "ModuleName" : "IKAOPLL_sr"
+         }
+        ]
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 259,
+        "InstName" : "u_kon",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 525,
+        "ModuleName" : "IKAOPLL_d9reg",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+          "InstLine" : 538,
+          "InstName" : "u_d9reg",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+          "ModuleLine" : 31,
+          "ModuleName" : "IKAOPLL_sr"
+         }
+        ]
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 262,
+        "InstName" : "u_susen",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 525,
+        "ModuleName" : "IKAOPLL_d9reg",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+          "InstLine" : 538,
+          "InstName" : "u_d9reg",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+          "ModuleLine" : 31,
+          "ModuleName" : "IKAOPLL_sr"
+         }
+        ]
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 265,
+        "InstName" : "u_vol",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 525,
+        "ModuleName" : "IKAOPLL_d9reg",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+          "InstLine" : 538,
+          "InstName" : "u_d9reg",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+          "ModuleLine" : 31,
+          "ModuleName" : "IKAOPLL_sr"
+         }
+        ]
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 268,
+        "InstName" : "u_inst",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 525,
+        "ModuleName" : "IKAOPLL_d9reg",
+        "SubInsts" : [
+         {
+          "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+          "InstLine" : 538,
+          "InstName" : "u_d9reg",
+          "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+          "ModuleLine" : 31,
+          "ModuleName" : "IKAOPLL_sr"
+         }
+        ]
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "InstLine" : 301,
+        "InstName" : "u_instrom",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v",
+        "ModuleLine" : 554,
+        "ModuleName" : "IKAOPLL_instrom"
+       }
+      ]
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
+      "InstLine" : 233,
+      "InstName" : "u_LFO",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_lfo.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "IKAOPLL_lfo"
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
+      "InstLine" : 258,
+      "InstName" : "u_PG",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_pg.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "IKAOPLL_pg",
+      "SubInsts" : [
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_pg.v",
+        "InstLine" : 269,
+        "InstName" : "u_cyc4r_cyc18r_phase_sr",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+        "ModuleLine" : 31,
+        "ModuleName" : "IKAOPLL_sr"
+       }
+      ]
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
+      "InstLine" : 289,
+      "InstName" : "u_EG",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_eg.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "IKAOPLL_eg",
+      "SubInsts" : [
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_eg.v",
+        "InstLine" : 122,
+        "InstName" : "u_cyc2r_cyc19r_envstatreg",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+        "ModuleLine" : 31,
+        "ModuleName" : "IKAOPLL_sr"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_eg.v",
+        "InstLine" : 296,
+        "InstName" : "u_cyc3r_cyc19r_attnlvreg",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+        "ModuleLine" : 31,
+        "ModuleName" : "IKAOPLL_sr"
+       }
+      ]
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
+      "InstLine" : 331,
+      "InstName" : "u_OP",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_op.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "IKAOPLL_op",
+      "SubInsts" : [
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_op.v",
+        "InstLine" : 65,
+        "InstName" : "u_cyc19c_logsinrom",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_op.v",
+        "ModuleLine" : 277,
+        "ModuleName" : "IKAOPLL_logsinrom"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_op.v",
+        "InstLine" : 110,
+        "InstName" : "u_cyc20c_exprom",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_op.v",
+        "ModuleLine" : 325,
+        "ModuleName" : "IKAOPLL_exprom"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_op.v",
+        "InstLine" : 194,
+        "InstName" : "u_op_z_reg",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+        "ModuleLine" : 31,
+        "ModuleName" : "IKAOPLL_sr"
+       },
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_op.v",
+        "InstLine" : 199,
+        "InstName" : "u_op_zz_reg",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+        "ModuleLine" : 31,
+        "ModuleName" : "IKAOPLL_sr"
+       }
+      ]
+     },
+     {
+      "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL.v",
+      "InstLine" : 356,
+      "InstName" : "u_DAC",
+      "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_dac.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "IKAOPLL_dac",
+      "SubInsts" : [
+       {
+        "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_dac.v",
+        "InstLine" : 80,
+        "InstName" : "u_percussion_sr",
+        "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/opll/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v",
+        "ModuleLine" : 31,
+        "ModuleName" : "IKAOPLL_sr"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/rtc/rtc.v",
+  "InstLine" : 53,
+  "InstName" : "rtc",
+  "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/rtc/rtc.v",
+  "ModuleLine" : 53,
+  "ModuleName" : "rtc"
+ },
+ {
+  "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ssg/ssg.v",
+  "InstLine" : 58,
+  "InstName" : "ssg",
+  "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ssg/ssg.v",
+  "ModuleLine" : 58,
+  "ModuleName" : "ssg"
+ },
+ {
+  "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ssram/ssram.v",
+  "InstLine" : 7,
+  "InstName" : "ssram",
+  "ModuleFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/ssram/ssram.v",
+  "ModuleLine" : 7,
+  "ModuleName" : "ssram"
+ },
+ {
   "InstFile" : "D:/github/HRA_product/FPGA_MSXtR/fpga/FPGA_MSXtR/src/hdmi_tx/src/hdmi_tx_gw.vhd",
   "InstLine" : 1397,
   "InstName" : "hdmi_tx",

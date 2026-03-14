@@ -3,12 +3,25 @@ Parsing netlist file "D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\impl\gwsy
 Processing netlist completed
 Running placement......
 [10%] Placement Phase 0 completed
-WARN  (PR2042) : BankVccio '1.8' of buf 'i2s_sndin_en_s0'(port 'i2s_sndin_en') conflicts with placed bufs or embedded port
-WARN  (PR2042) : BankVccio '1.8' of buf 'srom_cs_n_s0'(port 'srom_cs_n') conflicts with placed bufs or embedded port
-WARN  (PR2042) : BankVccio '1.8' of buf 'config_cs_n_obuf'(port 'config_cs_n') conflicts with placed bufs or embedded port
-ERROR  (PR0003) : Failed to place with '3 IOBUF(s) unPlaced ' in the device 'GW2AR-18-QFN88-8'
+[20%] Placement Phase 1 completed
+[30%] Placement Phase 2 completed
+[50%] Placement Phase 3 completed
+Running routing......
+[60%] Routing Phase 0 completed
+[70%] Routing Phase 1 completed
+[80%] Routing Phase 2 completed
+[90%] Routing Phase 3 completed
+Running timing analysis......
+[95%] Timing analysis completed
+Placement and routing completed
+Bitstream generation in progress......
+Bitstream generation completed
+Running power analysis......
+[100%] Power analysis completed
+Generate file "D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\impl\pnr\FPGA_MSXtR.power.html" completed
 Generate file "D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\impl\pnr\FPGA_MSXtR.pin.html" completed
 Generate file "D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\impl\pnr\FPGA_MSXtR.rpt.html" completed
 Generate file "D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\impl\pnr\FPGA_MSXtR.rpt.txt" completed
-Sun Mar  8 10:41:17 2026
+Generate file "D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\impl\pnr\FPGA_MSXtR.tr.html" completed
+Sat Mar 14 16:43:34 2026
 

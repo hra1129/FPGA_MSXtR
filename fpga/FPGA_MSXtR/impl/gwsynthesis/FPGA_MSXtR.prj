@@ -19,9 +19,7 @@
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\gowin_rpll\gowin_rpll.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\gowin_rpll\gowin_rpll2.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\gowin_rpll\gowin_rpll3.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\kanji_rom\kanji_rom.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\memory_mapper\memory_mapper.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\memory_mapper\memory_mapper_inst.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\i2s_audio\i2s_audio.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_dac.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_eg.v" type="verilog"/>
@@ -32,18 +30,15 @@
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_reg.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\ikaopll\IKAOPLL_modules\IKAOPLL_timinggen.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\opll\opll.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\ppi\ppi.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\rtc\rtc.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\sdram\ip_sdram_tangnano20k_c.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\ssg\ssg.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\rtc\rtc.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\secondary_slot\secondary_slot_inst.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\i2s_audio\i2s_audio.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\ssram\ssram.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_color_palette.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_color_palette_ram.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_command.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_command_cache.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_cpu_interface.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_sprite_info_collect.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_sprite_makeup_pixel.v" type="verilog"/>
@@ -59,13 +54,13 @@
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_video_out_bilinear.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_video_ram_line_buffer.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\v9958\vdp_vram_interface.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_double_buffer.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_out.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_out_bilinear.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_out_hmag.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\video_out\video_ram_line_buffer.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\ssram\ssram.v" type="verilog"/>
-        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\megarom\megarom_wo_scc.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a_cpu_select.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a_kanjirom.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a_megaemu.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a_megarom.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a_memory_mapper.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a_ppi.v" type="verilog"/>
+        <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\s2026a\s2026a_secondary_slot.v" type="verilog"/>
         <File path="D:\github\HRA_product\FPGA_MSXtR\fpga\FPGA_MSXtR\src\hdmi_tx\src\hdmi_tx_gw.vhd" type="vhdl"/>
     </FileList>
     <OptionList>
