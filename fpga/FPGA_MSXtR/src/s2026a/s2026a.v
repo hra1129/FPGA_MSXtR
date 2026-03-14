@@ -55,14 +55,11 @@ module s2026a (
 	input			r800_busak_n,
 	input	[15:0]	r800_a,
 	inout	[7:0]	r800_d,
-	output			mapper_cs,
-	output			ppi_cs,
 	output			rtc_cs,
 	output			vdp_cs,
 	output			cartridge_cs,
 	output			ssg_cs,
 	output			opll_cs,
-	output			kanji_cs,
 	output			megarom1_cs,
 	output			megarom2_cs,
 	output			bus_m1,
@@ -71,7 +68,6 @@ module s2026a (
 	output			bus_valid,
 	output	[7:0]	bus_wdata,
 	output	[15:0]	bus_address,
-	input			bus_mapper_ready,
 	input	[7:0]	bus_rtc_rdata,
 	input			bus_rtc_rdata_en,
 	input			bus_rtc_ready,
@@ -93,8 +89,6 @@ module s2026a (
 	output			processor_mode,
 	output			rom_mode,
 	output	[7:0]	primary_slot,
-	input	[7:0]	secondary_slot0,
-	input	[7:0]	secondary_slot3,
 	input			megarom1_en,
 	input			megarom2_en,
 	input			megaemu1_en,
@@ -108,6 +102,7 @@ module s2026a (
 	input	[3:0]	megaemu2_cmd_action,
 	input	[15:0]	megaemu2_cmd_wdata,
 	input			megaemu2_cmd_valid,
+	output	[7:0]	mapper_segment,
 	input			sw_internal_firmware,
 	output			kanji1_en,
 	output			kanji2_en,
@@ -136,6 +131,9 @@ module s2026a (
 	reg		[7:0]	ff_bus_rdata;
 	reg				ff_bus_rdata_en;
 	reg				ff_mapper_cs;
+	reg				ff_mapper_io_cs;
+	reg				ff_secondary_slot0_cs;
+	reg				ff_secondary_slot3_cs;
 	reg				ff_ppi_cs;
 	reg				ff_rtc_cs;
 	reg				ff_vdp_cs;
@@ -173,6 +171,12 @@ module s2026a (
 	wire	[1:0]	w_secondary_slot0;
 	wire	[1:0]	w_secondary_slot3;
 	wire	[7:0]	w_rdata;
+
+	//	Memory Mapper internal wires
+	wire	[7:0]	w_mapper_rdata;
+	wire			w_mapper_rdata_en;
+	wire			w_mapper_ready;
+	wire	[7:0]	w_mapper_segment;
 
 	//	PPI internal wires
 	wire	[7:0]	w_ppi_rdata;
@@ -212,6 +216,16 @@ module s2026a (
 	wire			w_megaemu2_ready;
 	wire	[7:0]	w_megaemu2_rdata;
 	wire			w_megaemu2_rdata_en;
+
+	//	Secondary Slot internal wires
+	wire	[7:0]	w_secondary_slot0_reg;
+	wire	[7:0]	w_secondary_slot0_rdata;
+	wire			w_secondary_slot0_rdata_en;
+	wire			w_secondary_slot0_ready;
+	wire	[7:0]	w_secondary_slot3_reg;
+	wire	[7:0]	w_secondary_slot3_rdata;
+	wire			w_secondary_slot3_rdata_en;
+	wire			w_secondary_slot3_ready;
 
 	// ---------------------------------------------------------
 	//	CPU select instance
@@ -276,14 +290,17 @@ module s2026a (
 	endfunction
 
 	assign w_primary_slot		= func_page_select( ff_bus_address[15:14], primary_slot );
-	assign w_secondary_slot0	= func_page_select( ff_bus_address[15:14], secondary_slot0 );
-	assign w_secondary_slot3	= func_page_select( ff_bus_address[15:14], secondary_slot3 );
+	assign w_secondary_slot0	= func_page_select( ff_bus_address[15:14], w_secondary_slot0_reg );
+	assign w_secondary_slot3	= func_page_select( ff_bus_address[15:14], w_secondary_slot3_reg );
 
 	// ---------------------------------------------------------
 	//	Chip select
 	// ---------------------------------------------------------
 	always @( posedge clk85m ) begin
 		ff_mapper_cs			<= (!ff_mreq_n && (w_primary_slot == 2'd3) && (w_secondary_slot3 == 2'd0));
+		ff_mapper_io_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hFC ));
+		ff_secondary_slot0_cs	<= (!ff_mreq_n && (w_primary_slot == 2'd0));
+		ff_secondary_slot3_cs	<= (!ff_mreq_n && (w_primary_slot == 2'd3));
 		ff_ppi_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hA8 ));
 		ff_rtc_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'hB4 ));
 		ff_vdp_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:3], 3'd0} == 8'h98 ));
@@ -306,6 +323,18 @@ module s2026a (
 		if( !reset_n ) begin
 			ff_bus_rdata	<= 8'd0;
 			ff_bus_rdata_en	<= 1'b0;
+		end
+		else if( w_secondary_slot0_rdata_en ) begin
+			ff_bus_rdata	<= w_secondary_slot0_rdata;
+			ff_bus_rdata_en	<= 1'b1;
+		end
+		else if( w_secondary_slot3_rdata_en ) begin
+			ff_bus_rdata	<= w_secondary_slot3_rdata;
+			ff_bus_rdata_en	<= 1'b1;
+		end
+		else if( w_mapper_rdata_en ) begin
+			ff_bus_rdata	<= w_mapper_rdata;
+			ff_bus_rdata_en	<= 1'b1;
 		end
 		else if( w_ppi_rdata_en ) begin
 			ff_bus_rdata	<= w_ppi_rdata;
@@ -371,7 +400,7 @@ module s2026a (
 	// ---------------------------------------------------------
 	//	Wait / Ready
 	// ---------------------------------------------------------
-	assign w_bus_ready	= (!ff_mapper_cs    | bus_mapper_ready   ) &
+	assign w_bus_ready	= (!ff_mapper_io_cs | w_mapper_ready    ) &
 						  (!ff_ppi_cs       | w_ppi_ready        ) &
 						  (!ff_rtc_cs       | bus_rtc_ready      ) &
 						  (!ff_cartridge_cs | bus_cartridge_ready ) &
@@ -389,14 +418,12 @@ module s2026a (
 	//--------------------------------------------------------------
 	assign processor_mode	= w_processor_mode;
 	assign rom_mode			= ff_rom_mode;
+	assign mapper_segment	= w_mapper_segment;
 
-	assign mapper_cs		= ff_mapper_cs;
-	assign ppi_cs			= ff_ppi_cs;
 	assign rtc_cs			= ff_rtc_cs;
 	assign cartridge_cs		= ff_cartridge_cs;
 	assign ssg_cs			= ff_ssg_cs;
 	assign opll_cs			= ff_opll_cs;
-	assign kanji_cs			= ff_kanji_cs;
 	assign megarom1_cs		= ff_megarom1_cs;
 	assign megarom2_cs		= ff_megarom2_cs;
 
@@ -543,6 +570,65 @@ module s2026a (
 	always @( posedge clk85m ) begin
 		ff_switch <= sw_internal_firmware;
 	end
+
+	// ---------------------------------------------------------
+	//	Secondary Slot #0 instance
+	// ---------------------------------------------------------
+	s2026a_secondary_slot u_secondary_slot0 (
+		.reset_n				( reset_n						),
+		.clk85m					( clk85m						),
+		.bus_cs					( ff_secondary_slot0_cs			),
+		.bus_write				( ff_bus_write					),
+		.bus_valid				( ff_bus_valid					),
+		.bus_ready				( w_secondary_slot0_ready		),
+		.bus_rdata				( w_secondary_slot0_rdata		),
+		.bus_rdata_en			( w_secondary_slot0_rdata_en	),
+		.bus_wdata				( ff_bus_wdata					),
+		.bus_address			( ff_bus_address				),
+		.secondary_slot			( w_secondary_slot0_reg			),
+		.sltsl_ext0				(								),
+		.sltsl_ext1				(								),
+		.sltsl_ext2				(								),
+		.sltsl_ext3				(								)
+	);
+
+	// ---------------------------------------------------------
+	//	Secondary Slot #3 instance
+	// ---------------------------------------------------------
+	s2026a_secondary_slot u_secondary_slot3 (
+		.reset_n				( reset_n						),
+		.clk85m					( clk85m						),
+		.bus_cs					( ff_secondary_slot3_cs			),
+		.bus_write				( ff_bus_write					),
+		.bus_valid				( ff_bus_valid					),
+		.bus_ready				( w_secondary_slot3_ready		),
+		.bus_rdata				( w_secondary_slot3_rdata		),
+		.bus_rdata_en			( w_secondary_slot3_rdata_en	),
+		.bus_wdata				( ff_bus_wdata					),
+		.bus_address			( ff_bus_address				),
+		.secondary_slot			( w_secondary_slot3_reg			),
+		.sltsl_ext0				(								),
+		.sltsl_ext1				(								),
+		.sltsl_ext2				(								),
+		.sltsl_ext3				(								)
+	);
+
+	// ---------------------------------------------------------
+	//	Memory Mapper instance
+	// ---------------------------------------------------------
+	s2026a_memory_mapper u_memory_mapper (
+		.reset_n				( reset_n					),
+		.clk85m					( clk85m					),
+		.bus_cs					( ff_mapper_io_cs			),
+		.bus_write				( ff_bus_write				),
+		.bus_valid				( ff_bus_valid				),
+		.bus_ready				( w_mapper_ready			),
+		.bus_rdata				( w_mapper_rdata			),
+		.bus_rdata_en			( w_mapper_rdata_en			),
+		.bus_wdata				( ff_bus_wdata				),
+		.bus_address			( ff_bus_address			),
+		.mapper_segment			( w_mapper_segment			)
+	);
 
 	// ---------------------------------------------------------
 	//	PPI instance
