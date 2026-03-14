@@ -1,4 +1,4 @@
-﻿//
+//
 //	CR800 Registers
 //	Copyright (c) 2024 Takayuki Hara
 //

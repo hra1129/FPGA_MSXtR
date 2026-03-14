@@ -3,6 +3,20 @@ vlib work
 rem ---- PLL replacement models (Gowin hard macro substitutes) ----
 vlog gowin_rpll.v
 
+rem ---- Z80 CPU core ----
+vlog ..\cz80\cz80_alu.v
+vlog ..\cz80\cz80_mcode.v
+vlog ..\cz80\cz80_reg.v
+vlog ..\cz80\cz80.v
+vlog ..\cz80\cz80_inst.v
+
+rem ---- R800 CPU core ----
+vlog ..\cr800\cr800_alu.v
+vlog ..\cr800\cr800_mcode.v
+vlog ..\cr800\cr800_reg.v
+vlog ..\cr800\cr800.v
+vlog ..\cr800\cr800_inst.v
+
 rem ---- Peripherals (bus interface modules) ----
 vlog ..\ppi\ppi.v
 vlog ..\rtc\rtc.v

@@ -1,3 +1,3 @@
 add wave -r *
-run 100us
+run 2ms
 quit

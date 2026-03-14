@@ -522,29 +522,29 @@ module fpga_msxtr_body #(
 	assign mreq_n		= w_processor_mode ? w_r800_mreq_n  : w_z80_mreq_n;
 	assign rfsh_n		= w_processor_mode ? w_r800_rfsh_n  : w_z80_rfsh_n;
 
-//	// --------------------------------------------------------------------
-//	//	PPI
-//	// --------------------------------------------------------------------
-//	ppi u_ppi (
-//		.reset_n				( w_msx_reset_n				),
-//		.clk					( clk42m					),
-//		.bus_cs					( w_ppi_cs					),
-//		.bus_write				( w_bus_write				),
-//		.bus_valid				( w_bus_valid				),
-//		.bus_ready				( w_bus_ppi_ready			),
-//		.bus_address			( w_bus_address[1:0]		),
-//		.bus_wdata				( w_bus_wdata				),
-//		.bus_rdata				( w_bus_ppi_rdata			),
-//		.bus_rdata_en			( w_bus_ppi_rdata_en		),
-//		.primary_slot			( w_primary_slot			),
-//		.matrix_y				( w_matrix_y				),
-//		.matrix_x				( w_matrix_x				),
-//		.cmt_motor_off			( w_cmt_motor_off			),
-//		.cmt_write_signal		( w_cmt_write_signal		),
-//		.keyboard_caps_led_off	( w_keyboard_caps_led_off	),
-//		.click_sound			( w_click_sound				)
-//	);
-//
+	// --------------------------------------------------------------------
+	//	PPI
+	// --------------------------------------------------------------------
+	ppi u_ppi (
+		.reset_n				( w_msx_reset_n				),
+		.clk					( clk42m					),
+		.bus_cs					( w_ppi_cs					),
+		.bus_write				( w_bus_write				),
+		.bus_valid				( w_bus_valid				),
+		.bus_ready				( w_bus_ppi_ready			),
+		.bus_address			( w_bus_address[1:0]		),
+		.bus_wdata				( w_bus_wdata				),
+		.bus_rdata				( w_bus_ppi_rdata			),
+		.bus_rdata_en			( w_bus_ppi_rdata_en		),
+		.primary_slot			( w_primary_slot			),
+		.matrix_y				( w_matrix_y				),
+		.matrix_x				( w_matrix_x				),
+		.cmt_motor_off			( w_cmt_motor_off			),
+		.cmt_write_signal		( w_cmt_write_signal		),
+		.keyboard_caps_led_off	( w_keyboard_caps_led_off	),
+		.click_sound			( w_click_sound				)
+	);
+
 //	// --------------------------------------------------------------------
 //	//	RTC
 //	// --------------------------------------------------------------------

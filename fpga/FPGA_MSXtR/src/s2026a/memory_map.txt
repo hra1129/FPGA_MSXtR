@@ -1,0 +1,66 @@
+TangNano20K Internal SDRAM 64Mbits (8Mbytes)
+-------------------------------------------------------------------------------
+
+00_0000h BANK#000 +-------------------+
+                  |       N/A         | 96KB    
+01_8000h BANK#00C +-------------------+
+                  |      MSX-JE       | 32KB    
+02_0000h BANK#010 +-------------------+
+                  |       N/A         | 160KB   
+04_8000h BANK#024 +-------------------+
+                  |    BOOT LOGO      | 16KB    SLOT#0-3 page1
+04_C000h BANK#026 +-------------------+
+                  |       DOS1        | 16KB    SLOT#3-2 page1
+05_0000h BANK#028 +-------------------+
+                  |    MAIN-ROM       | 32KB    SLOT#0-0 page1...2
+05_8000h BANK#02C +-------------------+
+                  |       N/A         | 32KB    
+06_0000h BANK#030 +-------------------+
+                  |       DOS2        | 16KB    SLOT#3-2 page1
+06_0000h BANK#032 +-------------------+
+                  |       DOS2        | 16KB    SLOT#3-2 page1
+06_0000h BANK#034 +-------------------+
+                  |       DOS2        | 16KB    SLOT#3-2 page1
+06_0000h BANK#036 +-------------------+
+                  |       DOS1        | 16KB    SLOT#3-2 page1
+07_0000h BANK#038 +-------------------+
+                  |     SUB-ROM       | 16KB    SLOT#3-1 page0
+07_4000h BANK#03A +-------------------+
+                  |   KanjiDriver     | 16KB    SLOT#3-1 page1...2
+07_C000h BANK#03E +-------------------+
+                  |   OPLL Driver     | 16KB    SLOT#0-2 page1
+08_0000h BANK#040 +-------------------+
+                  |   MSX-JE Dic      | 512KB   
+10_0000h BANK#080 +-------------------+
+                  |  KanjiFont JIS1   | 128KB   
+10_4000h BANK#090 +-------------------+
+                  |  KanjiFont JIS2   | 128KB   
+18_0000h BANK#0C0 +-------------------+
+                  | MSX-JE BackupRAM  | 16KB    
+18_4000h BANK#0C2 +-------------------+
+                  |       N/A         | 1520KB  
+30_0000h BANK#180 +-------------------+
+                  |    MapperRAM      | 1MB     SLOT#3-0:Page0...3
+40_0000h BANK#--- +-------------------+
+                  | MegaROM Emulator1 | 2MB     SLOT#1
+60_0000h BANK#--- +-------------------+
+                  | MegaROM Emulator2 | 2MB     SLOT#2
+80_0000h BANK#--- +-------------------+
+
+MapperRAM (SEG#00...SEG#1F: 256KBの場合) : 参考
+	3_0000h BANK#1C MAIN-ROM
+	3_4000h BANK#1D MAIN-ROM
+	3_8000h BANK#1E SUB-ROM
+	3_C000h BANK#1F KanjiDriver
+
+MapperRAM (SEG#00...SEG#1F: 512KBの場合) : 参考
+	7_0000h BANK#1C MAIN-ROM
+	7_4000h BANK#1D MAIN-ROM
+	7_8000h BANK#1E SUB-ROM
+	7_C000h BANK#1F KanjiDriver
+
+MapperRAM (SEG#00...SEG#3F: 1024KBの場合) : 今回はこのパターン
+	F_0000h BANK#1C MAIN-ROM
+	F_4000h BANK#1D MAIN-ROM
+	F_8000h BANK#1E SUB-ROM
+	F_C000h BANK#1F KanjiDriver

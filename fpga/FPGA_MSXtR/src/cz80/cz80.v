@@ -1,4 +1,4 @@
-﻿//	
+//	
 //	Z80 compatible microprocessor core
 //	Copyright (c) 2002 Daniel Wallner (jesus@opencores.org)
 //

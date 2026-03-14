@@ -72,9 +72,6 @@ module s2026a (
 	output	[7:0]	bus_wdata,
 	output	[15:0]	bus_address,
 	input			bus_mapper_ready,
-	input	[7:0]	bus_ppi_rdata,
-	input			bus_ppi_rdata_en,
-	input			bus_ppi_ready,
 	input	[7:0]	bus_rtc_rdata,
 	input			bus_rtc_rdata_en,
 	input			bus_rtc_ready,
@@ -87,9 +84,6 @@ module s2026a (
 	input	[7:0]	bus_ssg_rdata,
 	input			bus_ssg_rdata_en,
 	input			bus_ssg_ready,
-	input	[7:0]	bus_kanji_rdata,
-	input			bus_kanji_rdata_en,
-	input			bus_kanji_ready,
 	input	[7:0]	bus_megarom1_rdata,
 	input			bus_megarom1_rdata_en,
 	input			bus_megarom1_ready,
@@ -98,35 +92,47 @@ module s2026a (
 	input			bus_megarom2_ready,
 	output			processor_mode,
 	output			rom_mode,
-	input	[7:0]	primary_slot,
+	output	[7:0]	primary_slot,
 	input	[7:0]	secondary_slot0,
 	input	[7:0]	secondary_slot3,
 	input			megarom1_en,
 	input			megarom2_en,
+	input			megaemu1_en,
+	input			megaemu2_en,
+	//	MegaEmu command I/F
+	input			megaemu1_cmd_cs,
+	input	[3:0]	megaemu1_cmd_action,
+	input	[15:0]	megaemu1_cmd_wdata,
+	input			megaemu1_cmd_valid,
+	input			megaemu2_cmd_cs,
+	input	[3:0]	megaemu2_cmd_action,
+	input	[15:0]	megaemu2_cmd_wdata,
+	input			megaemu2_cmd_valid,
 	input			sw_internal_firmware,
 	output			kanji1_en,
-	output			kanji2_en
+	output			kanji2_en,
+	//	PPI peripheral I/F
+	output	[3:0]	matrix_y,
+	input	[7:0]	matrix_x,
+	output			cmt_motor_off,
+	output			cmt_write_signal,
+	output			keyboard_caps_led_off,
+	output			click_sound,
+	//	SDRAM I/F
+	output	[22:2]	sdram_address,
+	output			sdram_valid,
+	output			sdram_write,
+	output			sdram_refresh,
+	output	[31:0]	sdram_wdata,
+	output	[3:0]	sdram_wdata_mask,
+	input	[31:0]	sdram_rdata,
+	input			sdram_rdata_en
 );
 	reg		[ 3:0]	ff_register_index;
-	reg				ff_switch;				//	Internal firmware ON/OFF SW     0:right(OFF), 1:left(ON)
-	reg		[ 1:0]	ff_cpu_change_state;	//	cpu change state                00: R800, 01: Z80, 10: R800->Z80 changing, 11: Z80->R800 changing
-	reg				ff_rom_mode;			//	ROM mode                        0:DRAM, 1:ROM
+	reg				ff_switch;						//	Internal firmware ON/OFF SW     0:right(OFF), 1:left(ON)
+	reg				ff_rom_mode;					//	ROM mode                        0:DRAM, 1:ROM
 	reg		[ 8:0]	ff_div_counter;
 	reg		[15:0]	ff_freerun_counter;
-	reg				ff_timing;
-	reg				ff_r800_en;
-	reg				ff_m1_n;
-	reg				ff_mreq_n;
-	reg				ff_iorq_n;
-	reg				ff_rd_n;
-	reg				ff_wr_n;
-	reg				ff_halt_n;
-	reg		[7:0]	ff_wdata;
-	reg				ff_bus_m1;
-	reg				ff_bus_io;
-	reg				ff_bus_write;
-	reg				ff_bus_valid;
-	reg		[7:0]	ff_bus_wdata;
 	reg		[7:0]	ff_bus_rdata;
 	reg				ff_bus_rdata_en;
 	reg				ff_mapper_cs;
@@ -140,6 +146,7 @@ module s2026a (
 	reg				ff_megarom1_cs;
 	reg				ff_megarom2_cs;
 	reg				ff_s2026_cs;
+	reg				ff_s2026_meegarom_cs;
 	reg				ff_indicator_cs;
 	reg				ff_sysctl_cs;
 	reg		[7:0]	ff_f4;
@@ -151,33 +158,106 @@ module s2026a (
 	wire			w_cpu_pause;
 	localparam		c_div_start_pt		= 9'd335;
 
-	reg		[15:0]	ff_bus_address;
+	//	CPU select outputs
+	wire	[15:0]	ff_bus_address;
+	wire			ff_mreq_n;
+	wire			ff_iorq_n;
+	wire			ff_bus_m1;
+	wire			ff_bus_io;
+	wire			ff_bus_write;
+	wire			ff_bus_valid;
+	wire	[7:0]	ff_bus_wdata;
+	wire			w_processor_mode;
+
 	wire	[1:0]	w_primary_slot;
 	wire	[1:0]	w_secondary_slot0;
 	wire	[1:0]	w_secondary_slot3;
 	wire	[7:0]	w_rdata;
 
-	// ---------------------------------------------------------
-	//	Address
-	// ---------------------------------------------------------
-	always @( posedge clk85m ) begin
-		ff_bus_address	<= ff_cpu_change_state[0] ? z80_a		: r800_a;
-		ff_m1_n			<= ff_cpu_change_state[0] ? z80_m1_n	: r800_m1_n;
-		ff_mreq_n		<= ff_cpu_change_state[0] ? z80_mreq_n	: r800_mreq_n;
-		ff_iorq_n		<= ff_cpu_change_state[0] ? z80_iorq_n	: r800_iorq_n;
-		ff_rd_n			<= ff_cpu_change_state[0] ? z80_rd_n	: r800_rd_n;
-		ff_wr_n			<= ff_cpu_change_state[0] ? z80_wr_n	: r800_wr_n;
-		ff_halt_n		<= ff_cpu_change_state[0] ? z80_halt_n	: r800_halt_n;
-	end
+	//	PPI internal wires
+	wire	[7:0]	w_ppi_rdata;
+	wire			w_ppi_rdata_en;
+	wire			w_ppi_ready;
 
-	always @( posedge clk85m ) begin
-		if(      ff_cpu_change_state[0] && !z80_wr_n  ) begin
-			ff_wdata		<= z80_d;
-		end
-		else if(!ff_cpu_change_state[0] && !r800_wr_n ) begin
-			ff_wdata		<= r800_d;
-		end
-	end
+	//	KanjiROM internal wires
+	wire	[17:0]	w_kanjirom_sdram_address;
+	wire			w_kanjirom_sdram_valid;
+	wire			w_kanjirom_sdram_write;
+	wire	[7:0]	w_kanjirom_sdram_wdata;
+	wire			w_kanjirom_ready;
+
+	//	MegaROM internal wires
+	wire	[22:0]	w_megarom_sdram_address;
+	wire			w_megarom_sdram_valid;
+	wire			w_megarom_sdram_write;
+	wire	[7:0]	w_megarom_sdram_wdata;
+	wire			w_megarom_ready;
+	wire	[7:0]	w_megarom_rdata;
+	wire			w_megarom_rdata_en;
+
+	//	MegaEmu1 internal wires
+	wire	[20:0]	w_megaemu1_sdram_address;
+	wire			w_megaemu1_sdram_valid;
+	wire			w_megaemu1_sdram_write;
+	wire	[7:0]	w_megaemu1_sdram_wdata;
+	wire			w_megaemu1_ready;
+	wire	[7:0]	w_megaemu1_rdata;
+	wire			w_megaemu1_rdata_en;
+
+	//	MegaEmu2 internal wires
+	wire	[20:0]	w_megaemu2_sdram_address;
+	wire			w_megaemu2_sdram_valid;
+	wire			w_megaemu2_sdram_write;
+	wire	[7:0]	w_megaemu2_sdram_wdata;
+	wire			w_megaemu2_ready;
+	wire	[7:0]	w_megaemu2_rdata;
+	wire			w_megaemu2_rdata_en;
+
+	// ---------------------------------------------------------
+	//	CPU select instance
+	// ---------------------------------------------------------
+	wire	w_cpu_change_req	= ff_s2026_cs && ff_bus_write && ff_bus_address[1:0] == 2'd1 && ff_register_index == 4'd6;
+	wire	w_cpu_change_target	= ff_bus_wdata[5];
+
+	s2026a_cpu_select u_cpu_select (
+		.reset_n			( reset_n				),
+		.clk85m				( clk85m				),
+		.z80_m1_n			( z80_m1_n				),
+		.z80_mreq_n			( z80_mreq_n			),
+		.z80_iorq_n			( z80_iorq_n			),
+		.z80_rd_n			( z80_rd_n				),
+		.z80_wr_n			( z80_wr_n				),
+		.z80_halt_n			( z80_halt_n			),
+		.z80_busak_n		( z80_busak_n			),
+		.z80_a				( z80_a					),
+		.z80_d				( z80_d					),
+		.z80_busrq_n		( z80_busrq_n			),
+		.r800_m1_n			( r800_m1_n				),
+		.r800_mreq_n		( r800_mreq_n			),
+		.r800_iorq_n		( r800_iorq_n			),
+		.r800_rd_n			( r800_rd_n				),
+		.r800_wr_n			( r800_wr_n				),
+		.r800_halt_n		( r800_halt_n			),
+		.r800_busak_n		( r800_busak_n			),
+		.r800_a				( r800_a				),
+		.r800_d				( r800_d				),
+		.r800_busrq_n		( r800_busrq_n			),
+		.cpu_change_req		( w_cpu_change_req		),
+		.cpu_change_target	( w_cpu_change_target	),
+		.cpu_pause			( w_cpu_pause			),
+		.wait_n				( wait_n				),
+		.rdata				( ff_bus_rdata			),
+		.rdata_en			( ff_bus_rdata_en		),
+		.processor_mode		( w_processor_mode		),
+		.address			( ff_bus_address		),
+		.mreq_n				( ff_mreq_n				),
+		.iorq_n				( ff_iorq_n				),
+		.bus_m1				( ff_bus_m1				),
+		.bus_io				( ff_bus_io				),
+		.bus_write			( ff_bus_write			),
+		.bus_valid			( ff_bus_valid			),
+		.bus_wdata			( ff_bus_wdata			)
+	);
 
 	// ---------------------------------------------------------
 	//	Slot
@@ -203,30 +283,20 @@ module s2026a (
 	//	Chip select
 	// ---------------------------------------------------------
 	always @( posedge clk85m ) begin
-		ff_mapper_cs		<= (!ff_mreq_n && (w_primary_slot == 2'd3) && (w_secondary_slot3 == 2'd0));
-		ff_ppi_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hA8 ));
-		ff_rtc_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'hB4 ));
-		ff_vdp_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:3], 3'd0} == 8'h98 ));
-		ff_cartridge_cs		<= (!ff_mreq_n && ((!megarom1_en && w_primary_slot == 2'd1) || (!megarom2_en && w_primary_slot == 2'd2)));
-		ff_ssg_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hA0 ));
-		ff_opll_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'h7C ));
-		ff_kanji_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hD8 ));
-		ff_megarom1_cs		<= (!ff_mreq_n &&    megarom1_en && (w_primary_slot == 2'd1));
-		ff_megarom2_cs		<= (!ff_mreq_n &&    megarom2_en && (w_primary_slot == 2'd2));
-		ff_s2026_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hE4 ));
-		ff_indicator_cs		<= (!ff_iorq_n && (  ff_bus_address[7:0]        == 8'hA7 ));
-		ff_sysctl_cs		<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'hF4 ));
-	end
-
-	// ---------------------------------------------------------
-	//	BUS signal
-	// ---------------------------------------------------------
-	always @( posedge clk85m ) begin
-		ff_bus_m1		<= ~ff_m1_n;
-		ff_bus_io		<= ~ff_iorq_n;
-		ff_bus_write	<= ~ff_wr_n;
-		ff_bus_valid	<= (~ff_iorq_n | ~ff_mreq_n) & (~ff_wr_n | ~ff_rd_n);
-		ff_bus_wdata	<= ff_wdata;
+		ff_mapper_cs			<= (!ff_mreq_n && (w_primary_slot == 2'd3) && (w_secondary_slot3 == 2'd0));
+		ff_ppi_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hA8 ));
+		ff_rtc_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'hB4 ));
+		ff_vdp_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:3], 3'd0} == 8'h98 ));
+		ff_cartridge_cs			<= (!ff_mreq_n && ((!megarom1_en && w_primary_slot == 2'd1) || (!megarom2_en && w_primary_slot == 2'd2)));
+		ff_ssg_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hA0 ));
+		ff_opll_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'h7C ));
+		ff_kanji_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hD8 ));
+		ff_megarom1_cs			<= (!ff_mreq_n &&    megarom1_en && (w_primary_slot == 2'd1));
+		ff_megarom2_cs			<= (!ff_mreq_n &&    megarom2_en && (w_primary_slot == 2'd2));
+		ff_s2026_cs				<= (!ff_iorq_n && ( {ff_bus_address[7:2], 2'd0} == 8'hE4 ));
+		ff_s2026_meegarom_cs	<= (!ff_mreq_n && (w_primary_slot == 2'd3) && (w_secondary_slot3 == 2'd3));
+		ff_indicator_cs			<= (!ff_iorq_n && (  ff_bus_address[7:0]        == 8'hA7 ));
+		ff_sysctl_cs			<= (!ff_iorq_n && ( {ff_bus_address[7:1], 1'd0} == 8'hF4 ));
 	end
 
 	// ---------------------------------------------------------
@@ -237,8 +307,8 @@ module s2026a (
 			ff_bus_rdata	<= 8'd0;
 			ff_bus_rdata_en	<= 1'b0;
 		end
-		else if( bus_ppi_rdata_en ) begin
-			ff_bus_rdata	<= bus_ppi_rdata;
+		else if( w_ppi_rdata_en ) begin
+			ff_bus_rdata	<= w_ppi_rdata;
 			ff_bus_rdata_en	<= 1'b1;
 		end
 		else if( bus_rtc_rdata_en ) begin
@@ -257,8 +327,8 @@ module s2026a (
 			ff_bus_rdata	<= bus_ssg_rdata;
 			ff_bus_rdata_en	<= 1'b1;
 		end
-		else if( bus_kanji_rdata_en ) begin
-			ff_bus_rdata	<= bus_kanji_rdata;
+		else if( w_kanji_rdata_en ) begin
+			ff_bus_rdata	<= w_kanji_sdram_rdata;
 			ff_bus_rdata_en	<= 1'b1;
 		end
 		else if( bus_megarom1_rdata_en ) begin
@@ -269,8 +339,24 @@ module s2026a (
 			ff_bus_rdata	<= bus_megarom2_rdata;
 			ff_bus_rdata_en	<= 1'b1;
 		end
+		else if( w_megaemu1_rdata_en ) begin
+			ff_bus_rdata	<= w_megaemu1_rdata;
+			ff_bus_rdata_en	<= 1'b1;
+		end
+		else if( w_megaemu2_rdata_en ) begin
+			ff_bus_rdata	<= w_megaemu2_rdata;
+			ff_bus_rdata_en	<= 1'b1;
+		end
 		else if( ff_s2026_cs && ff_bus_valid && !ff_bus_write ) begin
 			ff_bus_rdata	<= w_rdata;
+			ff_bus_rdata_en	<= 1'b1;
+		end
+		else if( w_megarom_rdata_en ) begin
+			ff_bus_rdata	<= w_megarom_rdata;
+			ff_bus_rdata_en	<= 1'b1;
+		end
+		else if( w_megarom_sdram_rdata_en ) begin
+			ff_bus_rdata	<= w_megarom_sdram_rdata;
 			ff_bus_rdata_en	<= 1'b1;
 		end
 		else if( ff_sysctl_cs && ff_bus_valid && !ff_bus_write ) begin
@@ -282,29 +368,26 @@ module s2026a (
 		end
 	end
 
-	assign z80_d		= (!z80_rd_n  && ff_bus_rdata_en) ? ff_bus_rdata : 8'hZZ;
-	assign r800_d		= (!r800_rd_n && ff_bus_rdata_en) ? ff_bus_rdata : 8'hZZ;
-
 	// ---------------------------------------------------------
 	//	Wait / Ready
 	// ---------------------------------------------------------
 	assign w_bus_ready	= (!ff_mapper_cs    | bus_mapper_ready   ) &
-						  (!ff_ppi_cs       | bus_ppi_ready      ) &
+						  (!ff_ppi_cs       | w_ppi_ready        ) &
 						  (!ff_rtc_cs       | bus_rtc_ready      ) &
 						  (!ff_cartridge_cs | bus_cartridge_ready ) &
 						  (!ff_ssg_cs       | bus_ssg_ready      ) &
-						  (!ff_kanji_cs     | bus_kanji_ready    ) &
+						  (!ff_kanji_cs     | w_kanjirom_ready   ) &
 						  (!ff_megarom1_cs  | bus_megarom1_ready ) &
-						  (!ff_megarom2_cs  | bus_megarom2_ready );
+						  (!ff_megarom2_cs  | bus_megarom2_ready ) &
+						  (!ff_s2026_meegarom_cs | w_megarom_ready ) &
+						  (!(ff_megarom1_cs & megaemu1_en) | w_megaemu1_ready ) &
+						  (!(ff_megarom2_cs & megaemu2_en) | w_megaemu2_ready );
 	assign w_cpu_pause	= ff_bus_valid & ~w_bus_ready;
 
 	//--------------------------------------------------------------
 	//	out assignment
 	//--------------------------------------------------------------
-	assign wait_n			= ~ff_cpu_change_state[1] & ~w_cpu_pause;
-	assign z80_busrq_n		= ff_cpu_change_state[0];
-	assign r800_busrq_n		= ~ff_cpu_change_state[0];
-	assign processor_mode	= ff_cpu_change_state[0];
+	assign processor_mode	= w_processor_mode;
 	assign rom_mode			= ff_rom_mode;
 
 	assign mapper_cs		= ff_mapper_cs;
@@ -348,7 +431,7 @@ module s2026a (
 	assign w_register_read = register_read( 
 		ff_register_index, 
 		ff_switch, 
-		ff_cpu_change_state[0], 
+		w_processor_mode, 
 		ff_rom_mode 
 	);
 
@@ -461,70 +544,199 @@ module s2026a (
 		ff_switch <= sw_internal_firmware;
 	end
 
-	//--------------------------------------------------------------
-	//	change CPU state
-	//		00: R800
-	//		01: Z80
-	//		10: Z80 --> R800 changing
-	//		11: R800--> Z80 changing
-	//--------------------------------------------------------------
+	// ---------------------------------------------------------
+	//	PPI instance
+	// ---------------------------------------------------------
+	s2026a_ppi u_ppi (
+		.reset_n				( reset_n				),
+		.clk85m					( clk85m				),
+		.bus_cs					( ff_ppi_cs				),
+		.bus_write				( ff_bus_write			),
+		.bus_valid				( ff_bus_valid			),
+		.bus_ready				( w_ppi_ready			),
+		.bus_wdata				( ff_bus_wdata			),
+		.bus_address			( ff_bus_address[1:0]	),
+		.bus_rdata				( w_ppi_rdata			),
+		.bus_rdata_en			( w_ppi_rdata_en		),
+		.primary_slot			( primary_slot			),
+		.matrix_y				( matrix_y				),
+		.matrix_x				( matrix_x				),
+		.cmt_motor_off			( cmt_motor_off			),
+		.cmt_write_signal		( cmt_write_signal		),
+		.keyboard_caps_led_off	( keyboard_caps_led_off	),
+		.click_sound			( click_sound			)
+	);
+
+	// ---------------------------------------------------------
+	//	KanjiROM instance
+	// ---------------------------------------------------------
+	s2026a_kanjirom u_kanjirom (
+		.reset_n				( reset_n						),
+		.clk85m					( clk85m						),
+		.bus_cs					( ff_kanji_cs					),
+		.bus_write				( ff_bus_write					),
+		.bus_valid				( ff_bus_valid					),
+		.bus_ready				( w_kanjirom_ready				),
+		.bus_wdata				( ff_bus_wdata					),
+		.bus_address			( ff_bus_address[1:0]			),
+		.sdram_address			( w_kanjirom_sdram_address		),
+		.sdram_valid			( w_kanjirom_sdram_valid		),
+		.sdram_ready			( sdram_rdata_en				),
+		.sdram_write			( w_kanjirom_sdram_write		),
+		.sdram_wdata			( w_kanjirom_sdram_wdata		)
+	);
+
+	// ---------------------------------------------------------
+	//	System MegaROM instance
+	// ---------------------------------------------------------
+	s2026a_megarom u_megarom (
+		.reset_n				( reset_n						),
+		.clk85m					( clk85m						),
+		.bus_cs					( ff_s2026_meegarom_cs			),
+		.bus_write				( ff_bus_write					),
+		.bus_valid				( ff_bus_valid					),
+		.bus_ready				( w_megarom_ready				),
+		.bus_rdata				( w_megarom_rdata				),
+		.bus_rdata_en			( w_megarom_rdata_en			),
+		.bus_wdata				( ff_bus_wdata					),
+		.bus_address			( ff_bus_address				),
+		.sdram_address			( w_megarom_sdram_address		),
+		.sdram_valid			( w_megarom_sdram_valid			),
+		.sdram_ready			( sdram_rdata_en				),
+		.sdram_write			( w_megarom_sdram_write			),
+		.sdram_wdata			( w_megarom_sdram_wdata			)
+	);
+
+	// ---------------------------------------------------------
+	//	MegaEmu1 instance (Slot 1)
+	// ---------------------------------------------------------
+	s2026a_megaemu u_slot1_megaemu (
+		.reset_n			( reset_n					),
+		.clk85m				( clk85m					),
+		.enable				( megaemu1_en				),
+		.bus_cs				( ff_megarom1_cs			),
+		.bus_write			( ff_bus_write				),
+		.bus_valid			( ff_bus_valid				),
+		.bus_ready			( w_megaemu1_ready			),
+		.bus_rdata			( w_megaemu1_rdata			),
+		.bus_rdata_en		( w_megaemu1_rdata_en		),
+		.bus_wdata			( ff_bus_wdata				),
+		.bus_address		( ff_bus_address			),
+		.cmd_cs				( megaemu1_cmd_cs			),
+		.cmd_action			( megaemu1_cmd_action		),
+		.cmd_wdata			( megaemu1_cmd_wdata		),
+		.cmd_valid			( megaemu1_cmd_valid		),
+		.sdram_address		( w_megaemu1_sdram_address	),
+		.sdram_valid		( w_megaemu1_sdram_valid	),
+		.sdram_ready		( sdram_rdata_en			),
+		.sdram_write		( w_megaemu1_sdram_write	),
+		.sdram_wdata		( w_megaemu1_sdram_wdata	)
+	);
+
+	// ---------------------------------------------------------
+	//	MegaEmu2 instance (Slot 2)
+	// ---------------------------------------------------------
+	s2026a_megaemu u_slot2_megaemu (
+		.reset_n			( reset_n					),
+		.clk85m				( clk85m					),
+		.enable				( megaemu2_en				),
+		.bus_cs				( ff_megarom2_cs			),
+		.bus_write			( ff_bus_write				),
+		.bus_valid			( ff_bus_valid				),
+		.bus_ready			( w_megaemu2_ready			),
+		.bus_rdata			( w_megaemu2_rdata			),
+		.bus_rdata_en		( w_megaemu2_rdata_en		),
+		.bus_wdata			( ff_bus_wdata				),
+		.bus_address		( ff_bus_address			),
+		.cmd_cs				( megaemu2_cmd_cs			),
+		.cmd_action			( megaemu2_cmd_action		),
+		.cmd_wdata			( megaemu2_cmd_wdata		),
+		.cmd_valid			( megaemu2_cmd_valid		),
+		.sdram_address		( w_megaemu2_sdram_address	),
+		.sdram_valid		( w_megaemu2_sdram_valid	),
+		.sdram_ready		( sdram_rdata_en			),
+		.sdram_write		( w_megaemu2_sdram_write	),
+		.sdram_wdata		( w_megaemu2_sdram_wdata	)
+	);
+
+	// ---------------------------------------------------------
+	//	SDRAM Arbitration (KanjiROM / MegaROM / MegaEmu1 / MegaEmu2)
+	//		KanjiROM, MegaROM and MegaEmu are selected by different chip
+	//		selects, so their SDRAM requests do not conflict.
+	// ---------------------------------------------------------
+	wire			w_sdram_sel_kanjirom	= w_kanjirom_sdram_valid;
+	wire			w_sdram_sel_megaemu1	= w_megaemu1_sdram_valid;
+	wire			w_sdram_sel_megaemu2	= w_megaemu2_sdram_valid;
+
+	wire	[22:0]	w_megaemu1_sdram_address_23	= { 2'd0, w_megaemu1_sdram_address };
+	wire	[22:0]	w_megaemu2_sdram_address_23	= { 2'd0, w_megaemu2_sdram_address };
+
+	wire	[22:0]	w_sdram_address_byte	= w_sdram_sel_kanjirom  ? { 5'd0, w_kanjirom_sdram_address } :
+											  w_sdram_sel_megaemu1  ? w_megaemu1_sdram_address_23 :
+											  w_sdram_sel_megaemu2  ? w_megaemu2_sdram_address_23 :
+																   w_megarom_sdram_address;
+
+	assign sdram_address	= w_sdram_address_byte[22:2];
+	assign sdram_valid		= w_kanjirom_sdram_valid | w_megarom_sdram_valid | w_megaemu1_sdram_valid | w_megaemu2_sdram_valid;
+	assign sdram_write		= ~w_sdram_sel_kanjirom &
+							  ( w_sdram_sel_megaemu1 ? w_megaemu1_sdram_write :
+							    w_sdram_sel_megaemu2 ? w_megaemu2_sdram_write :
+													  w_megarom_sdram_write );
+	assign sdram_refresh	= 1'b0;
+	assign sdram_wdata		= w_sdram_sel_megaemu1 ? { 4{ w_megaemu1_sdram_wdata } } :
+							  w_sdram_sel_megaemu2 ? { 4{ w_megaemu2_sdram_wdata } } :
+													{ 4{ w_megarom_sdram_wdata } };
+
+	wire	[1:0]	w_sdram_byte_sel	= w_sdram_address_byte[1:0];
+	assign sdram_wdata_mask	= ( w_sdram_byte_sel == 2'd0 ) ? 4'b1110 :
+							  ( w_sdram_byte_sel == 2'd1 ) ? 4'b1101 :
+							  ( w_sdram_byte_sel == 2'd2 ) ? 4'b1011 : 4'b0111;
+
+	// ---------------------------------------------------------
+	//	SDRAM read data extraction
+	// ---------------------------------------------------------
+	reg		[1:0]	ff_kanjirom_byte_sel;
+	reg				ff_kanjirom_reading;
+	reg		[1:0]	ff_megarom_byte_sel;
+	reg				ff_megarom_reading;
+
 	always @( posedge clk85m ) begin
 		if( !reset_n ) begin
-			ff_cpu_change_state	<= 2'b01;
+			ff_kanjirom_reading		<= 1'b0;
+			ff_kanjirom_byte_sel	<= 2'd0;
 		end
-		else begin
-			if( ff_cpu_change_state[1] == 1'b1 ) begin
-				//	Changing to other CPU
-				if( ff_cpu_change_state[0] == 1'b1 ) begin
-					//	R800 --> Z80
-					if( r800_busak_n == 1'b0 ) begin
-						//	Completed
-						ff_cpu_change_state[1] <= 1'b0;
-					end
-				end
-				else begin
-					//	Z80 --> R800
-					if( z80_busak_n == 1'b0 ) begin
-						//	Completed
-						ff_cpu_change_state[1] <= 1'b0;
-					end
-				end
-			end
-			else if( ff_s2026_cs && ff_bus_write && ff_bus_address[1:0] == 2'd1 ) begin
-				//	I/O: E5h
-				if( ff_register_index == 4'd6 ) begin
-					//	S1990 Register: 06h
-					ff_cpu_change_state[0]	<= ff_bus_wdata[5];
-					ff_cpu_change_state[1]	<= ff_bus_wdata[5] ^ ff_cpu_change_state[0];
-				end
-			end
-			else begin
-				//	hold
-			end
+		else if( w_kanjirom_sdram_valid && !ff_kanjirom_reading ) begin
+			ff_kanjirom_reading		<= 1'b1;
+			ff_kanjirom_byte_sel	<= w_kanjirom_sdram_address[1:0];
+		end
+		else if( sdram_rdata_en ) begin
+			ff_kanjirom_reading		<= 1'b0;
 		end
 	end
 
 	always @( posedge clk85m ) begin
 		if( !reset_n ) begin
-			ff_r800_en	<= 1'b0;
-			ff_timing	<= 1'b0;
+			ff_megarom_reading		<= 1'b0;
+			ff_megarom_byte_sel		<= 2'd0;
 		end
-		else begin
-			if(      !z80_iorq_n && !z80_wr_n ) begin
-				if( !ff_timing &&  ff_cpu_change_state[0] ) begin
-					ff_r800_en	<= 1'b1;
-					ff_timing	<= 1'b1;
-				end
-			end
-			else if( !r800_iorq_n && !r800_wr_n ) begin
-				if( !ff_timing && !ff_cpu_change_state[0] ) begin
-					ff_r800_en	<= 1'b0;
-					ff_timing	<= 1'b1;
-				end
-			end
-			else begin
-				ff_timing	<= 1'b0;
-			end
+		else if( w_megarom_sdram_valid && !w_megarom_sdram_write && !ff_megarom_reading ) begin
+			ff_megarom_reading		<= 1'b1;
+			ff_megarom_byte_sel		<= w_megarom_sdram_address[1:0];
+		end
+		else if( sdram_rdata_en ) begin
+			ff_megarom_reading		<= 1'b0;
 		end
 	end
+
+	wire	[7:0]	w_kanji_sdram_rdata	= ( ff_kanjirom_byte_sel == 2'd0 ) ? sdram_rdata[ 7: 0] :
+										  ( ff_kanjirom_byte_sel == 2'd1 ) ? sdram_rdata[15: 8] :
+										  ( ff_kanjirom_byte_sel == 2'd2 ) ? sdram_rdata[23:16] :
+																			 sdram_rdata[31:24];
+	wire			w_kanji_rdata_en	= ff_kanjirom_reading & sdram_rdata_en;
+
+	wire	[7:0]	w_megarom_sdram_rdata	= ( ff_megarom_byte_sel == 2'd0 ) ? sdram_rdata[ 7: 0] :
+											  ( ff_megarom_byte_sel == 2'd1 ) ? sdram_rdata[15: 8] :
+											  ( ff_megarom_byte_sel == 2'd2 ) ? sdram_rdata[23:16] :
+																				sdram_rdata[31:24];
+	wire			w_megarom_sdram_rdata_en	= ff_megarom_reading & sdram_rdata_en;
 endmodule

@@ -320,7 +320,7 @@ module tb ();
 			$display( "[NG] R800 bus should be idle" );
 		end
 
-		repeat( 10 ) @( posedge u_dut.clk42m );
+		repeat( 10000 ) @( posedge u_dut.clk42m );
 		$finish;
 	end
 endmodule
