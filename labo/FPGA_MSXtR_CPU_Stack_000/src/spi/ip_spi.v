@@ -49,7 +49,11 @@ module ip_spi (
 	input			spi_clk,
 	input			spi_mosi,
 	output			spi_miso,
-	output			spi_intr
+	output			spi_intr,
+	//	MSX Hardware control
+	output			msx_reset_n,
+	output			msx_pause,
+	input	[7:0]	debug_signal
 );
 	localparam		ST_IDLE			= 4'd0;
 	localparam		ST_COMMAND		= 4'd1;
@@ -78,6 +82,20 @@ module ip_spi (
 	reg				ff_bus_io;
 	reg				ff_bus_write;
 	reg				ff_bus_valid;
+	reg				ff_msx_reset_n;
+	reg				ff_msx_pause;
+	reg		[7:0]	ff_debug_signal;
+	reg				ff_suppress_intr;
+	reg				ff_suppress_intr_d1;
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_debug_signal <= 8'h00;
+		end
+		else begin
+			ff_debug_signal <= debug_signal;
+		end
+	end
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -104,6 +122,9 @@ module ip_spi (
 			ff_spi_wdata	<= SPI_RX_WDATA;
 			ff_spi_write	<= 1'b0;
 			ff_spi_valid	<= 1'b0;
+			ff_msx_reset_n	<= 1'b0;
+			ff_msx_pause	<= 1'b0;
+			ff_suppress_intr <= 1'b0;
 		end
 		else if( ff_state == ST_SEND ) begin
 			if( ff_spi_valid && spi_ready ) begin
@@ -151,6 +172,7 @@ module ip_spi (
 			ff_state		<= ST_IDLE;
 			ff_spi_valid	<= 1'b0;
 			ff_bus_valid	<= 1'b0;
+			ff_suppress_intr <= 1'b0;
 		end
 		else if( ff_spi_valid ) begin
 			if( spi_ready ) begin
@@ -171,6 +193,13 @@ module ip_spi (
 			//   02h, io#, (dummy byte)            ... I/O read (return data on dummy byte)
 			//   03h, addr_l, addr_h, data         ... Memory write
 			//   04h, addr_l, addr_h, (dummy byte) ... Memory read (return data on dummy byte)
+			//   05h, (dummy byte)                 ... Busy check (return 01h if bus_valid is asserted, else 00h)
+			//   06h                               ... MSX Hardware reset ON  (msx_reset_n = 0)
+			//   07h                               ... MSX Hardware reset OFF (msx_reset_n = 1)
+			//   08h                               ... MSX Hardware pause ON  (msx_pause = 1)
+			//   09h                               ... MSX Hardware pause OFF (msx_pause = 0)
+			//   0Ah, (dummy byte)                 ... Debug signal read without SPI interrupt
+			//   0Bh, (dummy byte)                 ... Fixed A5h read without SPI interrupt
 			//   FFh                               ... presence check
 			ST_COMMAND: begin
 				if( spi_rdata_en ) begin
@@ -202,6 +231,55 @@ module ip_spi (
 						ff_bus_write	<= 1'b0;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b0;
+					end
+					8'h05: begin
+						//	busy check --> respond immediately, no bus access involved
+						ff_state		<= ST_SEND;
+						ff_spi_wdata	<= ff_bus_valid ? 8'h01 : 8'h00;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b1;
+					end
+					8'h06: begin
+						ff_msx_reset_n	<= 1'b0;
+						ff_state		<= ST_COMMAND;
+						ff_spi_wdata	<= SPI_RX_WDATA;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b0;
+					end
+					8'h07: begin
+						ff_msx_reset_n	<= 1'b1;
+						ff_state		<= ST_COMMAND;
+						ff_spi_wdata	<= SPI_RX_WDATA;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b0;
+					end
+					8'h08: begin
+						ff_msx_pause	<= 1'b1;
+						ff_state		<= ST_COMMAND;
+						ff_spi_wdata	<= SPI_RX_WDATA;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b0;
+					end
+					8'h09: begin
+						ff_msx_pause	<= 1'b0;
+						ff_state		<= ST_COMMAND;
+						ff_spi_wdata	<= SPI_RX_WDATA;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b0;
+					end
+					8'h0a: begin
+						ff_state		<= ST_SEND;
+						ff_spi_wdata	<= ff_debug_signal;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b1;
+						ff_suppress_intr <= 1'b1;
+					end
+					8'h0b: begin
+						ff_state		<= ST_SEND;
+						ff_spi_wdata	<= 8'hA5;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b1;
+						ff_suppress_intr <= 1'b1;
 					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command
@@ -279,14 +357,20 @@ module ip_spi (
 		if( !reset_n ) begin
 			ff_spi_intr				<= 1'b0;
 			ff_spi_tx_load_en_d1	<= 1'b0;
+			ff_suppress_intr_d1	<= 1'b0;
 		end
 		else if( ff_spi_cs_n ) begin
 			ff_spi_intr				<= 1'b0;
 			ff_spi_tx_load_en_d1	<= 1'b0;
+			ff_suppress_intr_d1	<= 1'b0;
 		end
 		else begin
 			ff_spi_tx_load_en_d1	<= spi_tx_load_en;
-			if( ff_spi_tx_load_en_d1 ) begin
+			ff_suppress_intr_d1	<= ff_suppress_intr;
+			if( ff_suppress_intr || ff_suppress_intr_d1 ) begin
+				ff_spi_intr	<= 1'b0;
+			end
+			else if( ff_spi_tx_load_en_d1 ) begin
 			ff_spi_intr	<= 1'b1;
 			end
 			else if( ff_spi_intr && spi_clk ) begin
@@ -325,4 +409,10 @@ module ip_spi (
 	assign bus_address		= ff_bus_address;
 	assign bus_wdata		= ff_bus_wdata;
 	assign bus_valid		= ff_bus_valid;
+
+	// ---------------------------------------------------------
+	//	MSX Hardware control
+	// ---------------------------------------------------------
+	assign msx_reset_n		= ff_msx_reset_n;
+	assign msx_pause		= ff_msx_pause;
 endmodule

@@ -129,6 +129,16 @@ static void test_ppi_port_a_readback( void ) {
 }
 
 // ---------------------------------------------------------
+static void dump_fpga_debug_signal( void ) {
+	uint8_t debug_signal;
+	uint8_t debug_test;
+
+	debug_signal = fpga_get_debug_signal();
+	debug_test = fpga_get_debug_test();
+	printf( "FPGA debug signal: %u (0x%02X), test: 0x%02X\r\n", debug_signal, debug_signal, debug_test );
+}
+
+// ---------------------------------------------------------
 static void i2c0_init(void) {
 	i2c_init(I2C_PORT, I2C_BAUDRATE);
 	gpio_set_function(I2C_SDA_PIN, GPIO_FUNC_I2C);
@@ -347,12 +357,15 @@ int main(void) {
 	multicore_launch_core1(core1_entry);
 
 	// FPGAが起動するまでは取りこぼすのでしばらく待つ
-	sleep_ms(6000);
+	sleep_ms(5000);
+
+	// MSXのリセット解除
+	fpga_msx_reset( false );
 
 	//	VDPに対して初期化処理を行う
-	//vdp_set_screen1();
-	//vdp_set_screen1_font();
-	//vdp_set_screen1_message();
+	vdp_set_screen1();
+	vdp_set_screen1_font();
+	vdp_set_screen1_message();
 	while (true) {
 		//	Menuボタンが押されたかどうかを確認する
 		if( (prev_mat11 & 0x01) && !(keymatrix[11] & 0x01) ) {
@@ -367,10 +380,20 @@ int main(void) {
 			//	2キーが押されたタイミングなら、PPI Port A の書き戻しテストを実行する
 			test_ppi_port_a_readback();
 		}
-//		if( (prev_mat00 & 0x08) && !(keymatrix[0] & 0x08) ) {
-//			//	3キーが押されたタイミングなら、ConfigROM にダミーデータを書き込む
-//			write_and_verify_dummy_data();
-//		}
+		if( (prev_mat00 & 0x08) && !(keymatrix[0] & 0x08) ) {
+			//	3キーが押されたタイミングなら、VDP の初期化を実行する
+			printf( "vdp_set_screen1()\n" );
+			vdp_set_screen1();
+			printf( "vdp_set_screen1_font()\n" );
+			vdp_set_screen1_font();
+			printf( "vdp_set_screen1_message()\n" );
+			vdp_set_screen1_message();
+			printf( "Ok.\n" );
+		}
+		if( (prev_mat00 & 0x10) && !(keymatrix[0] & 0x10) ) {
+			//	4キーが押されたタイミングなら、デバッグ
+			dump_fpga_debug_signal();
+		}
 		prev_mat00 = keymatrix[0];
 		prev_mat11 = keymatrix[11];
 

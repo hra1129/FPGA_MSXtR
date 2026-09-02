@@ -14,6 +14,7 @@ vlog ..\bootrom\ram.v
 vlog ..\bootrom\rom.v
 vlog ..\bootrom\bootrom.v
 vlog ..\ppi\ppi.v
+vlog ..\debugger\debugger.v
 vlog ..\FPGA_MSXtR_CPU_Stack.v
 vlog tb.sv
 

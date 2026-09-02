@@ -44,5 +44,9 @@ void fpga_outport( uint8_t io_address, uint8_t data );
 uint8_t fpga_inport( uint8_t io_address );
 void fpga_poke( uint16_t io_address, uint8_t data );
 uint8_t fpga_peek( uint16_t io_address );
+void fpga_msx_reset( bool reset_on );
+void fpga_msx_pause( bool pause_on );
+uint8_t fpga_get_debug_signal( void );
+uint8_t fpga_get_debug_test( void );
 
 #endif

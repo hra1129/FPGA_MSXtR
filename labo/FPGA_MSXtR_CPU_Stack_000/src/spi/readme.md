@@ -12,6 +12,11 @@ spi_cs_n = L にして、次の 1byte を送ります。
 - 02h ... FPGA I/O 読み出し要求
 - 03h ... FPGA Memory 書込み要求
 - 04h ... FPGA Memory 読み出し要求
+- 05h ... FPGA BUSY check
+- 06h ... MSX Hardware reset ON
+- 07h ... MSX Hardware reset OFF
+- 08h ... MSX Hardware pause ON
+- 09h ... MSX Hardware pause OFF
 - FFh ... FPGA 存在確認
 
 # FPGA I/O 書き込み要求
@@ -55,6 +60,42 @@ FPGAに対して、Picoから制御を要求するコマンドです。
 |#3|アドレス番号(上位8bit)|書き込み対象となるFPGA内のMemoryアドレス番号|
 |-|待機|応答を返せるタイミングで SPI_INTR=1 にする|
 |#4|データ|指定のMemoryアドレスから読み込んだデータ（FPGAから出力)|
+
+# FPGA BUSY check
+FPGAがBUSY状態かどうかを確認する要求です。
+
+|順番|値|内容|
+|---|---|---|
+|#1|05h|FPGA BUSY check|
+|#2|応答|FPGAがBUSY状態の場合は、01hを返す。BUSY状態でない場合は、00hを返す。(FPGAから出力)|
+
+# MSX Hardware reset ON
+PicoからFPGAに対して、MSXのハードウェアリセットを要求するコマンドです。
+
+|順番|値|内容|
+|---|---|---|
+|#1|06h|MSX Hardware reset ON|
+
+# MSX Hardware reset OFF
+PicoからFPGAに対して、MSXのハードウェアリセットを解除するコマンドです。
+
+|順番|値|内容|
+|---|---|---|
+|#1|07h|MSX Hardware reset OFF|
+
+# MSX Hardware pause ON
+PicoからFPGAに対して、MSXのハードウェアポーズを要求するコマンドです。
+
+|順番|値|内容|
+|---|---|---|
+|#1|08h|MSX Hardware pause ON|
+
+# MSX Hardware pause OFF
+PicoからFPGAに対して、MSXのハードウェアポーズを解除するコマンドです。
+
+|順番|値|内容|
+|---|---|---|
+|#1|09h|MSX Hardware pause OFF|
 
 # FPGA 存在確認
 FPGAが存在するかどうかを確認する要求です。

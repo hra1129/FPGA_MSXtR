@@ -1,6 +1,6 @@
 -d C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_000\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack.vg
 -p GW5A-25A-MBGA121N-1
--pn GW5A-LV25MG121NES
+-pn GW5A-LV25MG121NC1/I0
 -cst C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_000\src\FPGA_MSXtR_CPU_Stack.cst
 -cfg C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_000\impl\pnr\device.cfg
 -sdc C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_000\src\FPGA_MSXtR_CPU_Stack.sdc

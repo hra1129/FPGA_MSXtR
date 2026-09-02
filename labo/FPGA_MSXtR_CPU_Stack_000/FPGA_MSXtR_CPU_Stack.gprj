@@ -3,7 +3,7 @@
 <Project>
     <Template>FPGA</Template>
     <Version>5</Version>
-    <Device name="GW5A-25A" pn="GW5A-LV25MG121NES">gw5a25a-000</Device>
+    <Device name="GW5A-25A" pn="GW5A-LV25MG121NC1/I0">gw5a25a-002</Device>
     <FileList>
         <File path="src/FPGA_MSXtR_CPU_Stack.v" type="file.verilog" enable="1"/>
         <File path="src/address_decode/address_decode.v" type="file.verilog" enable="1"/>
@@ -20,6 +20,7 @@
         <File path="src/cz80/cz80_inst.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_mcode.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_reg.v" type="file.verilog" enable="1"/>
+        <File path="src/debugger/debugger.v" type="file.verilog" enable="1"/>
         <File path="src/extio/extio.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1"/>

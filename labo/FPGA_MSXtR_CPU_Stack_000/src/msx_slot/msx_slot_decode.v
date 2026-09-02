@@ -34,13 +34,12 @@
 module msx_slot_decode (
 	input			reset_n,
 	input			clk_42m,				//	42.95454MHz
-	input			clk_215m,				//	214.7727MHz
 	//	Internal bus interface
 	input	[15:0]	bus_address,			//	Z80 address
 	input			bus_io,					//	1: I/O access, 0: Memory access
 	input			bus_write,				//	0: read, 1: write
 	input			bus_valid,
-	output			bus_ready,
+	input			bus_ready,
 	input	[7:0]	bus_wdata,
 	input	[7:0]	primary_slot,
 	input	[7:0]	secondary_slot0,
@@ -55,9 +54,6 @@ module msx_slot_decode (
 	output	[7:0]	device_wdata,
 	input	[7:0]	device_rdata,
 	input			device_rdata_en,
-	//	MSX slot access interface
-	output			slot_valid,
-	input			slot_ready,
 	//	flash ROM interface
 	output	[18:0]	rom_address,
 	output			rom_address_en,
@@ -74,6 +70,7 @@ module msx_slot_decode (
 	wire			w_rom_sel;
 	wire			w_kanji_port;
 	wire			w_internal_sel;
+	reg				ff_bus_valid;
 	reg		[18:0]	ff_rom_address;
 	reg				ff_rom_address_en;
 	reg				ff_rom0_ce_n;
@@ -120,18 +117,23 @@ module msx_slot_decode (
 	assign w_internal_sel	= w_kanji_port &  bus_write;
 	assign w_rom_sel		= w_rom0_sel | w_rom1_sel;
 
-	//	内部レジスタアクセス以外は、slot_* (MSXスロットタイミング) と device_* (内蔵デバイス) の
-	//	両方へ同時にアクセス要求を出す。どちらが先に応答するかは msx_slot 側の読み出しラッチで調停する。
-	//	bus_valid は受理されるまで(slot_ready=1 の間)複数クロック保持され得るため、device_valid は
-	//	slot 側の受理と同じ 1 クロックだけのパルスにして、device_* へ多重に要求を出さないようにする。
-	assign slot_valid		= bus_valid & ~w_internal_sel;
-	assign device_valid		= bus_valid & ~w_internal_sel & slot_ready;
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_bus_valid	<= 1'b0;
+		end
+		else if( ff_bus_valid && device_ready ) begin
+			ff_bus_valid	<= 1'b0;
+		end
+		else if( bus_valid && bus_ready ) begin
+			ff_bus_valid	<= 1'b1;
+		end
+	end
+
+	assign device_valid		= ff_bus_valid;
 	assign device_address	= bus_address;
 	assign device_io		= bus_io;
 	assign device_write		= bus_write;
 	assign device_wdata		= bus_wdata;
-
-	assign bus_ready		= w_internal_sel ? 1'b1 : ( slot_ready & device_ready );
 
 	assign rom_address		= ff_rom_address;
 	assign rom_address_en	= ff_rom_address_en;
@@ -143,12 +145,10 @@ module msx_slot_decode (
 	// ---------------------------------------------------------
 	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
-			ff_rom_address_en		<= 1'b0;
 			ff_rom0_ce_n			<= 1'b1;
 			ff_rom1_ce_n			<= 1'b1;
 		end
 		else if( bus_valid ) begin
-			ff_rom_address_en		<= w_rom_sel;
 			ff_rom0_ce_n			<= ~w_rom0_sel;
 			ff_rom1_ce_n			<= ~w_rom1_sel;
 		end
@@ -160,6 +160,7 @@ module msx_slot_decode (
 	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
 			ff_rom_address			<= 19'd0;
+			ff_rom_address_en		<= 1'b0;
 			ff_dos_bank				<= 2'd0;
 		end
 		else if( !bus_io && bus_valid ) begin
@@ -167,57 +168,70 @@ module msx_slot_decode (
 				{ 2'd0, 2'd0, 2'd0 }: begin
 					//	SLOT#0-0 page#0: MAIN-ROM (lower)
 					ff_rom_address			<= { 3'd0, 2'b00, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd0, 2'd0, 2'd1 }: begin
 					//	SLOT#0-0 page#1: MAIN-ROM (upper)
 					ff_rom_address			<= { 3'd0, 2'b01, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd0, 2'd1, 2'd0 }: begin
 					//	SLOT#0-1 page#0: Option-ROM0
 					ff_rom_address			<= { 3'd0, 2'b10, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd0, 2'd1, 2'd1 }: begin
 					//	SLOT#0-1 page#1: Option-ROM1
 					ff_rom_address			<= { 3'd0, 2'b11, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd0, 2'd2, 2'd0 }: begin
 					//	SLOT#0-2 page#0: Option-ROM2
 					ff_rom_address			<= { 3'd1, 2'b00, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd0, 2'd2, 2'd1 }: begin
 					//	SLOT#0-2 page#1: MSX-MUSIC
 					ff_rom_address			<= { 3'd1, 2'b01, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd0, 2'd3, 2'd0 }: begin
 					//	SLOT#0-3 page#0: Option-ROM3
 					ff_rom_address			<= { 3'd1, 2'b10, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd0, 2'd3, 2'd1 }: begin
 					//	SLOT#0-3 page#1: Boot Logo
 					ff_rom_address			<= { 3'd1, 2'b11, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd3, 2'd1, 2'd0 }: begin
 					//	SLOT#3-1 page#0: EXT-ROM
 					ff_rom_address			<= { 3'd2, 2'b00, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd3, 2'd1, 2'd1 }: begin
 					//	SLOT#3-1 page#1: KanjiDriver (Lower)
 					ff_rom_address			<= { 3'd2, 2'b01, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd3, 2'd1, 2'd2 }: begin
 					//	SLOT#3-1 page#2: KanjiDriver (Upper)
 					ff_rom_address			<= { 3'd2, 2'b10, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd3, 2'd1, 2'd3 }: begin
 					//	SLOT#3-1 page#3: Option-ROM4
 					ff_rom_address			<= { 3'd2, 2'b11, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				{ 2'd3, 2'd3, 2'd0 }: begin
 					//	SLOT#3-3 page#0: MSX-DOS2
 					ff_rom_address			<= { 3'd3, ff_dos_bank, bus_address[13:0] };
+					ff_rom_address_en		<= 1'b1;
 				end
 				default: begin
-					//	hold
+					ff_rom_address_en		<= 1'b0;
 				end
 			endcase
 		end

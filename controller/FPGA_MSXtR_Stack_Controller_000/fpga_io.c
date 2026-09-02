@@ -21,6 +21,7 @@
 //	in the Software.
 // -----------------------------------------------------------------------------
 
+#include <stdio.h>
 #include "fpga_io.h"
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
@@ -32,7 +33,7 @@
 #define SPI0_SCK_PIN  6
 #define SPI0_TX_PIN	  7
 #define SPI0_INTR_PIN 3
-#define SPI0_BAUDRATE (50 * 1000 * 1000)	// 50 MHz
+#define SPI0_BAUDRATE (70 * 1000 * 1000)	// 70 MHz
 #define FPGA_INIT_COMMAND 0xFF
 #define FPGA_INIT_READY   0x64
 
@@ -73,8 +74,42 @@ void fpga_io_init( void ) {
 }
 
 // ---------------------------------------------------------
+// FPGA BUSY check (05h) をポーリングし、READY(00h)になるまで待つ。
+// 10ms でタイムアウトし、その場合は false を返す。
+static bool fpga_wait_ready( void ) {
+	uint8_t cmd;
+	uint8_t dummy;
+	uint8_t busy;
+	absolute_time_t timeout_time;
+
+	timeout_time = make_timeout_time_ms( 10 );
+
+	for(;;) {
+		gpio_put( SPI0_CSN_PIN, 0 );
+		cmd = 0x05;
+		spi_write_blocking( SPI0_PORT, &cmd, 1 );
+		dummy = 0x00;
+		spi_write_read_blocking( SPI0_PORT, &dummy, &busy, 1 );
+		gpio_put( SPI0_CSN_PIN, 1 );
+
+		if( busy == 0x00 ) {
+			return true;
+		}
+		if( time_reached( timeout_time ) ) {
+			printf( "FPGA Timeout.\n" );
+			return false;
+		}
+		sleep_us( 10 );
+	}
+}
+
+// ---------------------------------------------------------
 void fpga_outport( uint8_t io_address, uint8_t data ) {
 	uint8_t buf;
+
+	if( !fpga_wait_ready() ) {
+		return;
+	}
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	buf = 0x01;
@@ -84,6 +119,7 @@ void fpga_outport( uint8_t io_address, uint8_t data ) {
 	buf = data;
 	spi_write_blocking( SPI0_PORT, &buf, 1 );
 	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
 }
 
 // ---------------------------------------------------------
@@ -93,6 +129,10 @@ uint8_t fpga_inport( uint8_t io_address ) {
 	uint8_t data;
 	absolute_time_t timeout_time;
 	bool intr_ready;
+
+	if( !fpga_wait_ready() ) {
+		return 0xBB;
+	}
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 
@@ -122,12 +162,17 @@ uint8_t fpga_inport( uint8_t io_address ) {
 	spi_write_read_blocking( SPI0_PORT, &dummy, &data, 1 );
 
 	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
 	return data;
 }
 
 // ---------------------------------------------------------
 void fpga_poke( uint16_t io_address, uint8_t data ) {
 	uint8_t buf;
+
+	if( !fpga_wait_ready() ) {
+		return;
+	}
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	buf = 0x03;
@@ -139,6 +184,7 @@ void fpga_poke( uint16_t io_address, uint8_t data ) {
 	buf = data;
 	spi_write_blocking( SPI0_PORT, &buf, 1 );
 	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
 }
 
 // ---------------------------------------------------------
@@ -148,6 +194,10 @@ uint8_t fpga_peek( uint16_t io_address ) {
 	uint8_t data;
 	absolute_time_t timeout_time;
 	bool intr_ready;
+
+	if( !fpga_wait_ready() ) {
+		return 0xBB;
+	}
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 
@@ -179,5 +229,72 @@ uint8_t fpga_peek( uint16_t io_address ) {
 	spi_write_read_blocking( SPI0_PORT, &dummy, &data, 1 );
 
 	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+	return data;
+}
+
+// ---------------------------------------------------------
+void fpga_msx_reset( bool reset_on ) {
+	uint8_t cmd;
+
+	if( !fpga_wait_ready() ) {
+		return;
+	}
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	cmd = reset_on ? 0x06 : 0x07;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+}
+
+// ---------------------------------------------------------
+void fpga_msx_pause( bool pause_on ) {
+	uint8_t cmd;
+
+	if( !fpga_wait_ready() ) {
+		return;
+	}
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	cmd = pause_on ? 0x08 : 0x09;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+}
+
+// ---------------------------------------------------------
+uint8_t fpga_get_debug_signal( void ) {
+	uint8_t cmd;
+	uint8_t dummy;
+	uint8_t data;
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	cmd = 0x0A;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	sleep_us( 1 );
+	dummy = 0x00;
+	spi_write_read_blocking( SPI0_PORT, &dummy, &data, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+
+	return data;
+}
+
+// ---------------------------------------------------------
+uint8_t fpga_get_debug_test( void ) {
+	uint8_t cmd;
+	uint8_t dummy;
+	uint8_t data;
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	cmd = 0x0B;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	sleep_us( 1 );
+	dummy = 0x00;
+	spi_write_read_blocking( SPI0_PORT, &dummy, &data, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+
 	return data;
 }

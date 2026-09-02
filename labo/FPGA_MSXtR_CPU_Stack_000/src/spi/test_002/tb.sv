@@ -34,6 +34,8 @@
 //			  → bus_io=0, bus_address=16bit(addr_l,addr_h), bus_wdata=data, bus_valid=1
 //		0x04: Memory read   [cmd=0x04][addr_l][addr_h][dummy]       (4 bytes)
 //			  → bus_io=0, bus_write=0, bus_address=16bit(addr_l,addr_h), returns bus_rdata on dummy byte
+//		0x0A: Debug read    [cmd=0x0A][dummy]                      (2 bytes)
+//			  -> returns registered debug_signal on MISO without asserting spi_intr
 //		0xFF: Presence check [cmd=0xFF]                             (1 byte)
 //			  -> returns 0x64 on MISO, no bus access, ip_spi stays ready to receive the next command
 //
@@ -78,6 +80,7 @@ module tb ();
 	reg				spi_mosi;
 	wire			spi_miso;
 	wire			spi_intr;
+	reg		[7:0]	debug_signal;
 
 	//	--------------------------------------------------------------------
 	//	Monitor: count bus_valid pulses and capture last transaction values
@@ -149,7 +152,10 @@ module tb ();
 		.spi_clk		( spi_clk		),
 		.spi_mosi		( spi_mosi		),
 		.spi_miso		( spi_miso		),
-		.spi_intr		( spi_intr		)
+		.spi_intr		( spi_intr		),
+		.msx_reset_n	( 				),
+		.msx_pause		( 				),
+		.debug_signal	( debug_signal	)
 	);
 
 	// --------------------------------------------------------------------
@@ -217,6 +223,7 @@ module tb ();
 		spi_cs_n	= 1'b1;
 		spi_clk		= 1'b0;
 		spi_mosi	= 1'b0;
+		debug_signal = 8'h00;
 		test_no		= 0;
 		pass_count	= 0;
 		fail_count	= 0;
@@ -817,6 +824,95 @@ module tb ();
 				pass_count = pass_count + 1;
 			end else begin
 				$display( "[TEST %0d] FAIL: address=0x%04X, wdata=0x%02X (expected 0x0077 / 0x88)", test_no, captured_address, captured_wdata );
+				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 9: Debug signal read (command 0x0A)
+		// ================================================================
+		test_no = 9;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Debug signal read: cmd=0x0A, expect data=0xA6", test_no );
+
+		reset_n = 1'b0;
+		repeat( 3 ) @( posedge clk );
+		reset_n = 1'b1;
+		debug_signal = 8'hA6;
+		repeat( 5 ) @( posedge clk );
+
+		begin
+			int cnt_before;
+			reg [7:0] read_data;
+			cnt_before = bus_valid_count;
+			read_data = 8'h00;
+
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h0A );
+			repeat( 20 ) @( posedge clk );
+
+			if( spi_intr === 1'b0 ) begin
+				$display( "[TEST %0d] PASS: spi_intr remained low", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: spi_intr asserted", test_no );
+				fail_count = fail_count + 1;
+			end
+
+			spi_transfer_byte( 8'h00, read_data );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( read_data === 8'hA6 ) begin
+				$display( "[TEST %0d] PASS: debug response = 0x%02X", test_no, read_data );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: debug response = 0x%02X (expected 0xA6)", test_no, read_data );
+				fail_count = fail_count + 1;
+			end
+
+			if( bus_valid_count === cnt_before ) begin
+				$display( "[TEST %0d] PASS: bus_valid did not pulse", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: bus_valid pulsed unexpectedly", test_no );
+				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 10: Fixed debug test read (command 0x0B)
+		// ================================================================
+		test_no = 10;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Fixed debug test: cmd=0x0B, expect data=0xA5", test_no );
+
+		begin
+			int cnt_before;
+			reg [7:0] read_data;
+			cnt_before = bus_valid_count;
+			read_data = 8'h00;
+
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h0B );
+			repeat( 20 ) @( posedge clk );
+			spi_transfer_byte( 8'h00, read_data );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( read_data === 8'hA5 && spi_intr === 1'b0 && bus_valid_count === cnt_before ) begin
+				$display( "[TEST %0d] PASS: response=0x%02X, spi_intr=0, no bus access", test_no, read_data );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: response=0x%02X, spi_intr=%b, bus_count=%0d", test_no, read_data, spi_intr, bus_valid_count );
 				fail_count = fail_count + 1;
 			end
 		end

@@ -1,0 +1,13 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps tb -do "run -all; quit -f" 
+# Start time: 12:15:49 on Aug 30,2026
+# ** Error: (vsim-3170) Could not find 'tb'.
+#         Searched libraries:
+#             C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/work
+# Error loading design
+Error loading design
+# End time: 12:15:49 on Aug 30,2026, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 0

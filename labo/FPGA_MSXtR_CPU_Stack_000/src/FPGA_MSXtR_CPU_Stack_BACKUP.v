@@ -202,12 +202,10 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_device_ppi_rdata;
 	wire			w_device_ppi_rdata_en;
 
-	wire	[7:0]	w_debug_signal;
-
 	// --------------------------------------------------------------------
 	//	clock
 	// --------------------------------------------------------------------
-    Gowin_PLL u_pll (
+    Gowin_PLL your_instance_name(
         .clkin			( clk_28m			),		//	28.63636MHz
         .clkout0		( clk215m			),		//	214.7727MHz
         .clkout1		( clk42m			),		//	42.95454MHz
@@ -299,23 +297,7 @@ module fpga_msxtr_cpu_stack (
 		.spi_miso				( mcu_miso					),
 		.spi_intr				( mcu_intr					),
 		.msx_reset_n			( w_msx_reset_n				),
-		.msx_pause				(							),
-		.debug_signal			( w_debug_signal			)
-	);
-
-	debugger u_debugger (
-		.reset_n				( ff_spi_reset_n			),
-		.clk_42m				( clk42m					),
-		.spi_valid				( w_bus_ctrl_valid			),
-		.spi_ready				( w_bus_ctrl_ready			),
-		.spi_rdata_en			( w_bus_ctrl_rdata_en		),
-		.device_valid			( w_device_valid			),
-		.device_ready			( w_device_ready			),
-		.device_rdata_en		( w_device_rdata_en			),
-		.bootrom_valid			( w_device_bootrom_valid	),
-		.bootrom_ready			( w_device_bootrom_ready	),
-		.bootrom_rdata_en		( w_device_bootrom_rdata_en	),
-		.debug_signal			( w_debug_signal			)
+		.msx_pause				(							)
 	);
 
 	// --------------------------------------------------------------------
@@ -324,6 +306,7 @@ module fpga_msxtr_cpu_stack (
 	msx_slot u_msx_slot (
 		.reset_n				( ff_slot_reset_n			),
 		.clk_42m				( clk42m					),
+		.clk_215m				( clk215m					),
 		.bus_m1					( w_bus_m1					),
 		.bus_address			( w_bus_ctrl_address		),
 		.bus_io					( w_bus_ctrl_io				),

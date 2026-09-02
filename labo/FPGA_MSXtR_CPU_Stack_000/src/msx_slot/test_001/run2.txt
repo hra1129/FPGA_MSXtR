@@ -1,0 +1,25 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps tb -do "run -all; quit -f" 
+# Start time: 12:07:29 on Aug 30,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.msx_slot
+# Loading work.msx_slot_decode
+# run -all
+# STEP: reset check done, t=360871
+# STEP: clock idle check done, t=3945960
+# PASS: device immediate read data = 0xc1
+# STEP: device immediate read test done, t=5576039
+# PASS: device delayed read data = 0xd2
+# STEP: device delayed read test done, t=7252343
+# PASS: slot fallback read data = 0xe3
+# STEP: slot fallback read test done, t=8928647
+# STEP: plain memory read test done, t=10604951
+# STEP: ROM mapping test done, t=17310167
+# STEP: I/O write test done, t=18986471
+# STEP: I/O read test done, t=20662775
+# STEP: M1 access (normal speed) test done, t=22339079
+# STEP: external WAIT test done, t=24294767

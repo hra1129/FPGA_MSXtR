@@ -1,0 +1,47 @@
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 09:04:46 on Aug 30,2026
+vlog ..\msx_slot_decode.v 
+-- Compiling module msx_slot_decode
+
+Top level modules:
+	msx_slot_decode
+End time: 09:04:46 on Aug 30,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 09:04:46 on Aug 30,2026
+vlog ..\msx_slot.v 
+-- Compiling module msx_slot
+
+Top level modules:
+	msx_slot
+End time: 09:04:46 on Aug 30,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 09:04:46 on Aug 30,2026
+vlog tb.sv 
+-- Compiling module tb
+
+Top level modules:
+	tb
+End time: 09:04:46 on Aug 30,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps tb -do "add wave -r *; run -all; quit -f" 
+# Start time: 09:04:47 on Aug 30,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.msx_slot
+# Loading work.msx_slot_decode
+# add wave -r *
+# ** Warning: (vsim-WLF-5000) WLF file currently in use: vsim.wlf
+#           File in use by: hra  Hostname: DELL_14_PLUS  ProcessID: 43680
+#           Attempting to use alternate WLF file "./wlftnt0dxi".
+# ** Warning: (vsim-WLF-5001) Could not open WLF file: vsim.wlf
+#           Using alternate file: ./wlftnt0dxi
+#  run -all
+# PASS: device immediate read data = 0xc1
+# PASS: device delayed read data = 0xd2
+# PASS: slot fallback read data = 0xe3

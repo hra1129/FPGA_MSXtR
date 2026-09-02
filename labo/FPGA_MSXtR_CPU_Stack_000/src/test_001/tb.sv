@@ -209,16 +209,31 @@ module tb ();
 			rx_data = 8'h00;
 			for ( i = 7; i >= 0; i-- ) begin
 				mcu_mosi = tx_data[i];
-				#( 1 );
-				rx_data[i] = mcu_miso;
 				#( c_spi_half - 1 );
+				rx_data[i] = mcu_miso;
+				#( 1 );
 				mcu_sclk = 1'b1;
-				#( c_spi_half );
+				#( c_spi_half - 1 );
 				mcu_sclk = 1'b0;
 			end
 			//	Let the byte-done toggle cross spi.v's clk_serial->clk42m
 			//	synchronizer before the next byte starts (see spi/test_002).
 			repeat( 6 ) @( posedge u_dut.clk42m );
+		end
+	endtask
+
+	task automatic spi_debug_read(
+		output	[7:0]	debug_data
+	);
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h0A );
+			spi_transfer_byte( 8'h00, debug_data );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
 		end
 	endtask
 
@@ -265,16 +280,12 @@ module tb ();
 			end
 			bus_timeout = (u_dut.w_bus_ctrl_ready == 1'b0);
 			if ( bus_timeout ) begin
-				$display( "[DEBUG] bus_ctrl_ready timeout: state=%0d ctrl_valid=%b ctrl_ready=%b slot_busy=%b slot_busy215=%b access_count=%0d freeze=%b slot_wait_n=%b done42=%b",
+				$display( "[DEBUG] bus_ctrl_ready timeout: state=%0d ctrl_valid=%b ctrl_ready=%b device_ready=%b device_valid=%b",
 					u_dut.u_controller_spi.ff_state,
 					u_dut.w_bus_ctrl_valid,
 					u_dut.w_bus_ctrl_ready,
-					u_dut.u_msx_slot.ff_bus_busy,
-					u_dut.u_msx_slot.ff_busy_215m,
-					u_dut.u_msx_slot.ff_access_count,
-					u_dut.u_msx_slot.w_freeze,
-					slot_wait_n,
-					u_dut.u_msx_slot.w_done_event_42m );
+					u_dut.w_device_ready,
+					u_dut.w_device_valid );
 			end
 		end
 	endtask
@@ -362,7 +373,7 @@ module tb ();
 			intr_timeout = (mcu_intr == 1'b0);
 			if ( intr_timeout ) begin
 				rdata = 8'hAA;
-				$display( "[DEBUG] mcu_intr timeout: io_addr=0x%02X state=%0d ctrl_valid=%b ctrl_ready=%b ctrl_rdata_en=%b dev_valid=%b ppi_cs=%b ppi_rdata_en=%b slot_busy=%b slot_busy215=%b access_count=%0d freeze=%b slot_wait_n=%b slot_read_done=%b take_dev=%b take_slot=%b",
+				$display( "[DEBUG] mcu_intr timeout: io_addr=0x%02X state=%0d ctrl_valid=%b ctrl_ready=%b ctrl_rdata_en=%b dev_valid=%b ppi_cs=%b ppi_rdata_en=%b dev_ready=%b dev_rdata_en=%b",
 					io_addr,
 					u_dut.u_controller_spi.ff_state,
 					u_dut.w_bus_ctrl_valid,
@@ -371,14 +382,8 @@ module tb ();
 					u_dut.w_device_valid,
 					u_dut.w_device_ppi_cs,
 					u_dut.w_device_ppi_rdata_en,
-					u_dut.u_msx_slot.ff_bus_busy,
-					u_dut.u_msx_slot.ff_busy_215m,
-					u_dut.u_msx_slot.ff_access_count,
-					u_dut.u_msx_slot.w_freeze,
-					slot_wait_n,
-					u_dut.u_msx_slot.ff_slot_read_done,
-					u_dut.u_msx_slot.w_take_device_rdata,
-					u_dut.u_msx_slot.w_take_slot_rdata );
+					u_dut.w_device_ready,
+					u_dut.w_device_rdata_en );
 			end
 			else begin
 				spi_transfer_byte( 8'h00, rx );
@@ -456,7 +461,7 @@ module tb ();
 			intr_timeout = (mcu_intr == 1'b0);
 			if ( intr_timeout ) begin
 				rdata = 8'hAA;
-				$display( "[DEBUG] mcu_intr timeout: addr=0x%04X state=%0d ctrl_valid=%b ctrl_ready=%b ctrl_rdata_en=%b dev_valid=%b bootrom_cs=%b bootrom_rdata_en=%b slot_busy=%b take_dev=%b take_slot=%b",
+				$display( "[DEBUG] mcu_intr timeout: addr=0x%04X state=%0d ctrl_valid=%b ctrl_ready=%b ctrl_rdata_en=%b dev_valid=%b bootrom_cs=%b bootrom_rdata_en=%b dev_ready=%b dev_rdata_en=%b",
 					address,
 					u_dut.u_controller_spi.ff_state,
 					u_dut.w_bus_ctrl_valid,
@@ -465,9 +470,8 @@ module tb ();
 					u_dut.w_device_valid,
 					u_dut.w_device_bootrom_cs,
 					u_dut.w_device_bootrom_rdata_en,
-					u_dut.u_msx_slot.ff_bus_busy,
-					u_dut.u_msx_slot.w_take_device_rdata,
-					u_dut.u_msx_slot.w_take_slot_rdata );
+					u_dut.w_device_ready,
+					u_dut.w_device_rdata_en );
 			end
 			else begin
 				spi_transfer_byte( 8'h00, rx );
@@ -490,17 +494,18 @@ module tb ();
 	endtask
 
 	// --------------------------------------------------------------------
-	//	DEBUG (temporary)
+	//	DEBUG (temporary, disabled: $monitor fires on every SPI clock edge
+	//	and makes the VDP access loop (test 7) impractically slow)
 	// --------------------------------------------------------------------
-	initial begin
-		$monitor( "t=%0t cs_n=%b sclk=%b spi_ready=%b spi_rdata_en=%b spi_rdata=%02x state=%0d ctrl_valid=%b dev_valid=%b intr=%b",
-			$time, mcu_cs_n, mcu_sclk,
-			u_dut.u_controller_spi.u_spi.spi_ready,
-			u_dut.u_controller_spi.u_spi.spi_rdata_en,
-			u_dut.u_controller_spi.u_spi.spi_rdata,
-			u_dut.u_controller_spi.ff_state,
-			u_dut.w_bus_ctrl_valid, u_dut.w_device_valid, mcu_intr );
-	end
+	// initial begin
+	// 	$monitor( "t=%0t cs_n=%b sclk=%b spi_ready=%b spi_rdata_en=%b spi_rdata=%02x state=%0d ctrl_valid=%b dev_valid=%b intr=%b",
+	// 		$time, mcu_cs_n, mcu_sclk,
+	// 		u_dut.u_controller_spi.u_spi.spi_ready,
+	// 		u_dut.u_controller_spi.u_spi.spi_rdata_en,
+	// 		u_dut.u_controller_spi.u_spi.spi_rdata,
+	// 		u_dut.u_controller_spi.ff_state,
+	// 		u_dut.w_bus_ctrl_valid, u_dut.w_device_valid, mcu_intr );
+	// end
 
 	// --------------------------------------------------------------------
 	//	Test bench
@@ -519,18 +524,25 @@ module tb ();
 		srom_miso	= 1'b0;
 		uart_rx		= 1'b1;
 
-		//	u_msx_slot.primary_slot / secondary_slot0/3 / high_speed_mode and
-		//	w_bus_m1 have no driver yet (PPI is not implemented), so force
-		//	them here to keep the slot decoder out of the FlashROM(ROM0)/
-		//	Kanji-ROM path and route every access to u_bootrom (device_*).
 		force u_dut.w_bus_m1			= 1'b0;
-		force u_dut.w_primary_slot		= 8'h55;	//	all pages -> slot#1 (not ROM0)
+		force u_dut.w_primary_slot		= 8'h55;
 		force u_dut.w_secondary_slot0	= 8'h00;
 		force u_dut.w_secondary_slot3	= 8'h00;
 		force u_dut.w_high_speed_mode	= 1'b0;
 
 		//	wait for the internal power-on reset counter to finish
 		#( 3000 );
+
+		//	ip_spi manages msx_reset_n and starts in the reset-asserted state,
+		//	so the reset must be released before any other SPI command works.
+		$display( "[SETUP] MSX Hardware reset OFF (07h)" );
+		mcu_cs_n	= 1'b0;
+		#( 200 );
+		spi_send_byte( 8'h07 );
+		#( 200 );
+		mcu_cs_n	= 1'b1;
+		mcu_mosi	= 1'b0;
+		#( 200 );
 
 		// ================================================================
 		//	Test 1: BootROM Read from SPI memory access
@@ -619,6 +631,19 @@ module tb ();
 				pass_count = pass_count + 1;
 			end else begin
 				$display( "[TEST %0d] FAIL: io_read=0x%02X (expected 0x5A)", test_no, io_data );
+				fail_count = fail_count + 1;
+			end
+		end
+
+		begin
+			reg [7:0] debug_data;
+			spi_debug_read( debug_data );
+			if( debug_data === 8'd6 ) begin
+				$display( "[TEST %0d] PASS: debug_signal=0x%02X", test_no, debug_data );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: debug_signal=0x%02X (expected 0x06)", test_no, debug_data );
 				fail_count = fail_count + 1;
 			end
 		end

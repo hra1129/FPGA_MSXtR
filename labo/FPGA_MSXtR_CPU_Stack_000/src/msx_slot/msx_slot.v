@@ -31,10 +31,11 @@
 //
 // ----------------------------------------------------------------------------
 
-module msx_slot (
+module msx_slot #(
+	parameter	[17:0]	c_refresh_timeout	= 18'd42954		//	約1ms(42.95454MHz基準)。シミュレーション高速化用にオーバーライド可
+) (
 	input			reset_n,
 	input			clk_42m,				//	42.95454MHz
-	input			clk_215m,				//	214.7727MHz
 	//	Internal bus interface
 	input			bus_m1,
 	input	[15:0]	bus_address,			//	Z80 address
@@ -86,82 +87,175 @@ module msx_slot (
 	input	[7:0]	device_rdata,
 	input			device_rdata_en
 );
-	localparam		c_timing_start			= 8'd0;
-	localparam		c_timing_command		= 8'd31;
-	localparam		c_timing_select			= 8'd34;
-	localparam		c_timing_strobe			= 8'd60;
-	localparam		c_timing_read_sample	= 8'd165;
-	localparam		c_timing_finish			= 8'd179;
-	localparam		c_refresh_timeout		= 18'd214773;	//	約1ms(214.7727MHz基準)
+	//	clk_42m
+	reg				ff_bus_m1;
+	reg		[15:0]	ff_bus_address;
+	reg				ff_bus_io;
+	reg				ff_bus_write;
+	reg				ff_bus_valid;
+	reg		[7:0]	ff_bus_wdata;
+	reg				ff_bus_ready;
+	reg		[7:0]	ff_bus_rdata;
+	reg				ff_bus_rdata_en;
+	reg				ff_read_pending;
+	reg				ff_internal_wait_active;
+	reg		[3:0]	ff_internal_wait_count;
+	reg				ff_internal_wait_done;
+	reg				ff_slot_rdata_en;
+	wire			w_seq_finish;
+	wire	[18:0]	w_rom_address;
+	wire			w_rom_address_en;
+	wire			w_rom0_ce_n;
+	wire			w_rom1_ce_n;
+	wire			w_decode_ready;
 
-	reg				ff_bus_busy;
-	reg				ff_req_m1;
-	reg				ff_req_io;
-	reg				ff_req_write;
-	reg	[15:0]		ff_req_address;
-	reg	[7:0]		ff_req_wdata;
-	reg				ff_req_toggle;
-	reg				ff_done_toggle_sync0;
-	reg				ff_done_toggle_sync1;
-	reg				ff_done_toggle_sync2;
-	reg				ff_read_captured;
+	localparam	[2:0]	c_t1			= 3'd0;
+	localparam	[2:0]	c_t2			= 3'd1;
+	localparam	[2:0]	c_t3			= 3'd2;
+	localparam	[2:0]	c_t4			= 3'd3;
+	localparam	[2:0]	c_t5			= 3'd4;
+	//	3.579545MHz の1周期 = clk_42m の12サイクル。旧 clk_215m(60分割)基準値を 1/5 して求めた値
+	localparam	[3:0]	c_sig_start			= 4'd0;
+	localparam	[3:0]	c_sig_select		= 4'd6;
+	localparam	[3:0]	c_sig_strobe		= 4'd8;
+	localparam	[3:0]	c_sig_release		= 4'd7;
+	localparam	[3:0]	c_sig_m1_release	= 4'd7;
+	localparam	[3:0]	c_sig_rfsh_assert	= 4'd8;
+	localparam	[3:0]	c_sig_rfsh_release	= 4'd8;
+	localparam	[3:0]	c_sig_finish		= 4'd11;
+	localparam	[3:0]	c_sig_clock_rise	= 4'd1;
+	localparam	[3:0]	c_sig_clock_fall	= 4'd7;
+	localparam	[3:0]	c_sig_merq_assert	= 4'd6;		//	T1開始+145ns
+	localparam	[3:0]	c_sig_merq_release	= 4'd6;		//	T3開始+145ns
+	localparam	[3:0]	c_sig_iorq_assert	= 4'd6;		//	T2開始+135ns
+	localparam	[3:0]	c_sig_iorq_release	= 4'd6;		//	T3開始+145ns
+	localparam	[3:0]	c_sig_rd_assert		= 4'd7;		//	メモリサイクルのRD: T1開始+155ns
+	localparam	[3:0]	c_sig_rd_release	= 4'd6;		//	T3開始+145ns
+	localparam	[3:0]	c_sig_wr_assert		= 4'd5;		//	T2開始+125ns
+	localparam	[3:0]	c_sig_wr_release	= 4'd5;		//	T3開始+120ns
 
-	reg				ff_req_toggle_sync0;
-	reg				ff_req_toggle_sync1;
-	reg				ff_req_toggle_sync2;
-	reg				ff_done_toggle;
-	reg				ff_req_pending_215m;
-	reg				ff_busy_215m;
-	reg				ff_req_m1_215m;
-	reg				ff_req_io_215m;
-	reg				ff_req_write_215m;
-	reg	[15:0]		ff_req_address_215m;
-	reg	[7:0]		ff_req_wdata_215m;
-	reg	[7:0]		ff_access_count;
-	reg	[5:0]		ff_slot_clock_count;
-	reg				ff_slot_clock;
-	reg	[7:0]		ff_slot_rdata;
-	reg				ff_slot_read_done;
-	reg	[7:0]		ff_device_rdata;
-	reg				ff_device_rdata_pending;
-	reg	[7:0]		ff_primary_slot_215m;
-	reg				ff_m1_wait_active;
-	reg	[5:0]		ff_m1_wait_count;
-	reg				ff_m1_wait_done;
-	reg				ff_req_refresh_215m;
-	reg	[7:0]		ff_refresh_addr;
-	reg	[17:0]		ff_idle_timer;
+	reg				ff_sequence_active;
+	reg				ff_req_refresh;
+	reg				ff_refresh_pending;
+	reg		[17:0]	ff_idle_timer;
+	reg		[7:0]	ff_refresh_addr;
+	reg		[2:0]	ff_t_state;
+	reg				ff_slot_clock_n;
+	reg				ff_slot_m1_n		= 1'b1;
+	reg				ff_slot_sltsl0_n	= 1'b1;
+	reg				ff_slot_sltsl1_n	= 1'b1;
+	reg				ff_slot_sltsl2_n	= 1'b1;
+	reg				ff_slot_sltsl3_n	= 1'b1;
+	reg				ff_slot_cs1_n		= 1'b1;
+	reg				ff_slot_cs2_n		= 1'b1;
+	reg				ff_slot_cs12_n		= 1'b1;
+	reg		[18:0]	ff_slot_a			= 19'd0;
+	reg				ff_slot_wdata_en	= 1'b0;
+	reg				ff_slot_wr_n		= 1'b1;
+	reg				ff_slot_rd_n		= 1'b1;
+	reg				ff_slot_rom0_ce_n	= 1'b1;
+	reg				ff_slot_rom1_ce_n	= 1'b1;
+	reg				ff_slot_rfsh_n		= 1'b1;
+	reg				ff_slot_iorq_n		= 1'b1;
+	reg				ff_slot_merq_n		= 1'b1;
+	reg		[7:0]	ff_slot_d			= 8'hFF;
 
-	wire				w_accept;
-	wire				w_done_event_42m;
-	wire				w_req_event_215m;
-	wire				w_m1_wait_n;
-	wire				w_freeze;
-	wire				w_access_memory;
-	wire				w_real_access_memory;
-	wire				w_access_io;
-	wire				w_command_active;
-	wire				w_select_active;
-	wire				w_strobe_active;
-	wire				w_read_active;
-	wire				w_write_active;
-	wire	[1:0]		w_page;
-	wire	[1:0]		w_selected_slot;
-	wire				w_cs1;
-	wire				w_cs2;
-	wire				w_cs12;
-	wire				w_rom0_ce;
-	wire				w_rom1_ce;
-	wire	[18:0]		w_slot_address;
-	wire				w_slot_valid;
-	wire				w_slot_ready;
-	wire	[18:0]		w_rom_address;
-	wire				w_rom_address_en;
-	wire				w_rom0_ce_n;
-	wire				w_rom1_ce_n;
-	wire				w_device_rdata_ready;
-	wire				w_take_device_rdata;
-	wire				w_take_slot_rdata;
+	wire			w_req_memory;
+	wire			w_req_read;
+	wire			w_req_write;
+	wire	[1:0]	w_req_page;
+	wire	[1:0]	w_req_primary_slot;
+	wire			w_req_slot0;
+	wire			w_req_slot1;
+	wire			w_req_slot2;
+	wire			w_req_slot3;
+	wire			w_req_cs1;
+	wire			w_req_cs2;
+	wire			w_req_rom0;
+	wire			w_req_rom1;
+	wire			w_slot_rd_assert;
+	wire			w_slot_rd_release;
+
+	// ---------------------------------------------------------
+	//	Internal BUS interface
+	// ---------------------------------------------------------
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_bus_m1		<= 1'b0;
+			ff_bus_address	<= 16'd0;
+			ff_bus_io		<= 1'b0;
+			ff_bus_write	<= 1'b0;
+			ff_bus_wdata	<= 8'd0;
+		end
+		else if( bus_valid && ff_bus_ready ) begin
+			ff_bus_m1		<= bus_m1;
+			ff_bus_address	<= bus_address;
+			ff_bus_io		<= bus_io;
+			ff_bus_write	<= bus_write;
+			ff_bus_wdata	<= bus_wdata;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_bus_valid	<= 1'b0;
+		end
+		else if( ff_bus_valid ) begin
+			ff_bus_valid	<= 1'b0;
+		end
+		else if( bus_valid && ff_bus_ready ) begin
+			ff_bus_valid	<= 1'b1;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_read_pending	<= 1'b0;
+		end
+		else if( bus_valid && ff_bus_ready && !bus_write ) begin
+			ff_read_pending	<= 1'b1;
+		end
+		else if( ff_read_pending && (device_rdata_en || ff_slot_rdata_en) ) begin
+			ff_read_pending	<= 1'b0;
+		end
+		else if( bus_valid && ff_bus_ready ) begin
+			ff_read_pending	<= 1'b0;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_bus_ready <= 1'b1;
+		end
+		else if( bus_valid && ff_bus_ready ) begin
+			ff_bus_ready <= 1'b0;
+		end
+		else if( w_seq_finish ) begin
+			ff_bus_ready <= 1'b1;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_bus_rdata	<= 8'd0;
+			ff_bus_rdata_en	<= 1'b0;
+		end
+		else if( ff_read_pending && device_rdata_en ) begin
+			ff_bus_rdata	<= device_rdata;
+			ff_bus_rdata_en	<= 1'b1;
+		end
+		else if( ff_read_pending && ff_slot_rdata_en ) begin
+			ff_bus_rdata	<= ff_slot_d;
+			ff_bus_rdata_en	<= 1'b1;
+		end
+		else begin
+			ff_bus_rdata_en	<= 1'b0;
+		end
+	end
+
+	assign bus_ready		= ff_bus_ready;
+	assign bus_rdata		= ff_bus_rdata;
+	assign bus_rdata_en		= ff_bus_rdata_en;
 
 	// ---------------------------------------------------------
 	//	Address decoder
@@ -169,13 +263,12 @@ module msx_slot (
 	msx_slot_decode u_decode (
 		.reset_n			( reset_n			),
 		.clk_42m			( clk_42m			),
-		.clk_215m			( clk_215m			),
-		.bus_address		( bus_address		),
-		.bus_io				( bus_io			),
-		.bus_write			( bus_write			),
-		.bus_valid			( bus_valid			),
-		.bus_ready			( bus_ready			),
-		.bus_wdata			( bus_wdata			),
+		.bus_address		( ff_bus_address	),
+		.bus_io				( ff_bus_io			),
+		.bus_write			( ff_bus_write		),
+		.bus_valid			( ff_bus_valid		),
+		.bus_ready			( 1'b1				),
+		.bus_wdata			( ff_bus_wdata		),
 		.primary_slot		( primary_slot		),
 		.secondary_slot0	( secondary_slot0	),
 		.secondary_slot3	( secondary_slot3	),
@@ -188,282 +281,405 @@ module msx_slot (
 		.device_wdata		( device_wdata		),
 		.device_rdata		( device_rdata		),
 		.device_rdata_en	( device_rdata_en	),
-		.slot_valid			( w_slot_valid		),
-		.slot_ready			( w_slot_ready		),
 		.rom_address		( w_rom_address		),
 		.rom_address_en		( w_rom_address_en	),
 		.rom0_ce_n			( w_rom0_ce_n		),
 		.rom1_ce_n			( w_rom1_ce_n		)
 	);
 
-	assign bus_rdata		= w_take_device_rdata ? (device_rdata_en ? device_rdata : ff_device_rdata) : ff_slot_rdata;
-	assign bus_rdata_en		= w_take_device_rdata | w_take_slot_rdata;
-	//	device_rdata_en と slot 自体のリードラッチ(ff_slot_read_done)を毎クロック監視し、
-	//	先に成立した方を 1回だけ取り込む(同時なら device_rdata_en 優先)。
-	//	device の答えは同クロックでそのまま返し、早く来た場合はラッチして後続クロックで返す。
-	assign w_device_rdata_ready	= device_rdata_en | ff_device_rdata_pending;
-	assign w_take_device_rdata	= ff_bus_busy & ~ff_req_write & ~ff_read_captured & w_device_rdata_ready;
-	assign w_take_slot_rdata	= ff_bus_busy & ~ff_req_write & ~ff_read_captured & ~w_device_rdata_ready & ff_slot_read_done;
-	assign w_accept			= w_slot_valid & ~ff_bus_busy;
-	assign w_done_event_42m	= ff_done_toggle_sync1 ^ ff_done_toggle_sync2;
-	assign w_slot_ready		= ~ff_bus_busy;
-	assign int_n			= slot_int_n;
+	// ---------------------------------------------------------
+	//	Increment counter
+	// ---------------------------------------------------------
+	reg		[3:0]	ff_slot_timing;
+	wire			w_3m_fall;
 
 	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
-			ff_bus_busy				<= 1'b0;
-			ff_req_m1				<= 1'b0;
-			ff_req_io				<= 1'b0;
-			ff_req_write			<= 1'b0;
-			ff_req_address			<= 16'd0;
-			ff_req_wdata			<= 8'd0;
-			ff_req_toggle			<= 1'b0;
+			ff_slot_timing <= 4'd0;
 		end
-		else if( w_accept ) begin
-			ff_bus_busy				<= 1'b1;
-			ff_req_m1				<= bus_m1;
-			ff_req_io				<= bus_io;
-			ff_req_write			<= bus_write;
-			ff_req_address			<= bus_address;
-			ff_req_wdata			<= bus_wdata;
-			ff_req_toggle			<= ~ff_req_toggle;
+		else if( w_3m_fall ) begin
+			ff_slot_timing <= 4'd0;
 		end
-		else if( w_done_event_42m ) begin
-			ff_bus_busy			<= 1'b0;
+		else begin
+			ff_slot_timing <= ff_slot_timing + 4'd1;
+		end
+	end
+	assign w_3m_fall = ( ff_slot_timing == c_sig_finish );
+
+	// ---------------------------------------------------------
+	//	3.579545MHz clock generator / registered slot outputs
+	// ---------------------------------------------------------
+	//	ff_bus_valid はクロック位相と無関係に立つため、いったんペンディングにして
+	//	ff_slot_timing が c_sig_start(0) に揃うタイミングまでシーケンス開始を待ち合わせる
+	reg				ff_sequence_pending;
+	//	ff_sequence_active は1サイクル遅れて立つため、開始直後(timing==0)のラッチにはこちらを使う
+	wire			w_seq_start_real;
+	wire			w_seq_start_refresh;
+	wire			w_seq_start;
+	//	開始直後は ff_req_refresh がまだ更新されていないため、w_seq_start 中はこちらで代用する
+	wire			w_refresh_active;
+	wire			w_refresh_cycle;
+	wire	[2:0]	w_sequence_last_state;
+
+	//	実アクセス要求を優先し、ペンディングが無い時だけリフレッシュ要求を開始する
+	//	~ff_sequence_active を付けないと、シーケンス進行中に timing が0へ戻るたびに再開始してしまう
+	assign w_seq_start_real			= ff_sequence_pending & ~ff_sequence_active & (ff_slot_timing == c_sig_start);
+	assign w_seq_start_refresh		= ~ff_sequence_pending & ff_refresh_pending & ~ff_sequence_active & (ff_slot_timing == c_sig_start);
+	assign w_seq_start				= w_seq_start_real | w_seq_start_refresh;
+	assign w_refresh_active			= w_seq_start ? w_seq_start_refresh : ff_req_refresh;
+	assign w_refresh_cycle			= ff_sequence_active & ((ff_bus_m1 & ~high_speed_mode) | ff_req_refresh);
+	assign w_sequence_last_state	= ff_req_refresh ? c_t5 :
+									  (high_speed_mode & ff_bus_m1) ? c_t3 : 
+									  ff_bus_m1 ? c_t5 : c_t4;
+	assign w_seq_finish				= ff_sequence_active & slot_wait_n & (ff_t_state == w_sequence_last_state) & (ff_slot_timing == c_sig_finish);
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_sequence_pending <= 1'b0;
+		end
+		else if( ff_bus_valid ) begin
+			ff_sequence_pending <= 1'b1;
+		end
+		else if( w_seq_start_real ) begin
+			ff_sequence_pending <= 1'b0;
+		end
+	end
+
+	//	bus_valid が1msの間来なければ、最後のリフレッシュから約1ms経過時点で自動リフレッシュを要求する
+	//	idle_timer はRFSHアサート時まで timeout 値を保持するため、RFSHアサートによる
+	//	クリアを timeout 到達によるセットより優先させ、直後のリフレッシュ再要求を防ぐ
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_refresh_pending <= 1'b0;
+		end
+		else if( w_refresh_cycle & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
+			ff_refresh_pending <= 1'b0;
+		end
+		else if( ff_idle_timer == c_refresh_timeout ) begin
+			ff_refresh_pending <= 1'b1;
 		end
 	end
 
 	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
-			ff_done_toggle_sync0	<= 1'b0;
-			ff_done_toggle_sync1	<= 1'b0;
-			ff_done_toggle_sync2	<= 1'b0;
-			ff_read_captured		<= 1'b0;
+			ff_sequence_active <= 1'b0;
 		end
-		else begin
-			ff_done_toggle_sync0	<= ff_done_toggle;
-			ff_done_toggle_sync1	<= ff_done_toggle_sync0;
-			ff_done_toggle_sync2	<= ff_done_toggle_sync1;
-			if( w_accept ) begin
-				ff_read_captured	<= 1'b0;
-			end
-			else if( w_take_device_rdata | w_take_slot_rdata ) begin
-				ff_read_captured	<= 1'b1;
-			end
+		else if( w_seq_start ) begin
+			ff_sequence_active <= 1'b1;
+		end
+		else if( w_seq_finish ) begin
+			ff_sequence_active <= 1'b0;
 		end
 	end
 
+	//	今回のシーケンスがリフレッシュ専用かどうかをアクセス中ずっと保持する
 	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
-			ff_device_rdata			<= 8'd0;
-			ff_device_rdata_pending	<= 1'b0;
+			ff_req_refresh <= 1'b0;
 		end
-		else if( w_accept ) begin
-			ff_device_rdata			<= device_rdata;
-			ff_device_rdata_pending	<= device_rdata_en & ~bus_write;
-		end
-		else if( w_take_device_rdata ) begin
-			ff_device_rdata_pending	<= 1'b0;
-		end
-		else if( device_rdata_en & ff_bus_busy & ~ff_req_write & ~ff_read_captured ) begin
-			ff_device_rdata			<= device_rdata;
-			ff_device_rdata_pending	<= 1'b1;
-		end
-		else if( !ff_bus_busy ) begin
-			ff_device_rdata_pending	<= 1'b0;
+		else if( w_seq_start ) begin
+			ff_req_refresh <= w_seq_start_refresh;
 		end
 	end
 
-	assign w_req_event_215m	= ff_req_toggle_sync1 ^ ff_req_toggle_sync2;
-	//	M1サイクルの TW ステートで内部 /WAIT を 1回だけ主張する(カウンタで自動解除)
-	assign w_m1_wait_n		= ~ff_m1_wait_active;
-	assign w_freeze			= ff_busy_215m & ~( w_m1_wait_n & slot_wait_n );
+	assign w_req_memory				= ff_sequence_active & (w_refresh_active | ~ff_bus_io);
+	assign w_req_read				= ff_sequence_active & ~w_refresh_active & ~ff_bus_write;
+	assign w_req_write				= ff_sequence_active & ~w_refresh_active &  ff_bus_write;
+	assign w_req_page				= ff_bus_address[15:14];
+	assign w_req_primary_slot		= (w_req_page == 2'd0) ? primary_slot[1:0] :
+									  (w_req_page == 2'd1) ? primary_slot[3:2] :
+									  (w_req_page == 2'd2) ? primary_slot[5:4] : primary_slot[7:6];
+	assign w_req_slot0				= ~w_refresh_active & ~ff_bus_io & (w_req_primary_slot == 2'd0);
+	assign w_req_slot1				= ~w_refresh_active & ~ff_bus_io & (w_req_primary_slot == 2'd1);
+	assign w_req_slot2				= ~w_refresh_active & ~ff_bus_io & (w_req_primary_slot == 2'd2);
+	assign w_req_slot3				= ~w_refresh_active & ~ff_bus_io & (w_req_primary_slot == 2'd3);
+	assign w_req_cs1				= ~w_refresh_active & ~ff_bus_io & ~ff_bus_write & (w_req_page == 2'd1);
+	assign w_req_cs2				= ~w_refresh_active & ~ff_bus_io & ~ff_bus_write & (w_req_page == 2'd2);
+	assign w_req_rom0				= ~w_refresh_active & ~ff_bus_io & ~w_rom0_ce_n;
+	assign w_req_rom1				= ~w_refresh_active & ~ff_bus_io & ~w_rom1_ce_n;
 
-	always @( posedge clk_215m ) begin
+	//	リフレッシュ用アイドルタイマ: RFSHが立つ度に0へ戻し、c_refresh_timeoutで飽和させる
+	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
-			ff_req_toggle_sync0	<= 1'b0;
-			ff_req_toggle_sync1	<= 1'b0;
-			ff_req_toggle_sync2	<= 1'b0;
+			ff_idle_timer <= 18'd0;
 		end
-		else begin
-			ff_req_toggle_sync0	<= ff_req_toggle;
-			ff_req_toggle_sync1	<= ff_req_toggle_sync0;
-			ff_req_toggle_sync2	<= ff_req_toggle_sync1;
-		end
-	end
-
-	//	clk_42m ドメインの primary_slot を clk_215m で受ける
-	always @( posedge clk_215m ) begin
-		if( !reset_n ) begin
-			ff_primary_slot_215m	<= 8'd0;
-		end
-		else begin
-			ff_primary_slot_215m	<= primary_slot;
-		end
-	end
-
-	//	M1サイクルの TW ステートを SLTSL/CS 確定直後に 1回だけ挿入する
-	always @( posedge clk_215m ) begin
-		if( !reset_n ) begin
-			ff_m1_wait_active	<= 1'b0;
-			ff_m1_wait_count	<= 6'd0;
-			ff_m1_wait_done		<= 1'b0;
-		end
-		else if( !ff_busy_215m ) begin
-			ff_m1_wait_active	<= 1'b0;
-			ff_m1_wait_done		<= 1'b0;
-		end
-		else if( ff_m1_wait_active ) begin
-			if( ff_m1_wait_count == 6'd0 ) begin
-				ff_m1_wait_active	<= 1'b0;
-				ff_m1_wait_done		<= 1'b1;
-			end
-			else begin
-				ff_m1_wait_count	<= ff_m1_wait_count - 6'd1;
-			end
-		end
-		else if( ~high_speed_mode & ff_req_m1_215m & ~ff_m1_wait_done & (ff_access_count == c_timing_select) ) begin
-			ff_m1_wait_active	<= 1'b1;
-			ff_m1_wait_count	<= 6'd59;
-		end
-	end
-
-	//	リフレッシュタイマア: 最後のリフレッシュ(または通常速度M1)から c_refresh_timeout 経過したらリフレッシュを要求する
-	always @( posedge clk_215m ) begin
-		if( !reset_n ) begin
-			ff_idle_timer		<= 18'd0;
-		end
-		else if( ff_busy_215m & ff_req_refresh_215m ) begin
-			ff_idle_timer		<= 18'd0;
-		end
-		else if( ff_busy_215m & ff_req_m1_215m & ~high_speed_mode & w_command_active ) begin
-			ff_idle_timer		<= 18'd0;
+		else if( w_refresh_cycle & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
+			ff_idle_timer <= 18'd0;
 		end
 		else if( ff_idle_timer != c_refresh_timeout ) begin
-			ff_idle_timer		<= ff_idle_timer + 18'd1;
+			ff_idle_timer <= ff_idle_timer + 18'd1;
 		end
 	end
 
-	always @( posedge clk_215m ) begin
+	//	T5中のRFSH解放に合わせてアドレスカウンタをインクリメントする(初期値0、8bit幅)
+	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
-			ff_slot_clock_count	<= 6'd0;
-			ff_slot_clock		<= 1'b0;
+			ff_refresh_addr <= 8'd0;
 		end
-		else if( ff_slot_clock_count == 6'd59 ) begin
-			ff_slot_clock_count	<= 6'd0;
-			ff_slot_clock		<= 1'b0;
-		end
-		else begin
-			ff_slot_clock_count	<= ff_slot_clock_count + 6'd1;
-			if( ff_slot_clock_count == 6'd29 ) begin
-				ff_slot_clock	<= 1'b1;
-			end
+		else if( w_refresh_cycle & (ff_t_state == c_t5) & (ff_slot_timing == c_sig_rfsh_release) ) begin
+			ff_refresh_addr <= ff_refresh_addr + 8'd1;
 		end
 	end
 
-	always @( posedge clk_215m ) begin
+	//	M1サイクル, I/Oサイクルの内部/WAIT(TWステート相当)。high_speed_mode=0のときのみ、
+	//	SLTSL/CS確定(c_sig_select)直後に1アクセス中1回だけ slot_clock 1周期分挿入する。
+	//	TWステートは、T2ステートの次に来る。
+	wire			w_internal_wait_n;
+
+	assign w_internal_wait_n = ~ff_internal_wait_active;
+
+	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
-			ff_req_pending_215m			<= 1'b0;
-			ff_busy_215m				<= 1'b0;
-			ff_req_m1_215m				<= 1'b0;
-			ff_req_io_215m				<= 1'b0;
-			ff_req_write_215m			<= 1'b0;
-			ff_req_address_215m			<= 16'd0;
-			ff_req_wdata_215m			<= 8'd0;
-			ff_req_refresh_215m			<= 1'b0;
-			ff_refresh_addr				<= 8'd0;
-			ff_access_count				<= 8'd0;
-			ff_slot_rdata				<= 8'd0;
-			ff_slot_read_done			<= 1'b0;
-			ff_done_toggle				<= 1'b0;
+			ff_internal_wait_active	<= 1'b0;
+			ff_internal_wait_count	<= 4'd0;
+			ff_internal_wait_done	<= 1'b0;
 		end
-		else if( !ff_busy_215m ) begin
-			ff_access_count				<= c_timing_start;
-			ff_slot_read_done			<= 1'b0;
-			if( w_req_event_215m ) begin
-				ff_req_pending_215m		<= 1'b1;
-			end
-			if( (ff_idle_timer == c_refresh_timeout) & (ff_slot_clock_count == 6'd0) ) begin
-				ff_busy_215m				<= 1'b1;
-				ff_req_refresh_215m			<= 1'b1;
-				ff_req_m1_215m				<= 1'b0;
-				ff_req_io_215m				<= 1'b0;
-				ff_req_write_215m			<= 1'b0;
-			end
-			else if( (ff_req_pending_215m | w_req_event_215m) & (ff_slot_clock_count == 6'd0) ) begin
-				ff_req_pending_215m			<= 1'b0;
-				ff_busy_215m				<= 1'b1;
-				ff_req_refresh_215m			<= 1'b0;
-				ff_req_m1_215m				<= ff_req_m1;
-				ff_req_io_215m				<= ff_req_io;
-				ff_req_write_215m			<= ff_req_write;
-				ff_req_address_215m			<= ff_req_address;
-				ff_req_wdata_215m			<= ff_req_wdata;
-			end
+		else if( !ff_sequence_active ) begin
+			ff_internal_wait_active	<= 1'b0;
+			ff_internal_wait_done	<= 1'b0;
 		end
-		else if( w_freeze ) begin
-			ff_access_count		<= ff_access_count;
-		end
-		else if( ff_access_count == c_timing_finish ) begin
-			ff_busy_215m		<= 1'b0;
-			ff_access_count		<= c_timing_start;
-			if( ff_req_refresh_215m ) begin
-				ff_refresh_addr		<= ff_refresh_addr + 8'd1;
+		else if( ff_internal_wait_active ) begin
+			if( ff_internal_wait_count == 4'd0 ) begin
+				ff_internal_wait_active	<= 1'b0;
+				ff_internal_wait_done	<= 1'b1;
 			end
 			else begin
-				ff_done_toggle		<= ~ff_done_toggle;
+				ff_internal_wait_count	<= ff_internal_wait_count - 4'd1;
 			end
 		end
-		else begin
-			ff_access_count		<= ff_access_count + 8'd1;
-			if( (ff_access_count == c_timing_read_sample) & !ff_req_write_215m & !ff_slot_read_done & !ff_req_refresh_215m ) begin
-				ff_slot_rdata		<= slot_d;
-				ff_slot_read_done	<= 1'b1;
+		else if( ~high_speed_mode & 
+			(ff_bus_m1 || ff_bus_io) & ~ff_internal_wait_done & 
+			(ff_t_state == c_t2) & (ff_slot_timing == c_sig_select) ) begin
+			ff_internal_wait_active	<= 1'b1;
+			ff_internal_wait_count	<= 4'd11;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_t_state <= c_t1;
+		end
+		else if( w_seq_start ) begin
+			ff_t_state <= w_seq_start_refresh ? c_t3 : c_t1;
+		end
+		else if( !ff_sequence_active ) begin
+			ff_t_state <= c_t1;
+		end
+		else if( w_3m_fall && slot_wait_n && w_internal_wait_n ) begin
+			if( ff_t_state == c_t5 ) begin
+				ff_t_state <= c_t1;
+			end
+			else if( !ff_bus_m1 && !ff_req_refresh && (ff_t_state == c_t4) ) begin
+				ff_t_state <= c_t1;
+			end
+			else begin
+				ff_t_state <= ff_t_state + 3'd1;
 			end
 		end
 	end
 
-	assign w_access_memory	= ff_busy_215m & ~ff_req_io_215m;
-	assign w_real_access_memory	= w_access_memory & ~ff_req_refresh_215m;
-	assign w_access_io		= ff_busy_215m &  ff_req_io_215m;
-	assign w_command_active	= ff_busy_215m & (ff_access_count >= c_timing_command);
-	assign w_select_active	= ff_busy_215m & (ff_access_count >= c_timing_select);
-	assign w_strobe_active	= ff_busy_215m & (ff_access_count >= c_timing_strobe);
-	assign w_read_active	= w_strobe_active & ~ff_req_write_215m;
-	assign w_write_active	= w_strobe_active &  ff_req_write_215m;
-	assign w_page			= ff_req_address_215m[15:14];
-	assign w_selected_slot	= (w_page == 2'd0) ? ff_primary_slot_215m[1:0] :
-							  (w_page == 2'd1) ? ff_primary_slot_215m[3:2] :
-							  (w_page == 2'd2) ? ff_primary_slot_215m[5:4] :
-											  ff_primary_slot_215m[7:6];
-	assign w_cs1			= w_read_active & w_real_access_memory & (w_page == 2'd1);
-	assign w_cs2			= w_read_active & w_real_access_memory & (w_page == 2'd2);
-	assign w_cs12			= w_cs1 | w_cs2;
-	//	ROM の選択とアドレスは msx_slot_decode が生成する
-	assign w_rom0_ce		= w_select_active & ~ff_req_refresh_215m & ~w_rom0_ce_n;
-	assign w_rom1_ce		= w_select_active & ~ff_req_refresh_215m & ~w_rom1_ce_n;
-	assign w_slot_address	= ff_req_refresh_215m ? { 11'd0, ff_refresh_addr } :
-							  w_rom_address_en ? w_rom_address : { 3'd0, ff_req_address_215m };
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_clock_n <= 1'b0;
+		end
+		else if( ff_slot_timing == c_sig_clock_rise ) begin
+			ff_slot_clock_n <= 1'b1;
+		end
+		else if( ff_slot_timing == c_sig_clock_fall ) begin
+			ff_slot_clock_n <= 1'b0;
+		end
+	end
 
-	assign slot_m1_n		= (w_command_active & ff_req_m1_215m) ? 1'b0 : 1'b1;
+	//	M1 はコマンド確定後、T3開始から約160ns後に解放する
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_m1_n <= 1'b1;
+		end
+		else if( ff_sequence_active & ff_bus_m1 & ~ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_m1_release) ) begin
+			ff_slot_m1_n <= 1'b1;
+		end
+		else if( ff_sequence_active & ff_bus_m1 & ~w_refresh_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_select) ) begin
+			ff_slot_m1_n <= 1'b0;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_sltsl0_n <= 1'b1;
+			ff_slot_sltsl1_n <= 1'b1;
+			ff_slot_sltsl2_n <= 1'b1;
+			ff_slot_sltsl3_n <= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_release) ) begin
+			ff_slot_sltsl0_n <= 1'b1;
+			ff_slot_sltsl1_n <= 1'b1;
+			ff_slot_sltsl2_n <= 1'b1;
+			ff_slot_sltsl3_n <= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_select) ) begin
+			ff_slot_sltsl0_n <= ~w_req_slot0;
+			ff_slot_sltsl1_n <= ~w_req_slot1;
+			ff_slot_sltsl2_n <= ~w_req_slot2;
+			ff_slot_sltsl3_n <= ~w_req_slot3;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_cs1_n	<= 1'b1;
+			ff_slot_cs2_n	<= 1'b1;
+			ff_slot_cs12_n	<= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_release) ) begin
+			ff_slot_cs1_n	<= 1'b1;
+			ff_slot_cs2_n	<= 1'b1;
+			ff_slot_cs12_n	<= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_strobe) ) begin
+			ff_slot_cs1_n	<= ~w_req_cs1;
+			ff_slot_cs2_n	<= ~w_req_cs2;
+			ff_slot_cs12_n	<= ~(w_req_cs1 | w_req_cs2);
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_a <= 19'd0;
+		end
+		else if( (ff_sequence_active | w_seq_start) && (ff_t_state == c_t1) && (ff_slot_timing == c_sig_start) ) begin
+			ff_slot_a <= w_refresh_active ? { 11'd0, ff_refresh_addr } : { 3'd0, ff_bus_address };
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_wdata_en <= 1'b0;
+		end
+		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_strobe) ) begin
+			ff_slot_wdata_en <= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_release) ) begin
+			ff_slot_wdata_en <= 1'b0;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_wr_n <= 1'b1;
+		end
+		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_wr_release) ) begin
+			ff_slot_wr_n <= 1'b1;
+		end
+		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_wr_assert) ) begin
+			ff_slot_wr_n <= 1'b0;
+		end
+	end
+
+	//	I/Oサイクルの /RD は /IORQ と同じく T2 で確定する
+	assign w_slot_rd_assert		= ff_sequence_active & w_req_read &
+								  ( ff_bus_io ? ((ff_t_state == c_t2) & (ff_slot_timing == c_sig_iorq_assert)) :
+												((ff_t_state == c_t1) & (ff_slot_timing == c_sig_rd_assert)) );
+	assign w_slot_rd_release	= ff_sequence_active & w_req_read & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_rd_release);
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_rd_n <= 1'b1;
+			ff_slot_d <= 8'hFF;
+			ff_slot_rdata_en <= 1'b0;
+		end
+		else if( w_slot_rd_release ) begin
+			ff_slot_d <= slot_d;
+			ff_slot_rdata_en <= 1'b1;
+			ff_slot_rd_n <= 1'b1;
+		end
+		else if( w_slot_rd_assert ) begin
+			ff_slot_rdata_en <= 1'b0;
+			ff_slot_rd_n <= 1'b0;
+		end
+		else begin
+			ff_slot_rdata_en <= 1'b0;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_rom0_ce_n <= 1'b1;
+			ff_slot_rom1_ce_n <= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_release) ) begin
+			ff_slot_rom0_ce_n <= 1'b1;
+			ff_slot_rom1_ce_n <= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_select) ) begin
+			ff_slot_rom0_ce_n <= ~w_req_rom0;
+			ff_slot_rom1_ce_n <= ~w_req_rom1;
+		end
+	end
+
+	//	RFSH は通常M1およびリフレッシュ専用シーケンスのT3で開始し、T4を通過してT5で解放する
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_rfsh_n <= 1'b1;
+		end
+		else if( w_refresh_cycle & (ff_t_state == c_t5) & (ff_slot_timing == c_sig_rfsh_release) ) begin
+			ff_slot_rfsh_n <= 1'b1;
+		end
+		else if( w_refresh_cycle & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
+			ff_slot_rfsh_n <= 1'b0;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_iorq_n <= 1'b1;
+		end
+		else if( ff_sequence_active & ff_bus_io & ~ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_iorq_release) ) begin
+			ff_slot_iorq_n <= 1'b1;
+		end
+		else if( ff_sequence_active & ff_bus_io & ~ff_req_refresh & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_iorq_assert) ) begin
+			ff_slot_iorq_n <= 1'b0;
+		end
+	end
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_slot_merq_n <= 1'b1;
+		end
+		else if( ff_sequence_active & ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_merq_assert) ) begin
+			ff_slot_merq_n <= 1'b1;
+		end
+		else if( ff_sequence_active & w_req_memory & ~ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_merq_release) ) begin
+			ff_slot_merq_n <= 1'b1;
+		end
+		else if( ff_sequence_active & w_req_memory & ~ff_req_refresh & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_merq_assert) ) begin
+			ff_slot_merq_n <= 1'b0;
+		end
+	end
+
 	assign slot_oe_n		= 1'b0;
-	assign slot_clock_n		= ff_slot_clock;
-	assign slot_sltsl0_n	= (w_select_active & w_real_access_memory & (w_selected_slot == 2'd0)) ? 1'b0 : 1'b1;
-	assign slot_sltsl1_n	= (w_select_active & w_real_access_memory & (w_selected_slot == 2'd1)) ? 1'b0 : 1'b1;
-	assign slot_sltsl2_n	= (w_select_active & w_real_access_memory & (w_selected_slot == 2'd2)) ? 1'b0 : 1'b1;
-	assign slot_sltsl3_n	= (w_select_active & w_real_access_memory & (w_selected_slot == 2'd3)) ? 1'b0 : 1'b1;
-	assign slot_cs1_n		= w_cs1 ? 1'b0 : 1'b1;
-	assign slot_cs2_n		= w_cs2 ? 1'b0 : 1'b1;
-	assign slot_cs12_n		= w_cs12 ? 1'b0 : 1'b1;
-	assign slot_a			= w_slot_address;
 	assign slot_reset_n		= reset_n;
-	assign slot_data_dir	= (ff_busy_215m & ff_req_write_215m) ? 1'b1 : slot_busdir;
-	assign slot_wr_n		= (w_write_active & (w_real_access_memory | w_access_io)) ? 1'b0 : 1'b1;
-	assign slot_rd_n		= (w_read_active  & (w_real_access_memory | w_access_io)) ? 1'b0 : 1'b1;
-	assign slot_rom0_ce_n	= w_rom0_ce ? 1'b0 : 1'b1;
-	assign slot_rom1_ce_n	= w_rom1_ce ? 1'b0 : 1'b1;
-	assign slot_rfsh_n		= (w_command_active & w_access_memory & ( (~high_speed_mode & ff_req_m1_215m) | ff_req_refresh_215m )) ? 1'b0 : 1'b1;
-	assign slot_iorq_n		= (w_command_active & w_access_io) ? 1'b0 : 1'b1;
-	assign slot_merq_n		= (w_command_active & w_access_memory) ? 1'b0 : 1'b1;
-	assign slot_d			= (ff_busy_215m & ff_req_write_215m) ? ff_req_wdata_215m : 8'hzz;
+	assign int_n			= slot_int_n;
+	assign slot_m1_n		= ff_slot_m1_n;
+	assign slot_clock_n		= ff_slot_clock_n;
+	assign slot_sltsl0_n	= ff_slot_sltsl0_n;
+	assign slot_sltsl1_n	= ff_slot_sltsl1_n;
+	assign slot_sltsl2_n	= ff_slot_sltsl2_n;
+	assign slot_sltsl3_n	= ff_slot_sltsl3_n;
+	assign slot_cs1_n		= ff_slot_cs1_n;
+	assign slot_cs2_n		= ff_slot_cs2_n;
+	assign slot_cs12_n		= ff_slot_cs12_n;
+	//	rom_address_en は I/O アクセスでは更新されないため、I/O サイクル中は必ずバスアドレスを出す
+	assign slot_a			= ~ff_slot_rfsh_n ? { 11'd0, ff_refresh_addr } :
+						  (~ff_slot_rd_n | ~ff_slot_wr_n) ? { 3'd0, ff_bus_address } :
+						  (w_rom_address_en & ~w_refresh_active & ~ff_bus_io) ? w_rom_address : ff_slot_a;
+	//	slot_data_dir: 0 = Read(スロット→FPGA), 1 = Write(FPGA→スロット)
+	assign slot_data_dir	= ff_slot_wdata_en;
+	assign slot_wr_n		= ff_slot_wr_n;
+	assign slot_rd_n		= ff_slot_rd_n;
+	assign slot_rom0_ce_n	= ff_slot_rom0_ce_n;
+	assign slot_rom1_ce_n	= ff_slot_rom1_ce_n;
+	assign slot_rfsh_n		= ff_slot_rfsh_n;
+	assign slot_iorq_n		= ff_slot_iorq_n;
+	assign slot_merq_n		= ff_slot_merq_n;
+	assign slot_d			= ff_slot_wdata_en ? ff_bus_wdata : 8'hzz;
 endmodule
