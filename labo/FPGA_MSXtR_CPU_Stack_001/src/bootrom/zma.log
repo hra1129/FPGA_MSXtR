@@ -1,0 +1,233 @@
+Z80 Macro Assembler ZMA v1.0.19
+=====================================================
+Programmed by t.hara
+
+  DEFS is DEFINE STRING (default).
+  OUTPUT TYPE: BINARY
+
+<< code >>
+LINE# |OFFSET|ADDR|MNEMONIC
+======+======+====+==================================
+    36|      |    |UART := 0x10
+      |      |    |  Global integer symbol [UART] = 16 (0x10)
+------+------+----+----------------------------------
+    37|      |    |BUTTON := 0x10
+      |      |    |  Global integer symbol [BUTTON] = 16 (0x10)
+------+------+----+----------------------------------
+    39|      |    |EXTIO_MANUFACTURE := 0x40
+      |      |    |  Global integer symbol [EXTIO_MANUFACTURE] = 64 (0x40)
+------+------+----+----------------------------------
+    40|      |    |EXTIO_DEVICE := 0x41
+      |      |    |  Global integer symbol [EXTIO_DEVICE] = 65 (0x41)
+------+------+----+----------------------------------
+    41|      |    |SROM_COMMAND := 0x42
+      |      |    |  Global integer symbol [SROM_COMMAND] = 66 (0x42)
+------+------+----+----------------------------------
+    42|      |    |SROM_DATA := 0x43
+      |      |    |  Global integer symbol [SROM_DATA] = 67 (0x43)
+------+------+----+----------------------------------
+    44|      |    |MANUFACTURE_ID := 64
+      |      |    |  Global integer symbol [MANUFACTURE_ID] = 64 (0x40)
+------+------+----+----------------------------------
+    46|      |    |DEVICE_CONFIG_ROM_VDP := 1
+      |      |    |  Global integer symbol [DEVICE_CONFIG_ROM_VDP] = 1 (0x1)
+------+------+----+----------------------------------
+    47|      |    |DEVICE_CONFIG_ROM_CPU := 2
+      |      |    |  Global integer symbol [DEVICE_CONFIG_ROM_CPU] = 2 (0x2)
+------+------+----+----------------------------------
+    48|      |    |DEVICE_SERIAL_ROM := 3
+      |      |    |  Global integer symbol [DEVICE_SERIAL_ROM] = 3 (0x3)
+------+------+----+----------------------------------
+    50|      |    |VDP_PORT0 := 0x98
+      |      |    |  Global integer symbol [VDP_PORT0] = 152 (0x98)
+------+------+----+----------------------------------
+    51|      |    |VDP_PORT1 := 0x99
+      |      |    |  Global integer symbol [VDP_PORT1] = 153 (0x99)
+------+------+----+----------------------------------
+    52|      |    |VDP_PORT2 := 0x9A
+      |      |    |  Global integer symbol [VDP_PORT2] = 154 (0x9a)
+------+------+----+----------------------------------
+    53|      |    |VDP_PORT3 := 0x9B
+      |      |    |  Global integer symbol [VDP_PORT3] = 155 (0x9b)
+------+------+----+----------------------------------
+    54|      |    |VDP_PORT4 := 0x9C
+      |      |    |  Global integer symbol [VDP_PORT4] = 156 (0x9c)
+------+------+----+----------------------------------
+    56|      |    |S2026_REG_IDX := 0xE4
+      |      |    |  Global integer symbol [S2026_REG_IDX] = 228 (0xe4)
+------+------+----+----------------------------------
+    57|      |    |S2026_REG_VAL := 0xE5
+      |      |    |  Global integer symbol [S2026_REG_VAL] = 229 (0xe5)
+------+------+----+----------------------------------
+    58|      |    |S2026_FR_TIMER_L := 0xE6
+      |      |    |  Global integer symbol [S2026_FR_TIMER_L] = 230 (0xe6)
+------+------+----+----------------------------------
+    59|      |    |S2026_FR_TIMER_H := 0xE7
+      |      |    |  Global integer symbol [S2026_FR_TIMER_H] = 231 (0xe7)
+------+------+----+----------------------------------
+    62|      |    |FPGA_CONFIG_ROM_SET_ADDRESS := 0x00
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_SET_ADDRESS] = 0 (0x0)
+------+------+----+----------------------------------
+    63|      |    |FPGA_CONFIG_ROM_SINGLE_READ := 0x01
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_SINGLE_READ] = 1 (0x1)
+------+------+----+----------------------------------
+    64|      |    |FPGA_CONFIG_ROM_BURST_READ := 0x02
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_BURST_READ] = 2 (0x2)
+------+------+----+----------------------------------
+    65|      |    |FPGA_CONFIG_ROM_BURST_WRITE := 0x03
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_BURST_WRITE] = 3 (0x3)
+------+------+----+----------------------------------
+    66|      |    |FPGA_CONFIG_ROM_CHIP_ERASE := 0x04
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_CHIP_ERASE] = 4 (0x4)
+------+------+----+----------------------------------
+    67|      |    |FPGA_CONFIG_ROM_READ_STATUS := 0x05
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_READ_STATUS] = 5 (0x5)
+------+------+----+----------------------------------
+    68|      |    |FPGA_CONFIG_ROM_SELECT_SROM := 0x06
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_SELECT_SROM] = 6 (0x6)
+------+------+----+----------------------------------
+    69|      |    |FPGA_CONFIG_ROM_ACCESS_END := 0x07
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_ACCESS_END] = 7 (0x7)
+------+------+----+----------------------------------
+    70|      |    |FPGA_CONFIG_ROM_WRITE_ENABLE := 0x08
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_WRITE_ENABLE] = 8 (0x8)
+------+------+----+----------------------------------
+    71|      |    |FPGA_CONFIG_ROM_BLOCK_ERASE := 0x09
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_BLOCK_ERASE] = 9 (0x9)
+------+------+----+----------------------------------
+    72|      |    |FPGA_CONFIG_ROM_READ_STATUS2 := 0x0A
+      |      |    |  Global integer symbol [FPGA_CONFIG_ROM_READ_STATUS2] = 10 (0xa)
+------+------+----+----------------------------------
+    74|      |    |ORG 0x0000
+------+------+----+----------------------------------
+    78|      |    |DI
+      |      |    |  Z80:5cyc R800:2cyc
+      |000000|0000|  F3
+------+------+----+----------------------------------
+    79|      |    |LD SP, 8192 - 2
+      |      |    |  Z80:11cyc R800:3cyc
+      |000001|0001|  31 FE 1F
+------+------+----+----------------------------------
+    84|      |    |WAIT_PRESS_BUTTON :
+      |      |    |  label [WAIT_PRESS_BUTTON] address: 0x000004
+------+------+----+----------------------------------
+    85|      |    |IN A, [ BUTTON ]
+      |      |    |  Z80:12cyc R800:10cyc/9cyc
+      |000004|0004|  DB 10
+------+------+----+----------------------------------
+    86|      |    |AND A, 1
+      |      |    |  Z80:8cyc R800:2cyc
+      |000006|0006|  E6 01
+------+------+----+----------------------------------
+    87|      |    |JR Z, WAIT_PRESS_BUTTON
+      |      |    |  Z80:13cyc/8cyc R800:3cyc/2cyc
+      |000008|0008|  28 FA
+------+------+----+----------------------------------
+    88|      |    |WAIT_RELEASE_BUTTON :
+      |      |    |  label [WAIT_RELEASE_BUTTON] address: 0x00000a
+------+------+----+----------------------------------
+    89|      |    |IN A, [ BUTTON ]
+      |      |    |  Z80:12cyc R800:10cyc/9cyc
+      |00000A|000A|  DB 10
+------+------+----+----------------------------------
+    90|      |    |AND A, 1
+      |      |    |  Z80:8cyc R800:2cyc
+      |00000C|000C|  E6 01
+------+------+----+----------------------------------
+    91|      |    |JR NZ, WAIT_RELEASE_BUTTON
+      |      |    |  Z80:13cyc/8cyc R800:3cyc/2cyc
+      |00000E|000E|  20 FA
+------+------+----+----------------------------------
+    96|      |    |LD HL, 0x1800 | 0x4000
+      |      |    |  Z80:11cyc R800:3cyc
+      |000010|0010|  21 00 58
+------+------+----+----------------------------------
+    97|      |    |LD C, VDP_PORT1
+      |      |    |  Z80:8cyc R800:2cyc
+      |000013|0013|  0E 99
+------+------+----+----------------------------------
+    98|      |    |OUT [ C ], L
+      |      |    |  Z80:14cyc R800:10cyc/9cyc
+      |000015|0015|  ED 69
+------+------+----+----------------------------------
+    99|      |    |OUT [ C ], H
+      |      |    |  Z80:14cyc R800:10cyc/9cyc
+      |000017|0017|  ED 61
+------+------+----+----------------------------------
+   101|      |    |DEC C
+      |      |    |  Z80:5cyc R800:1cyc
+      |000019|0019|  0D
+------+------+----+----------------------------------
+   102|      |    |LD DE, S_HELLO_WORLD
+      |      |    |  Z80:11cyc R800:3cyc
+      |00001A|001A|  11 27 00
+------+------+----+----------------------------------
+   103|      |    |LOOP :
+      |      |    |  label [LOOP] address: 0x00001d
+------+------+----+----------------------------------
+   104|      |    |LD A, [ DE ]
+      |      |    |  Z80:8cyc R800:4cyc
+      |00001D|001D|  1A
+------+------+----+----------------------------------
+   105|      |    |OR A, A
+      |      |    |  Z80:5cyc R800:1cyc
+      |00001E|001E|  B7
+------+------+----+----------------------------------
+   106|      |    |JP Z, WAIT_PRESS_BUTTON
+      |      |    |  Z80:11cyc R800:5cyc/3cyc
+      |00001F|001F|  CA 04 00
+------+------+----+----------------------------------
+   107|      |    |OUT [ C ], A
+      |      |    |  Z80:14cyc R800:10cyc/9cyc
+      |000022|0022|  ED 79
+------+------+----+----------------------------------
+   108|      |    |INC DE
+      |      |    |  Z80:7cyc R800:1cyc
+      |000024|0024|  13
+------+------+----+----------------------------------
+   109|      |    |JR LOOP
+      |      |    |  Z80:13cyc R800:3cyc
+      |000025|0025|  18 F6
+------+------+----+----------------------------------
+   111|      |    |S_HELLO_WORLD :
+      |      |    |  label [S_HELLO_WORLD] address: 0x000027
+------+------+----+----------------------------------
+   112|      |    |DB "Hello, World!", 0
+      |000027|0027|  48 65 6C 6C 6F 2C 20 57
+      |00002F|002F|  6F 72 6C 64 21 00
+------+------+----+----------------------------------
+<< label >>
+BUTTON ......................... 16 ( 0x10 )
+DEVICE_CONFIG_ROM_CPU .......... 2 ( 0x2 )
+DEVICE_CONFIG_ROM_VDP .......... 1 ( 0x1 )
+DEVICE_SERIAL_ROM .............. 3 ( 0x3 )
+EXTIO_DEVICE ................... 65 ( 0x41 )
+EXTIO_MANUFACTURE .............. 64 ( 0x40 )
+FPGA_CONFIG_ROM_ACCESS_END ..... 7 ( 0x7 )
+FPGA_CONFIG_ROM_BLOCK_ERASE .... 9 ( 0x9 )
+FPGA_CONFIG_ROM_BURST_READ ..... 2 ( 0x2 )
+FPGA_CONFIG_ROM_BURST_WRITE .... 3 ( 0x3 )
+FPGA_CONFIG_ROM_CHIP_ERASE ..... 4 ( 0x4 )
+FPGA_CONFIG_ROM_READ_STATUS .... 5 ( 0x5 )
+FPGA_CONFIG_ROM_READ_STATUS2 ... 10 ( 0xa )
+FPGA_CONFIG_ROM_SELECT_SROM .... 6 ( 0x6 )
+FPGA_CONFIG_ROM_SET_ADDRESS .... 0 ( 0x0 )
+FPGA_CONFIG_ROM_SINGLE_READ .... 1 ( 0x1 )
+FPGA_CONFIG_ROM_WRITE_ENABLE ... 8 ( 0x8 )
+LOOP ........................... 29 ( 0x1d )
+MANUFACTURE_ID ................. 64 ( 0x40 )
+S2026_FR_TIMER_H ............... 231 ( 0xe7 )
+S2026_FR_TIMER_L ............... 230 ( 0xe6 )
+S2026_REG_IDX .................. 228 ( 0xe4 )
+S2026_REG_VAL .................. 229 ( 0xe5 )
+SROM_COMMAND ................... 66 ( 0x42 )
+SROM_DATA ...................... 67 ( 0x43 )
+S_HELLO_WORLD .................. 39 ( 0x27 )
+UART ........................... 16 ( 0x10 )
+VDP_PORT0 ...................... 152 ( 0x98 )
+VDP_PORT1 ...................... 153 ( 0x99 )
+VDP_PORT2 ...................... 154 ( 0x9a )
+VDP_PORT3 ...................... 155 ( 0x9b )
+VDP_PORT4 ...................... 156 ( 0x9c )
+WAIT_PRESS_BUTTON .............. 4 ( 0x4 )
+WAIT_RELEASE_BUTTON ............ 10 ( 0xa )

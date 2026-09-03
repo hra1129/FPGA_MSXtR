@@ -1,0 +1,22 @@
+         ps       /tb/u_dut/w_bus_ctrl_valid        /tb/u_dut/w_device_io  /tb/u_dut/w_device_rdata  /tb/u_dut/w_bus_ctrl_rdata               
+          delta                  /tb/u_dut/w_bus_ctrl_address  /tb/u_dut/w_device_rdata_en                                                    
+                                          /tb/u_dut/w_bus_ctrl_io  /tb/u_dut/u_msx_slot/ff_slot_read_done                                     
+                                             /tb/u_dut/w_device_valid           /tb/u_dut/u_msx_slot/ff_slot_rdata                            
+                                               /tb/u_dut/u_bootrom/bootrom_cs            /tb/u_dut/w_bus_ctrl_rdata_en                        
+          0  +0                          StX xxxxxxxxxxxxxxxx StX StX StX StX          StX xxxxxxxx     x xxxxxxxx StX xxxxxxxx 
+       2328  +1                          StX xxxxxxxxxxxxxxxx StX StX StX StX          StX xxxxxxxx     0 00000000 StX xxxxxxxx 
+      11640  +2                          St0 0000000000000000 St0 St0 St0 St1          StX 00000000     0 00000000 St0 00000000 
+      34920  +3                          St0 0000000000000000 St0 St0 St0 St1          St0 00000000     0 00000000 St0 00000000 
+    3852840  +2                          St0 0001000000000000 St0 St0 St0 St1          St0 00000000     0 00000000 St0 00000000 
+    4085640  +3                          St1 0001000000000000 St0 St1 St0 St1          St0 00000000     0 00000000 St0 00000000 
+    4108920  +2                          St0 0001000000000000 St0 St0 St0 St1          St0 00000000     0 00000000 St0 00000000 
+    6530040  +3                          St1 0001000000000000 St0 St1 St0 St1          St0 00000000     0 00000000 St0 00000000 
+    6553320  +2                          St0 0001000000000000 St0 St0 St0 St1          St1 10100101     0 00000000 St1 10100101 
+    6576600  +2                          St0 0001000000000000 St0 St0 St0 St1          St0 10100101     0 00000000 St0 00000000 
+    7354152  +1                          St0 0001000000000000 St0 St0 St0 St1          St0 10100101     1 zzzzzzzz St0 00000000 
+    7354152  +2                          St0 0001000000000000 St0 St0 St0 St1          St0 10100101     1 zzzzzzzz St0 zzzzzzzz 
+    7423992  +1                          St0 0001000000000000 St0 St0 St0 St1          St0 10100101     0 zzzzzzzz St0 zzzzzzzz 
+    7717320  +3                          St0 0001000000000000 St1 St0 St1 St0          St0 10100101     0 zzzzzzzz St0 zzzzzzzz 
+    7740600  +2                          St0 0001000000000000 St1 St0 St1 St0          St0 00000000     0 zzzzzzzz St0 zzzzzzzz 
+    7973400  +2                          St1 0000000000000000 St1 St1 St1 St0          St0 00000000     0 zzzzzzzz St0 zzzzzzzz 
+    7996680  +3                          St0 0000000000000000 St1 St0 St1 St0          St0 00000000     0 zzzzzzzz St0 zzzzzzzz 

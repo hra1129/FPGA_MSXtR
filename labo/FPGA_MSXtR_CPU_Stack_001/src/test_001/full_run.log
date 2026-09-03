@@ -1,0 +1,41 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps tb -do "log -r /*; run -all; quit -f" 
+# Start time: 19:53:05 on Aug 28,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.fpga_msxtr_cpu_stack
+# Loading work.Gowin_PLL
+# Loading work.ip_spi
+# Loading work.spi
+# Loading work.msx_slot
+# Loading work.msx_slot_decode
+# Loading work.bootrom
+# Loading work.rom
+# Loading work.ip_ram
+# Loading work.SP
+# log -r /*
+#  run -all
+# ------------------------------------------------------------
+# [TEST 1] Memory Write/Read-back: addr=0x1000, data=0xA5
+# WARNING: mcu_intr timed out while waiting for read data
+# [TEST 1] FAIL: read back 0x00 (expected 0xA5)
+# ------------------------------------------------------------
+# [TEST 2] I/O Read vs Memory Read consistency: addr=0x00
+# WARNING: mcu_intr timed out while waiting for read data
+# WARNING: mcu_intr timed out while waiting for read data
+# [TEST 2] PASS: io_read=0x00 == mem_read=0x00
+# ------------------------------------------------------------
+# [TEST 3] ROM write-protection: addr=0x00
+# WARNING: mcu_intr timed out while waiting for read data
+# WARNING: mcu_intr timed out while waiting for read data
+# [TEST 3] PASS: ROM content unchanged (0x00)
+# ============================================================
+# Results: PASS = 2, FAIL = 1
+# Some tests FAILED.
+# ** Note: $finish    : tb.sv(423)
+#    Time: 37771488 ps  Iteration: 0  Instance: /tb
+# End time: 19:53:05 on Aug 28,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0

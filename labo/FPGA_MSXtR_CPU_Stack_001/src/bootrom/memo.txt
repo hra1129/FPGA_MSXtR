@@ -1,0 +1,11 @@
+202byte ... OK
+409byte ... OK
+461byte ... OK
+487byte ... OK
+499byte ... OK
+505byte ... OK
+508byte ... OK
+510byte ... OK
+511byte ... OK
+512byte ... NG
+615byte ... NG
