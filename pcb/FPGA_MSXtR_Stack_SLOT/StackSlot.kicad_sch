@@ -3589,7 +3589,7 @@
 		)
 		(uuid "16e7a682-43ed-4c8d-9f9b-dd7bee3cb353")
 	)
-	(text "BUSDIR\n0: CPU → Cartridge (WRITE)\n1: CPU ← Cartridge (READ)"
+	(text "SLOT_DATA_DIR\n1: CPU → Cartridge (WRITE)\n0: CPU ← Cartridge (READ)"
 		(exclude_from_sim no)
 		(at 247.396 31.496 0)
 		(effects

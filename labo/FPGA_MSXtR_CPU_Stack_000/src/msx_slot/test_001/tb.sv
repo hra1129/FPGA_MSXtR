@@ -465,7 +465,8 @@ module tb;
 		check( slot_iorq_n == 1'b1, "I/O write asserted IORQ before WR" );
 		@( posedge clk_42m );
 		check( slot_iorq_n == 1'b0, "I/O write did not assert IORQ" );
-		check( slot_data_dir == 1'b0, "I/O write did not set slot_data_dir to write" );
+		check( u_msx_slot.ff_internal_wait_active == 1'b1, "I/O write did not activate the internal TW wait" );
+		check( slot_data_dir == 1'b1, "I/O write did not set slot_data_dir to write" );
 		check( slot_merq_n == 1'b1, "I/O write asserted MERQ" );
 		check( slot_m1_n == 1'b1, "I/O write asserted M1" );
 		check( slot_sltsl0_n == 1'b1, "I/O write asserted SLTSL0" );
@@ -478,10 +479,16 @@ module tb;
 		slot_d_drive	= 1'b1;
 		slot_d_rdata	= 8'h7e;
 		issue_access( 1'b0, 1'b1, 1'b0, 16'h00a8, 8'h00 );
+		m1_wait_count = 0;
+		while( (u_msx_slot.ff_internal_wait_active == 1'b0) && (m1_wait_count < 200) ) begin
+			@( posedge clk_42m );
+			m1_wait_count = m1_wait_count + 1;
+		end
+		check( u_msx_slot.ff_internal_wait_active == 1'b1, "I/O read did not activate the internal TW wait" );
 		wait_rd_n_checked( read_timeout );
 		check( !read_timeout, "I/O read: slot_rd_n did not assert" );
 		check( slot_iorq_n == 1'b0, "I/O read did not assert IORQ" );
-		check( slot_data_dir == 1'b1, "I/O read did not set slot_data_dir to read" );
+		check( slot_data_dir == 1'b0, "I/O read did not set slot_data_dir to read" );
 		check( slot_merq_n == 1'b1, "I/O read asserted MERQ" );
 		check( slot_m1_n == 1'b1, "I/O read asserted M1" );
 		wait_rdata_en_checked( read_timeout );
@@ -514,7 +521,8 @@ module tb;
 				m1_rfsh_time_start = $realtime;
 				@( posedge slot_rfsh_n );
 				m1_rfsh_low_time = $realtime - m1_rfsh_time_start;
-				check( (m1_rfsh_low_time > 530.0) && (m1_rfsh_low_time < 570.0), "M1 RFSH low time did not include the full T4 cycle" );
+				//	RFSH: T4,count2(assert) 〜 T5,count8(release) = 18clk ≒ 419ns
+				check( (m1_rfsh_low_time > 400.0) && (m1_rfsh_low_time < 440.0), "M1 RFSH low time did not match T4/T5 timing" );
 				check( u_msx_slot.ff_refresh_addr == (m1_refresh_addr + 8'd1), "M1 RFSH did not increment refresh counter on release" );
 				m1_rfsh_seen = 1'b1;
 			end
@@ -523,8 +531,14 @@ module tb;
 		wait_m1_n_checked( read_timeout );
 		check( !read_timeout, "M1 access: slot_m1_n did not assert" );
 		check( slot_iorq_n == 1'b1, "M1 access asserted IORQ" );
-		check( slot_merq_n == 1'b0, "M1 access did not assert MERQ" );
 		check( slot_rfsh_n == 1'b1, "M1 access asserted RFSH too early" );
+		//	/MREQ は /M1 より遅れて T1 で確定するため、成立するまで待ち合わせる
+		m1_wait_count = 0;
+		while( (slot_merq_n == 1'b1) && (m1_wait_count < 200) ) begin
+			@( posedge clk_42m );
+			m1_wait_count = m1_wait_count + 1;
+		end
+		check( slot_merq_n == 1'b0, "M1 access did not assert MERQ" );
 		//	TWステートはT2で挿入されるため、M1アサート直後ではなく成立するまで待ち合わせる
 		m1_wait_count = 0;
 		while( (u_msx_slot.ff_internal_wait_active == 1'b0) && (m1_wait_count < 200) ) begin

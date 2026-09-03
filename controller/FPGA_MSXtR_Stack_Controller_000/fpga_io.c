@@ -246,6 +246,11 @@ void fpga_msx_reset( bool reset_on ) {
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
+	if( !reset_on ) {
+		// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
+		// を実行するので、リセット解除後に、しばらく待つ必要がある
+		sleep_ms( 500 );
+	}
 }
 
 // ---------------------------------------------------------

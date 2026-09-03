@@ -12,27 +12,27 @@
   <Part Number>: GW2AR-LV18QN88C8/I7
   <Device>: GW2AR-18
   <Device Version>: C
-  <Created Time>:Sat Aug 29 12:35:43 2026
+  <Created Time>:Thu Sep  3 22:13:54 2026
 
 
 2. PnR Details
 
   Running placement:
     Placement Phase 0: CPU time = 0h 0m 1s, Elapsed time = 0h 0m 1s
-    Placement Phase 1: CPU time = 0h 0m 0.356s, Elapsed time = 0h 0m 0.356s
+    Placement Phase 1: CPU time = 0h 0m 0.387s, Elapsed time = 0h 0m 0.388s
     Placement Phase 2: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
     Placement Phase 3: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
-    Total Placement: CPU time = 0h 0m 10s, Elapsed time = 0h 0m 10s
+    Total Placement: CPU time = 0h 0m 9s, Elapsed time = 0h 0m 9s
  Running routing:
-    Routing Phase 0: CPU time = 0h 0m 0.006s, Elapsed time = 0h 0m 0.006s
-    Routing Phase 1: CPU time = 0h 0m 0.395s, Elapsed time = 0h 0m 0.395s
+    Routing Phase 0: CPU time = 0h 0m 0.007s, Elapsed time = 0h 0m 0.007s
+    Routing Phase 1: CPU time = 0h 0m 0.384s, Elapsed time = 0h 0m 0.385s
     Routing Phase 2: CPU time = 0h 0m 8s, Elapsed time = 0h 0m 8s
     Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
     Total Routing: CPU time = 0h 0m 8s, Elapsed time = 0h 0m 8s
  Generate output files:
     CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
 
- Total Time and Memory Usage: CPU time = 0h 0m 20s, Elapsed time = 0h 0m 20s, Peak memory usage = 544MB
+ Total Time and Memory Usage: CPU time = 0h 0m 19s, Elapsed time = 0h 0m 19s, Peak memory usage = 530MB
 
 
 3. Resource Usage Summary
@@ -135,8 +135,8 @@ slot_a[4]         | -         | 41/4          | Y          | in    | IOB43[A] | 
 slot_a[5]         | -         | 48/3          | Y          | in    | IOR49[B] | -               | LVTTL33    | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
 slot_a[6]         | -         | 49/3          | Y          | in    | IOR49[A] | -               | LVTTL33    | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
 slot_a[7]         | -         | 17/6          | Y          | in    | IOL49[A] | -               | LVTTL33    | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
-dipsw[0]          | -         | 53/3          | Y          | in    | IOR38[B] | DOUT/WE_N       | LVTTL33    | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
-dipsw[1]          | -         | 52/3          | Y          | in    | IOR39[A] | SCLK            | LVTTL33    | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
+dipsw[0]          | -         | 53/3          | Y          | in    | IOR38[B] | DOUT/WE_N       | LVTTL33    | NA    | NONE      | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
+dipsw[1]          | -         | 52/3          | Y          | in    | IOR39[A] | SCLK            | LVTTL33    | NA    | NONE      | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
 button[0]         | -         | 88/3          | Y          | in    | IOR30[A] | MODE0           | LVTTL33    | NA    | DOWN      | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
 button[1]         | -         | 87/3          | Y          | in    | IOR30[B] | MODE1           | LVTTL33    | NA    | DOWN      | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
 audio_en          | -         | 51/3          | Y          | in    | IOR45[A] | RPLL2_T_in      | LVTTL33    | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3       
@@ -179,14 +179,14 @@ O_sdram_dqm[0]    | -         | p14/7         | -          | out   | IOL12[A] | 
 O_sdram_dqm[1]    | -         | p76/2         | -          | out   | IOR11[A] | -               | LVTTL33    | -     | UP        | -         | -          | -          | -          | -               | -             | -         
 O_sdram_dqm[2]    | -         | p29/7         | -          | out   | IOL18[A] | -               | LVTTL33    | -     | UP        | -         | -          | -          | -          | -               | -             | -         
 O_sdram_dqm[3]    | -         | p61/2         | -          | out   | IOR15[B] | -               | LVTTL33    | -     | UP        | -         | -          | -          | -          | -               | -             | -         
-slot_d[0]         | -         | 29/5          | Y          | io    | IOB14[A] | -               | LVTTL33    | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3       
-slot_d[1]         | -         | 28/5          | Y          | io    | IOB8[B]  | -               | LVTTL33    | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3       
-slot_d[2]         | -         | 27/5          | Y          | io    | IOB8[A]  | -               | LVTTL33    | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3       
-slot_d[3]         | -         | 77/1          | Y          | io    | IOT30[A] | GCLKT_1         | LVTTL33    | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3       
-slot_d[4]         | -         | 85/0          | Y          | io    | IOT4[B]  | -               | LVTTL33    | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3       
-slot_d[5]         | -         | 75/1          | Y          | io    | IOT34[A] | -               | LVTTL33    | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3       
-slot_d[6]         | -         | 74/1          | Y          | io    | IOT34[B] | -               | LVTTL33    | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3       
-slot_d[7]         | -         | 73/1          | Y          | io    | IOT40[A] | -               | LVTTL33    | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3       
+slot_d[0]         | -         | 29/5          | Y          | io    | IOB14[A] | -               | LVTTL33    | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3       
+slot_d[1]         | -         | 28/5          | Y          | io    | IOB8[B]  | -               | LVTTL33    | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3       
+slot_d[2]         | -         | 27/5          | Y          | io    | IOB8[A]  | -               | LVTTL33    | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3       
+slot_d[3]         | -         | 77/1          | Y          | io    | IOT30[A] | GCLKT_1         | LVTTL33    | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3       
+slot_d[4]         | -         | 85/0          | Y          | io    | IOT4[B]  | -               | LVTTL33    | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3       
+slot_d[5]         | -         | 75/1          | Y          | io    | IOT34[A] | -               | LVTTL33    | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3       
+slot_d[6]         | -         | 74/1          | Y          | io    | IOT34[B] | -               | LVTTL33    | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3       
+slot_d[7]         | -         | 73/1          | Y          | io    | IOT40[A] | -               | LVTTL33    | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3       
 IO_sdram_dq[0]    | -         | p1/7          | -          | io    | IOL3[A]  | -               | LVTTL33    | -     | UP        | -         | -          | -          | -          | -               | -             | -         
 IO_sdram_dq[1]    | -         | p2/7          | -          | io    | IOL3[B]  | -               | LVTTL33    | -     | UP        | -         | -          | -          | -          | -               | -             | -         
 IO_sdram_dq[2]    | -         | p5/7          | -          | io    | IOL8[A]  | LPLL1_T_fb      | LVTTL33    | -     | UP        | -         | -          | -          | -          | -               | -             | -         
@@ -230,18 +230,18 @@ IO_sdram_dq[31]   | -         | p48/3         | -          | io    | IOR44[B] | 
 Loc./Bank| Signal            | Dir.  | Site     | CFG             | IO Type  | Drive | Pull Mode | PCI Clamp | Hysteresis | Open Drain | Vref       | Single Resistor | Diff Resistor | Bank Vccio
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 86/0     | slot_reset_n      | in    | IOT4[A]  | -               | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
-85/0     | slot_d[4]         | io    | IOT4[B]  | -               | LVTTL33  | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3  
+85/0     | slot_d[4]         | io    | IOT4[B]  | -               | LVTTL33  | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3  
 84/0     | -                 | in    | IOT6[A]  | -               | LVCMOS33 | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
 83/0     | -                 | in    | IOT6[B]  | -               | LVCMOS33 | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
 82/0     | -                 | in    | IOT17[A] | -               | LVCMOS33 | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
 81/0     | -                 | in    | IOT17[B] | -               | LVCMOS33 | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
 80/0     | clk14m            | in    | IOT27[A] | GCLKT_0         | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
 79/0     | ws2812_led        | out   | IOT27[B] | GCLKC_0         | LVTTL33  | 8     | UP        | NA        | NA         | OFF        | NA         | NA              | NA            | 3.3  
-77/1     | slot_d[3]         | io    | IOT30[A] | GCLKT_1         | LVTTL33  | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3  
+77/1     | slot_d[3]         | io    | IOT30[A] | GCLKT_1         | LVTTL33  | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3  
 76/1     | slot_a[2]         | in    | IOT30[B] | GCLKC_1         | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
-75/1     | slot_d[5]         | io    | IOT34[A] | -               | LVTTL33  | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3  
-74/1     | slot_d[6]         | io    | IOT34[B] | -               | LVTTL33  | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3  
-73/1     | slot_d[7]         | io    | IOT40[A] | -               | LVTTL33  | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3  
+75/1     | slot_d[5]         | io    | IOT34[A] | -               | LVTTL33  | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3  
+74/1     | slot_d[6]         | io    | IOT34[B] | -               | LVTTL33  | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3  
+73/1     | slot_d[7]         | io    | IOT40[A] | -               | LVTTL33  | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3  
 72/1     | slot_wait_n       | out   | IOT40[B] | -               | LVTTL33  | 8     | DOWN      | NA        | NA         | OFF        | NA         | NA              | NA            | 3.3  
 71/1     | slot_int_n        | out   | IOT44[A] | -               | LVTTL33  | 8     | UP        | NA        | NA         | OFF        | NA         | NA              | NA            | 3.3  
 70/1     | -                 | in    | IOT44[B] | -               | LVCMOS33 | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
@@ -249,9 +249,9 @@ Loc./Bank| Signal            | Dir.  | Site     | CFG             | IO Type  | D
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 25/5     | -                 | in    | IOB6[A]  | -               | LVCMOS33 | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
 26/5     | -                 | in    | IOB6[B]  | -               | LVCMOS33 | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
-27/5     | slot_d[2]         | io    | IOB8[A]  | -               | LVTTL33  | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3  
-28/5     | slot_d[1]         | io    | IOB8[B]  | -               | LVTTL33  | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3  
-29/5     | slot_d[0]         | io    | IOB14[A] | -               | LVTTL33  | 8     | UP        | NA        | NONE       | OFF        | NA         | NA              | NA            | 3.3  
+27/5     | slot_d[2]         | io    | IOB8[A]  | -               | LVTTL33  | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3  
+28/5     | slot_d[1]         | io    | IOB8[B]  | -               | LVTTL33  | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3  
+29/5     | slot_d[0]         | io    | IOB14[A] | -               | LVTTL33  | 8     | UP        | NA        | NONE       | ON         | NA         | NA              | NA            | 3.3  
 30/5     | slot_a[0]         | in    | IOB14[B] | -               | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
 31/5     | slot_a[1]         | in    | IOB18[A] | -               | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
 32/5     | -                 | in    | IOB18[B] | -               | LVCMOS33 | NA    | UP        | ON        | NONE       | NA         | NA         | NA              | NA            | 3.3  
@@ -346,8 +346,8 @@ p52/2    | IO_sdram_dq[29]   | io    | IOR18[B] | -               | LVTTL33  | -
 56/3     | audio_bclk        | in    | IOR36[A] | SO/D1           | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3  
 55/3     | audio_lrclk       | in    | IOR36[B] | SSPI_CS_N/D0    | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3  
 54/3     | audio_sdata       | in    | IOR38[A] | DIN/CLKHOLD_N   | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3  
-53/3     | dipsw[0]          | in    | IOR38[B] | DOUT/WE_N       | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3  
-52/3     | dipsw[1]          | in    | IOR39[A] | SCLK            | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3  
+53/3     | dipsw[0]          | in    | IOR38[B] | DOUT/WE_N       | LVTTL33  | NA    | NONE      | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3  
+52/3     | dipsw[1]          | in    | IOR39[A] | SCLK            | LVTTL33  | NA    | NONE      | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3  
 p49/3    | IO_sdram_dq[30]   | io    | IOR44[A] | -               | LVTTL33  | -     | UP        | -         | -          | -          | -          | -               | -             | -    
 p48/3    | IO_sdram_dq[31]   | io    | IOR44[B] | -               | LVTTL33  | -     | UP        | -         | -          | -          | -          | -               | -             | -    
 51/3     | audio_en          | in    | IOR45[A] | RPLL2_T_in      | LVTTL33  | NA    | UP        | ON        | NONE       | NA         | NA         | OFF             | NA            | 3.3  

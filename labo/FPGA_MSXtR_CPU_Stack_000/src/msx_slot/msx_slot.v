@@ -115,24 +115,32 @@ module msx_slot #(
 	localparam	[2:0]	c_t4			= 3'd3;
 	localparam	[2:0]	c_t5			= 3'd4;
 	//	3.579545MHz の1周期 = clk_42m の12サイクル。旧 clk_215m(60分割)基準値を 1/5 して求めた値
-	localparam	[3:0]	c_sig_start			= 4'd0;
-	localparam	[3:0]	c_sig_select		= 4'd6;
-	localparam	[3:0]	c_sig_strobe		= 4'd8;
-	localparam	[3:0]	c_sig_release		= 4'd7;
-	localparam	[3:0]	c_sig_m1_release	= 4'd7;
-	localparam	[3:0]	c_sig_rfsh_assert	= 4'd8;
-	localparam	[3:0]	c_sig_rfsh_release	= 4'd8;
-	localparam	[3:0]	c_sig_finish		= 4'd11;
-	localparam	[3:0]	c_sig_clock_rise	= 4'd1;
-	localparam	[3:0]	c_sig_clock_fall	= 4'd7;
-	localparam	[3:0]	c_sig_merq_assert	= 4'd6;		//	T1開始+145ns
-	localparam	[3:0]	c_sig_merq_release	= 4'd6;		//	T3開始+145ns
-	localparam	[3:0]	c_sig_iorq_assert	= 4'd6;		//	T2開始+135ns
-	localparam	[3:0]	c_sig_iorq_release	= 4'd6;		//	T3開始+145ns
-	localparam	[3:0]	c_sig_rd_assert		= 4'd7;		//	メモリサイクルのRD: T1開始+155ns
-	localparam	[3:0]	c_sig_rd_release	= 4'd6;		//	T3開始+145ns
-	localparam	[3:0]	c_sig_wr_assert		= 4'd5;		//	T2開始+125ns
-	localparam	[3:0]	c_sig_wr_release	= 4'd5;		//	T3開始+120ns
+	localparam	[3:0]	c_sig_start				= 4'd0;		//	T1: latch address
+	localparam	[3:0]	c_sig_wdata_setup		= 4'd8;		//	T1: write data drive setup
+	localparam	[3:0]	c_sig_sltsl_assert		= 4'd0;		//	T2: /SLTSL, ROM_CE fall (mem/M1共通)
+	localparam	[3:0]	c_sig_cs_assert			= 4'd1;		//	T2: /CS fall (mem/M1共通, read時のみ)
+	localparam	[3:0]	c_sig_release_t4		= 4'd0;		//	T4: /SLTSL, ROM_CE, write data 解放(mem/IO共通)
+	localparam	[3:0]	c_sig_cs_release_mem	= 4'd1;		//	T4: /CS 解放(mem専用, read時のみ)
+	localparam	[3:0]	c_sig_sltsl_release_m1	= 4'd6;		//	T3: /SLTSL 解放(M1専用)
+	localparam	[3:0]	c_sig_cs_release_m1		= 4'd7;		//	T3: /CS 解放(M1専用)
+	localparam	[3:0]	c_sig_m1_release		= 4'd7;
+	localparam	[3:0]	c_sig_m1_assert			= 4'd6;		//	CPU /M1 pin fall (T1)
+	localparam	[3:0]	c_sig_rfsh_assert		= 4'd1;		//	T4
+	localparam	[3:0]	c_sig_rfsh_release		= 4'd7;		//	T5
+	localparam	[3:0]	c_sig_finish			= 4'd11;
+	localparam	[3:0]	c_sig_clock_rise		= 4'd1;
+	localparam	[3:0]	c_sig_clock_fall		= 4'd7;
+	localparam	[3:0]	c_sig_merq_assert		= 4'd11;	//	T1: /MREQ fall(mem/M1共通)
+	localparam	[3:0]	c_sig_merq_release_mem	= 4'd11;	//	T3: /MREQ rise(mem)
+	localparam	[3:0]	c_sig_merq_release_m1	= 4'd5;		//	T3: /MREQ rise(M1)
+	localparam	[3:0]	c_sig_iorq_assert		= 4'd5;		//	T2: /IORQ fall
+	localparam	[3:0]	c_sig_iorq_release		= 4'd11;	//	T3: /IORQ rise
+	localparam	[3:0]	c_sig_rd_assert_std		= 4'd0;		//	T2: /RD fall(mem/M1共通)
+	localparam	[3:0]	c_sig_rd_release_std	= 4'd11;	//	T3: /RD rise(mem/IO共通)
+	localparam	[3:0]	c_sig_rd_release_m1		= 4'd5;		//	T3: /RD rise(M1専用)
+	localparam	[3:0]	c_sig_wr_assert_mem		= 4'd11;	//	T2: /WR fall(mem)
+	localparam	[3:0]	c_sig_wr_assert_io		= 4'd4;		//	T2: /WR fall(IO)
+	localparam	[3:0]	c_sig_wr_release		= 4'd10;	//	T3: /WR rise(mem/IO共通)
 
 	reg				ff_sequence_active;
 	reg				ff_req_refresh;
@@ -292,10 +300,18 @@ module msx_slot #(
 	// ---------------------------------------------------------
 	reg		[3:0]	ff_slot_timing;
 	wire			w_3m_fall;
+	wire			w_timing_hold;
+
+	//	外部/内部WAIT中はTステートだけでなく下位カウンタ自体も止める
+	//	(止めないとT1等に固定されたまま特定カウント値の条件が周期的に再ヒットしてしまう)
+	assign w_timing_hold = ff_sequence_active & ( ~slot_wait_n | ff_internal_wait_active );
 
 	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
 			ff_slot_timing <= 4'd0;
+		end
+		else if( w_timing_hold ) begin
+			//	hold
 		end
 		else if( w_3m_fall ) begin
 			ff_slot_timing <= 4'd0;
@@ -305,6 +321,21 @@ module msx_slot #(
 		end
 	end
 	assign w_3m_fall = ( ff_slot_timing == c_sig_finish );
+
+	//	slot_clock_n はWAIT中も止まらない自走クロックのため、専用カウンタで生成する
+	reg		[3:0]	ff_clock_gen_timing;
+
+	always @( posedge clk_42m ) begin
+		if( !reset_n ) begin
+			ff_clock_gen_timing <= 4'd0;
+		end
+		else if( ff_clock_gen_timing == c_sig_finish ) begin
+			ff_clock_gen_timing <= 4'd0;
+		end
+		else begin
+			ff_clock_gen_timing <= ff_clock_gen_timing + 4'd1;
+		end
+	end
 
 	// ---------------------------------------------------------
 	//	3.579545MHz clock generator / registered slot outputs
@@ -352,7 +383,7 @@ module msx_slot #(
 		if( !reset_n ) begin
 			ff_refresh_pending <= 1'b0;
 		end
-		else if( w_refresh_cycle & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
+		else if( w_refresh_cycle & (ff_t_state == c_t4) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
 			ff_refresh_pending <= 1'b0;
 		end
 		else if( ff_idle_timer == c_refresh_timeout ) begin
@@ -403,7 +434,7 @@ module msx_slot #(
 		if( !reset_n ) begin
 			ff_idle_timer <= 18'd0;
 		end
-		else if( w_refresh_cycle & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
+		else if( w_refresh_cycle & (ff_t_state == c_t4) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
 			ff_idle_timer <= 18'd0;
 		end
 		else if( ff_idle_timer != c_refresh_timeout ) begin
@@ -422,8 +453,8 @@ module msx_slot #(
 	end
 
 	//	M1サイクル, I/Oサイクルの内部/WAIT(TWステート相当)。high_speed_mode=0のときのみ、
-	//	SLTSL/CS確定(c_sig_select)直後に1アクセス中1回だけ slot_clock 1周期分挿入する。
-	//	TWステートは、T2ステートの次に来る。
+	//	各制御信号がすべてアサートされた後(IO: /IORQ確定, M1: /CS確定)に1アクセス中1回だけ
+	//	slot_clock 1周期分の停止を挿入する。TWステートは、T2ステートの途中に来る。
 	wire			w_internal_wait_n;
 
 	assign w_internal_wait_n = ~ff_internal_wait_active;
@@ -449,7 +480,7 @@ module msx_slot #(
 		end
 		else if( ~high_speed_mode & 
 			(ff_bus_m1 || ff_bus_io) & ~ff_internal_wait_done & 
-			(ff_t_state == c_t2) & (ff_slot_timing == c_sig_select) ) begin
+			(ff_t_state == c_t2) & (ff_slot_timing == (ff_bus_io ? c_sig_iorq_assert : c_sig_cs_assert)) ) begin
 			ff_internal_wait_active	<= 1'b1;
 			ff_internal_wait_count	<= 4'd11;
 		end
@@ -482,10 +513,10 @@ module msx_slot #(
 		if( !reset_n ) begin
 			ff_slot_clock_n <= 1'b0;
 		end
-		else if( ff_slot_timing == c_sig_clock_rise ) begin
+		else if( ff_clock_gen_timing == c_sig_clock_rise ) begin
 			ff_slot_clock_n <= 1'b1;
 		end
-		else if( ff_slot_timing == c_sig_clock_fall ) begin
+		else if( ff_clock_gen_timing == c_sig_clock_fall ) begin
 			ff_slot_clock_n <= 1'b0;
 		end
 	end
@@ -498,7 +529,7 @@ module msx_slot #(
 		else if( ff_sequence_active & ff_bus_m1 & ~ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_m1_release) ) begin
 			ff_slot_m1_n <= 1'b1;
 		end
-		else if( ff_sequence_active & ff_bus_m1 & ~w_refresh_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_select) ) begin
+		else if( ff_sequence_active & ff_bus_m1 & ~w_refresh_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_m1_assert) ) begin
 			ff_slot_m1_n <= 1'b0;
 		end
 	end
@@ -510,13 +541,19 @@ module msx_slot #(
 			ff_slot_sltsl2_n <= 1'b1;
 			ff_slot_sltsl3_n <= 1'b1;
 		end
-		else if( ff_sequence_active & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_release) ) begin
+		else if( ff_sequence_active & ff_bus_m1 & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_sltsl_release_m1) ) begin
 			ff_slot_sltsl0_n <= 1'b1;
 			ff_slot_sltsl1_n <= 1'b1;
 			ff_slot_sltsl2_n <= 1'b1;
 			ff_slot_sltsl3_n <= 1'b1;
 		end
-		else if( ff_sequence_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_select) ) begin
+		else if( ff_sequence_active & ~ff_bus_m1 & (ff_t_state == c_t4) & (ff_slot_timing == c_sig_release_t4) ) begin
+			ff_slot_sltsl0_n <= 1'b1;
+			ff_slot_sltsl1_n <= 1'b1;
+			ff_slot_sltsl2_n <= 1'b1;
+			ff_slot_sltsl3_n <= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_sltsl_assert) ) begin
 			ff_slot_sltsl0_n <= ~w_req_slot0;
 			ff_slot_sltsl1_n <= ~w_req_slot1;
 			ff_slot_sltsl2_n <= ~w_req_slot2;
@@ -530,12 +567,17 @@ module msx_slot #(
 			ff_slot_cs2_n	<= 1'b1;
 			ff_slot_cs12_n	<= 1'b1;
 		end
-		else if( ff_sequence_active & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_release) ) begin
+		else if( ff_sequence_active & ff_bus_m1 & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_cs_release_m1) ) begin
 			ff_slot_cs1_n	<= 1'b1;
 			ff_slot_cs2_n	<= 1'b1;
 			ff_slot_cs12_n	<= 1'b1;
 		end
-		else if( ff_sequence_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_strobe) ) begin
+		else if( ff_sequence_active & ~ff_bus_m1 & (ff_t_state == c_t4) & (ff_slot_timing == c_sig_cs_release_mem) ) begin
+			ff_slot_cs1_n	<= 1'b1;
+			ff_slot_cs2_n	<= 1'b1;
+			ff_slot_cs12_n	<= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_cs_assert) ) begin
 			ff_slot_cs1_n	<= ~w_req_cs1;
 			ff_slot_cs2_n	<= ~w_req_cs2;
 			ff_slot_cs12_n	<= ~(w_req_cs1 | w_req_cs2);
@@ -555,10 +597,10 @@ module msx_slot #(
 		if( !reset_n ) begin
 			ff_slot_wdata_en <= 1'b0;
 		end
-		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_strobe) ) begin
+		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_wdata_setup) ) begin
 			ff_slot_wdata_en <= 1'b1;
 		end
-		else if( ff_sequence_active & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_release) ) begin
+		else if( ff_sequence_active & (ff_t_state == c_t4) & (ff_slot_timing == c_sig_release_t4) ) begin
 			ff_slot_wdata_en <= 1'b0;
 		end
 	end
@@ -570,16 +612,16 @@ module msx_slot #(
 		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_wr_release) ) begin
 			ff_slot_wr_n <= 1'b1;
 		end
-		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_wr_assert) ) begin
+		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t2) & (ff_slot_timing == (ff_bus_io ? c_sig_wr_assert_io : c_sig_wr_assert_mem)) ) begin
 			ff_slot_wr_n <= 1'b0;
 		end
 	end
 
-	//	I/Oサイクルの /RD は /IORQ と同じく T2 で確定する
-	assign w_slot_rd_assert		= ff_sequence_active & w_req_read &
-								  ( ff_bus_io ? ((ff_t_state == c_t2) & (ff_slot_timing == c_sig_iorq_assert)) :
-												((ff_t_state == c_t1) & (ff_slot_timing == c_sig_rd_assert)) );
-	assign w_slot_rd_release	= ff_sequence_active & w_req_read & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_rd_release);
+	//	I/Oサイクルの /RD は /IORQ と同一タイミングで確定する。mem/M1 は共通だが、解放は M1 のみ早い
+	assign w_slot_rd_assert		= ff_sequence_active & w_req_read & (ff_t_state == c_t2) &
+								  ( ff_slot_timing == ( ff_bus_io ? c_sig_iorq_assert : c_sig_rd_assert_std ) );
+	assign w_slot_rd_release	= ff_sequence_active & w_req_read & (ff_t_state == c_t3) &
+								  ( ff_slot_timing == ( ff_bus_m1 ? c_sig_rd_release_m1 : c_sig_rd_release_std ) );
 
 	always @( posedge clk_42m ) begin
 		if( !reset_n ) begin
@@ -606,11 +648,15 @@ module msx_slot #(
 			ff_slot_rom0_ce_n <= 1'b1;
 			ff_slot_rom1_ce_n <= 1'b1;
 		end
-		else if( ff_sequence_active & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_release) ) begin
+		else if( ff_sequence_active & ff_bus_m1 & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_sltsl_release_m1) ) begin
 			ff_slot_rom0_ce_n <= 1'b1;
 			ff_slot_rom1_ce_n <= 1'b1;
 		end
-		else if( ff_sequence_active & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_select) ) begin
+		else if( ff_sequence_active & ~ff_bus_m1 & (ff_t_state == c_t4) & (ff_slot_timing == c_sig_release_t4) ) begin
+			ff_slot_rom0_ce_n <= 1'b1;
+			ff_slot_rom1_ce_n <= 1'b1;
+		end
+		else if( ff_sequence_active & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_sltsl_assert) ) begin
 			ff_slot_rom0_ce_n <= ~w_req_rom0;
 			ff_slot_rom1_ce_n <= ~w_req_rom1;
 		end
@@ -624,7 +670,7 @@ module msx_slot #(
 		else if( w_refresh_cycle & (ff_t_state == c_t5) & (ff_slot_timing == c_sig_rfsh_release) ) begin
 			ff_slot_rfsh_n <= 1'b1;
 		end
-		else if( w_refresh_cycle & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
+		else if( w_refresh_cycle & (ff_t_state == c_t4) & (ff_slot_timing == c_sig_rfsh_assert) ) begin
 			ff_slot_rfsh_n <= 1'b0;
 		end
 	end
@@ -648,7 +694,7 @@ module msx_slot #(
 		else if( ff_sequence_active & ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_merq_assert) ) begin
 			ff_slot_merq_n <= 1'b1;
 		end
-		else if( ff_sequence_active & w_req_memory & ~ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_merq_release) ) begin
+		else if( ff_sequence_active & w_req_memory & ~ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == (ff_bus_m1 ? c_sig_merq_release_m1 : c_sig_merq_release_mem)) ) begin
 			ff_slot_merq_n <= 1'b1;
 		end
 		else if( ff_sequence_active & w_req_memory & ~ff_req_refresh & (ff_t_state == c_t1) & (ff_slot_timing == c_sig_merq_assert) ) begin
@@ -672,7 +718,7 @@ module msx_slot #(
 	assign slot_a			= ~ff_slot_rfsh_n ? { 11'd0, ff_refresh_addr } :
 						  (~ff_slot_rd_n | ~ff_slot_wr_n) ? { 3'd0, ff_bus_address } :
 						  (w_rom_address_en & ~w_refresh_active & ~ff_bus_io) ? w_rom_address : ff_slot_a;
-	//	slot_data_dir: 0 = Read(スロット→FPGA), 1 = Write(FPGA→スロット)
+	//	slot_data_dir: 1 = Write(CPU→Slot), 0 = Read(Slot→CPU)
 	assign slot_data_dir	= ff_slot_wdata_en;
 	assign slot_wr_n		= ff_slot_wr_n;
 	assign slot_rd_n		= ff_slot_rd_n;

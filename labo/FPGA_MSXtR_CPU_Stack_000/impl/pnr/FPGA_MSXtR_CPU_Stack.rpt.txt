@@ -12,23 +12,23 @@
   <Part Number>: GW5A-LV25MG121NC1/I0
   <Device>: GW5A-25
   <Device Version>: A
-  <Created Time>:Thu Sep  3 06:50:43 2026
+  <Created Time>:Thu Sep  3 22:26:20 2026
 
 
 2. PnR Details
 
   Running placement:
-    Placement Phase 0: CPU time = 0h 0m 0.087s, Elapsed time = 0h 0m 0.086s
-    Placement Phase 1: CPU time = 0h 0m 0.191s, Elapsed time = 0h 0m 0.191s
+    Placement Phase 0: CPU time = 0h 0m 0.086s, Elapsed time = 0h 0m 0.086s
+    Placement Phase 1: CPU time = 0h 0m 0.197s, Elapsed time = 0h 0m 0.196s
     Placement Phase 2: CPU time = 0h 0m 0.07s, Elapsed time = 0h 0m 0.07s
-    Placement Phase 3: CPU time = 0h 0m 0.302s, Elapsed time = 0h 0m 0.302s
-    Total Placement: CPU time = 0h 0m 0.65s, Elapsed time = 0h 0m 0.649s
+    Placement Phase 3: CPU time = 0h 0m 0.302s, Elapsed time = 0h 0m 0.303s
+    Total Placement: CPU time = 0h 0m 0.655s, Elapsed time = 0h 0m 0.655s
  Running routing:
-    Routing Phase 0: CPU time = 0h 0m 0.001s, Elapsed time = 0h 0m 0.001s
-    Routing Phase 1: CPU time = 0h 0m 0.77s, Elapsed time = 0h 0m 0.77s
-    Routing Phase 2: CPU time = 0h 0m 0.024s, Elapsed time = 0h 0m 0.024s
+    Routing Phase 0: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0.001s
+    Routing Phase 1: CPU time = 0h 0m 0.784s, Elapsed time = 0h 0m 0.783s
+    Routing Phase 2: CPU time = 0h 0m 0.024s, Elapsed time = 0h 0m 0.025s
     Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
-    Total Routing: CPU time = 0h 0m 0.795s, Elapsed time = 0h 0m 0.795s
+    Total Routing: CPU time = 0h 0m 0.808s, Elapsed time = 0h 0m 0.809s
  Generate output files:
     CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
 
@@ -40,15 +40,15 @@
   --------------------------------------------------------------------------------
   Resources                   | Usage                               | Utilization
   --------------------------------------------------------------------------------
-  Logic                       | 707/23040                           |  4%
-    --LUT,ALU,ROM16           | 707(663 LUT, 44 ALU, 0 ROM16)       | -
+  Logic                       | 718/23040                           |  4%
+    --LUT,ALU,ROM16           | 718(674 LUT, 44 ALU, 0 ROM16)       | -
     --SSRAM(RAM16)            | 0                                   | -
-  Register                    | 405/23280                           |  2%
+  Register                    | 409/23280                           |  2%
     --Logic Register as Latch | 0/23040                             |  0%
-    --Logic Register as FF    | 384/23040                           |  2%
+    --Logic Register as FF    | 388/23040                           |  2%
     --I/O Register as Latch   | 0/240                               |  0%
     --I/O Register as FF      | 21/240                              |  9%
-  CLS                         | 474/11520                           |  5%
+  CLS                         | 471/11520                           |  5%
   I/O Port                    | 77/86                               |  90%
   I/O Buf                     | 65                                  | -
     --Input Buf               | 6                                   | -
@@ -96,7 +96,7 @@
   Signal         | Global Clock   | Location
   -------------------------------------------
   clk_50m_d      | PRIMARY        |  TR TL
-  clk215m        | PRIMARY        |  BR
+  clk215m        | PRIMARY        |  TR BR
   clk42m         | PRIMARY        |  TR TL BR BL
   ff_spi_reset_n | LW             |  -
   slot_reset_n_d | LW             |  -
@@ -113,8 +113,8 @@ clk_50m          | -         | E2/5          | Y          | in    | IOB12[A] | G
 mcu_cs_n         | -         | J4/2          | Y          | in    | IOR22[A] | -               | LVCMOS33   | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 mcu_sclk         | -         | K4/2          | Y          | in    | IOR22[B] | -               | LVCMOS33   | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 mcu_mosi         | -         | G2/2          | Y          | in    | IOR24[A] | -               | LVCMOS33   | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
-slot_int_n       | -         | H11/7         | Y          | in    | IOT3[A]  | GCLKT_16        | LVCMOS33   | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
-slot_wait_n      | -         | H10/7         | Y          | in    | IOT3[B]  | GCLKC_16        | LVCMOS33   | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
+slot_int_n       | -         | H11/7         | Y          | in    | IOT3[A]  | GCLKT_16        | LVCMOS33   | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
+slot_wait_n      | -         | H10/7         | Y          | in    | IOT3[B]  | GCLKC_16        | LVCMOS33   | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
 slot_busdir      | -         | G10/7         | Y          | in    | IOT7[B]  | -               | LVCMOS33   | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus0         
 srom_miso        | -         | A10/6         | Y          | in    | IOL14[B] | -               | LVCMOS33   | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus0         
 uart_rx          | -         | B3/4          | Y          | in    | IOB56[A] | -               | LVCMOS33   | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
@@ -197,8 +197,8 @@ Loc./Bank| Signal           | Dir.  | Site     | CFG             | IO Type  | Dr
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 J11/7    | slot_a[6]        | out   | IOT1[A]  | GCLKT_15/LPLL0_T_IN0 | LVCMOS33 | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 J10/7    | slot_a[7]        | out   | IOT1[B]  | GCLKC_15        | LVCMOS33 | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
-H11/7    | slot_int_n       | in    | IOT3[A]  | GCLKT_16        | LVCMOS33 | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
-H10/7    | slot_wait_n      | in    | IOT3[B]  | GCLKC_16        | LVCMOS33 | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
+H11/7    | slot_int_n       | in    | IOT3[A]  | GCLKT_16        | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
+H10/7    | slot_wait_n      | in    | IOT3[B]  | GCLKC_16        | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
 G11/7    | slot_reset_n     | out   | IOT7[A]  | -               | LVCMOS33 | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 G10/7    | slot_busdir      | in    | IOT7[B]  | -               | LVCMOS33 | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 K11/7    | slot_a[14]       | out   | IOT11[A] | -               | LVCMOS33 | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         

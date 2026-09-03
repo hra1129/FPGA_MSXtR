@@ -356,10 +356,12 @@ int main(void) {
 
 	multicore_launch_core1(core1_entry);
 
-	// FPGAが起動するまでは取りこぼすのでしばらく待つ
-	sleep_ms(5000);
+	// fpga_io_init() を抜けてきた時点で CPU Board の FPGA の起動は完了しているが、
+	// 他のボードが起動しているかわからないので、念のため 100ms 待機する
+	sleep_ms(100);
 
-	// MSXのリセット解除
+	// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
+	// を実行するので、リセット解除後に、またしばらく待つ必要がある
 	fpga_msx_reset( false );
 
 	//	VDPに対して初期化処理を行う

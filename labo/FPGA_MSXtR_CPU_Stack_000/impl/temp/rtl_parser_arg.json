@@ -62,6 +62,10 @@
             "Type": "verilog"
         },
         {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_000/src/debugger/debugger.v",
+            "Type": "verilog"
+        },
+        {
             "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_000/src/extio/extio.v",
             "Type": "verilog"
         },
@@ -111,10 +115,6 @@
         },
         {
             "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_000/src/ssram/ssram.v",
-            "Type": "verilog"
-        },
-        {
-            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_000/src/debugger/debugger.v",
             "Type": "verilog"
         }
     ],
