@@ -204,6 +204,8 @@ module fpga_msxtr_cpu_stack (
 
 	wire			w_bootrom_en;
 	wire	[7:0]	w_debug_signal;
+	wire	[19:0]	w_flashrom_address;
+	wire			w_flashrom_en;
 
 	// --------------------------------------------------------------------
 	//	clock
@@ -302,7 +304,9 @@ module fpga_msxtr_cpu_stack (
 		.msx_reset_n			( w_msx_reset_n				),
 		.msx_pause				(							),
 		.bootrom_en				( w_bootrom_en				),
-		.debug_signal			( w_debug_signal			)
+		.debug_signal			( w_debug_signal			),
+		.flashrom_address		( w_flashrom_address		),
+		.flashrom_en			( w_flashrom_en				)
 	);
 
 	debugger u_debugger (
@@ -335,6 +339,8 @@ module fpga_msxtr_cpu_stack (
 		.bus_wdata				( w_bus_ctrl_wdata			),
 		.bus_rdata				( w_bus_ctrl_rdata			),
 		.bus_rdata_en			( w_bus_ctrl_rdata_en		),
+		.flashrom_address		( w_flashrom_address		),
+		.flashrom_en			( w_flashrom_en				),
 		.primary_slot			( w_primary_slot			),
 		.secondary_slot0		( w_secondary_slot0			),
 		.secondary_slot3		( w_secondary_slot3			),

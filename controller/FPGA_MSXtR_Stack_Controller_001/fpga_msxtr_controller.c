@@ -18,6 +18,14 @@
 #define I2C_BAUDRATE (400 * 1000)  // 400 kHz (Fast mode)
 #define I2C_ADDR	 0x08
 
+#define FLASHROM_CHIP_SIZE			(512u * 1024u)
+#define FLASHROM_ROM0_BASE			0x00000u
+#define FLASHROM_ROM1_BASE			0x80000u
+#define FLASHROM_UNLOCK_ADDR1		0x05555u
+#define FLASHROM_UNLOCK_ADDR2		0x02AAAu
+#define FLASHROM_ERASE_TIMEOUT_MS	30000u
+#define FLASHROM_WRITE_TIMEOUT_MS	100u
+
 // SPI1 (SDカード) -- ピン設定・初期化は sdcard.c で管理
 // RX=8, CSN=9, SCK=10, TX=11, BAUDRATE=12.5MHz
 
@@ -233,6 +241,196 @@ static void write_and_verify_dummy_data( void ) {
 }
 
 // ---------------------------------------------------------
+static bool flashrom_wait_data( uint32_t address, uint8_t data, uint32_t timeout_ms ) {
+	absolute_time_t timeout_time;
+
+	timeout_time = make_timeout_time_ms( timeout_ms );
+	while( !time_reached( timeout_time ) ) {
+		if( flashrom_read( address ) == data ) {
+			return true;
+		}
+	}
+
+	printf( "FlashROM timeout at 0x%05lX: expected 0x%02X, actual 0x%02X\r\n",
+			(unsigned long)address,
+			data,
+			flashrom_read( address ) );
+	return false;
+}
+
+// ---------------------------------------------------------
+static void flashrom_unlock( uint32_t base_address ) {
+	flashrom_write( base_address + FLASHROM_UNLOCK_ADDR1, 0xAA );
+	flashrom_write( base_address + FLASHROM_UNLOCK_ADDR2, 0x55 );
+}
+
+// ---------------------------------------------------------
+static bool flashrom_chip_erase( uint32_t base_address, const char *name ) {
+	printf( "Erase %s...", name );
+	flashrom_unlock( base_address );
+	flashrom_write( base_address + FLASHROM_UNLOCK_ADDR1, 0x80 );
+	flashrom_unlock( base_address );
+	flashrom_write( base_address + FLASHROM_UNLOCK_ADDR1, 0x10 );
+
+	if( !flashrom_wait_data( base_address, 0xFF, FLASHROM_ERASE_TIMEOUT_MS ) ) {
+		printf( " NG\r\n" );
+		return false;
+	}
+
+	printf( " OK\r\n" );
+	return true;
+}
+
+// ---------------------------------------------------------
+static bool flashrom_program_byte( uint32_t address, uint8_t data ) {
+	uint32_t base_address;
+
+	base_address = address & FLASHROM_ROM1_BASE;
+	flashrom_unlock( base_address );
+	flashrom_write( base_address + FLASHROM_UNLOCK_ADDR1, 0xA0 );
+	flashrom_write( address, data );
+
+	return flashrom_wait_data( address, data, FLASHROM_WRITE_TIMEOUT_MS );
+}
+
+// ---------------------------------------------------------
+static bool flashrom_check_image( const char *path ) {
+	FRESULT result;
+	FILINFO file_info;
+
+	result = f_stat( path, &file_info );
+	if( result != FR_OK ) {
+		printf( "f_stat failed: %s (%d)\r\n", path, (int)result );
+		return false;
+	}
+	if( file_info.fsize > FLASHROM_CHIP_SIZE ) {
+		printf( "File too large: %s (%lu bytes)\r\n", path, (unsigned long)file_info.fsize );
+		return false;
+	}
+
+	return true;
+}
+
+// ---------------------------------------------------------
+static bool flashrom_write_image( const char *path, uint32_t base_address, const char *name ) {
+	FRESULT result;
+	FIL file;
+	UINT read_size;
+	uint8_t buffer[256];
+	uint32_t offset;
+	uint32_t address;
+
+	result = f_open( &file, path, FA_READ );
+	if( result != FR_OK ) {
+		printf( "f_open failed: %s (%d)\r\n", path, (int)result );
+		return false;
+	}
+
+	printf( "Write %s: %s\r\n", name, path );
+	offset = 0;
+	for(;;) {
+		result = f_read( &file, buffer, sizeof(buffer), &read_size );
+		if( result != FR_OK ) {
+			printf( "\r\nf_read failed: %s (%d)\r\n", path, (int)result );
+			f_close( &file );
+			return false;
+		}
+		if( read_size == 0 ) {
+			break;
+		}
+		if( (offset + read_size) > FLASHROM_CHIP_SIZE ) {
+			printf( "\r\nFile too large while reading: %s\r\n", path );
+			f_close( &file );
+			return false;
+		}
+
+		for( UINT index = 0; index < read_size; index++ ) {
+			address = base_address + offset;
+			if( !flashrom_program_byte( address, buffer[index] ) ) {
+				printf( "\r\nWrite failed: %s offset=0x%05lX\r\n", path, (unsigned long)offset );
+				f_close( &file );
+				return false;
+			}
+			offset++;
+			if( (offset & 0x3FF) == 0 ) {
+				printf( "*" );
+			}
+		}
+	}
+
+	f_close( &file );
+	if( (offset & 0x3FF) != 0 ) {
+		printf( "*" );
+	}
+	printf( "\r\n%s done: %lu bytes\r\n", name, (unsigned long)offset );
+	return true;
+}
+
+// ---------------------------------------------------------
+static void write_flashrom_images( void ) {
+	printf( "FlashROM write start\r\n" );
+	if( !sdcard_init_and_mount() ) {
+		printf( "Failed: mount the SD card.\r\n" );
+		return;
+	}
+
+	if( !flashrom_check_image( "/bios/msxtr.rom" ) || !flashrom_check_image( "/bios/kanji.rom" ) ) {
+		return;
+	}
+
+	if( !flashrom_chip_erase( FLASHROM_ROM0_BASE, "ROM0" ) ) {
+		return;
+	}
+	if( !flashrom_chip_erase( FLASHROM_ROM1_BASE, "ROM1" ) ) {
+		return;
+	}
+
+	if( !flashrom_write_image( "/bios/msxtr.rom", FLASHROM_ROM0_BASE, "ROM0" ) ) {
+		return;
+	}
+	if( !flashrom_write_image( "/bios/kanji.rom", FLASHROM_ROM1_BASE, "ROM1" ) ) {
+		return;
+	}
+
+	printf( "FlashROM write complete\r\n" );
+}
+
+// ---------------------------------------------------------
+static void dump_flashrom( const char *name, uint32_t base_address ) {
+	char s_line[16 * 3 + 1];
+	char *p_dest;
+	uint32_t address;
+	uint8_t rom_data;
+
+	printf( "Dump %s: 0x%05lX - 0x%05lX\r\n",
+			name,
+			(unsigned long)base_address,
+			(unsigned long)(base_address + 255) );
+	for( int i = 0; i < 16; i++ ) {
+		address = base_address + (uint32_t)(i * 16);
+		printf( "%05lX: ", (unsigned long)address );
+		p_dest = s_line;
+		for( int j = 0; j < 16; j++ ) {
+			rom_data = flashrom_read( address + (uint32_t)j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf( "%s\r\n", s_line );
+	}
+	printf( "----\r\n" );
+}
+
+// ---------------------------------------------------------
+static void dump_flashrom_images( void ) {
+	dump_flashrom( "ROM0", FLASHROM_ROM0_BASE );
+	dump_flashrom( "ROM1", FLASHROM_ROM1_BASE );
+}
+
+// ---------------------------------------------------------
 // SDカード ルートディレクトリ一覧 (MS-DOS DIR 形式)
 static void dir_sd_root(void) {
 	FATFS fs;
@@ -404,6 +602,14 @@ int main(void) {
 		if( (prev_mat00 & 0x10) && !(keymatrix[0] & 0x10) ) {
 			//	4キーが押されたタイミングなら、デバッグ
 			dump_fpga_debug_signal();
+		}
+		if( (prev_mat00 & 0x20) && !(keymatrix[0] & 0x20) ) {
+			//	5キーが押されたタイミングなら、SDカード上のROMイメージをFlashROMへ書き込む
+			write_flashrom_images();
+		}
+		if( (prev_mat00 & 0x40) && !(keymatrix[0] & 0x40) ) {
+			//	6キーが押されたタイミングなら、FlashROM の先頭256byteをダンプする
+			dump_flashrom_images();
 		}
 		prev_mat00 = keymatrix[0];
 		prev_mat11 = keymatrix[11];

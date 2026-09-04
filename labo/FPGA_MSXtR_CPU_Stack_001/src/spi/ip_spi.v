@@ -54,7 +54,9 @@ module ip_spi (
 	output			msx_reset_n,
 	output			msx_pause,
 	output			bootrom_en,
-	input	[7:0]	debug_signal
+	input	[7:0]	debug_signal,
+	output	[19:0]	flashrom_address,
+	output			flashrom_en
 );
 	localparam		ST_IDLE			= 4'd0;
 	localparam		ST_COMMAND		= 4'd1;
@@ -65,6 +67,9 @@ module ip_spi (
 	localparam		ST_DO			= 4'd6;
 	localparam		ST_SEND			= 4'd7;
 	localparam		ST_WAIT_RDATA	= 4'd8;
+	localparam		ST_FLASH_ADDR_L	= 4'd9;
+	localparam		ST_FLASH_ADDR_M	= 4'd10;
+	localparam		ST_FLASH_ADDR_H	= 4'd11;
 	localparam		SPI_RX_WDATA	= 8'h64;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
@@ -89,6 +94,8 @@ module ip_spi (
 	reg		[7:0]	ff_debug_signal;
 	reg				ff_suppress_intr;
 	reg				ff_suppress_intr_d1;
+	reg		[19:0]	ff_flashrom_address;
+	reg				ff_flashrom_access;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -128,6 +135,8 @@ module ip_spi (
 			ff_msx_pause	<= 1'b0;
 			ff_bootrom_en	<= 1'b1;
 			ff_suppress_intr <= 1'b0;
+			ff_flashrom_address <= 20'd0;
+			ff_flashrom_access <= 1'b0;
 		end
 		else if( ff_state == ST_SEND ) begin
 			if( ff_spi_valid && spi_ready ) begin
@@ -176,6 +185,7 @@ module ip_spi (
 			ff_spi_valid	<= 1'b0;
 			ff_bus_valid	<= 1'b0;
 			ff_suppress_intr <= 1'b0;
+			ff_flashrom_access <= 1'b0;
 		end
 		else if( ff_spi_valid ) begin
 			if( spi_ready ) begin
@@ -204,6 +214,8 @@ module ip_spi (
 			//   0Ah, (dummy byte)                 ... Debug signal read without SPI interrupt
 			//   0Bh                               ... MSX BootROM enable  (bootrom_en = 1)
 			//   0Ch                               ... MSX BootROM disable (bootrom_en = 0)
+			//   0Dh, addr_l, addr_m, addr_h, data  ... FlashROM write
+			//   0Eh, addr_l, addr_m, addr_h, dummy ... FlashROM read
 			//   FFh                               ... presence check
 			ST_COMMAND: begin
 				if( spi_rdata_en ) begin
@@ -212,6 +224,7 @@ module ip_spi (
 						ff_state		<= ST_ADDRESS;
 						ff_bus_io		<= 1'b1;
 						ff_bus_write	<= 1'b1;
+						ff_flashrom_access <= 1'b0;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b0;
 					end
@@ -219,6 +232,7 @@ module ip_spi (
 						ff_state		<= ST_ADDRESS;
 						ff_bus_io		<= 1'b1;
 						ff_bus_write	<= 1'b0;
+						ff_flashrom_access <= 1'b0;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b0;
 					end
@@ -226,6 +240,7 @@ module ip_spi (
 						ff_state		<= ST_MEM_ADDR_L;
 						ff_bus_io		<= 1'b0;
 						ff_bus_write	<= 1'b1;
+						ff_flashrom_access <= 1'b0;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b0;
 					end
@@ -233,6 +248,7 @@ module ip_spi (
 						ff_state		<= ST_MEM_ADDR_L;
 						ff_bus_io		<= 1'b0;
 						ff_bus_write	<= 1'b0;
+						ff_flashrom_access <= 1'b0;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b0;
 					end
@@ -292,6 +308,22 @@ module ip_spi (
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b0;
 					end
+					8'h0d: begin
+						ff_state		<= ST_FLASH_ADDR_L;
+						ff_bus_io		<= 1'b0;
+						ff_bus_write	<= 1'b1;
+						ff_flashrom_access <= 1'b1;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b0;
+					end
+					8'h0e: begin
+						ff_state		<= ST_FLASH_ADDR_L;
+						ff_bus_io		<= 1'b0;
+						ff_bus_write	<= 1'b0;
+						ff_flashrom_access <= 1'b1;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b0;
+					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command
 						ff_state		<= ST_COMMAND;
@@ -333,6 +365,38 @@ module ip_spi (
 			ST_MEM_ADDR_H: begin
 				if( spi_rdata_en ) begin
 					ff_bus_address[15:8]	<= spi_rdata;
+					if( ff_bus_write ) begin
+						ff_state			<= ST_WDATA;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
+					end
+					else begin
+						ff_state			<= ST_DO;
+						ff_bus_valid		<= 1'b1;
+					end
+				end
+			end
+			ST_FLASH_ADDR_L: begin
+				if( spi_rdata_en ) begin
+					ff_bus_address[7:0]		<= spi_rdata;
+					ff_flashrom_address[7:0]	<= spi_rdata;
+					ff_state				<= ST_FLASH_ADDR_M;
+					ff_spi_valid			<= 1'b1;
+					ff_spi_write			<= 1'b0;
+				end
+			end
+			ST_FLASH_ADDR_M: begin
+				if( spi_rdata_en ) begin
+					ff_bus_address[15:8]		<= spi_rdata;
+					ff_flashrom_address[15:8]	<= spi_rdata;
+					ff_state				<= ST_FLASH_ADDR_H;
+					ff_spi_valid			<= 1'b1;
+					ff_spi_write			<= 1'b0;
+				end
+			end
+			ST_FLASH_ADDR_H: begin
+				if( spi_rdata_en ) begin
+					ff_flashrom_address[19:16]	<= spi_rdata[3:0];
 					if( ff_bus_write ) begin
 						ff_state			<= ST_WDATA;
 						ff_spi_valid		<= 1'b1;
@@ -420,6 +484,8 @@ module ip_spi (
 	assign bus_address		= ff_bus_address;
 	assign bus_wdata		= ff_bus_wdata;
 	assign bus_valid		= ff_bus_valid;
+	assign flashrom_address	= ff_flashrom_address;
+	assign flashrom_en		= ff_flashrom_access & ff_bus_valid;
 
 	// ---------------------------------------------------------
 	//	MSX Hardware control

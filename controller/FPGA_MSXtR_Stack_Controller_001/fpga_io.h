@@ -44,6 +44,8 @@ void fpga_outport( uint8_t io_address, uint8_t data );
 uint8_t fpga_inport( uint8_t io_address );
 void fpga_poke( uint16_t io_address, uint8_t data );
 uint8_t fpga_peek( uint16_t io_address );
+void flashrom_write( uint32_t address, uint8_t data );
+uint8_t flashrom_read( uint32_t address );
 void fpga_msx_reset( bool reset_on );
 void fpga_msx_pause( bool pause_on );
 void fpga_bootrom_enable( bool enable );

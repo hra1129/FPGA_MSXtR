@@ -46,6 +46,8 @@ module msx_slot #(
 	input	[7:0]	bus_wdata,
 	output	[7:0]	bus_rdata,
 	output			bus_rdata_en,
+	input	[19:0]	flashrom_address,
+	input			flashrom_en,
 	input	[7:0]	primary_slot,
 	input	[7:0]	secondary_slot0,
 	input	[7:0]	secondary_slot3,
@@ -94,6 +96,8 @@ module msx_slot #(
 	reg				ff_bus_write;
 	reg				ff_bus_valid;
 	reg		[7:0]	ff_bus_wdata;
+	reg		[19:0]	ff_flashrom_address;
+	reg				ff_flashrom_en;
 	reg				ff_bus_ready;
 	reg		[7:0]	ff_bus_rdata;
 	reg				ff_bus_rdata_en;
@@ -181,6 +185,8 @@ module msx_slot #(
 	wire			w_req_cs2;
 	wire			w_req_rom0;
 	wire			w_req_rom1;
+	wire			w_flashrom_access;
+	wire			w_req_io;
 	wire			w_slot_rd_assert;
 	wire			w_slot_rd_release;
 
@@ -194,6 +200,8 @@ module msx_slot #(
 			ff_bus_io		<= 1'b0;
 			ff_bus_write	<= 1'b0;
 			ff_bus_wdata	<= 8'd0;
+			ff_flashrom_address	<= 20'd0;
+			ff_flashrom_en		<= 1'b0;
 		end
 		else if( bus_valid && ff_bus_ready ) begin
 			ff_bus_m1		<= bus_m1;
@@ -201,6 +209,8 @@ module msx_slot #(
 			ff_bus_io		<= bus_io;
 			ff_bus_write	<= bus_write;
 			ff_bus_wdata	<= bus_wdata;
+			ff_flashrom_address	<= flashrom_address;
+			ff_flashrom_en		<= flashrom_en;
 		end
 	end
 
@@ -274,7 +284,7 @@ module msx_slot #(
 		.bus_address		( ff_bus_address	),
 		.bus_io				( ff_bus_io			),
 		.bus_write			( ff_bus_write		),
-		.bus_valid			( ff_bus_valid		),
+		.bus_valid			( ff_bus_valid & ~ff_flashrom_en	),
 		.bus_ready			( 1'b1				),
 		.bus_wdata			( ff_bus_wdata		),
 		.primary_slot		( primary_slot		),
@@ -413,21 +423,23 @@ module msx_slot #(
 		end
 	end
 
-	assign w_req_memory				= ff_sequence_active & (w_refresh_active | ~ff_bus_io);
+	assign w_flashrom_access	= ff_sequence_active & ~w_refresh_active & ff_flashrom_en;
+	assign w_req_io				= ff_bus_io & ~ff_flashrom_en;
+	assign w_req_memory				= ff_sequence_active & (w_refresh_active | (~ff_bus_io & ~ff_flashrom_en));
 	assign w_req_read				= ff_sequence_active & ~w_refresh_active & ~ff_bus_write;
 	assign w_req_write				= ff_sequence_active & ~w_refresh_active &  ff_bus_write;
 	assign w_req_page				= ff_bus_address[15:14];
 	assign w_req_primary_slot		= (w_req_page == 2'd0) ? primary_slot[1:0] :
 									  (w_req_page == 2'd1) ? primary_slot[3:2] :
 									  (w_req_page == 2'd2) ? primary_slot[5:4] : primary_slot[7:6];
-	assign w_req_slot0				= ~w_refresh_active & ~ff_bus_io & (w_req_primary_slot == 2'd0);
-	assign w_req_slot1				= ~w_refresh_active & ~ff_bus_io & (w_req_primary_slot == 2'd1);
-	assign w_req_slot2				= ~w_refresh_active & ~ff_bus_io & (w_req_primary_slot == 2'd2);
-	assign w_req_slot3				= ~w_refresh_active & ~ff_bus_io & (w_req_primary_slot == 2'd3);
-	assign w_req_cs1				= ~w_refresh_active & ~ff_bus_io & ~ff_bus_write & (w_req_page == 2'd1);
-	assign w_req_cs2				= ~w_refresh_active & ~ff_bus_io & ~ff_bus_write & (w_req_page == 2'd2);
-	assign w_req_rom0				= ~w_refresh_active & ~ff_bus_io & ~w_rom0_ce_n;
-	assign w_req_rom1				= ~w_refresh_active & ~ff_bus_io & ~w_rom1_ce_n;
+	assign w_req_slot0				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & (w_req_primary_slot == 2'd0);
+	assign w_req_slot1				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & (w_req_primary_slot == 2'd1);
+	assign w_req_slot2				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & (w_req_primary_slot == 2'd2);
+	assign w_req_slot3				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & (w_req_primary_slot == 2'd3);
+	assign w_req_cs1				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & ~ff_bus_write & (w_req_page == 2'd1);
+	assign w_req_cs2				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & ~ff_bus_write & (w_req_page == 2'd2);
+	assign w_req_rom0				= (~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & ~w_rom0_ce_n) | (w_flashrom_access & ~ff_flashrom_address[19]);
+	assign w_req_rom1				= (~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & ~w_rom1_ce_n) | (w_flashrom_access &  ff_flashrom_address[19]);
 
 	//	リフレッシュ用アイドルタイマ: RFSHが立つ度に0へ戻し、c_refresh_timeoutで飽和させる
 	always @( posedge clk_42m ) begin
@@ -479,8 +491,8 @@ module msx_slot #(
 			end
 		end
 		else if( ~high_speed_mode & 
-			(ff_bus_m1 || ff_bus_io) & ~ff_internal_wait_done & 
-			(ff_t_state == c_t2) & (ff_slot_timing == (ff_bus_io ? c_sig_iorq_assert : c_sig_cs_assert)) ) begin
+			(ff_bus_m1 || w_req_io) & ~ff_internal_wait_done & 
+			(ff_t_state == c_t2) & (ff_slot_timing == (w_req_io ? c_sig_iorq_assert : c_sig_cs_assert)) ) begin
 			ff_internal_wait_active	<= 1'b1;
 			ff_internal_wait_count	<= 4'd11;
 		end
@@ -589,7 +601,8 @@ module msx_slot #(
 			ff_slot_a <= 19'd0;
 		end
 		else if( (ff_sequence_active | w_seq_start) && (ff_t_state == c_t1) && (ff_slot_timing == c_sig_start) ) begin
-			ff_slot_a <= w_refresh_active ? { 11'd0, ff_refresh_addr } : { 3'd0, ff_bus_address };
+			ff_slot_a <= w_refresh_active ? { 11'd0, ff_refresh_addr } :
+						 ff_flashrom_en ? ff_flashrom_address[18:0] : { 3'd0, ff_bus_address };
 		end
 	end
 
@@ -612,14 +625,14 @@ module msx_slot #(
 		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_wr_release) ) begin
 			ff_slot_wr_n <= 1'b1;
 		end
-		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t2) & (ff_slot_timing == (ff_bus_io ? c_sig_wr_assert_io : c_sig_wr_assert_mem)) ) begin
+		else if( ff_sequence_active & w_req_write & (ff_t_state == c_t2) & (ff_slot_timing == (w_req_io ? c_sig_wr_assert_io : c_sig_wr_assert_mem)) ) begin
 			ff_slot_wr_n <= 1'b0;
 		end
 	end
 
 	//	I/Oサイクルの /RD は /IORQ と同一タイミングで確定する。mem/M1 は共通だが、解放は M1 のみ早い
 	assign w_slot_rd_assert		= ff_sequence_active & w_req_read & (ff_t_state == c_t2) &
-								  ( ff_slot_timing == ( ff_bus_io ? c_sig_iorq_assert : c_sig_rd_assert_std ) );
+								  ( ff_slot_timing == ( w_req_io ? c_sig_iorq_assert : c_sig_rd_assert_std ) );
 	assign w_slot_rd_release	= ff_sequence_active & w_req_read & (ff_t_state == c_t3) &
 								  ( ff_slot_timing == ( ff_bus_m1 ? c_sig_rd_release_m1 : c_sig_rd_release_std ) );
 
@@ -679,10 +692,10 @@ module msx_slot #(
 		if( !reset_n ) begin
 			ff_slot_iorq_n <= 1'b1;
 		end
-		else if( ff_sequence_active & ff_bus_io & ~ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_iorq_release) ) begin
+		else if( ff_sequence_active & w_req_io & ~ff_req_refresh & (ff_t_state == c_t3) & (ff_slot_timing == c_sig_iorq_release) ) begin
 			ff_slot_iorq_n <= 1'b1;
 		end
-		else if( ff_sequence_active & ff_bus_io & ~ff_req_refresh & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_iorq_assert) ) begin
+		else if( ff_sequence_active & w_req_io & ~ff_req_refresh & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_iorq_assert) ) begin
 			ff_slot_iorq_n <= 1'b0;
 		end
 	end
@@ -716,8 +729,9 @@ module msx_slot #(
 	assign slot_cs12_n		= ff_slot_cs12_n;
 	//	rom_address_en は I/O アクセスでは更新されないため、I/O サイクル中は必ずバスアドレスを出す
 	assign slot_a			= ~ff_slot_rfsh_n ? { 11'd0, ff_refresh_addr } :
+						  w_flashrom_access ? ff_flashrom_address[18:0] :
 						  (~ff_slot_rd_n | ~ff_slot_wr_n) ? { 3'd0, ff_bus_address } :
-						  (w_rom_address_en & ~w_refresh_active & ~ff_bus_io) ? w_rom_address : ff_slot_a;
+						  (w_rom_address_en & ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en) ? w_rom_address : ff_slot_a;
 	//	slot_data_dir: 1 = Write(CPU→Slot), 0 = Read(Slot→CPU)
 	assign slot_data_dir	= ff_slot_wdata_en;
 	assign slot_wr_n		= ff_slot_wr_n;

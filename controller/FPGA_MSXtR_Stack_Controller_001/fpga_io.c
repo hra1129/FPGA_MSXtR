@@ -234,6 +234,75 @@ uint8_t fpga_peek( uint16_t io_address ) {
 }
 
 // ---------------------------------------------------------
+void flashrom_write( uint32_t address, uint8_t data ) {
+	uint8_t buf;
+
+	if( !fpga_wait_ready() ) {
+		return;
+	}
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	buf = 0x0D;
+	spi_write_blocking( SPI0_PORT, &buf, 1 );
+	buf = (uint8_t)(address & 0x000000FF);
+	spi_write_blocking( SPI0_PORT, &buf, 1 );
+	buf = (uint8_t)((address & 0x0000FF00) >> 8);
+	spi_write_blocking( SPI0_PORT, &buf, 1 );
+	buf = (uint8_t)((address & 0x000F0000) >> 16);
+	spi_write_blocking( SPI0_PORT, &buf, 1 );
+	buf = data;
+	spi_write_blocking( SPI0_PORT, &buf, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+}
+
+// ---------------------------------------------------------
+uint8_t flashrom_read( uint32_t address ) {
+	uint8_t cmd;
+	uint8_t dummy;
+	uint8_t data;
+	absolute_time_t timeout_time;
+	bool intr_ready;
+
+	if( !fpga_wait_ready() ) {
+		return 0xBB;
+	}
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+
+	cmd = 0x0E;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	cmd = (uint8_t)(address & 0x000000FF);
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	cmd = (uint8_t)((address & 0x0000FF00) >> 8);
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	cmd = (uint8_t)((address & 0x000F0000) >> 16);
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+
+	timeout_time = make_timeout_time_ms( 50 );
+	intr_ready = false;
+
+	while( !time_reached( timeout_time ) ) {
+		if( gpio_get( SPI0_INTR_PIN ) ) {
+			intr_ready = true;
+			break;
+		}
+	}
+
+	if( !intr_ready ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		return 0xAA;
+	}
+
+	dummy = 0x00;
+	spi_write_read_blocking( SPI0_PORT, &dummy, &data, 1 );
+
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+	return data;
+}
+
+// ---------------------------------------------------------
 void fpga_msx_reset( bool reset_on ) {
 	uint8_t cmd;
 

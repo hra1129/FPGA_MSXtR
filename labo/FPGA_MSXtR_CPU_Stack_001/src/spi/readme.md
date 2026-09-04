@@ -20,6 +20,8 @@ spi_cs_n = L にして、次の 1byte を送ります。
 - 0Ah ... Debug
 - 0Bh ... MSX BootROM enable
 - 0Ch ... MSX BootROM disable
+- 0Dh ... FlashROM 書き込み要求
+- 0Eh ... FlashROM 読み出し要求
 - FFh ... FPGA 存在確認
 
 # FPGA I/O 書き込み要求
@@ -99,6 +101,51 @@ PicoからFPGAに対して、MSXのハードウェアポーズを解除するコ
 |順番|値|内容|
 |---|---|---|
 |#1|09h|MSX Hardware pause OFF|
+
+# Debug
+FPGA内のデバッグレジスタを読み出します。
+
+|順番|値|内容|
+|---|---|---|
+|#1|0Ah|Debug|
+|#2|応答|デバッグレジスタの内容（FPGAから出力)|
+
+# MSX BootROM enable
+PicoからFPGAに対して、MSXのBootROMを有効にする要求です。
+
+|順番|値|内容|
+|---|---|---|
+|#1|0Bh|MSX BootROM enable|
+
+# MSX BootROM disable
+PicoからFPGAに対して、MSXのBootROMを無効にする要求です。
+
+|順番|値|内容|
+|---|---|---|
+|#1|0Ch|MSX BootROM disable|
+
+# FlashROM への書き込み要求
+Picoから、FPGA(CPU) に搭載の パラレルFlashROM へ書き込む要求です。
+
+|順番|値|内容|
+|---|---|---|
+|#1|0Dh|FlashROM 書き込み要求|
+|#2|アドレス番号(下位8bit)|書き込み対象となるFlashROMのアドレス番号|
+|#3|アドレス番号(中位8bit)|書き込み対象となるFlashROMのアドレス番号|
+|#4|アドレス番号(上位4bit)|書き込み対象となるFlashROMのアドレス番号|
+|#5|データ|指定のFlashROMアドレスに書き込むデータ|
+
+# FlashROM への読み出し要求
+Picoから、FPGA(CPU) に搭載の パラレルFlashROM から読み出す要求です。
+
+|順番|値|内容|
+|---|---|---|
+|#1|0Eh|FlashROM 読み出し要求|
+|#2|アドレス番号(下位8bit)|読み出し対象となるFlashROMのアドレス番号|
+|#3|アドレス番号(中位8bit)|読み出し対象となるFlashROMのアドレス番号|
+|#4|アドレス番号(上位4bit)|読み出し対象となるFlashROMのアドレス番号|
+|-|待機|応答を返せるタイミングで SPI_INTR=1 にする|
+|#5|データ|指定のFlashROMアドレスから読み込んだデータ（FPGAから出力)|
 
 # FPGA 存在確認
 FPGAが存在するかどうかを確認する要求です。

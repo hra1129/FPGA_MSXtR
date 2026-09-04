@@ -40,6 +40,10 @@
 //			  -> bootrom_en=1, no bus access
 //		0x0C: BootROM disable                                      (1 byte)
 //			  -> bootrom_en=0, no bus access
+//		0x0D: FlashROM write [cmd=0x0D][addr_l][addr_m][addr_h][data]
+//			  -> flashrom_en=1 during bus access, flashrom_address=20bit address
+//		0x0E: FlashROM read  [cmd=0x0E][addr_l][addr_m][addr_h][dummy]
+//			  -> flashrom_en=1 during bus access, returns bus_rdata on dummy byte
 //		0xFF: Presence check [cmd=0xFF]                             (1 byte)
 //			  -> returns 0x64 on MISO, no bus access, ip_spi stays ready to receive the next command
 //
@@ -86,6 +90,8 @@ module tb ();
 	wire			spi_intr;
 		wire			bootrom_en;
 	reg		[7:0]	debug_signal;
+	wire	[19:0]	flashrom_address;
+	wire			flashrom_en;
 
 	//	--------------------------------------------------------------------
 	//	Monitor: count bus_valid pulses and capture last transaction values
@@ -97,6 +103,8 @@ module tb ();
 	reg		[15:0]	captured_address;
 	reg				captured_io;
 	reg				captured_write;
+	reg		[19:0]	captured_flashrom_address;
+	reg				captured_flashrom_en;
 	reg				bus_valid_d;		//	1-cycle delayed bus_valid for edge detection
 
 	//	 bus_valid is held high until bus_ready acknowledges (multi-cycle).
@@ -109,6 +117,8 @@ module tb ();
 			captured_address <= 16'h0000;
 			captured_io      <= 1'b0;
 			captured_write   <= 1'b0;
+			captured_flashrom_address <= 20'h00000;
+			captured_flashrom_en      <= 1'b0;
 		end else begin
 			bus_valid_d <= bus_valid;
 			if ( bus_valid && !bus_valid_d ) begin
@@ -117,6 +127,8 @@ module tb ();
 				captured_address <= bus_address;
 				captured_io      <= bus_io;
 				captured_write   <= bus_write;
+				captured_flashrom_address <= flashrom_address;
+				captured_flashrom_en      <= flashrom_en;
 			end
 		end
 	end
@@ -161,7 +173,9 @@ module tb ();
 		.msx_reset_n	( 				),
 		.msx_pause		( 				),
 		.bootrom_en		( bootrom_en	),
-		.debug_signal	( debug_signal	)
+		.debug_signal	( debug_signal	),
+		.flashrom_address	( flashrom_address	),
+		.flashrom_en		( flashrom_en		)
 	);
 
 	// --------------------------------------------------------------------
@@ -942,6 +956,163 @@ module tb ();
 			end
 			else begin
 				$display( "[TEST %0d] FAIL: after cmd=0x0B bootrom_en=%b, spi_intr=%b, bus_count=%0d", test_no, bootrom_en, spi_intr, bus_valid_count );
+				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 11: FlashROM Write (command 0x0D)
+		//	  Packet  : [0x0D][addr_l][addr_m][addr_h][data]
+		//	  Expected: bus_valid=1, bus_io=0, bus_write=1,
+		//	            bus_address=0x3456, bus_wdata=0x9A,
+		//	            flashrom_en=1, flashrom_address=0x23456
+		// ================================================================
+		test_no = 11;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] FlashROM Write: cmd=0x0D, addr=0x23456, data=0x9A", test_no );
+
+		reset_n = 1'b0;
+		repeat( 3 ) @( posedge clk );
+		reset_n = 1'b1;
+		repeat( 5 ) @( posedge clk );
+
+		begin
+			int cnt_before;
+			cnt_before = bus_valid_count;
+
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h0D );
+			spi_send_byte( 8'h56 );
+			spi_send_byte( 8'h34 );
+			spi_send_byte( 8'h02 );
+			spi_send_byte( 8'h9A );
+
+			repeat( 10 ) @( posedge clk );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( bus_valid_count === cnt_before + 1 ) begin
+				$display( "[TEST %0d] PASS: bus_valid pulsed once (count=%0d)", test_no, bus_valid_count );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: bus_valid pulse count=%0d (expected %0d)", test_no, bus_valid_count, cnt_before + 1 );
+				fail_count = fail_count + 1;
+			end
+
+			if( captured_io === 1'b0 && captured_write === 1'b1 && captured_address === 16'h3456 && captured_wdata === 8'h9A ) begin
+				$display( "[TEST %0d] PASS: bus access io=%b write=%b address=0x%04X wdata=0x%02X", test_no, captured_io, captured_write, captured_address, captured_wdata );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: bus access io=%b write=%b address=0x%04X wdata=0x%02X", test_no, captured_io, captured_write, captured_address, captured_wdata );
+				fail_count = fail_count + 1;
+			end
+
+			if( captured_flashrom_en === 1'b1 && captured_flashrom_address === 20'h23456 ) begin
+				$display( "[TEST %0d] PASS: flashrom_en=1, flashrom_address=0x%05X", test_no, captured_flashrom_address );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: flashrom_en=%b, flashrom_address=0x%05X (expected 1 / 0x23456)", test_no, captured_flashrom_en, captured_flashrom_address );
+				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 12: FlashROM Read (command 0x0E)
+		// ================================================================
+		test_no = 12;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] FlashROM Read: cmd=0x0E, addr=0xFEDCB, expect data=0x5C", test_no );
+
+		reset_n = 1'b0;
+		repeat( 3 ) @( posedge clk );
+		reset_n = 1'b1;
+		repeat( 5 ) @( posedge clk );
+
+		begin
+			int cnt_before;
+			int bus_timeout;
+			int intr_timeout;
+			reg [7:0] read_data;
+			cnt_before = bus_valid_count;
+			read_data = 8'h00;
+
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h0E );
+			spi_send_byte( 8'hCB );
+			spi_send_byte( 8'hED );
+			spi_send_byte( 8'h0F );
+
+			bus_timeout = 0;
+			while( (bus_valid_count == cnt_before) && (bus_timeout < 200) ) begin
+				bus_timeout = bus_timeout + 1;
+				@( posedge clk );
+			end
+
+			repeat( 2 ) @( posedge clk );
+			bus_rdata    = 8'h5C;
+			bus_rdata_en = 1'b1;
+			@( posedge clk );
+			bus_rdata_en = 1'b0;
+
+			intr_timeout = 0;
+			while( (spi_intr == 1'b0) && (intr_timeout < 200) ) begin
+				intr_timeout = intr_timeout + 1;
+				@( posedge clk );
+			end
+
+			if( spi_intr === 1'b1 ) begin
+				$display( "[TEST %0d] PASS: spi_intr asserted before dummy read", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: spi_intr did not assert (timeout)", test_no );
+				fail_count = fail_count + 1;
+			end
+
+			spi_transfer_byte( 8'h00, read_data );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( bus_valid_count === cnt_before + 1 ) begin
+				$display( "[TEST %0d] PASS: bus_valid pulsed once (count=%0d)", test_no, bus_valid_count );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: bus_valid pulse count=%0d (expected %0d)", test_no, bus_valid_count, cnt_before + 1 );
+				fail_count = fail_count + 1;
+			end
+
+			if( captured_io === 1'b0 && captured_write === 1'b0 && captured_address === 16'hEDCB ) begin
+				$display( "[TEST %0d] PASS: bus read access io=%b write=%b address=0x%04X", test_no, captured_io, captured_write, captured_address );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: bus read access io=%b write=%b address=0x%04X", test_no, captured_io, captured_write, captured_address );
+				fail_count = fail_count + 1;
+			end
+
+			if( captured_flashrom_en === 1'b1 && captured_flashrom_address === 20'hFEDCB ) begin
+				$display( "[TEST %0d] PASS: flashrom_en=1, flashrom_address=0x%05X", test_no, captured_flashrom_address );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: flashrom_en=%b, flashrom_address=0x%05X (expected 1 / 0xFEDCB)", test_no, captured_flashrom_en, captured_flashrom_address );
+				fail_count = fail_count + 1;
+			end
+
+			if( read_data === 8'h5C ) begin
+				$display( "[TEST %0d] PASS: flashrom read data = 0x%02X", test_no, read_data );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: flashrom read data = 0x%02X (expected 0x5C)", test_no, read_data );
 				fail_count = fail_count + 1;
 			end
 		end

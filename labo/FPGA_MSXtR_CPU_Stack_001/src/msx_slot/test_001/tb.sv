@@ -13,6 +13,8 @@ module tb;
 	reg	[7:0]	bus_wdata;
 	wire	[7:0]	bus_rdata;
 	wire			bus_rdata_en;
+	reg		[19:0]	flashrom_address;
+	reg				flashrom_en;
 	reg	[7:0]	primary_slot;
 	reg	[7:0]	secondary_slot0;
 	reg	[7:0]	secondary_slot3;
@@ -89,6 +91,8 @@ module tb;
 		.bus_wdata				( bus_wdata			),
 		.bus_rdata				( bus_rdata			),
 		.bus_rdata_en			( bus_rdata_en		),
+		.flashrom_address		( flashrom_address	),
+		.flashrom_en			( flashrom_en			),
 		.primary_slot			( primary_slot		),
 		.secondary_slot0		( secondary_slot0	),
 		.secondary_slot3		( secondary_slot3	),
@@ -172,6 +176,32 @@ module tb;
 			bus_write		<= ~access_write;
 			bus_address		<= ~access_address;
 			bus_wdata		<= ~access_wdata;
+		end
+	endtask
+
+	task issue_flashrom_access;
+		input			access_write;
+		input [19:0]	access_flashrom_address;
+		input [7:0]		access_wdata;
+		begin
+			@( posedge clk_42m );
+			bus_m1			<= 1'b0;
+			bus_io			<= 1'b0;
+			bus_write		<= access_write;
+			bus_address		<= ~access_flashrom_address[15:0];
+			bus_wdata		<= access_wdata;
+			flashrom_address	<= access_flashrom_address;
+			flashrom_en		<= 1'b1;
+			bus_valid		<= 1'b1;
+			@( posedge clk_42m );
+			@( negedge clk_42m );
+			check( bus_ready == 1'b0, "bus_ready did not drop after flashrom request acceptance" );
+			bus_valid		<= 1'b0;
+			bus_write		<= ~access_write;
+			bus_address		<= access_flashrom_address[15:0];
+			bus_wdata		<= ~access_wdata;
+			flashrom_address	<= ~access_flashrom_address;
+			flashrom_en		<= 1'b0;
 		end
 	endtask
 
@@ -289,6 +319,8 @@ module tb;
 		bus_write			= 1'b0;
 		bus_valid			= 1'b0;
 		bus_wdata			= 8'd0;
+		flashrom_address	= 20'd0;
+		flashrom_en			= 1'b0;
 		primary_slot		= 8'he4;	//	page0->slot0, page1->slot1, page2->slot2, page3->slot3
 		secondary_slot0		= 8'h00;
 		secondary_slot3		= 8'h00;
@@ -434,6 +466,49 @@ module tb;
 		wait_ready();
 		slot_d_drive	= 1'b0;
 		$display( "STEP: ROM mapping test done, t=%0t", $realtime );
+
+		slot_d_drive	= 1'b1;
+		slot_d_rdata	= 8'h39;
+		issue_flashrom_access( 1'b0, 20'h01234, 8'h00 );
+		wait_rd_n_checked( read_timeout );
+		check( !read_timeout, "FlashROM0 read: slot_rd_n did not assert" );
+		check( slot_a == 19'h01234, "FlashROM0 read address mismatch" );
+		check( slot_rom0_ce_n == 1'b0, "FlashROM0 read did not assert ROM0 CE" );
+		check( slot_rom1_ce_n == 1'b1, "FlashROM0 read asserted ROM1 CE" );
+		check( slot_sltsl0_n == 1'b1, "FlashROM0 read asserted SLTSL0" );
+		check( slot_sltsl1_n == 1'b1, "FlashROM0 read asserted SLTSL1" );
+		check( slot_sltsl2_n == 1'b1, "FlashROM0 read asserted SLTSL2" );
+		check( slot_sltsl3_n == 1'b1, "FlashROM0 read asserted SLTSL3" );
+		check( slot_cs1_n == 1'b1, "FlashROM0 read asserted CS1" );
+		check( slot_cs2_n == 1'b1, "FlashROM0 read asserted CS2" );
+		check( slot_cs12_n == 1'b1, "FlashROM0 read asserted CS12" );
+		check( slot_merq_n == 1'b1, "FlashROM0 read asserted MERQ" );
+		check( slot_iorq_n == 1'b1, "FlashROM0 read asserted IORQ" );
+		wait_rdata_en_checked( read_timeout );
+		check( !read_timeout, "FlashROM0 read: bus_rdata_en did not assert" );
+		check( bus_rdata == 8'h39, "FlashROM0 read data mismatch" );
+		wait_ready();
+		slot_d_drive	= 1'b0;
+
+		issue_flashrom_access( 1'b1, 20'h8abcd, 8'h5e );
+		wait_wr_n_checked( read_timeout );
+		check( !read_timeout, "FlashROM1 write: slot_wr_n did not assert" );
+		check( slot_a == 19'h0abcd, "FlashROM1 write address mismatch" );
+		check( slot_rom0_ce_n == 1'b1, "FlashROM1 write asserted ROM0 CE" );
+		check( slot_rom1_ce_n == 1'b0, "FlashROM1 write did not assert ROM1 CE" );
+		check( slot_sltsl0_n == 1'b1, "FlashROM1 write asserted SLTSL0" );
+		check( slot_sltsl1_n == 1'b1, "FlashROM1 write asserted SLTSL1" );
+		check( slot_sltsl2_n == 1'b1, "FlashROM1 write asserted SLTSL2" );
+		check( slot_sltsl3_n == 1'b1, "FlashROM1 write asserted SLTSL3" );
+		check( slot_cs1_n == 1'b1, "FlashROM1 write asserted CS1" );
+		check( slot_cs2_n == 1'b1, "FlashROM1 write asserted CS2" );
+		check( slot_cs12_n == 1'b1, "FlashROM1 write asserted CS12" );
+		check( slot_merq_n == 1'b1, "FlashROM1 write asserted MERQ" );
+		check( slot_iorq_n == 1'b1, "FlashROM1 write asserted IORQ" );
+		check( slot_data_dir == 1'b1, "FlashROM1 write did not set slot_data_dir to write" );
+		check( slot_d == 8'h5e, "FlashROM1 write data mismatch" );
+		wait_ready();
+		$display( "STEP: FlashROM direct access test done, t=%0t", $realtime );
 
 		//	元のリモートスロット構成に戻す
 		primary_slot	= 8'he4;
