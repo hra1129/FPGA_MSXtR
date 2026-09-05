@@ -9,7 +9,7 @@ module ssram (
 	input			clk,
 	input			clk_serial,
 	input			bus_cs,
-	input	[18:0]	bus_address,
+	input	[21:0]	bus_address,
 	input			bus_write,
 	input			bus_valid,
 	input	[7:0]	bus_wdata,
@@ -18,7 +18,10 @@ module ssram (
 	output			bus_rdata_en,
 	//	SPI SRAM I/F
 	output			sram_sclk,
-	output			sram_ce_n,
+	output			sram_ce0_n,
+	output			sram_ce1_n,
+	output			sram_ce2_n,
+	output			sram_ce3_n,
 	inout	[3:0]	sram_sio
 );
 	localparam		c_state_init_w0		= 5'd0;
@@ -61,10 +64,11 @@ module ssram (
 	reg				ff_req_toggle_clk;
 	reg				ff_req_toggle_200_d0;
 	reg				ff_req_toggle_200_d1;
-	reg		[18:0]	ff_req_address_clk;
+	reg		[21:0]	ff_req_address_clk;
 	reg				ff_req_write_clk;
 	reg		[7:0]	ff_req_wdata_clk;
 	reg		[18:0]	ff_address;
+	reg		[1:0]	ff_sram_select;
 	reg		[7:0]	ff_wdata;
 	reg		[7:0]	ff_rdata;
 	reg				ff_rdata_en;
@@ -140,7 +144,7 @@ module ssram (
 	always @( posedge clk ) begin
 		if( !n_reset ) begin
 			ff_req_toggle_clk <= 1'b0;
-			ff_req_address_clk <= 19'd0;
+			ff_req_address_clk <= 22'd0;
 			ff_req_write_clk <= 1'b0;
 			ff_req_wdata_clk <= 8'd0;
 		end
@@ -176,6 +180,7 @@ module ssram (
 			ff_active	<= 1'b0;
 			ff_so		<= 4'b1zz0;
 			ff_address	<= 19'd0;
+			ff_sram_select	<= 2'd0;
 			ff_read		<= 1'b0;
 			ff_write	<= 1'b0;
 			ff_powerup_wait <= 14'd0;
@@ -250,7 +255,8 @@ module ssram (
 					ff_state	<= c_state_start;
 					ff_ce_n		<= 1'b0;
 					ff_so		<= 4'd0;
-					ff_address	<= ff_req_address_clk;
+					ff_address	<= ff_req_address_clk[18:0];
+					ff_sram_select	<= ff_req_address_clk[21:20];
 					ff_write	<= ff_req_write_clk;
 					ff_active	<= 1'b0;
 				end
@@ -418,7 +424,10 @@ module ssram (
 	end
 
 	assign sram_sclk	= ff_sclk_div & ~ff_ce_n;
-	assign sram_ce_n	= ff_ce_n;
+	assign sram_ce0_n	= ff_ce_n | (ff_sram_select != 2'd0);
+	assign sram_ce1_n	= ff_ce_n | (ff_sram_select != 2'd1);
+	assign sram_ce2_n	= ff_ce_n | (ff_sram_select != 2'd2);
+	assign sram_ce3_n	= ff_ce_n | (ff_sram_select != 2'd3);
 	assign sram_sio		= ff_read ? 4'bzzzz: ff_so;
 	assign bus_ready	= ff_ready;
 	assign bus_rdata	= ff_rdata;

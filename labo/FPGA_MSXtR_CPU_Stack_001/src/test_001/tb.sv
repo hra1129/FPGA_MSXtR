@@ -105,6 +105,22 @@ module tb ();
 	wire			flash_spi_cs_n;
 	wire	[3:0]	flash_spi_io;
 
+	//	Captured at the FlashROM write strobe for the 0x0D command tests.
+	reg			flash_write_seen;
+	reg	[18:0]	captured_flash_address;
+	reg			captured_flash_rom0_ce_n;
+	reg			captured_flash_rom1_ce_n;
+	reg	[7:0]	captured_flash_data;
+	reg			captured_flash_data_dir;
+	reg	[7:0]	flash_rom0_read_data;
+	reg	[7:0]	flash_rom1_read_data;
+	reg			flash_read_seen;
+	reg	[18:0]	captured_flash_read_address;
+	reg			captured_flash_read_rom0_ce_n;
+	reg			captured_flash_read_rom1_ce_n;
+	wire	[7:0]	flash_read_data = (slot_rom0_ce_n == 1'b0) ? flash_rom0_read_data :
+											(slot_rom1_ce_n == 1'b0) ? flash_rom1_read_data : 8'hFF;
+
 	//	UART (unused by this test)
 	wire			uart_tx;
 	reg				uart_rx;
@@ -173,6 +189,28 @@ module tb ();
 		.uart_tx			( uart_tx			),
 		.uart_rx			( uart_rx			)
 	);
+
+	assign slot_d = (slot_rd_n == 1'b0) ? flash_read_data : 8'hzz;
+
+	always @( negedge slot_wr_n ) begin
+		if( !mcu_cs_n ) begin
+			flash_write_seen			= 1'b1;
+			captured_flash_address		= slot_a;
+			captured_flash_rom0_ce_n	= slot_rom0_ce_n;
+			captured_flash_rom1_ce_n	= slot_rom1_ce_n;
+			captured_flash_data			= slot_d;
+			captured_flash_data_dir		= slot_data_dir;
+		end
+	end
+
+	always @( negedge slot_rd_n ) begin
+		if( !mcu_cs_n && ((slot_rom0_ce_n == 1'b0) || (slot_rom1_ce_n == 1'b0)) ) begin
+			flash_read_seen				= 1'b1;
+			captured_flash_read_address	= slot_a;
+			captured_flash_read_rom0_ce_n	= slot_rom0_ce_n;
+			captured_flash_read_rom1_ce_n	= slot_rom1_ce_n;
+		end
+	end
 
 	// --------------------------------------------------------------------
 	//	Task: spi_send_byte
@@ -485,6 +523,65 @@ module tb ();
 		end
 	endtask
 
+	task automatic spi_flash_write(
+		input	[19:0]	address,
+		input	[7:0]	wdata,
+		output			bus_timeout
+	);
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h0D );
+			spi_send_byte( address[7:0]  );
+			spi_send_byte( address[15:8] );
+			spi_send_byte( { 4'd0, address[19:16] } );
+			spi_send_byte( wdata );
+			wait_bus_ctrl_ready_checked( bus_timeout );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic spi_flash_read(
+		input	[19:0]	address,
+		output	[7:0]	rdata,
+		output			intr_timeout
+	);
+		reg	[7:0]	rx;
+		int	timeout_ns;
+		begin
+			flash_rom0_read_data = 8'hA6;
+			flash_rom1_read_data = 8'h5C;
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h0E );
+			spi_send_byte( address[7:0]  );
+			spi_send_byte( address[15:8] );
+			spi_send_byte( { 4'd0, address[19:16] } );
+
+			timeout_ns = 0;
+			while( (mcu_intr == 1'b0) && (timeout_ns < 5000) ) begin
+				#( 10 );
+				timeout_ns = timeout_ns + 10;
+			end
+			intr_timeout = (mcu_intr == 1'b0);
+			if( intr_timeout ) begin
+				rdata = 8'hAA;
+			end
+			else begin
+				spi_transfer_byte( 8'h00, rx );
+				rdata = rx;
+			end
+
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
 	task automatic wait_cycle(
 		input [15:0]	c
 	);
@@ -523,6 +620,8 @@ module tb ();
 		slot_busdir	= 1'b1;
 		srom_miso	= 1'b0;
 		uart_rx		= 1'b1;
+		flash_rom0_read_data = 8'hA6;
+		flash_rom1_read_data = 8'h5C;
 
 		force u_dut.w_bus_m1			= 1'b0;
 		force u_dut.w_primary_slot		= 8'h55;
@@ -545,9 +644,218 @@ module tb ();
 		#( 200 );
 
 		// ================================================================
-		//	Test 1: BootROM Read from SPI memory access
+		//	Test 1: FlashROM write command and parallel slot signals
 		// ================================================================
 		test_no = 1;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] FlashROM write command and slot signals", test_no );
+
+		begin
+			reg bus_timeout;
+			reg flash_test_failed;
+
+			flash_test_failed = 1'b0;
+			flash_write_seen = 1'b0;
+			spi_flash_write( 20'h00000, 8'hC7, bus_timeout );
+			if( bus_timeout ) begin
+				$display( "[TEST %0d] FAIL: ROM0 write bus timeout", test_no );
+				flash_test_failed = 1'b1;
+			end
+			else if( !flash_write_seen || captured_flash_address !== 19'h00000 ||
+				captured_flash_rom0_ce_n !== 1'b0 || captured_flash_rom1_ce_n !== 1'b1 ||
+				captured_flash_data !== 8'hC7 || captured_flash_data_dir !== 1'b1 ) begin
+				$display( "[TEST %0d] FAIL: ROM0 /WR signals seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X dir=%b",
+					test_no, flash_write_seen, captured_flash_address, captured_flash_rom0_ce_n,
+					captured_flash_rom1_ce_n, captured_flash_data, captured_flash_data_dir );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM0 /WR addr=0x%05X data=0x%02X", test_no, captured_flash_address, captured_flash_data );
+			end
+
+			flash_write_seen = 1'b0;
+			spi_flash_write( 20'h80000, 8'h5A, bus_timeout );
+			if( bus_timeout ) begin
+				$display( "[TEST %0d] FAIL: ROM1 write bus timeout", test_no );
+				flash_test_failed = 1'b1;
+			end
+			else if( !flash_write_seen || captured_flash_address !== 19'h00000 ||
+				captured_flash_rom0_ce_n !== 1'b1 || captured_flash_rom1_ce_n !== 1'b0 ||
+				captured_flash_data !== 8'h5A || captured_flash_data_dir !== 1'b1 ) begin
+				$display( "[TEST %0d] FAIL: ROM1 /WR signals seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X dir=%b",
+					test_no, flash_write_seen, captured_flash_address, captured_flash_rom0_ce_n,
+					captured_flash_rom1_ce_n, captured_flash_data, captured_flash_data_dir );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM1 /WR addr=0x%05X data=0x%02X", test_no, captured_flash_address, captured_flash_data );
+			end
+
+			flash_write_seen = 1'b0;
+			spi_flash_write( 20'h05555, 8'hAA, bus_timeout );
+			if( bus_timeout || !flash_write_seen || captured_flash_address !== 19'h05555 ||
+				captured_flash_rom0_ce_n !== 1'b0 || captured_flash_rom1_ce_n !== 1'b1 ||
+				captured_flash_data !== 8'hAA || captured_flash_data_dir !== 1'b1 ) begin
+				$display( "[TEST %0d] FAIL: ROM0 address 0x05555 /WR timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X dir=%b",
+					test_no, bus_timeout, flash_write_seen, captured_flash_address,
+					captured_flash_rom0_ce_n, captured_flash_rom1_ce_n, captured_flash_data, captured_flash_data_dir );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM0 address 0x05555 /WR data=0x%02X", test_no, captured_flash_data );
+			end
+
+			flash_write_seen = 1'b0;
+			spi_flash_write( 20'h01555, 8'h55, bus_timeout );
+			if( bus_timeout || !flash_write_seen || captured_flash_address !== 19'h01555 ||
+				captured_flash_rom0_ce_n !== 1'b0 || captured_flash_rom1_ce_n !== 1'b1 ||
+				captured_flash_data !== 8'h55 || captured_flash_data_dir !== 1'b1 ) begin
+				$display( "[TEST %0d] FAIL: ROM0 address 0x01555 /WR timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X dir=%b",
+					test_no, bus_timeout, flash_write_seen, captured_flash_address,
+					captured_flash_rom0_ce_n, captured_flash_rom1_ce_n, captured_flash_data, captured_flash_data_dir );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM0 address 0x01555 /WR data=0x%02X", test_no, captured_flash_data );
+			end
+
+			flash_write_seen = 1'b0;
+			spi_flash_write( 20'h85555, 8'hA0, bus_timeout );
+			if( bus_timeout || !flash_write_seen || captured_flash_address !== 19'h05555 ||
+				captured_flash_rom0_ce_n !== 1'b1 || captured_flash_rom1_ce_n !== 1'b0 ||
+				captured_flash_data !== 8'hA0 || captured_flash_data_dir !== 1'b1 ) begin
+				$display( "[TEST %0d] FAIL: ROM1 address 0x85555 /WR timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X dir=%b",
+					test_no, bus_timeout, flash_write_seen, captured_flash_address,
+					captured_flash_rom0_ce_n, captured_flash_rom1_ce_n, captured_flash_data, captured_flash_data_dir );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM1 address 0x05555 /WR data=0x%02X", test_no, captured_flash_data );
+			end
+
+			flash_write_seen = 1'b0;
+			spi_flash_write( 20'h81555, 8'h5A, bus_timeout );
+			if( bus_timeout || !flash_write_seen || captured_flash_address !== 19'h01555 ||
+				captured_flash_rom0_ce_n !== 1'b1 || captured_flash_rom1_ce_n !== 1'b0 ||
+				captured_flash_data !== 8'h5A || captured_flash_data_dir !== 1'b1 ) begin
+				$display( "[TEST %0d] FAIL: ROM1 address 0x81555 /WR timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X dir=%b",
+					test_no, bus_timeout, flash_write_seen, captured_flash_address,
+					captured_flash_rom0_ce_n, captured_flash_rom1_ce_n, captured_flash_data, captured_flash_data_dir );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM1 address 0x01555 /WR data=0x%02X", test_no, captured_flash_data );
+			end
+
+			if( flash_test_failed ) fail_count = fail_count + 1;
+			else                    pass_count = pass_count + 1;
+		end
+
+		// ================================================================
+		//	Test 2: FlashROM read command and SPI response
+		// ================================================================
+		test_no = 2;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] FlashROM read command and SPI response", test_no );
+
+		begin
+			reg [7:0] read_data;
+			reg intr_timeout;
+			reg flash_test_failed;
+
+			flash_test_failed = 1'b0;
+			flash_read_seen = 1'b0;
+			spi_flash_read( 20'h01234, read_data, intr_timeout );
+			if( intr_timeout || !flash_read_seen || captured_flash_read_address !== 19'h01234 ||
+				captured_flash_read_rom0_ce_n !== 1'b0 || captured_flash_read_rom1_ce_n !== 1'b1 ||
+				read_data !== 8'hA6 ) begin
+				$display( "[TEST %0d] FAIL: ROM0 read timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X",
+					test_no, intr_timeout, flash_read_seen, captured_flash_read_address,
+					captured_flash_read_rom0_ce_n, captured_flash_read_rom1_ce_n, read_data );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM0 read data=0x%02X", test_no, read_data );
+			end
+
+			flash_read_seen = 1'b0;
+			spi_flash_read( 20'h8ABCD, read_data, intr_timeout );
+			if( intr_timeout || !flash_read_seen || captured_flash_read_address !== 19'h0ABCD ||
+				captured_flash_read_rom0_ce_n !== 1'b1 || captured_flash_read_rom1_ce_n !== 1'b0 ||
+				read_data !== 8'h5C ) begin
+				$display( "[TEST %0d] FAIL: ROM1 read timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X",
+					test_no, intr_timeout, flash_read_seen, captured_flash_read_address,
+					captured_flash_read_rom0_ce_n, captured_flash_read_rom1_ce_n, read_data );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM1 read data=0x%02X", test_no, read_data );
+			end
+
+			flash_read_seen = 1'b0;
+			spi_flash_read( 20'h05555, read_data, intr_timeout );
+			if( intr_timeout || !flash_read_seen || captured_flash_read_address !== 19'h05555 ||
+				captured_flash_read_rom0_ce_n !== 1'b0 || captured_flash_read_rom1_ce_n !== 1'b1 ||
+				read_data !== 8'hA6 ) begin
+				$display( "[TEST %0d] FAIL: ROM0 address 0x05555 timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X",
+					test_no, intr_timeout, flash_read_seen, captured_flash_read_address,
+					captured_flash_read_rom0_ce_n, captured_flash_read_rom1_ce_n, read_data );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM0 address 0x05555 read data=0x%02X", test_no, read_data );
+			end
+
+			flash_read_seen = 1'b0;
+			spi_flash_read( 20'h01555, read_data, intr_timeout );
+			if( intr_timeout || !flash_read_seen || captured_flash_read_address !== 19'h01555 ||
+				captured_flash_read_rom0_ce_n !== 1'b0 || captured_flash_read_rom1_ce_n !== 1'b1 ||
+				read_data !== 8'hA6 ) begin
+				$display( "[TEST %0d] FAIL: ROM0 address 0x01555 timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X",
+					test_no, intr_timeout, flash_read_seen, captured_flash_read_address,
+					captured_flash_read_rom0_ce_n, captured_flash_read_rom1_ce_n, read_data );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM0 address 0x01555 read data=0x%02X", test_no, read_data );
+			end
+
+			flash_read_seen = 1'b0;
+			spi_flash_read( 20'h85555, read_data, intr_timeout );
+			if( intr_timeout || !flash_read_seen || captured_flash_read_address !== 19'h05555 ||
+				captured_flash_read_rom0_ce_n !== 1'b1 || captured_flash_read_rom1_ce_n !== 1'b0 ||
+				read_data !== 8'h5C ) begin
+				$display( "[TEST %0d] FAIL: ROM1 address 0x85555 timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X",
+					test_no, intr_timeout, flash_read_seen, captured_flash_read_address,
+					captured_flash_read_rom0_ce_n, captured_flash_read_rom1_ce_n, read_data );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM1 address 0x05555 read data=0x%02X", test_no, read_data );
+			end
+
+			flash_read_seen = 1'b0;
+			spi_flash_read( 20'h81555, read_data, intr_timeout );
+			if( intr_timeout || !flash_read_seen || captured_flash_read_address !== 19'h01555 ||
+				captured_flash_read_rom0_ce_n !== 1'b1 || captured_flash_read_rom1_ce_n !== 1'b0 ||
+				read_data !== 8'h5C ) begin
+				$display( "[TEST %0d] FAIL: ROM1 address 0x81555 timeout=%b seen=%b addr=0x%05X ce0_n=%b ce1_n=%b data=0x%02X",
+					test_no, intr_timeout, flash_read_seen, captured_flash_read_address,
+					captured_flash_read_rom0_ce_n, captured_flash_read_rom1_ce_n, read_data );
+				flash_test_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: ROM1 address 0x01555 read data=0x%02X", test_no, read_data );
+			end
+
+			if( flash_test_failed ) fail_count = fail_count + 1;
+			else                    pass_count = pass_count + 1;
+		end
+
+		// ================================================================
+		//	Test 3: BootROM Read from SPI memory access
+		// ================================================================
+		test_no = 3;
 		$display( "------------------------------------------------------------" );
 		$display( "[TEST %0d] BootROM first bytes read via SPI memory access", test_no );
 
@@ -594,9 +902,9 @@ module tb ();
 		end
 
 		// ================================================================
-		//	Test 2: Memory Write + Read-back (RAM region, address bit12=1)
+		//	Test 4: Memory Write + Read-back (RAM region, address bit12=1)
 		// ================================================================
-		test_no = 2;
+		test_no = 4;
 		$display( "------------------------------------------------------------" );
 		$display( "[TEST %0d] Memory Write/Read-back: addr=0x1000, data=0xA5", test_no );
 
@@ -615,9 +923,9 @@ module tb ();
 		end
 
 		// ================================================================
-		//	Test 3: PPI register write/read-back (I/O A8h = Port A / primary_slot)
+		//	Test 5: PPI register write/read-back (I/O A8h = Port A / primary_slot)
 		// ================================================================
-		test_no = 3;
+		test_no = 5;
 		$display( "------------------------------------------------------------" );
 		$display( "[TEST %0d] PPI Port A write/read-back: addr=0xA8, data=0x5A", test_no );
 
@@ -649,9 +957,9 @@ module tb ();
 		end
 
 		// ================================================================
-		//	Test 4: Empty I/O write to VDP slot completes
+		//	Test 6: Empty I/O write to VDP slot completes
 		// ================================================================
-		test_no = 4;
+		test_no = 6;
 		$display( "------------------------------------------------------------" );
 		$display( "[TEST %0d] Empty I/O write completion: addr=0x98, data=0x00", test_no );
 
@@ -669,9 +977,9 @@ module tb ();
 		end
 
 		// ================================================================
-		//	Test 5: Empty I/O read from VDP slot completes
+		//	Test 7: Empty I/O read from VDP slot completes
 		// ================================================================
-		test_no = 5;
+		test_no = 7;
 		$display( "------------------------------------------------------------" );
 		$display( "[TEST %0d] Empty I/O read completion: addr=0x98", test_no );
 
@@ -690,9 +998,9 @@ module tb ();
 		end
 
 		// ================================================================
-		//	Test 6: ROM area is read-only (I/O write must not change it)
+		//	Test 8: ROM area is read-only (I/O write must not change it)
 		// ================================================================
-		test_no = 6;
+		test_no = 8;
 		$display( "------------------------------------------------------------" );
 		$display( "[TEST %0d] ROM write-protection: addr=0x00", test_no );
 
@@ -713,9 +1021,9 @@ module tb ();
 		end
 
 		// ================================================================
-		//	Test 7: VDP Access test
+		//	Test 9: VDP Access test
 		// ================================================================
-		test_no = 7;
+		test_no = 9;
 		$display( "------------------------------------------------------------" );
 		$display( "[TEST %0d] VDP Access Test: I/O 98h-9Ch", test_no );
 

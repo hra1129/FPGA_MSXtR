@@ -294,6 +294,57 @@ static bool flashrom_program_byte( uint32_t address, uint8_t data ) {
 }
 
 // ---------------------------------------------------------
+static void flashrom_read_device_id( void ) {
+	uint8_t manufacturer_id;
+	uint8_t device_id;
+
+	printf( "FlashROM Device ID read start\r\n" );
+	flashrom_write( FLASHROM_UNLOCK_ADDR1, 0xAA );
+	flashrom_write( FLASHROM_UNLOCK_ADDR2, 0x55 );
+	flashrom_write( FLASHROM_UNLOCK_ADDR1, 0x90 );
+	sleep_us( 10 );
+
+	manufacturer_id = flashrom_read( 0x00000u );
+	device_id = flashrom_read( 0x00001u );
+
+	printf( "FlashROM Manufacturer ID: 0x%02X (%s)\r\n",
+			manufacturer_id,
+			manufacturer_id == 0xBF ? "expected BFh" : "unexpected" );
+	printf( "FlashROM Device ID:       0x%02X\r\n", device_id );
+
+	//	Return to the normal read mode.
+	flashrom_write( FLASHROM_UNLOCK_ADDR1, 0xAA );
+	flashrom_write( FLASHROM_UNLOCK_ADDR2, 0x55 );
+	flashrom_write( FLASHROM_UNLOCK_ADDR1, 0xF0 );
+	printf( "FlashROM Device ID read end\r\n" );
+}
+
+// ---------------------------------------------------------
+static void flashrom_read_address_test( void ) {
+	absolute_time_t end_time;
+	uint32_t count;
+	uint8_t data_5555;
+	uint8_t data_1555;
+
+	printf( "FlashROM address read test start\r\n" );
+	end_time = make_timeout_time_ms( 5000 );
+	count = 0;
+	while( !time_reached( end_time ) ) {
+		data_5555 = flashrom_read( 0x05555u );
+		printf( "FlashROM read[%lu] address=0x05555 data=0x%02X\r\n",
+				(unsigned long)count,
+				data_5555 );
+		data_1555 = flashrom_read( 0x01555u );
+		printf( "FlashROM read[%lu] address=0x01555 data=0x%02X\r\n",
+				(unsigned long)count,
+				data_1555 );
+		count++;
+	}
+	printf( "FlashROM address read test end: %lu cycles\r\n",
+			(unsigned long)count );
+}
+
+// ---------------------------------------------------------
 static bool flashrom_check_image( const char *path ) {
 	FRESULT result;
 	FILINFO file_info;
@@ -545,6 +596,7 @@ int main(void) {
 	uint8_t matrix;
 	uint8_t prev_mat11 = 0xFF;
 	uint8_t prev_mat00 = 0xFF;
+	uint8_t prev_mat01 = 0xFF;
 	bool reset_pressed;
 	bool prev_reset_pressed;
 
@@ -611,8 +663,17 @@ int main(void) {
 			//	6キーが押されたタイミングなら、FlashROM の先頭256byteをダンプする
 			dump_flashrom_images();
 		}
+		if( (prev_mat00 & 0x80) && !(keymatrix[0] & 0x80) ) {
+			//	7キーが押されたタイミングなら、FlashROM のDevice IDを読み出す
+			flashrom_read_device_id();
+		}
+		if( (prev_mat01 & 0x01) && !(keymatrix[1] & 0x01) ) {
+			//	8キーが押されたタイミングなら、FlashROMのアドレス読み出しを5秒間実行する
+			flashrom_read_address_test();
+		}
 		prev_mat00 = keymatrix[0];
 		prev_mat11 = keymatrix[11];
+		prev_mat01 = keymatrix[1];
 
 		for( i = 0; i < 12; i++ ) {
 			matrix = keymatrix[i];
