@@ -54,7 +54,6 @@ module ssram (
 	localparam		c_state_read1		= 5'd27;
 	localparam		c_state_read2		= 5'd28;
 	localparam		c_state_read3		= 5'd29;
-	localparam [14:0]	c_powerup_wait_count = 15'd20045;	// 100us at 200.45452MHz clk_serial
 
 	reg				ff_ready;
 	reg				ff_busy_clk;
@@ -90,11 +89,13 @@ module ssram (
 	wire			w_sclk_enable;
 	wire			w_sclk_fall;
 	wire			w_state_tick;
+	wire			w_powerup_wait_done;
 
 	assign w_req = bus_cs && bus_valid;
 	assign w_sclk_enable = (ff_state != c_state_init_w0) && (ff_state != c_state_idle) && (ff_state != c_state_read3);
 	assign w_sclk_fall = w_sclk_enable && ff_sclk_div && (ff_sclk_div_count == 2'd3);
 	assign w_state_tick = (ff_state == c_state_init_w0) || (ff_state == c_state_idle) || (ff_state == c_state_read3) || w_sclk_fall;
+	assign w_powerup_wait_done = ff_powerup_wait[14];	// About 163us at 200.45452MHz clk_serial.
 
 	// Internal SCLK divider: input clock is clk_serial, output SCLK becomes quarter-rate.
 	always @( posedge clk_serial ) begin
@@ -248,6 +249,7 @@ module ssram (
 			ff_powerup_wait <= 15'd0;
 		end
 		else if( w_state_tick ) begin
+			ff_sram_ce_n <= ff_sram_ce_n;
 			case( ff_state )
 			//	EQIO (Enable Quad I/O Instruction) -----------------------------
 			//	            __                                __
@@ -265,7 +267,7 @@ module ssram (
 			//
 			c_state_init_w0: begin
 				// Datasheet TPU timing: do not assert CS for at least 100us after power-up.
-				if( ff_powerup_wait == c_powerup_wait_count - 15'd1 ) begin
+				if( w_powerup_wait_done ) begin
 					ff_state	<= c_state_init_eqio0;
 					ff_ce_n		<= 1'b0;
 					ff_sram_ce_n <= 4'b0000;
