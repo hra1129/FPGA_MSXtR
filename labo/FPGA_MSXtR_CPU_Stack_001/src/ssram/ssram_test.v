@@ -5,17 +5,17 @@
 // --------------------------------------------------------------------
 
 module ssram_test (
-	input			n_reset,
-	input			clk,
-	output reg		bus_cs,
+	input				n_reset,
+	input				clk,
+	output reg			bus_cs,
 	output reg	[20:0]	bus_address,
-	output reg		bus_write,
-	output reg		bus_valid,
+	output reg			bus_write,
+	output reg			bus_valid,
 	output reg	[7:0]	bus_wdata,
-	input			bus_ready,
-	input	[7:0]	bus_rdata,
-	input			bus_rdata_en,
-	output	[7:0]	debug_signal
+	input				bus_ready,
+	input		[7:0]	bus_rdata,
+	input				bus_rdata_en,
+	output		[7:0]	debug_signal
 );
 	localparam	[3:0]	c_state_reset			= 4'd0;
 	localparam	[3:0]	c_state_wait_ready		= 4'd1;
@@ -33,7 +33,7 @@ module ssram_test (
 	localparam	[3:0]	c_fail_mismatch			= 4'd4;
 
 	localparam	[20:0]	c_last_address			= 21'h1FFFFF;
-	localparam	[15:0]	c_timeout_count		= 16'hFFFF;
+	localparam	[15:0]	c_timeout_count			= 16'hFFFF;
 
 	reg	[3:0]	ff_state;
 	reg	[20:0]	ff_address;

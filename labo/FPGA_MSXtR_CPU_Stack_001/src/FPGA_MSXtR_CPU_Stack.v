@@ -78,7 +78,7 @@ module fpga_msxtr_cpu_stack (
 	input			uart_rx					//	B3
 );
 	wire			clk42m;
-	wire			clk200m;
+	wire			clk215m;
 	reg		[2:0]	ff_reset_n = 3'b000;
 	wire			w_msx_reset_n;
 
@@ -217,7 +217,6 @@ module fpga_msxtr_cpu_stack (
 	wire	[20:0]	w_ssram_address;				//	{ mapper_segment, device_address[13:0] }
 
 	wire			w_bootrom_en;
-	reg		[7:0]	ff_debug_signal;
 	wire	[19:0]	w_flashrom_address;
 	wire			w_flashrom_en;
 
@@ -226,7 +225,7 @@ module fpga_msxtr_cpu_stack (
 	// --------------------------------------------------------------------
     Gowin_PLL u_pll (
         .clkin			( clk_28m			),		//	 28.63636MHz
-		.clkout0		( clk200m			),		//	200.45452MHz
+		.clkout0		( clk215m			),		//	214.7727MHz
         .clkout1		( clk42m			),		//	 42.95454MHz
         .mdclk			( clk_50m			) 		//	 50.00000MHz
 	);
@@ -303,7 +302,7 @@ module fpga_msxtr_cpu_stack (
 	ip_spi u_controller_spi (
 		.reset_n				( ff_spi_reset_n			),
 		.clk					( clk42m					),
-		.clk_serial				( clk200m					),
+		.clk_serial				( clk215m					),
 		.bus_io					( w_bus_ctrl_io				),
 		.bus_write				( w_bus_ctrl_write			),
 		.bus_valid				( w_bus_ctrl_valid			),
@@ -320,19 +319,10 @@ module fpga_msxtr_cpu_stack (
 		.msx_reset_n			( w_msx_reset_n				),
 		.msx_pause				(							),
 		.bootrom_en				( w_bootrom_en				),
-		.debug_signal			( ff_debug_signal			),
+		.debug_signal			( 8'h00						),
 		.flashrom_address		( w_flashrom_address		),
 		.flashrom_en			( w_flashrom_en				)
 	);
-
-	always @( posedge clk42m ) begin
-		if( !ff_ssram_reset_n ) begin
-			ff_debug_signal <= 8'h00;
-		end
-		else if( w_device_ssram_rdata_en ) begin
-			ff_debug_signal <= w_device_ssram_rdata;
-		end
-	end
 
 	// --------------------------------------------------------------------
 	//	MSX Slot signal controller
@@ -521,7 +511,7 @@ module fpga_msxtr_cpu_stack (
 //	ip_spi_rom u_config_rom (
 //		.reset					( ~ff_config_rom_reset_n	),
 //		.clk					( clk42m					),
-//		.clk_serial				( clk200m					),
+//		.clk_serial				( clk215m					),
 //		.bus_cs					( w_bus_crom_cs				),
 //		.bus_address			( w_bus_address[0]			),
 //		.bus_write				( w_bus_write				),
@@ -627,7 +617,7 @@ module fpga_msxtr_cpu_stack (
 	ssram u_ssram (
 		.n_reset				( ff_ssram_reset_n			),
 		.clk					( clk42m					),
-		.clk_serial				( clk200m					),
+		.clk_serial				( clk215m					),
 		.bus_cs					( w_device_ssram_cs			),
 		.bus_address			( w_ssram_address			),
 		.bus_write				( w_device_write			),
