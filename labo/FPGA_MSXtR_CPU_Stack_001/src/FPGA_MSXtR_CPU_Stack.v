@@ -214,17 +214,10 @@ module fpga_msxtr_cpu_stack (
 	wire			w_device_ssram_ready;
 	wire	[7:0]	w_device_ssram_rdata;
 	wire			w_device_ssram_rdata_en;
-	wire			w_ssram_test_cs;
-	wire	[20:0]	w_ssram_test_address;
-	wire			w_ssram_test_write;
-	wire			w_ssram_test_valid;
-	wire			w_ssram_test_ready;
-	wire	[7:0]	w_ssram_test_wdata;
-	wire	[7:0]	w_ssram_test_rdata;
-	wire			w_ssram_test_rdata_en;
+	wire	[20:0]	w_ssram_address;				//	{ mapper_segment, device_address[13:0] }
 
 	wire			w_bootrom_en;
-	wire	[7:0]	w_debug_signal;
+	reg		[7:0]	ff_debug_signal;
 	wire	[19:0]	w_flashrom_address;
 	wire			w_flashrom_en;
 
@@ -327,10 +320,19 @@ module fpga_msxtr_cpu_stack (
 		.msx_reset_n			( w_msx_reset_n				),
 		.msx_pause				(							),
 		.bootrom_en				( w_bootrom_en				),
-		.debug_signal			( w_debug_signal			),
+		.debug_signal			( ff_debug_signal			),
 		.flashrom_address		( w_flashrom_address		),
 		.flashrom_en			( w_flashrom_en				)
 	);
+
+	always @( posedge clk42m ) begin
+		if( !ff_ssram_reset_n ) begin
+			ff_debug_signal <= 8'h00;
+		end
+		else if( w_device_ssram_rdata_en ) begin
+			ff_debug_signal <= w_device_ssram_rdata;
+		end
+	end
 
 	// --------------------------------------------------------------------
 	//	MSX Slot signal controller
@@ -559,9 +561,6 @@ module fpga_msxtr_cpu_stack (
 								  w_device_ppi_cs     ? w_device_ppi_ready     :
 								  w_device_mapper_cs  ? w_device_mapper_ready  :
 								  w_device_ssram_cs   ? w_device_ssram_ready   : 1'b1;
-	assign w_device_ssram_ready	= 1'b1;
-	assign w_device_ssram_rdata	= 8'hFF;
-	assign w_device_ssram_rdata_en = 1'b0;
 
 	// --------------------------------------------------------------------
 	//	BOOT ROM
@@ -621,34 +620,22 @@ module fpga_msxtr_cpu_stack (
 	);
 
 	// --------------------------------------------------------------------
-	//	Serial SRAM self test
+	//	Serial SRAM (memory access page1-3, address mapped by memory_mapper)
 	// --------------------------------------------------------------------
-	ssram_test u_ssram_test (
-		.n_reset				( ff_ssram_reset_n			),
-		.clk					( clk42m					),
-		.bus_cs					( w_ssram_test_cs			),
-		.bus_address			( w_ssram_test_address		),
-		.bus_write				( w_ssram_test_write		),
-		.bus_valid				( w_ssram_test_valid		),
-		.bus_wdata				( w_ssram_test_wdata		),
-		.bus_ready				( w_ssram_test_ready		),
-		.bus_rdata				( w_ssram_test_rdata		),
-		.bus_rdata_en			( w_ssram_test_rdata_en	),
-		.debug_signal			( w_debug_signal			)
-	);
+	assign w_ssram_address	= { w_mapper_segment, w_device_address[13:0] };
 
 	ssram u_ssram (
 		.n_reset				( ff_ssram_reset_n			),
 		.clk					( clk42m					),
 		.clk_serial				( clk200m					),
-		.bus_cs					( w_ssram_test_cs			),
-		.bus_address			( w_ssram_test_address		),
-		.bus_write				( w_ssram_test_write		),
-		.bus_valid				( w_ssram_test_valid		),
-		.bus_wdata				( w_ssram_test_wdata		),
-		.bus_ready				( w_ssram_test_ready		),
-		.bus_rdata				( w_ssram_test_rdata		),
-		.bus_rdata_en			( w_ssram_test_rdata_en	),
+		.bus_cs					( w_device_ssram_cs			),
+		.bus_address			( w_ssram_address			),
+		.bus_write				( w_device_write			),
+		.bus_valid				( w_device_valid			),
+		.bus_wdata				( w_device_wdata			),
+		.bus_ready				( w_device_ssram_ready		),
+		.bus_rdata				( w_device_ssram_rdata		),
+		.bus_rdata_en			( w_device_ssram_rdata_en	),
 		.sram_sclk				( sram_sclk					),
 		.sram_ce0_n				( sram_ce0_n				),
 		.sram_ce1_n				( sram_ce1_n				),

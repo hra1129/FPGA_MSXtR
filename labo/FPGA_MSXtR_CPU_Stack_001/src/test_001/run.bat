@@ -12,7 +12,6 @@ vlog ..\msx_slot\msx_slot.v
 vlog ..\address_decode\address_decode.v
 vlog ..\memory_mapper\memory_mapper.v
 vlog ..\ssram\ssram.v
-vlog ..\ssram\ssram_test.v
 vlog ..\ssram\ssram_test_model.v
 vlog ..\bootrom\ram.v
 vlog ..\bootrom\rom.v

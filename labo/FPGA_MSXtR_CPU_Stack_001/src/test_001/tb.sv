@@ -988,12 +988,12 @@ module tb ();
 		begin
 			reg [7:0] debug_data;
 			spi_debug_read( debug_data );
-			if( debug_data === 8'd6 ) begin
+			if( debug_data === 8'h00 ) begin
 				$display( "[TEST %0d] PASS: debug_signal=0x%02X", test_no, debug_data );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: debug_signal=0x%02X (expected 0x06)", test_no, debug_data );
+				$display( "[TEST %0d] FAIL: debug_signal=0x%02X (expected 0x00)", test_no, debug_data );
 				fail_count = fail_count + 1;
 			end
 		end

@@ -80,7 +80,10 @@ module ssram (
 	reg		[4:0]	ff_state;
 	reg				ff_active;
 	reg				ff_ce_n;
-	reg		[3:0]	ff_sram_ce_n;
+	reg				ff_sram_ce0_n;
+	reg				ff_sram_ce1_n;
+	reg				ff_sram_ce2_n;
+	reg				ff_sram_ce3_n;
 	reg		[3:0]	ff_so;
 	reg				ff_sclk_div;
 	reg		[1:0]	ff_sclk_div_count;
@@ -124,6 +127,83 @@ module ssram (
 			default: begin
 				ff_sclk_div		<= 1'b0;
 				ff_sclk_div_count <= 2'd0;
+			end
+			endcase
+		end
+	end
+
+	// ---------------------------------------------------------
+	//	SRAM chip enable
+	// ---------------------------------------------------------
+	always @( posedge clk_serial ) begin
+		if( !n_reset ) begin
+			ff_sram_ce0_n <= 1'b1;
+			ff_sram_ce1_n <= 1'b1;
+			ff_sram_ce2_n <= 1'b1;
+			ff_sram_ce3_n <= 1'b1;
+		end
+		else if( w_state_tick ) begin
+			ff_sram_ce0_n <= ff_sram_ce0_n;
+			ff_sram_ce1_n <= ff_sram_ce1_n;
+			ff_sram_ce2_n <= ff_sram_ce2_n;
+			ff_sram_ce3_n <= ff_sram_ce3_n;
+			case( ff_state )
+			c_state_init_w0: begin
+				if( w_powerup_wait_done ) begin
+					ff_sram_ce0_n <= 1'b0;
+					ff_sram_ce1_n <= 1'b0;
+					ff_sram_ce2_n <= 1'b0;
+					ff_sram_ce3_n <= 1'b0;
+				end
+				else begin
+					ff_sram_ce0_n <= 1'b1;
+					ff_sram_ce1_n <= 1'b1;
+					ff_sram_ce2_n <= 1'b1;
+					ff_sram_ce3_n <= 1'b1;
+				end
+			end
+			c_state_init_eqio7: begin
+				ff_sram_ce0_n <= 1'b1;
+				ff_sram_ce1_n <= 1'b1;
+				ff_sram_ce2_n <= 1'b1;
+				ff_sram_ce3_n <= 1'b1;
+			end
+			c_state_idle: begin
+				if( w_valid ) begin
+					case( ff_req_address_clk[20:19] )
+					2'd0: begin
+						ff_sram_ce0_n <= 1'b0;
+						ff_sram_ce1_n <= 1'b1;
+						ff_sram_ce2_n <= 1'b1;
+						ff_sram_ce3_n <= 1'b1;
+					end
+					2'd1: begin
+						ff_sram_ce0_n <= 1'b1;
+						ff_sram_ce1_n <= 1'b0;
+						ff_sram_ce2_n <= 1'b1;
+						ff_sram_ce3_n <= 1'b1;
+					end
+					2'd2: begin
+						ff_sram_ce0_n <= 1'b1;
+						ff_sram_ce1_n <= 1'b1;
+						ff_sram_ce2_n <= 1'b0;
+						ff_sram_ce3_n <= 1'b1;
+					end
+					default: begin
+						ff_sram_ce0_n <= 1'b1;
+						ff_sram_ce1_n <= 1'b1;
+						ff_sram_ce2_n <= 1'b1;
+						ff_sram_ce3_n <= 1'b0;
+					end
+					endcase
+				end
+			end
+			c_state_write1,
+			c_state_read2: begin
+				ff_sram_ce0_n <= 1'b1;
+				ff_sram_ce1_n <= 1'b1;
+				ff_sram_ce2_n <= 1'b1;
+				ff_sram_ce3_n <= 1'b1;
 			end
 			endcase
 		end
@@ -243,13 +323,11 @@ module ssram (
 			ff_so		<= 4'b1zz0;
 			ff_address	<= 19'd0;
 			ff_sram_select	<= 2'd0;
-			ff_sram_ce_n	<= 4'b1111;
 			ff_read		<= 1'b0;
 			ff_write	<= 1'b0;
 			ff_powerup_wait <= 15'd0;
 		end
 		else if( w_state_tick ) begin
-			ff_sram_ce_n <= ff_sram_ce_n;
 			case( ff_state )
 			//	EQIO (Enable Quad I/O Instruction) -----------------------------
 			//	            __                                __
@@ -270,14 +348,12 @@ module ssram (
 				if( w_powerup_wait_done ) begin
 					ff_state	<= c_state_init_eqio0;
 					ff_ce_n		<= 1'b0;
-					ff_sram_ce_n <= 4'b0000;
 					ff_so		<= 4'b1zz0;
 					ff_sram_select <= 2'd0;			//	EQIO を chip0 から開始
 				end
 				else begin
 					ff_powerup_wait <= ff_powerup_wait + 15'd1;
 					ff_ce_n		<= 1'b1;
-					ff_sram_ce_n <= 4'b1111;
 					ff_so		<= 4'bzzzz;
 				end
 			end
@@ -315,7 +391,6 @@ module ssram (
 				ff_so		<= 4'bzzzz;
 				ff_active	<= 1'b1;		// Init complete (stays high)
 				ff_ce_n		<= 1'b1;
-				ff_sram_ce_n <= 4'b1111;
 			end
 			//	IDLE -----------------------------------------------------------
 			c_state_idle: begin
@@ -326,12 +401,6 @@ module ssram (
 					ff_so		<= 4'd0;
 					ff_address	<= ff_req_address_clk[18:0];
 					ff_sram_select	<= ff_req_address_clk[20:19];
-					case( ff_req_address_clk[20:19] )
-					2'd0: ff_sram_ce_n <= 4'b1110;
-					2'd1: ff_sram_ce_n <= 4'b1101;
-					2'd2: ff_sram_ce_n <= 4'b1011;
-					default: ff_sram_ce_n <= 4'b0111;
-					endcase
 					ff_write	<= ff_req_write_clk;
 					ff_active	<= 1'b0;
 				end
@@ -401,7 +470,6 @@ module ssram (
 				ff_state	<= c_state_idle;
 				ff_active	<= 1'b1;
 				ff_ce_n		<= 1'b1;
-				ff_sram_ce_n <= 4'b1111;
 			end
 			// HIGH SPEED BYTE READ --------------------------------------------
 			c_state_dummy0: begin
@@ -440,7 +508,6 @@ module ssram (
 			c_state_read2: begin
 				ff_state		<= c_state_read3;
 				ff_ce_n			<= 1'b1;
-				ff_sram_ce_n	<= 4'b1111;
 				ff_read			<= 1'b0;
 			end
 			c_state_read3: begin
@@ -493,10 +560,10 @@ module ssram (
 	end
 
 	assign sram_sclk	= ff_sclk_div;
-	assign sram_ce0_n	= ff_sram_ce_n[0];
-	assign sram_ce1_n	= ff_sram_ce_n[1];
-	assign sram_ce2_n	= ff_sram_ce_n[2];
-	assign sram_ce3_n	= ff_sram_ce_n[3];
+	assign sram_ce0_n	= ff_sram_ce0_n;
+	assign sram_ce1_n	= ff_sram_ce1_n;
+	assign sram_ce2_n	= ff_sram_ce2_n;
+	assign sram_ce3_n	= ff_sram_ce3_n;
 	assign sram_sio		= ff_read ? 4'bzzzz: ff_so;
 	assign bus_ready	= ff_ready;
 	assign bus_rdata	= ff_rdata;

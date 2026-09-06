@@ -20,7 +20,6 @@
         <File path="src/cz80/cz80_inst.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_mcode.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_reg.v" type="file.verilog" enable="1"/>
-        <File path="src/debugger/debugger.v" type="file.verilog" enable="1"/>
         <File path="src/extio/extio.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1"/>
@@ -35,7 +34,6 @@
         <File path="src/spi/spi.v" type="file.verilog" enable="1"/>
         <File path="src/spi_rom/ip_spi_rom.v" type="file.verilog" enable="1"/>
         <File path="src/ssram/ssram.v" type="file.verilog" enable="1"/>
-        <File path="src/ssram/ssram_test.v" type="file.verilog" enable="1"/>
         <File path="src/FPGA_MSXtR_CPU_Stack.cst" type="file.cst" enable="1"/>
         <File path="src/FPGA_MSXtR_CPU_Stack.sdc" type="file.sdc" enable="1"/>
     </FileList>

@@ -17,6 +17,8 @@ Clkout0
 	Phase(degree)
 	☑Static 0
 
+	204.06 (28.64*7.125)
+
 Clkout1
 	Expected Frequency(5.469~1400)MHz: 42.96MHz   ※ 28.64 * 1.5 = 42.96  ※実クロック 42.95454MHz
 	Tolerance(%): 0.0

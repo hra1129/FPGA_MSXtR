@@ -144,6 +144,7 @@ static void test_ssram_memory( void ) {
 	int i;
 	uint8_t write_value;
 	uint8_t read_value;
+	uint8_t debug_signal;
 	uint8_t original_fd;
 	uint8_t original_fe;
 	uint8_t original_ff;
@@ -164,9 +165,16 @@ static void test_ssram_memory( void ) {
 		for( i = 0; i < 256; i++ ) {
 			write_value = (uint8_t)i;
 			fpga_poke( (uint16_t)address, write_value );
+			sleep_us(1);
 			read_value = fpga_peek( (uint16_t)address );
 			if( read_value != write_value ) {
-				printf( "Fail\r\n" );
+				debug_signal = fpga_get_debug_signal();
+				printf( "Fail: write=0x%02X read=0x%02X debug=0x%02X debug_vs_write=%s debug_vs_read=%s\r\n",
+					write_value,
+					read_value,
+					debug_signal,
+					(debug_signal == write_value) ? "OK" : "NG",
+					(debug_signal == read_value) ? "OK" : "NG" );
 				fail_count++;
 				break;
 			}

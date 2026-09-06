@@ -7,6 +7,7 @@ Running placement......
 [10%] Placement Phase 0 completed
 [20%] Placement Phase 1 completed
 [30%] Placement Phase 2 completed
+WARN  (TA1123) : the clock "clk200m"'s frequency does not match u_pll/u_pll_0/PLLA_inst/CLKOUT0's 
 [50%] Placement Phase 3 completed
 Running routing......
 [60%] Routing Phase 0 completed
@@ -25,5 +26,5 @@ Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MS
 Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\impl\pnr\FPGA_MSXtR_CPU_Stack.rpt.html" completed
 Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\impl\pnr\FPGA_MSXtR_CPU_Stack.rpt.txt" completed
 Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\impl\pnr\FPGA_MSXtR_CPU_Stack.tr.html" completed
-Sun Sep  6 15:38:16 2026
+Sun Sep  6 18:20:39 2026
 

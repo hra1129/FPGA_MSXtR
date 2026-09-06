@@ -20,12 +20,12 @@
 -fclkin 28.64
 -idiv_sel 1
 -clkfb_sel 0
--fbdiv_sel 6
+-fbdiv_sel 1
 -en_lock true
 -dyn_dpa_en false
 -clkout0_bypass false
 -odiv0_sel 4
--odiv0_frac_sel 4
+-odiv0_frac_sel 0
 -clkout0_dt_dir 1
 -clkout0_dt_step 0
 -dyn_pe0_sel false
@@ -36,7 +36,7 @@
 -clkout0_dt_step 0
 -en_clkout1 true
 -clkout1_bypass false
--odiv1_sel 21
+-odiv1_sel 20
 -clkout1_dt_dir 1
 -clkout1_dt_step 0
 -dyn_pe1_sel false
@@ -49,5 +49,5 @@
 -en_clkout5 false
 -en_clkout6 false
 -en_clkfbout false
--mdiv_sel 5
--mdiv_frac_sel 2
+-mdiv_sel 30
+-mdiv_frac_sel 0
