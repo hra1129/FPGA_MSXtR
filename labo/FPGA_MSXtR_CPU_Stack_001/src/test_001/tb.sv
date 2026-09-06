@@ -60,7 +60,7 @@ module tb ();
 	wire			mcu_miso;
 	wire			mcu_intr;
 
-	//	SRAM (unused by this test)
+	//	SRAM (QSPI SRAM simulation model is attached below)
 	wire			sram_ce0_n;
 	wire			sram_ce1_n;
 	wire			sram_ce2_n;
@@ -211,6 +211,35 @@ module tb ();
 			captured_flash_read_rom1_ce_n	= slot_rom1_ce_n;
 		end
 	end
+
+	// --------------------------------------------------------------------
+	//	QSPI SRAM simulation model (4 chips x 512KB, SQI mode)
+	//	  ssram_test_model: 512KB Serial SRAM 1個分のモデル。
+	//  EQIO (0x38) を受信したチップのみ Quad I/O mode に入る。
+	// --------------------------------------------------------------------
+	ssram_test_model u_sram_chip0 (
+		.sclk	( sram_sclk		),
+		.cs_n	( sram_ce0_n	),
+		.sio	( sram_sio		)
+	);
+
+	ssram_test_model u_sram_chip1 (
+		.sclk	( sram_sclk		),
+		.cs_n	( sram_ce1_n	),
+		.sio	( sram_sio		)
+	);
+
+	ssram_test_model u_sram_chip2 (
+		.sclk	( sram_sclk		),
+		.cs_n	( sram_ce2_n	),
+		.sio	( sram_sio		)
+	);
+
+	ssram_test_model u_sram_chip3 (
+		.sclk	( sram_sclk		),
+		.cs_n	( sram_ce3_n	),
+		.sio	( sram_sio		)
+	);
 
 	// --------------------------------------------------------------------
 	//	Task: spi_send_byte
@@ -594,6 +623,19 @@ module tb ();
 	//	DEBUG (temporary, disabled: $monitor fires on every SPI clock edge
 	//	and makes the VDP access loop (test 7) impractically slow)
 	// --------------------------------------------------------------------
+	always @( posedge u_dut.clk42m ) begin
+		if( u_dut.w_device_rdata_en ) begin
+			$display( "[DEBUG] device_rdata_en data=0x%02X boot=%b ppi=%b mapper=%b ssram=%b ssram_en=%b ssram_data=0x%02X",
+				u_dut.w_device_rdata,
+				u_dut.w_device_bootrom_cs,
+				u_dut.w_device_ppi_cs,
+				u_dut.w_device_mapper_cs,
+				u_dut.w_device_ssram_cs,
+				u_dut.w_device_ssram_rdata_en,
+				u_dut.w_device_ssram_rdata );
+		end
+	end
+
 	// initial begin
 	// 	$monitor( "t=%0t cs_n=%b sclk=%b spi_ready=%b spi_rdata_en=%b spi_rdata=%02x state=%0d ctrl_valid=%b dev_valid=%b intr=%b",
 	// 		$time, mcu_cs_n, mcu_sclk,
@@ -1040,6 +1082,151 @@ module tb ();
 				spi_io_write( 8'h98, i );	//	Data with address auto increment
 			end
 			wait_cycle( 2 );
+		end
+
+		// ================================================================
+		//	Test 10: Memory mapper registers (I/O FCh-FFh)
+		// ================================================================
+		test_no = 10;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Memory mapper registers: reset defaults and write/read-back", test_no );
+
+		begin
+			reg [7:0] io_data;
+			reg			mapper_failed;
+
+			mapper_failed = 1'b0;
+
+			//	reset defaults: page0=3, page1=2, page2=1, page3=0
+			spi_io_read( 8'hFC, io_data );
+			if( io_data !== 8'd3 ) begin
+				$display( "[TEST %0d] FAIL: port FC default=0x%02X (expected 0x03)", test_no, io_data );
+				mapper_failed = 1'b1;
+			end
+			spi_io_read( 8'hFD, io_data );
+			if( io_data !== 8'd2 ) begin
+				$display( "[TEST %0d] FAIL: port FD default=0x%02X (expected 0x02)", test_no, io_data );
+				mapper_failed = 1'b1;
+			end
+			spi_io_read( 8'hFE, io_data );
+			if( io_data !== 8'd1 ) begin
+				$display( "[TEST %0d] FAIL: port FE default=0x%02X (expected 0x01)", test_no, io_data );
+				mapper_failed = 1'b1;
+			end
+			spi_io_read( 8'hFF, io_data );
+			if( io_data !== 8'd0 ) begin
+				$display( "[TEST %0d] FAIL: port FF default=0x%02X (expected 0x00)", test_no, io_data );
+				mapper_failed = 1'b1;
+			end
+
+			//	write/read-back
+			spi_io_write( 8'hFC, 8'h12 );
+			spi_io_write( 8'hFD, 8'h34 );
+			spi_io_write( 8'hFE, 8'h56 );
+			spi_io_write( 8'hFF, 8'h78 );
+
+			spi_io_read( 8'hFC, io_data );
+			if( io_data !== 8'h12 ) begin
+				$display( "[TEST %0d] FAIL: port FC read-back=0x%02X (expected 0x12)", test_no, io_data );
+				mapper_failed = 1'b1;
+			end
+			spi_io_read( 8'hFD, io_data );
+			if( io_data !== 8'h34 ) begin
+				$display( "[TEST %0d] FAIL: port FD read-back=0x%02X (expected 0x34)", test_no, io_data );
+				mapper_failed = 1'b1;
+			end
+			spi_io_read( 8'hFE, io_data );
+			if( io_data !== 8'h56 ) begin
+				$display( "[TEST %0d] FAIL: port FE read-back=0x%02X (expected 0x56)", test_no, io_data );
+				mapper_failed = 1'b1;
+			end
+			spi_io_read( 8'hFF, io_data );
+			if( io_data !== 8'h78 ) begin
+				$display( "[TEST %0d] FAIL: port FF read-back=0x%02X (expected 0x78)", test_no, io_data );
+				mapper_failed = 1'b1;
+			end
+
+			if( !mapper_failed ) begin
+				$display( "[TEST %0d] PASS: mapper register defaults and read-back", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 11: Serial SRAM access via memory mapper (page1-3)
+		//		segment -> SRAM byte address = segment << 14
+		//		0x10 -> 0x040000 (chip0), 0x40 -> 0x100000 (chip2),
+		//		0x7F -> 0x1FC000 (chip3)
+		// ================================================================
+		test_no = 11;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Serial SRAM write/read via memory mapper", test_no );
+		while( u_dut.u_ssram.ff_active == 1'b0 ) begin
+			@( posedge u_dut.clk42m );
+		end
+
+		begin
+			reg [7:0] read_data;
+			reg			ssram_failed;
+
+			ssram_failed = 1'b0;
+
+			spi_io_write( 8'hFD, 8'h10 );		//	page1 segment = 0x10 (chip0)
+			spi_io_write( 8'hFE, 8'h40 );		//	page2 segment = 0x40 (chip2)
+			spi_io_write( 8'hFF, 8'h7F );		//	page3 segment = 0x7F (chip3)
+
+			//	page1: 0x4123 -> SRAM 0x040123 (chip0)
+			spi_mem_write( 16'h4123, 8'hA5 );
+			spi_mem_read ( 16'h4123, read_data );
+			if( read_data !== 8'hA5 ) begin
+				$display( "[TEST %0d] FAIL: page1 0x4123 read=0x%02X (expected 0xA5)", test_no, read_data );
+				ssram_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: page1 0x4123 -> chip0 read back 0x%02X", test_no, read_data );
+			end
+
+			//	page2: 0x8456 -> SRAM 0x100456 (chip2)
+			spi_mem_write( 16'h8456, 8'h5A );
+			spi_mem_read ( 16'h8456, read_data );
+			if( read_data !== 8'h5A ) begin
+				$display( "[TEST %0d] FAIL: page2 0x8456 read=0x%02X (expected 0x5A)", test_no, read_data );
+				ssram_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: page2 0x8456 -> chip2 read back 0x%02X", test_no, read_data );
+			end
+
+			//	page3: 0xFFFF -> SRAM 0x1FFFFF (chip3, last byte of 2MB)
+			spi_mem_write( 16'hFFFF, 8'hC3 );
+			spi_mem_read ( 16'hFFFF, read_data );
+			if( read_data !== 8'hC3 ) begin
+				$display( "[TEST %0d] FAIL: page3 0xFFFF read=0x%02X (expected 0xC3)", test_no, read_data );
+				ssram_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: page3 0xFFFF -> chip3 read back 0x%02X", test_no, read_data );
+			end
+
+			//	re-read page1: other accesses must not have disturbed it
+			spi_mem_read ( 16'h4123, read_data );
+			if( read_data !== 8'hA5 ) begin
+				$display( "[TEST %0d] FAIL: page1 0x4123 re-read=0x%02X (expected 0xA5)", test_no, read_data );
+				ssram_failed = 1'b1;
+			end
+			else begin
+				$display( "[TEST %0d] PASS: page1 re-read 0x%02X (no aliasing)", test_no, read_data );
+			end
+
+			if( !ssram_failed ) begin
+				pass_count = pass_count + 1;
+			end
+			else begin
+				fail_count = fail_count + 1;
+			end
 		end
 
 		// ================================================================

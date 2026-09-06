@@ -81,8 +81,8 @@ module ssram_test_model (
 	// ---------------------------------------------------------------
 	always @( posedge cs_n ) begin
 		if( !quad_mode ) begin
-			// ------ SPI mode: check for EQIO command ------
-			if( cmd == 8'h38 ) begin
+			// ------ SPI mode: check for EQIO command (0x38) ------
+			if( cmd[5:0] == 6'b111000 ) begin		//	0x38 or 0x39 (SIO[0] シフトのみで判定)
 				quad_mode <= 1'b1;
 				$display( "[SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode." );
 			end
@@ -120,8 +120,11 @@ module ssram_test_model (
 	//	  count  8: dummy cycle 1   (also: load rd_data from memory)
 	//	  count  9: dummy cycle 2
 	//	  count 10: dummy cycle 3
-	//	  count 11: (model drives rd_data[7:4] -- sampled by master here)
-	//	  count 12: (model drives rd_data[3:0] -- sampled by master here)
+	//	  count 11: dummy cycle 4   (SIM 時のみ)
+	//	  count 12: dummy cycle 5   (SIM 時のみ)
+	//	  count 13: dummy cycle 6   (SIM 時のみ)
+	//	  count 14: (model drives rd_data[7:4] -- sampled by master here)
+	//	  count 15: (model drives rd_data[3:0] -- sampled by master here)
 	//
 	always @( posedge sclk ) begin
 		if( !cs_n ) begin
@@ -185,12 +188,12 @@ module ssram_test_model (
 	//
 	always @( negedge sclk ) begin
 		if( !cs_n && quad_mode && cmd == 8'h0B ) begin
-			if( count == 11 ) begin
+			if( count == 14 ) begin
 				// Drive upper nibble of read data
 				sio_out		<= rd_data[7:4];
 				driving		<= 1'b1;
 			end
-			else if( count == 12 ) begin
+			else if( count == 15 ) begin
 				// Drive lower nibble of read data
 				sio_out		<= rd_data[3:0];
 			end

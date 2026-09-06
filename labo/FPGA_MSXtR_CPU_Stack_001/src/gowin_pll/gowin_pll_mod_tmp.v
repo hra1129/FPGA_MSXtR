@@ -3,10 +3,10 @@
 //File Title: Template file for instantiation
 //Tool Version: V1.9.12.03 (64-bit)
 //IP Version: 1.0
-//Part Number: GW5A-LV25MG121NES
+//Part Number: GW5A-LV25MG121NC1/I0
 //Device: GW5A-25
 //Device Version: A
-//Created Time: Mon Aug 24 22:48:09 2026
+//Created Time: Sun Sep  6 13:24:58 2026
 
 //Change the instance name and port connections to the signal names
 //--------Copy here to design--------

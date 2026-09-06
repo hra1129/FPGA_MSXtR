@@ -2,12 +2,12 @@
 -device GW5A-25
 -device_version A
 -package MBGA121N
--part_number GW5A-LV25MG121NES
+-part_number GW5A-LV25MG121NC1/I0
 
 
 -mod_name Gowin_PLL_MOD
 -file_name gowin_pll_mod
--path C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_000/src/gowin_pll/
+-path C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001/src/gowin_pll/
 -type PLL_ADV
 -file_type vlg
 -ip_version 1.0
@@ -17,15 +17,15 @@
 -rst_i false
 -mdrp_en true
 -rst_o false
--fclkin 28.636
+-fclkin 28.64
 -idiv_sel 1
 -clkfb_sel 0
--fbdiv_sel 3
+-fbdiv_sel 6
 -en_lock true
 -dyn_dpa_en false
 -clkout0_bypass false
 -odiv0_sel 4
--odiv0_frac_sel 0
+-odiv0_frac_sel 4
 -clkout0_dt_dir 1
 -clkout0_dt_step 0
 -dyn_pe0_sel false
@@ -36,7 +36,7 @@
 -clkout0_dt_step 0
 -en_clkout1 true
 -clkout1_bypass false
--odiv1_sel 20
+-odiv1_sel 21
 -clkout1_dt_dir 1
 -clkout1_dt_step 0
 -dyn_pe1_sel false
@@ -49,5 +49,5 @@
 -en_clkout5 false
 -en_clkout6 false
 -en_clkfbout false
--mdiv_sel 10
--mdiv_frac_sel 0
+-mdiv_sel 5
+-mdiv_frac_sel 2

@@ -1,7 +1,6 @@
 GowinSynthesis start
 Running parser ...
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v'
-Undeclared symbol 'w_device_bootrom_valid', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":321)
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\address_decode\address_decode.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\bootrom\bootrom.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\bootrom\ram.v'
@@ -24,6 +23,7 @@ Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\gowin_pll\gowin_pll_mod.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\msx_slot\msx_slot.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\msx_slot\msx_slot_decode.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\memory_mapper\memory_mapper.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\pll_init.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ppi\ppi.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026.v'
@@ -34,13 +34,13 @@ Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi\spi.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi_rom\ip_spi_rom.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ssram\ssram.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ssram\ssram_test.v'
 Compiling module 'fpga_msxtr_cpu_stack'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":24)
 Compiling module 'Gowin_PLL'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\gowin_pll\gowin_pll.v":1)
 Compiling module 'Gowin_PLL_MOD'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\gowin_pll\gowin_pll_mod.v":11)
 Compiling module 'PLL_INIT(MULTI_FAC=30)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\pll_init.v":4)
 Compiling module 'ip_spi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi\ip_spi.v":34)
 Compiling module 'spi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi\spi.v":38)
-Compiling module 'debugger'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\debugger\debugger.v":34)
 Compiling module 'msx_slot'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\msx_slot\msx_slot.v":34)
 Compiling module 'msx_slot_decode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\msx_slot\msx_slot_decode.v":34)
 Compiling module 'address_decode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\address_decode\address_decode.v":34)
@@ -48,16 +48,13 @@ Compiling module 'bootrom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR
 Compiling module 'rom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\bootrom\rom.v":34)
 Compiling module 'ip_ram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\bootrom\ram.v":34)
 Compiling module 'ppi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ppi\ppi.v":34)
-WARN  (EX1998) : Net 'w_bus_m1' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":127)
-WARN  (EX1998) : Net 'w_secondary_slot0[7]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":182)
-WARN  (EX1998) : Net 'w_secondary_slot3[7]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":183)
-WARN  (EX1998) : Net 'w_device_bootrom_valid' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":321)
+Compiling module 'memory_mapper'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\memory_mapper\memory_mapper.v":50)
+Compiling module 'ssram_test'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ssram\ssram_test.v":7)
+Compiling module 'ssram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ssram\ssram.v":7)
+WARN  (EX1998) : Net 'w_bus_m1' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":129)
+WARN  (EX1998) : Net 'w_secondary_slot0[7]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":184)
+WARN  (EX1998) : Net 'w_secondary_slot3[7]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":185)
 NOTE  (EX0101) : Current top module is "fpga_msxtr_cpu_stack"
-WARN  (EX0211) : The output port "sram_ce0_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":34)
-WARN  (EX0211) : The output port "sram_ce1_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":35)
-WARN  (EX0211) : The output port "sram_ce2_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":36)
-WARN  (EX0211) : The output port "sram_ce3_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":37)
-WARN  (EX0211) : The output port "sram_sclk" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":38)
 WARN  (EX0211) : The output port "srom_sclk" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":68)
 WARN  (EX0211) : The output port "srom_cs_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":69)
 WARN  (EX0211) : The output port "srom_mosi" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":70)
@@ -69,7 +66,6 @@ WARN  (CV0016) : Input slot_int_n is unused("C:\Users\hra\Documents\github\HRA_p
 WARN  (CV0016) : Input slot_busdir is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":57)
 WARN  (CV0016) : Input srom_miso is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":71)
 WARN  (CV0016) : Input uart_rx is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":78)
-WARN  (CV0017) : Inout sram_sio is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":39)
 WARN  (CV0017) : Inout flash_spi_io is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":75)
 Running device independent optimization ...
 [10%] Optimizing Phase 0 completed

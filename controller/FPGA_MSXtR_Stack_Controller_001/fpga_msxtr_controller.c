@@ -138,6 +138,52 @@ static void test_ppi_port_a_readback( void ) {
 }
 
 // ---------------------------------------------------------
+static void test_ssram_memory( void ) {
+	uint32_t fail_count;
+	uint32_t address;
+	int i;
+	uint8_t write_value;
+	uint8_t read_value;
+	uint8_t original_fd;
+	uint8_t original_fe;
+	uint8_t original_ff;
+
+	//	memory mapper: page1/page2/page3 に直線マッピングを設定
+	original_fd = fpga_inport( 0xFD );
+	original_fe = fpga_inport( 0xFE );
+	original_ff = fpga_inport( 0xFF );
+	fpga_outport( 0xFD, 1 );
+	fpga_outport( 0xFE, 2 );
+	fpga_outport( 0xFF, 3 );
+
+	fail_count = 0;
+	printf( "SerialSRAM test start (0x4000-0xFFFF)\r\n" );
+
+	for( address = 0x4000; address <= 0xFFFF; address++ ) {
+		printf( "%04Xh: ", (unsigned int)address );
+		for( i = 0; i < 256; i++ ) {
+			write_value = (uint8_t)i;
+			fpga_poke( (uint16_t)address, write_value );
+			read_value = fpga_peek( (uint16_t)address );
+			if( read_value != write_value ) {
+				printf( "Fail\r\n" );
+				fail_count++;
+				break;
+			}
+		}
+		if( i == 256 ) {
+			printf( "OK\r\n" );
+		}
+	}
+
+	//	memory mapper の設定を元に戻す
+	fpga_outport( 0xFD, original_fd );
+	fpga_outport( 0xFE, original_fe );
+	fpga_outport( 0xFF, original_ff );
+	printf( "SerialSRAM test end: fail=%lu\r\n", (unsigned long)fail_count );
+}
+
+// ---------------------------------------------------------
 static void dump_fpga_debug_signal( void ) {
 	uint8_t debug_signal;
 
@@ -670,6 +716,10 @@ int main(void) {
 		if( (prev_mat01 & 0x01) && !(keymatrix[1] & 0x01) ) {
 			//	8キーが押されたタイミングなら、FlashROMのアドレス読み出しを5秒間実行する
 			flashrom_read_address_test();
+		}
+		if( (prev_mat01 & 0x02) && !(keymatrix[1] & 0x02) ) {
+			//	9キーが押されたタイミングなら、SerialSRAM の書き込み/読み出しテストを実行する
+			test_ssram_memory();
 		}
 		prev_mat00 = keymatrix[0];
 		prev_mat11 = keymatrix[11];

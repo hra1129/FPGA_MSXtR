@@ -24,6 +24,7 @@
         <File path="src/extio/extio.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/memory_mapper/memory_mapper.v" type="file.verilog" enable="1"/>
         <File path="src/msx_slot/msx_slot.v" type="file.verilog" enable="1"/>
         <File path="src/msx_slot/msx_slot_decode.v" type="file.verilog" enable="1"/>
         <File path="src/pll_init.v" type="file.verilog" enable="1"/>
@@ -34,6 +35,7 @@
         <File path="src/spi/spi.v" type="file.verilog" enable="1"/>
         <File path="src/spi_rom/ip_spi_rom.v" type="file.verilog" enable="1"/>
         <File path="src/ssram/ssram.v" type="file.verilog" enable="1"/>
+        <File path="src/ssram/ssram_test.v" type="file.verilog" enable="1"/>
         <File path="src/FPGA_MSXtR_CPU_Stack.cst" type="file.cst" enable="1"/>
         <File path="src/FPGA_MSXtR_CPU_Stack.sdc" type="file.sdc" enable="1"/>
     </FileList>

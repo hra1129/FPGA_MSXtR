@@ -78,7 +78,7 @@ module fpga_msxtr_cpu_stack (
 	input			uart_rx					//	B3
 );
 	wire			clk42m;
-	wire			clk215m;
+	wire			clk200m;
 	reg		[2:0]	ff_reset_n = 3'b000;
 	wire			w_msx_reset_n;
 
@@ -93,6 +93,8 @@ module fpga_msxtr_cpu_stack (
 	reg				ff_ext_rom_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
 	reg				ff_bootrom_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
 	reg				ff_ppi_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_mapper_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	reg				ff_ssram_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
 	reg				ff_uart_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
 
 	reg		[3:0]	ff_3_579m = 4'd0;
@@ -202,6 +204,25 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_device_ppi_rdata;
 	wire			w_device_ppi_rdata_en;
 
+	wire			w_device_mapper_cs;
+	wire			w_device_mapper_ready;
+	wire	[7:0]	w_device_mapper_rdata;
+	wire			w_device_mapper_rdata_en;
+	wire	[6:0]	w_mapper_segment;				//	SRAM address [20:14]
+
+	wire			w_device_ssram_cs;
+	wire			w_device_ssram_ready;
+	wire	[7:0]	w_device_ssram_rdata;
+	wire			w_device_ssram_rdata_en;
+	wire			w_ssram_test_cs;
+	wire	[20:0]	w_ssram_test_address;
+	wire			w_ssram_test_write;
+	wire			w_ssram_test_valid;
+	wire			w_ssram_test_ready;
+	wire	[7:0]	w_ssram_test_wdata;
+	wire	[7:0]	w_ssram_test_rdata;
+	wire			w_ssram_test_rdata_en;
+
 	wire			w_bootrom_en;
 	wire	[7:0]	w_debug_signal;
 	wire	[19:0]	w_flashrom_address;
@@ -211,10 +232,10 @@ module fpga_msxtr_cpu_stack (
 	//	clock
 	// --------------------------------------------------------------------
     Gowin_PLL u_pll (
-        .clkin			( clk_28m			),		//	28.63636MHz
-        .clkout0		( clk215m			),		//	214.7727MHz
-        .clkout1		( clk42m			),		//	42.95454MHz
-        .mdclk			( clk_50m			) 		//	50.00000MHz
+        .clkin			( clk_28m			),		//	 28.63636MHz
+		.clkout0		( clk200m			),		//	200.45452MHz
+        .clkout1		( clk42m			),		//	 42.95454MHz
+        .mdclk			( clk_50m			) 		//	 50.00000MHz
 	);
 
 	// --------------------------------------------------------------------
@@ -278,6 +299,8 @@ module fpga_msxtr_cpu_stack (
 //		ff_ext_rom_reset_n		<= 1'b0;
 		ff_bootrom_reset_n		<= w_msx_reset_n;
 		ff_ppi_reset_n			<= w_msx_reset_n;
+		ff_mapper_reset_n		<= w_msx_reset_n;
+		ff_ssram_reset_n		<= w_msx_reset_n;
 //		ff_uart_reset_n			<= 1'b0;
 	end
 
@@ -287,7 +310,7 @@ module fpga_msxtr_cpu_stack (
 	ip_spi u_controller_spi (
 		.reset_n				( ff_spi_reset_n			),
 		.clk					( clk42m					),
-		.clk_serial				( clk215m					),
+		.clk_serial				( clk200m					),
 		.bus_io					( w_bus_ctrl_io				),
 		.bus_write				( w_bus_ctrl_write			),
 		.bus_valid				( w_bus_ctrl_valid			),
@@ -307,21 +330,6 @@ module fpga_msxtr_cpu_stack (
 		.debug_signal			( w_debug_signal			),
 		.flashrom_address		( w_flashrom_address		),
 		.flashrom_en			( w_flashrom_en				)
-	);
-
-	debugger u_debugger (
-		.reset_n				( ff_spi_reset_n			),
-		.clk_42m				( clk42m					),
-		.spi_valid				( w_bus_ctrl_valid			),
-		.spi_ready				( w_bus_ctrl_ready			),
-		.spi_rdata_en			( w_bus_ctrl_rdata_en		),
-		.device_valid			( w_device_valid			),
-		.device_ready			( w_device_ready			),
-		.device_rdata_en		( w_device_rdata_en			),
-		.bootrom_valid			( w_device_bootrom_valid	),
-		.bootrom_ready			( w_device_bootrom_ready	),
-		.bootrom_rdata_en		( w_device_bootrom_rdata_en	),
-		.debug_signal			( w_debug_signal			)
 	);
 
 	// --------------------------------------------------------------------
@@ -511,7 +519,7 @@ module fpga_msxtr_cpu_stack (
 //	ip_spi_rom u_config_rom (
 //		.reset					( ~ff_config_rom_reset_n	),
 //		.clk					( clk42m					),
-//		.clk_serial				( clk215m					),
+//		.clk_serial				( clk200m					),
 //		.bus_cs					( w_bus_crom_cs				),
 //		.bus_address			( w_bus_address[0]			),
 //		.bus_write				( w_bus_write				),
@@ -537,14 +545,23 @@ module fpga_msxtr_cpu_stack (
 		.device_io				( w_device_io				),
 		.bootrom_en				( w_bootrom_en				),
 		.bootrom_cs				( w_device_bootrom_cs		),
-		.ppi_cs					( w_device_ppi_cs			)
+		.ppi_cs					( w_device_ppi_cs			),
+		.memory_mapper_cs		( w_device_mapper_cs		),
+		.ssram_cs				( w_device_ssram_cs			)
 	);
 
-	//	bootrom / ppi の cs は排他的なので、応答をそのまま束ねて device_* へ返す
-	assign w_device_rdata		= w_device_ppi_cs ? w_device_ppi_rdata : w_device_bootrom_rdata;
-	assign w_device_rdata_en	= w_device_bootrom_rdata_en | w_device_ppi_rdata_en;
+	//	bootrom / ppi / memory_mapper / ssram の cs は排他的なので、応答をそのまま束ねて device_* へ返す
+	assign w_device_rdata		= w_device_ppi_cs    ? w_device_ppi_rdata    :
+								  w_device_mapper_cs ? w_device_mapper_rdata :
+								  w_device_ssram_cs  ? w_device_ssram_rdata  : w_device_bootrom_rdata;
+	assign w_device_rdata_en	= w_device_bootrom_rdata_en | w_device_ppi_rdata_en | w_device_mapper_rdata_en | w_device_ssram_rdata_en;
 	assign w_device_ready		= w_device_bootrom_cs ? w_device_bootrom_ready :
-								  w_device_ppi_cs     ? w_device_ppi_ready     : 1'b1;
+								  w_device_ppi_cs     ? w_device_ppi_ready     :
+								  w_device_mapper_cs  ? w_device_mapper_ready  :
+								  w_device_ssram_cs   ? w_device_ssram_ready   : 1'b1;
+	assign w_device_ssram_ready	= 1'b1;
+	assign w_device_ssram_rdata	= 8'hFF;
+	assign w_device_ssram_rdata_en = 1'b0;
 
 	// --------------------------------------------------------------------
 	//	BOOT ROM
@@ -583,6 +600,61 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_matrix_row	( 4'd0						),
 		.keyboard_matrix		( 8'hFF						),
 		.keyboard_matrix_valid	( 1'b0						)
+	);
+
+	// --------------------------------------------------------------------
+	//	Memory mapper (I/O port FCh-FFh)
+	// --------------------------------------------------------------------
+	memory_mapper u_memory_mapper (
+		.clk					( clk42m					),
+		.reset_n				( ff_mapper_reset_n			),
+		.bus_cs					( w_device_mapper_cs		),
+		.bus_address			( w_device_address[1:0]		),
+		.bus_write				( w_device_write			),
+		.bus_wdata				( w_device_wdata			),
+		.bus_valid				( w_device_valid			),
+		.bus_ready				( w_device_mapper_ready		),
+		.bus_rdata				( w_device_mapper_rdata		),
+		.bus_rdata_en			( w_device_mapper_rdata_en	),
+		.page					( w_device_address[15:14]	),
+		.mapper_segment			( w_mapper_segment			)
+	);
+
+	// --------------------------------------------------------------------
+	//	Serial SRAM self test
+	// --------------------------------------------------------------------
+	ssram_test u_ssram_test (
+		.n_reset				( ff_ssram_reset_n			),
+		.clk					( clk42m					),
+		.bus_cs					( w_ssram_test_cs			),
+		.bus_address			( w_ssram_test_address		),
+		.bus_write				( w_ssram_test_write		),
+		.bus_valid				( w_ssram_test_valid		),
+		.bus_wdata				( w_ssram_test_wdata		),
+		.bus_ready				( w_ssram_test_ready		),
+		.bus_rdata				( w_ssram_test_rdata		),
+		.bus_rdata_en			( w_ssram_test_rdata_en	),
+		.debug_signal			( w_debug_signal			)
+	);
+
+	ssram u_ssram (
+		.n_reset				( ff_ssram_reset_n			),
+		.clk					( clk42m					),
+		.clk_serial				( clk200m					),
+		.bus_cs					( w_ssram_test_cs			),
+		.bus_address			( w_ssram_test_address		),
+		.bus_write				( w_ssram_test_write		),
+		.bus_valid				( w_ssram_test_valid		),
+		.bus_wdata				( w_ssram_test_wdata		),
+		.bus_ready				( w_ssram_test_ready		),
+		.bus_rdata				( w_ssram_test_rdata		),
+		.bus_rdata_en			( w_ssram_test_rdata_en	),
+		.sram_sclk				( sram_sclk					),
+		.sram_ce0_n				( sram_ce0_n				),
+		.sram_ce1_n				( sram_ce1_n				),
+		.sram_ce2_n				( sram_ce2_n				),
+		.sram_ce3_n				( sram_ce3_n				),
+		.sram_sio				( sram_sio					)
 	);
 
 //	// --------------------------------------------------------------------

@@ -1,7 +1,7 @@
 //Copyright (C)2014-2026 Gowin Semiconductor Corporation.
 //All rights reserved.
 //File Title: Template file for instantiation
-//Part Number: GW5A-LV25MG121NES
+//Part Number: GW5A-LV25MG121NC1/I0
 //Device: GW5A-25
 //Device Version: A
 

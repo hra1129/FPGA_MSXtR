@@ -84,47 +84,25 @@ module ssram (
 	reg		[3:0]	ff_sram_ce_n;
 	reg		[3:0]	ff_so;
 	reg				ff_sclk_div;
-	reg		[1:0]	ff_sclk_div_count;
 	reg	[14:0]	ff_powerup_wait;
 	wire			w_req;
 	wire			w_sclk_enable;
-	wire			w_sclk_fall;
 	wire			w_state_tick;
 
 	assign w_req = bus_cs && bus_valid;
 	assign w_sclk_enable = (ff_state != c_state_init_w0) && (ff_state != c_state_idle) && (ff_state != c_state_read3);
-	assign w_sclk_fall = w_sclk_enable && ff_sclk_div && (ff_sclk_div_count == 2'd3);
-	assign w_state_tick = (ff_state == c_state_init_w0) || (ff_state == c_state_idle) || (ff_state == c_state_read3) || w_sclk_fall;
+	assign w_state_tick = (ff_state == c_state_init_w0) || (ff_state == c_state_idle) || (ff_state == c_state_read3) || ff_sclk_div;
 
-	// Internal SCLK divider: input clock is clk_serial, output SCLK becomes quarter-rate.
+	// Internal SCLK divider: input clock is 200.452MHz, output SCLK becomes half-rate.
 	always @( posedge clk_serial ) begin
 		if( !n_reset ) begin
-			ff_sclk_div		<= 1'b0;
-			ff_sclk_div_count <= 2'd0;
+			ff_sclk_div <= 1'b0;
 		end
-		else if( !w_sclk_enable ) begin
-			ff_sclk_div		<= 1'b0;
-			ff_sclk_div_count <= 2'd0;
+		else if( w_sclk_enable ) begin
+			ff_sclk_div <= ~ff_sclk_div;
 		end
 		else begin
-			case( ff_sclk_div_count )
-			2'd0: begin
-				ff_sclk_div		<= 1'b0;
-				ff_sclk_div_count <= 2'd1;
-			end
-			2'd1: begin
-				ff_sclk_div		<= 1'b1;
-				ff_sclk_div_count <= 2'd2;
-			end
-			2'd2: begin
-				ff_sclk_div		<= 1'b1;
-				ff_sclk_div_count <= 2'd3;
-			end
-			default: begin
-				ff_sclk_div		<= 1'b0;
-				ff_sclk_div_count <= 2'd0;
-			end
-			endcase
+			ff_sclk_div <= 1'b0;
 		end
 	end
 

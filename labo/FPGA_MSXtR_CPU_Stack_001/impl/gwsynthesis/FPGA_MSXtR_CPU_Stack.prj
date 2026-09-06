@@ -25,6 +25,7 @@
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\gowin_pll\gowin_pll_mod.v" type="verilog"/>
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\msx_slot\msx_slot.v" type="verilog"/>
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\msx_slot\msx_slot_decode.v" type="verilog"/>
+        <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\memory_mapper\memory_mapper.v" type="verilog"/>
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\pll_init.v" type="verilog"/>
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ppi\ppi.v" type="verilog"/>
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026.v" type="verilog"/>
@@ -33,6 +34,7 @@
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi\spi.v" type="verilog"/>
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi_rom\ip_spi_rom.v" type="verilog"/>
         <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ssram\ssram.v" type="verilog"/>
+        <File path="C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ssram\ssram_test.v" type="verilog"/>
     </FileList>
     <OptionList>
         <Option type="disable_insert_pad" value="0"/>
