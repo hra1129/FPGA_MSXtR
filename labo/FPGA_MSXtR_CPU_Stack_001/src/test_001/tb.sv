@@ -304,6 +304,21 @@ module tb ();
 		end
 	endtask
 
+	task automatic spi_set_bus_owner(
+		input		owner
+	);
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h10 );
+			spi_send_byte( { 7'd0, owner } );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
 	// --------------------------------------------------------------------
 	//	Task: spi_wait_intr
 	//	  Waits for mcu_intr (read data loaded into the SPI shifter).
@@ -666,7 +681,7 @@ module tb ();
 		flash_rom1_read_data = 8'h5C;
 
 		force u_dut.w_bus_m1			= 1'b0;
-		force u_dut.w_primary_slot		= 8'h55;
+		force u_dut.w_primary_slot		= 8'hFF;
 		force u_dut.w_secondary_slot0	= 8'h00;
 		force u_dut.w_secondary_slot3	= 8'h00;
 		force u_dut.w_high_speed_mode	= 1'b0;
@@ -1225,6 +1240,46 @@ module tb ();
 				pass_count = pass_count + 1;
 			end
 			else begin
+				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 12: Pico bus request is held while CPU owns the bus
+		// ================================================================
+		test_no = 12;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Pico bus request waits while CPU owns the bus", test_no );
+
+		begin
+			int wait_count;
+
+			spi_set_bus_owner( 1'b1 );
+
+			wait_count = 0;
+			while( (u_dut.w_active_bus_owner == 1'b0) && (wait_count < 2000) ) begin
+				@( posedge u_dut.clk42m );
+				wait_count = wait_count + 1;
+			end
+
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h03 );
+			spi_send_byte( 8'h00 );
+			spi_send_byte( 8'h20 );
+			spi_send_byte( 8'h99 );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+
+			repeat( 50 ) @( posedge u_dut.clk42m );
+
+			if( u_dut.w_active_bus_owner === 1'b1 && u_dut.w_bus_ctrl_valid === 1'b1 && u_dut.w_bus_ctrl_ready === 1'b0 ) begin
+				$display( "[TEST %0d] PASS: Pico request is held with ready=0 while CPU owns bus", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: active_owner=%b ctrl_valid=%b ctrl_ready=%b", test_no, u_dut.w_active_bus_owner, u_dut.w_bus_ctrl_valid, u_dut.w_bus_ctrl_ready );
 				fail_count = fail_count + 1;
 			end
 		end

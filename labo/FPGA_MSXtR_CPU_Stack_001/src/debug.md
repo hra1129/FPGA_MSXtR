@@ -14,7 +14,7 @@
 ### トップ接続 (FPGA_MSXtR_CPU_Stack.v)
 - `w_ssram_address[20:0] = { w_mapper_segment[6:0], w_device_address[13:0] }`
 - ssram bus_address[20:0]: [18:0]=チップ内アドレス(512KB), [20:19]=チップ選択
-- address_decode: `ssram_cs = ~device_io & (device_address[15:14] != 2'd0)` (page1-3)
+- address_decode: `ssram_cs = slot3_0_selected & ~device_io & (device_address[15:14] != 2'd0)` (SLOT#3-0のpage1-3)
 - Pico テストはセグメント1-3設定なので SRAM アドレス 0x004000-0x00FFFF (chip0 のみ使用)
 
 ### ssram.v 現在の状態 (ワークツリー)

@@ -44,6 +44,8 @@
 //			  -> flashrom_en=1 during bus access, flashrom_address=20bit address
 //		0x0E: FlashROM read  [cmd=0x0E][addr_l][addr_m][addr_h][dummy]
 //			  -> flashrom_en=1 during bus access, returns bus_rdata on dummy byte
+//		0x10: Bus owner select [cmd=0x10][owner]
+//			  -> bus_owner=owner[0], no bus access
 //		0xFF: Presence check [cmd=0xFF]                             (1 byte)
 //			  -> returns 0x64 on MISO, no bus access, ip_spi stays ready to receive the next command
 //
@@ -88,7 +90,11 @@ module tb ();
 	reg				spi_mosi;
 	wire			spi_miso;
 	wire			spi_intr;
-		wire			bootrom_en;
+	wire			bootrom_en;
+	wire			bus_owner;
+	wire	[3:0]	keyboard_matrix_row;
+	wire	[7:0]	keyboard_matrix;
+	wire			keyboard_matrix_valid;
 	reg		[7:0]	debug_signal;
 	wire	[19:0]	flashrom_address;
 	wire			flashrom_en;
@@ -106,6 +112,8 @@ module tb ();
 	reg		[19:0]	captured_flashrom_address;
 	reg				captured_flashrom_en;
 	reg				bus_valid_d;		//	1-cycle delayed bus_valid for edge detection
+	int				keyboard_update_count;
+	reg		[7:0]	captured_keyboard [0:11];
 
 	//	 bus_valid is held high until bus_ready acknowledges (multi-cycle).
 	//	 Count only the rising edge (0→1) so each transaction is counted once.
@@ -119,6 +127,7 @@ module tb ();
 			captured_write   <= 1'b0;
 			captured_flashrom_address <= 20'h00000;
 			captured_flashrom_en      <= 1'b0;
+			keyboard_update_count    <= 0;
 		end else begin
 			bus_valid_d <= bus_valid;
 			if ( bus_valid && !bus_valid_d ) begin
@@ -129,6 +138,12 @@ module tb ();
 				captured_write   <= bus_write;
 				captured_flashrom_address <= flashrom_address;
 				captured_flashrom_en      <= flashrom_en;
+			end
+			if( keyboard_matrix_valid ) begin
+				if( keyboard_matrix_row < 4'd12 ) begin
+					captured_keyboard[ keyboard_matrix_row ] <= keyboard_matrix;
+				end
+				keyboard_update_count <= keyboard_update_count + 1;
 			end
 		end
 	end
@@ -173,6 +188,10 @@ module tb ();
 		.msx_reset_n	( 				),
 		.msx_pause		( 				),
 		.bootrom_en		( bootrom_en	),
+		.bus_owner		( bus_owner		),
+		.keyboard_matrix_row	( keyboard_matrix_row	),
+		.keyboard_matrix		( keyboard_matrix		),
+		.keyboard_matrix_valid	( keyboard_matrix_valid	),
 		.debug_signal	( debug_signal	),
 		.flashrom_address	( flashrom_address	),
 		.flashrom_en		( flashrom_en		)
@@ -1114,6 +1133,123 @@ module tb ();
 			else begin
 				$display( "[TEST %0d] FAIL: flashrom read data = 0x%02X (expected 0x5C)", test_no, read_data );
 				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 13: Bus owner select (command 0x10)
+		// ================================================================
+		test_no = 13;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Bus owner select: cmd=0x10", test_no );
+
+		reset_n = 1'b0;
+		repeat( 3 ) @( posedge clk );
+		reset_n = 1'b1;
+		repeat( 5 ) @( posedge clk );
+
+		begin
+			int cnt_before;
+			cnt_before = bus_valid_count;
+
+			if( bus_owner === 1'b0 ) begin
+				$display( "[TEST %0d] PASS: bus_owner initial value = 0", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: bus_owner initial value = %b (expected 0)", test_no, bus_owner );
+				fail_count = fail_count + 1;
+			end
+
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h10 );
+			spi_send_byte( 8'h01 );
+			repeat( 20 ) @( posedge clk );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( bus_owner === 1'b1 && spi_intr === 1'b0 && bus_valid_count === cnt_before ) begin
+				$display( "[TEST %0d] PASS: cmd=0x10 owner=1 sets bus_owner=1, no bus access", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: owner=1 bus_owner=%b spi_intr=%b bus_count=%0d", test_no, bus_owner, spi_intr, bus_valid_count );
+				fail_count = fail_count + 1;
+			end
+
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h10 );
+			spi_send_byte( 8'h00 );
+			repeat( 20 ) @( posedge clk );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( bus_owner === 1'b0 && spi_intr === 1'b0 && bus_valid_count === cnt_before ) begin
+				$display( "[TEST %0d] PASS: cmd=0x10 owner=0 sets bus_owner=0, no bus access", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: owner=0 bus_owner=%b spi_intr=%b bus_count=%0d", test_no, bus_owner, spi_intr, bus_valid_count );
+				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 14: Keyboard matrix bulk update (command 0x11)
+		// ================================================================
+		test_no = 14;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Keyboard matrix bulk update: cmd=0x11", test_no );
+
+		reset_n = 1'b0;
+		repeat( 3 ) @( posedge clk );
+		reset_n = 1'b1;
+		repeat( 5 ) @( posedge clk );
+
+		begin
+			int cnt_before;
+			int i;
+			reg [7:0] expected [0:11];
+
+			cnt_before = bus_valid_count;
+			for( i = 0; i < 12; i++ ) begin
+				expected[i] = 8'h80 + i;
+			end
+
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h11 );
+			for( i = 0; i < 12; i++ ) begin
+				spi_send_byte( expected[i] );
+				repeat( 20 ) @( posedge clk );
+			end
+			repeat( 20 ) @( posedge clk );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( keyboard_update_count === 12 && bus_valid_count === cnt_before && spi_intr === 1'b0 ) begin
+				$display( "[TEST %0d] PASS: 12 rows updated without bus access or interrupt", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: update_count=%0d bus_count=%0d spi_intr=%b", test_no, keyboard_update_count, bus_valid_count, spi_intr );
+				fail_count = fail_count + 1;
+			end
+
+			for( i = 0; i < 12; i++ ) begin
+				if( captured_keyboard[i] === expected[i] ) begin
+					$display( "[TEST %0d] PASS: row %0d = 0x%02X", test_no, i, captured_keyboard[i] );
+					pass_count = pass_count + 1;
+				end
+				else begin
+					$display( "[TEST %0d] FAIL: row %0d = 0x%02X (expected 0x%02X)", test_no, i, captured_keyboard[i], expected[i] );
+					fail_count = fail_count + 1;
+				end
 			end
 		end
 

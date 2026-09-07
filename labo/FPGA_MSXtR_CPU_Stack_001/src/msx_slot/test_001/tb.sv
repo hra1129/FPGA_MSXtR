@@ -447,7 +447,7 @@ module tb;
 		wait_rd_n_checked( read_timeout );
 		check( !read_timeout, "SLOT#0-1 page0: slot_rd_n did not assert" );
 		check( slot_rom0_ce_n == 1'b0, "SLOT#0-1 page0 did not assert ROM0 CE" );
-		check( slot_a == 19'h00000, "SLOT#0-1 page0 bus address mismatch" );
+		check( slot_a == 19'h08000, "SLOT#0-1 page0 FlashROM address mismatch" );
 		wait_ready();
 		slot_d_drive	= 1'b0;
 
@@ -459,7 +459,7 @@ module tb;
 		wait_rd_n_checked( read_timeout );
 		check( !read_timeout, "SLOT#3-1 page1: slot_rd_n did not assert" );
 		check( slot_rom0_ce_n == 1'b0, "SLOT#3-1 page1 did not assert ROM0 CE" );
-		check( slot_a == 19'h04000, "SLOT#3-1 page1 bus address mismatch" );
+		check( slot_a == 19'h24000, "SLOT#3-1 page1 FlashROM address mismatch" );
 		wait_rdata_en_checked( read_timeout );
 		check( !read_timeout, "SLOT#3-1 page1: bus_rdata_en did not assert" );
 		check( bus_rdata == 8'he2, "SLOT#3-1 page1 read data mismatch" );

@@ -62,16 +62,64 @@ static char hex_to_char(uint8_t value) {
 }
 
 // ---------------------------------------------------------
-static void dump_boot_rom(void) {
+static void dump_slot0(void) {
 	char s_line[16 * 3 + 1];
 	char *p_dest;
 	uint16_t address;
 	int i, j;
 	uint8_t rom_data;
 
-	printf( "Dump BootROM\r\n" );
+	printf( "Dump SLOT#0-0\r\n" );
+	fpga_outport( 0xA8, 0 );			// 全ページ SLOT#0 を選択
+	fpga_poke( 0xFFFF, 0 );				// 全ページ SLOT#0-0 を選択
+	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
+	printf( "-- SLOT#0 Secondary Slot Selector: 0x%02X\r\n", fpga_peek( 0xFFFF ) );
 	for( i = 0; i < 16; i++ ) {
 		address = (uint16_t)(i * 16);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+
+	printf( "Dump SLOT#0-2\r\n" );
+	fpga_outport( 0xA8, 0 );			// 全ページ SLOT#0 を選択
+	fpga_poke( 0xFFFF, 0xAA );			// 全ページ SLOT#0-2 を選択
+	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
+	printf( "-- SLOT#0 Secondary Slot Selector: 0x%02X\r\n", fpga_peek( 0xFFFF ) );
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16 + 0x4000);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+
+	printf( "Dump SLOT#3-1\r\n" );
+	fpga_outport( 0xA8, 0xFF );			// 全ページ SLOT#3 を選択
+	fpga_poke( 0xFFFF, 0x55 );			// 全ページ SLOT#3-1 を選択
+	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
+	printf( "-- SLOT#3 Secondary Slot Selector: 0x%02X\r\n", fpga_peek( 0xFFFF ) );
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16 + 0x4000);
 		printf( "%04X: ", address );
 		p_dest = s_line;
 		for( j = 0; j < 16; j++ ) {
@@ -651,6 +699,7 @@ int main(void) {
 	uint8_t prev_mat11 = 0xFF;
 	uint8_t prev_mat00 = 0xFF;
 	uint8_t prev_mat01 = 0xFF;
+	bool pico_bus_owner = true;
 	bool reset_pressed;
 	bool prev_reset_pressed;
 
@@ -667,8 +716,20 @@ int main(void) {
 	sleep_ms(100);
 
 	// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
-	// を実行するので、リセット解除後に、またしばらく待つ必要がある
+	// を実行し、その間 slot_wait_n = L にしてくる。それが解除されるまで待つ。
+	fpga_bootrom_enable( false );
+	fpga_msx_pause( true );
+	//fpga_set_bus_owner( 1 );
 	fpga_msx_reset( false );
+
+	// ★ToDo: 現状 /WAIT のあたりがおかしいので下記コードで無限ループに入る、要調査
+	//while( fpga_get_wait_status() ) {
+	//	printf( "Waiting for FPGA to be ready...\n" );
+	//	sleep_us( 10 );
+	//}
+	sleep_ms( 500 );		//	★代用
+	fpga_msx_pause( false );
+
 	prev_reset_pressed = mode_switch_is_reset_pressed();
 
 	//	VDPに対して初期化処理を行う
@@ -678,14 +739,28 @@ int main(void) {
 	while (true) {
 		reset_pressed = mode_switch_is_reset_pressed();
 		if( reset_pressed != prev_reset_pressed ) {
-			fpga_msx_reset( reset_pressed );
+			if( reset_pressed ) {
+				fpga_msx_reset( reset_pressed );
+			}
+			else if( !reset_pressed ) {
+				fpga_msx_pause( true );
+				fpga_msx_reset( reset_pressed );
+				while( fpga_get_wait_status() ) {
+					sleep_us( 10 );
+				}
+				sleep_ms( 500 );		//	★代用
+				fpga_msx_pause( false );
+				vdp_set_screen1();
+				vdp_set_screen1_font();
+				vdp_set_screen1_message();
+			}
 			prev_reset_pressed = reset_pressed;
 		}
 
 		//	Menuボタンが押されたかどうかを確認する
 		if( (prev_mat11 & 0x01) && !(keymatrix[11] & 0x01) ) {
-			//	MENUキーが押されたタイミングなら、ConfigROM のダンプ処理を実行する
-			dump_boot_rom();
+			//	MENUキーが押されたタイミングなら、SLOT#0-0 のダンプ処理を実行する
+			dump_slot0();
 		}
 		if( (prev_mat00 & 0x02) && !(keymatrix[0] & 0x02) ) {
 			//	1キーが押されたタイミングなら、VDP のステータスレジスタを表示する
@@ -729,9 +804,24 @@ int main(void) {
 			//	9キーが押されたタイミングなら、SerialSRAM の書き込み/読み出しテストを実行する
 			test_ssram_memory();
 		}
+		if( (prev_mat01 & 0x04) && !(keymatrix[1] & 0x04) ) {
+			//	0キーが押されたタイミングなら、Picoへバス所有権を戻す
+			printf( "Returning bus ownership to Pico\n" );
+			fpga_set_bus_owner( 0 );
+			pico_bus_owner = true;
+		}
+		if( (prev_mat01 & 0x08) && !(keymatrix[1] & 0x08) ) {
+			//	-キーが押されたタイミングなら、MSX CPUへバス所有権を渡す
+			printf( "Passing bus ownership to MSX CPU\n" );
+			fpga_set_bus_owner( 1 );
+			pico_bus_owner = false;
+		}
 		prev_mat00 = keymatrix[0];
 		prev_mat11 = keymatrix[11];
 		prev_mat01 = keymatrix[1];
+		if( pico_bus_owner ) {
+			fpga_set_keyboard_matrix( keymatrix );
+		}
 
 		for( i = 0; i < 12; i++ ) {
 			matrix = keymatrix[i];
@@ -750,7 +840,7 @@ int main(void) {
 			vdp_set_vram_address( 0x1800 + i * 32 + 64 );
 			vdp_write_vram( s_keyline, 32 );
 		}
-		sleep_ms(10);
+		sleep_ms(5);
 	}
 	return 0;
 }

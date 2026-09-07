@@ -92,7 +92,7 @@ static bool fpga_wait_ready( void ) {
 		spi_write_read_blocking( SPI0_PORT, &dummy, &busy, 1 );
 		gpio_put( SPI0_CSN_PIN, 1 );
 
-		if( busy == 0x00 ) {
+		if( (busy & 1) == 0x00 ) {
 			return true;
 		}
 		if( time_reached( timeout_time ) ) {
@@ -101,6 +101,24 @@ static bool fpga_wait_ready( void ) {
 		}
 		sleep_us( 10 );
 	}
+}
+
+// ---------------------------------------------------------
+//	/WAIT の状態を取得する
+//	0: /WAIT がアサートされていない (READY)
+//	1: /WAIT がアサートされている (BUSY)
+bool fpga_get_wait_status( void ) {
+	uint8_t cmd;
+	uint8_t dummy;
+	uint8_t busy;
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	cmd = 0x05;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	dummy = 0x00;
+	spi_write_read_blocking( SPI0_PORT, &dummy, &busy, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	return( (busy & 2) == 2 );
 }
 
 // ---------------------------------------------------------
@@ -348,6 +366,42 @@ void fpga_bootrom_enable( bool enable ) {
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = enable ? 0x0B : 0x0C;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+}
+
+// ---------------------------------------------------------
+void fpga_set_bus_owner( uint8_t owner ) {
+	uint8_t cmd;
+
+	if( !fpga_wait_ready() ) {
+		return;
+	}
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	cmd = 0x10;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	cmd = owner & 0x01;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+}
+
+// ---------------------------------------------------------
+void fpga_set_keyboard_matrix( const uint8_t *matrix ) {
+	uint8_t cmd;
+
+	if( !fpga_wait_ready() ) {
+		return;
+	}
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	cmd = 0x11;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	for( uint8_t index = 0; index < 12; index++ ) {
+		spi_write_blocking( SPI0_PORT, &matrix[index], 1 );
+		sleep_us( 2 );
+	}
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 }

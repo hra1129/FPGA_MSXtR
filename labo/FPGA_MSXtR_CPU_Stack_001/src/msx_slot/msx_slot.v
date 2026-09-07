@@ -279,30 +279,30 @@ module msx_slot #(
 	//	Address decoder
 	// ---------------------------------------------------------
 	msx_slot_decode u_decode (
-		.reset_n			( reset_n			),
-		.clk_42m			( clk_42m			),
-		.bus_address		( ff_bus_address	),
-		.bus_io				( ff_bus_io			),
-		.bus_write			( ff_bus_write		),
+		.reset_n			( reset_n							),
+		.clk_42m			( clk_42m							),
+		.bus_address		( ff_bus_address					),
+		.bus_io				( ff_bus_io							),
+		.bus_write			( ff_bus_write						),
 		.bus_valid			( ff_bus_valid & ~ff_flashrom_en	),
-		.bus_ready			( 1'b1				),
-		.bus_wdata			( ff_bus_wdata		),
-		.primary_slot		( primary_slot		),
-		.secondary_slot0	( secondary_slot0	),
-		.secondary_slot3	( secondary_slot3	),
-		.high_speed_mode	( high_speed_mode	),
-		.device_address		( device_address	),
-		.device_io			( device_io			),
-		.device_write		( device_write		),
-		.device_valid		( device_valid		),
-		.device_ready		( device_ready		),
-		.device_wdata		( device_wdata		),
-		.device_rdata		( device_rdata		),
-		.device_rdata_en	( device_rdata_en	),
-		.rom_address		( w_rom_address		),
-		.rom_address_en		( w_rom_address_en	),
-		.rom0_ce_n			( w_rom0_ce_n		),
-		.rom1_ce_n			( w_rom1_ce_n		)
+		.bus_ready			( 1'b1								),
+		.bus_wdata			( ff_bus_wdata						),
+		.primary_slot		( primary_slot						),
+		.secondary_slot0	( secondary_slot0					),
+		.secondary_slot3	( secondary_slot3					),
+		.high_speed_mode	( high_speed_mode					),
+		.device_address		( device_address					),
+		.device_io			( device_io							),
+		.device_write		( device_write						),
+		.device_valid		( device_valid						),
+		.device_ready		( device_ready						),
+		.device_wdata		( device_wdata						),
+		.device_rdata		( device_rdata						),
+		.device_rdata_en	( device_rdata_en					),
+		.rom_address		( w_rom_address						),
+		.rom_address_en		( w_rom_address_en					),
+		.rom0_ce_n			( w_rom0_ce_n						),
+		.rom1_ce_n			( w_rom1_ce_n						)
 	);
 
 	// ---------------------------------------------------------
@@ -423,8 +423,8 @@ module msx_slot #(
 		end
 	end
 
-	assign w_flashrom_access	= ff_sequence_active & ~w_refresh_active & ff_flashrom_en;
-	assign w_req_io				= ff_bus_io & ~ff_flashrom_en;
+	assign w_flashrom_access		= ff_sequence_active & ~w_refresh_active & ff_flashrom_en;
+	assign w_req_io					= ff_bus_io & ~ff_flashrom_en;
 	assign w_req_memory				= ff_sequence_active & (w_refresh_active | (~ff_bus_io & ~ff_flashrom_en));
 	assign w_req_read				= ff_sequence_active & ~w_refresh_active & ~ff_bus_write;
 	assign w_req_write				= ff_sequence_active & ~w_refresh_active &  ff_bus_write;
@@ -438,8 +438,8 @@ module msx_slot #(
 	assign w_req_slot3				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & (w_req_primary_slot == 2'd3);
 	assign w_req_cs1				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & ~ff_bus_write & (w_req_page == 2'd1);
 	assign w_req_cs2				= ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & ~ff_bus_write & (w_req_page == 2'd2);
-	assign w_req_rom0				= (~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & ~w_rom0_ce_n) | (w_flashrom_access & ~ff_flashrom_address[19]);
-	assign w_req_rom1				= (~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en & ~w_rom1_ce_n) | (w_flashrom_access &  ff_flashrom_address[19]);
+	assign w_req_rom0				=(~w_refresh_active & ~ff_flashrom_en & ~w_rom0_ce_n) | (w_flashrom_access & ~ff_flashrom_address[19]);
+	assign w_req_rom1				=(~w_refresh_active & ~ff_flashrom_en & ~w_rom1_ce_n) | (w_flashrom_access &  ff_flashrom_address[19]);
 
 	//	リフレッシュ用アイドルタイマ: RFSHが立つ度に0へ戻し、c_refresh_timeoutで飽和させる
 	always @( posedge clk_42m ) begin
@@ -600,6 +600,9 @@ module msx_slot #(
 		if( !reset_n ) begin
 			ff_slot_a <= 19'd0;
 		end
+		else if( ff_sequence_active && (ff_t_state == c_t2) && (ff_slot_timing == c_sig_sltsl_assert) && (w_req_rom0 || w_req_rom1) ) begin
+			ff_slot_a <= w_rom_address;
+		end
 		else if( (ff_sequence_active | w_seq_start) && (ff_t_state == c_t1) && (ff_slot_timing == c_sig_start) ) begin
 			ff_slot_a <= w_refresh_active ? { 11'd0, ff_refresh_addr } :
 						 ff_flashrom_en ? ff_flashrom_address[18:0] : { 3'd0, ff_bus_address };
@@ -669,7 +672,7 @@ module msx_slot #(
 			ff_slot_rom0_ce_n <= 1'b1;
 			ff_slot_rom1_ce_n <= 1'b1;
 		end
-		else if( ff_sequence_active & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_sltsl_assert) ) begin
+		else if( ff_sequence_active & (ff_t_state == c_t2) & (ff_slot_timing == c_sig_sltsl_assert)) begin
 			ff_slot_rom0_ce_n <= ~w_req_rom0;
 			ff_slot_rom1_ce_n <= ~w_req_rom1;
 		end
@@ -727,11 +730,16 @@ module msx_slot #(
 	assign slot_cs1_n		= ff_slot_cs1_n;
 	assign slot_cs2_n		= ff_slot_cs2_n;
 	assign slot_cs12_n		= ff_slot_cs12_n;
+	/*
 	//	rom_address_en は I/O アクセスでは更新されないため、I/O サイクル中は必ずバスアドレスを出す
-	assign slot_a			= ~ff_slot_rfsh_n ? { 11'd0, ff_refresh_addr } :
-						  w_flashrom_access ? ff_flashrom_address[18:0] :
-						  (~ff_slot_rd_n | ~ff_slot_wr_n) ? { 3'd0, ff_bus_address } :
-						  (w_rom_address_en & ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en) ? w_rom_address : ff_slot_a;
+	assign slot_a			=  ~ff_slot_rfsh_n														? { 11'd0, ff_refresh_addr } :
+							  w_flashrom_access														? ff_flashrom_address[18:0] :
+							  (~ff_slot_rd_n | ~ff_slot_wr_n)										? { 3'd0, ff_bus_address } :
+							  (w_rom_address_en & ~w_refresh_active & ~ff_bus_io & ~ff_flashrom_en)	? w_rom_address : ff_slot_a;
+	*/
+	assign slot_a = !ff_slot_rfsh_n ? { 11'd0, ff_refresh_addr } :
+					w_flashrom_access ? ff_flashrom_address[18:0] :
+					(w_rom_address_en && !w_refresh_active && !ff_bus_io && !ff_flashrom_en) ? w_rom_address : ff_slot_a;
 	//	slot_data_dir: 1 = Write(CPU→Slot), 0 = Read(Slot→CPU)
 	assign slot_data_dir	= ff_slot_wdata_en;
 	assign slot_wr_n		= ff_slot_wr_n;

@@ -51,9 +51,14 @@ module ip_spi (
 	output			spi_miso,
 	output			spi_intr,
 	//	MSX Hardware control
+	input			slot_wait_n,
 	output			msx_reset_n,
 	output			msx_pause,
 	output			bootrom_en,
+	output			bus_owner,
+	output	[3:0]	keyboard_matrix_row,
+	output	[7:0]	keyboard_matrix,
+	output			keyboard_matrix_valid,
 	input	[7:0]	debug_signal,
 	output	[19:0]	flashrom_address,
 	output			flashrom_en
@@ -70,6 +75,8 @@ module ip_spi (
 	localparam		ST_FLASH_ADDR_L	= 4'd9;
 	localparam		ST_FLASH_ADDR_M	= 4'd10;
 	localparam		ST_FLASH_ADDR_H	= 4'd11;
+	localparam		ST_BUS_OWNER	= 4'd12;
+	localparam		ST_KEYBOARD	= 4'd13;
 	localparam		SPI_RX_WDATA	= 8'h64;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
@@ -91,11 +98,20 @@ module ip_spi (
 	reg				ff_msx_reset_n;
 	reg				ff_msx_pause;
 	reg				ff_bootrom_en;
+	reg				ff_bus_owner;
+	reg		[3:0]	ff_keyboard_matrix_row;
+	reg		[7:0]	ff_keyboard_matrix;
+	reg		[3:0]	ff_keyboard_output_row;
+	reg		[7:0]	ff_keyboard_output_data;
+	reg				ff_keyboard_matrix_valid;
+	reg				ff_keyboard_update_toggle;
+	reg				ff_keyboard_update_toggle_d;
 	reg		[7:0]	ff_debug_signal;
 	reg				ff_suppress_intr;
 	reg				ff_suppress_intr_d1;
 	reg		[19:0]	ff_flashrom_address;
 	reg				ff_flashrom_access;
+	reg				ff_slot_wait_n;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -117,6 +133,15 @@ module ip_spi (
 		end
 	end
 
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_slot_wait_n <= 1'b1;
+		end
+		else begin
+			ff_slot_wait_n <= slot_wait_n;
+		end
+	end
+
 	// ---------------------------------------------------------
 	//	State machine
 	// ---------------------------------------------------------
@@ -134,6 +159,12 @@ module ip_spi (
 			ff_msx_reset_n	<= 1'b0;
 			ff_msx_pause	<= 1'b0;
 			ff_bootrom_en	<= 1'b1;
+			ff_bus_owner	<= 1'b0;
+			ff_keyboard_matrix_row	<= 4'd0;
+			ff_keyboard_matrix	<= 8'hFF;
+			ff_keyboard_output_row	<= 4'd0;
+			ff_keyboard_output_data	<= 8'hFF;
+			ff_keyboard_update_toggle	<= 1'b0;
 			ff_suppress_intr <= 1'b0;
 			ff_flashrom_address <= 20'd0;
 			ff_flashrom_access <= 1'b0;
@@ -187,7 +218,7 @@ module ip_spi (
 			ff_suppress_intr <= 1'b0;
 			ff_flashrom_access <= 1'b0;
 		end
-		else if( ff_spi_valid ) begin
+		else if( ff_spi_valid && !(ff_state == ST_KEYBOARD && spi_rdata_en) ) begin
 			if( spi_ready ) begin
 				ff_spi_valid	<= 1'b0;
 			end
@@ -216,6 +247,8 @@ module ip_spi (
 			//   0Ch                               ... MSX BootROM disable (bootrom_en = 0)
 			//   0Dh, addr_l, addr_m, addr_h, data  ... FlashROM write
 			//   0Eh, addr_l, addr_m, addr_h, dummy ... FlashROM read
+			//   10h, owner                         ... Bus owner select (0: SPI/Pico, 1: CPU)
+			//   11h, matrix[0..11]                 ... Keyboard matrix update
 			//   FFh                               ... presence check
 			ST_COMMAND: begin
 				if( spi_rdata_en ) begin
@@ -255,7 +288,7 @@ module ip_spi (
 					8'h05: begin
 						//	busy check --> respond immediately, no bus access involved
 						ff_state		<= ST_SEND;
-						ff_spi_wdata	<= ff_bus_valid ? 8'h01 : 8'h00;
+						ff_spi_wdata	<= { 6'd0, ~ff_slot_wait_n, ff_bus_valid };
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b1;
 					end
@@ -321,6 +354,17 @@ module ip_spi (
 						ff_bus_io		<= 1'b0;
 						ff_bus_write	<= 1'b0;
 						ff_flashrom_access <= 1'b1;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b0;
+					end
+					8'h10: begin
+						ff_state		<= ST_BUS_OWNER;
+						ff_spi_valid	<= 1'b1;
+						ff_spi_write	<= 1'b0;
+					end
+					8'h11: begin
+						ff_state		<= ST_KEYBOARD;
+						ff_keyboard_matrix_row	<= 4'd0;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b0;
 					end
@@ -408,6 +452,32 @@ module ip_spi (
 					end
 				end
 			end
+			ST_BUS_OWNER: begin
+				if( spi_rdata_en ) begin
+					ff_bus_owner	<= spi_rdata[0];
+					ff_state		<= ST_COMMAND;
+					ff_spi_wdata	<= SPI_RX_WDATA;
+					ff_spi_valid	<= 1'b1;
+					ff_spi_write	<= 1'b0;
+				end
+			end
+			ST_KEYBOARD: begin
+				if( spi_rdata_en ) begin
+					ff_keyboard_matrix		<= spi_rdata;
+					ff_keyboard_output_row	<= ff_keyboard_matrix_row;
+					ff_keyboard_output_data	<= spi_rdata;
+					ff_keyboard_update_toggle	<= ~ff_keyboard_update_toggle;
+					if( ff_keyboard_matrix_row == 4'd11 ) begin
+						ff_state		<= ST_COMMAND;
+					end
+					else begin
+						ff_keyboard_matrix_row	<= ff_keyboard_matrix_row + 4'd1;
+					end
+					ff_spi_wdata	<= SPI_RX_WDATA;
+					ff_spi_valid	<= 1'b1;
+					ff_spi_write	<= 1'b0;
+				end
+			end
 			ST_WDATA: begin
 				if( spi_rdata_en ) begin
 					ff_bus_wdata	<= spi_rdata;
@@ -420,6 +490,17 @@ module ip_spi (
 				ff_state <= ST_COMMAND;
 			end
 			endcase
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_keyboard_matrix_valid <= 1'b0;
+			ff_keyboard_update_toggle_d <= 1'b0;
+		end
+		else begin
+			ff_keyboard_matrix_valid <= ff_keyboard_update_toggle ^ ff_keyboard_update_toggle_d;
+			ff_keyboard_update_toggle_d <= ff_keyboard_update_toggle;
 		end
 	end
 
@@ -490,7 +571,11 @@ module ip_spi (
 	// ---------------------------------------------------------
 	//	MSX Hardware control
 	// ---------------------------------------------------------
-	assign msx_reset_n		= ff_msx_reset_n;
-	assign msx_pause		= ff_msx_pause;
-	assign bootrom_en		= ff_bootrom_en;
+	assign msx_reset_n				= ff_msx_reset_n;
+	assign msx_pause				= ff_msx_pause;
+	assign bootrom_en				= ff_bootrom_en;
+	assign bus_owner				= ff_bus_owner;
+	assign keyboard_matrix_row		= ff_keyboard_output_row;
+	assign keyboard_matrix			= ff_keyboard_output_data;
+	assign keyboard_matrix_valid	= ff_keyboard_matrix_valid;
 endmodule

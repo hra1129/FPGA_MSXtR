@@ -110,7 +110,7 @@ module msx_slot_decode (
 	assign w_rom0_sel		= ~bus_io & (
 								  (   ( w_primary_slot == 2'd0 ) & ~w_page[1] ) |
 								  ( ( ( w_primary_slot == 2'd3 ) & ( w_secondary_slot == 2'd1 ) ) ) |
-								  ( ( ( w_primary_slot == 2'd3 ) & ( w_secondary_slot == 2'd3 ) & ( w_page == 2'd0 ) ) ) );
+								  ( ( ( w_primary_slot == 2'd3 ) & ( w_secondary_slot == 2'd2 ) & ( w_page == 2'd1 ) ) ) );
 	//	I/O D8h〜DBh が漢字ROM(ROM1)。read が ROM アクセス、write はアドレスレジスタ設定で内部完結する
 	assign w_kanji_port		= bus_io & ( { bus_address[7:2], 2'd0 } == 8'hD8 );
 	assign w_rom1_sel		= w_kanji_port & ~bus_write;
@@ -225,8 +225,8 @@ module msx_slot_decode (
 					ff_rom_address			<= { 3'd2, 2'b11, bus_address[13:0] };
 					ff_rom_address_en		<= 1'b1;
 				end
-				{ 2'd3, 2'd3, 2'd0 }: begin
-					//	SLOT#3-3 page#0: MSX-DOS2
+				{ 2'd3, 2'd2, 2'd1 }: begin
+					//	SLOT#3-2 page#1: MSX-DOS2
 					ff_rom_address			<= { 3'd3, ff_dos_bank, bus_address[13:0] };
 					ff_rom_address_en		<= 1'b1;
 				end
@@ -238,6 +238,10 @@ module msx_slot_decode (
 		else if( bus_valid && w_rom1_sel ) begin
 			//	D8h〜DBh read: KanjiROM の読み出しアドレス
 			ff_rom_address			<= ( bus_address[1] == 1'b0 ) ? { 2'd0, ff_jis1_address } : { 2'd0, ff_jis2_address };
+			ff_rom_address_en		<= 1'b1;
+		end
+		else begin
+			ff_rom_address_en		<= 1'b0;
 		end
 	end
 

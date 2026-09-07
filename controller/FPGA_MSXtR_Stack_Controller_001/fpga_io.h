@@ -40,6 +40,7 @@
 #define IO_VDP_PORT4				0x9C
 
 void fpga_io_init( void );
+bool fpga_get_wait_status( void );
 void fpga_outport( uint8_t io_address, uint8_t data );
 uint8_t fpga_inport( uint8_t io_address );
 void fpga_poke( uint16_t io_address, uint8_t data );
@@ -49,6 +50,8 @@ uint8_t flashrom_read( uint32_t address );
 void fpga_msx_reset( bool reset_on );
 void fpga_msx_pause( bool pause_on );
 void fpga_bootrom_enable( bool enable );
+void fpga_set_bus_owner( uint8_t owner );
+void fpga_set_keyboard_matrix( const uint8_t *matrix );
 uint8_t fpga_get_debug_signal( void );
 
 #endif

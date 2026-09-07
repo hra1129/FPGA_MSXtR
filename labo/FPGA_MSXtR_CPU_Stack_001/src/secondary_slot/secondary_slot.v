@@ -35,8 +35,7 @@ module secondary_slot (
 	input			clk,
 	input			reset_n,
 	//	internal bus interface
-	input			bus_mem_cs,
-	input			bus_io_cs,
+	input			bus_io,
 	input	[15:0]	bus_address,
 	input			bus_write,
 	input	[7:0]	bus_wdata,
@@ -46,10 +45,48 @@ module secondary_slot (
 	output			bus_rdata_en,
 	//	primart slot register
 	input	[7:0]	primary_slot,
-	//	flash rom interface
-	output			slot_rom0_ce_n,
-	output			slot_rom1_ce_n,
-	output			slot_upper,
-	output	[18:0]	slot_rom_a,
+	//	secondary slot register
+	output	[7:0]	secondary_slot0,
+	output	[7:0]	secondary_slot3
 );
+	reg		[7:0]	ff_secondary_slot0;
+	reg		[7:0]	ff_secondary_slot3;
+	reg		[7:0]	ff_rdata;
+	reg				ff_rdata_en;
+	
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_secondary_slot0 <= 8'b0;
+			ff_secondary_slot3 <= 8'b0;
+		end
+		else if( ~bus_io && bus_valid && (bus_address == 16'hFFFF) && (primary_slot[7:6] == 2'd0) ) begin
+			if( bus_write ) begin
+				ff_secondary_slot0 <= bus_wdata;
+				ff_rdata_en <= 1'b0;
+			end
+			else begin
+				ff_rdata <= ~ff_secondary_slot0;
+				ff_rdata_en <= 1'b1;
+			end
+		end
+		else if( ~bus_io && bus_valid && (bus_address == 16'hFFFF) && (primary_slot[7:6] == 2'd3) ) begin
+			if( bus_write ) begin
+				ff_secondary_slot3 <= bus_wdata;
+				ff_rdata_en <= 1'b0;
+			end
+			else begin
+				ff_rdata <= ~ff_secondary_slot3;
+				ff_rdata_en <= 1'b1;
+			end
+		end
+		else begin
+			ff_rdata_en <= 1'b0;
+		end
+	end
+
+	assign secondary_slot0	= ff_secondary_slot0;
+	assign secondary_slot3	= ff_secondary_slot3;
+	assign bus_ready		= 1'b1;
+	assign bus_rdata		= ff_rdata;
+	assign bus_rdata_en		= ff_rdata_en;
 endmodule

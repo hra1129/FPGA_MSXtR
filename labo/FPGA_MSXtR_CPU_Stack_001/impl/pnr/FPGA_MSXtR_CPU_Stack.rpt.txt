@@ -12,27 +12,27 @@
   <Part Number>: GW5A-LV25MG121NC1/I0
   <Device>: GW5A-25
   <Device Version>: A
-  <Created Time>:Sun Sep  6 18:45:58 2026
+  <Created Time>:Mon Sep  7 23:13:07 2026
 
 
 2. PnR Details
 
   Running placement:
-    Placement Phase 0: CPU time = 0h 0m 0.12s, Elapsed time = 0h 0m 0.12s
-    Placement Phase 1: CPU time = 0h 0m 0.196s, Elapsed time = 0h 0m 0.196s
-    Placement Phase 2: CPU time = 0h 0m 0.097s, Elapsed time = 0h 0m 0.097s
-    Placement Phase 3: CPU time = 0h 0m 0.331s, Elapsed time = 0h 0m 0.331s
-    Total Placement: CPU time = 0h 0m 0.744s, Elapsed time = 0h 0m 0.744s
+    Placement Phase 0: CPU time = 0h 0m 0.317s, Elapsed time = 0h 0m 0.317s
+    Placement Phase 1: CPU time = 0h 0m 0.201s, Elapsed time = 0h 0m 0.201s
+    Placement Phase 2: CPU time = 0h 0m 0.437s, Elapsed time = 0h 0m 0.437s
+    Placement Phase 3: CPU time = 0h 0m 0.689s, Elapsed time = 0h 0m 0.689s
+    Total Placement: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
  Running routing:
-    Routing Phase 0: CPU time = 0h 0m 0.001s, Elapsed time = 0h 0m 0.001s
-    Routing Phase 1: CPU time = 0h 0m 0.927s, Elapsed time = 0h 0m 0.927s
-    Routing Phase 2: CPU time = 0h 0m 0.029s, Elapsed time = 0h 0m 0.029s
+    Routing Phase 0: CPU time = 0h 0m 0.002s, Elapsed time = 0h 0m 0.002s
+    Routing Phase 1: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
+    Routing Phase 2: CPU time = 0h 0m 0.049s, Elapsed time = 0h 0m 0.048s
     Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
-    Total Routing: CPU time = 0h 0m 0.957s, Elapsed time = 0h 0m 0.957s
+    Total Routing: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
  Generate output files:
     CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
 
- Total Time and Memory Usage: CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s, Peak memory usage = 783MB
+ Total Time and Memory Usage: CPU time = 0h 0m 6s, Elapsed time = 0h 0m 6s, Peak memory usage = 690MB
 
 
 3. Resource Usage Summary
@@ -40,15 +40,15 @@
   --------------------------------------------------------------------------------
   Resources                   | Usage                               | Utilization
   --------------------------------------------------------------------------------
-  Logic                       | 931/23040                           |  5%
-    --LUT,ALU,ROM16           | 931(873 LUT, 58 ALU, 0 ROM16)       | -
+  Logic                       | 2978/23040                          |  13%
+    --LUT,ALU,ROM16           | 2978(2826 LUT, 152 ALU, 0 ROM16)    | -
     --SSRAM(RAM16)            | 0                                   | -
-  Register                    | 603/23280                           |  3%
+  Register                    | 1204/23280                          |  6%
     --Logic Register as Latch | 0/23040                             |  0%
-    --Logic Register as FF    | 582/23040                           |  3%
+    --Logic Register as FF    | 1179/23040                          |  6%
     --I/O Register as Latch   | 0/240                               |  0%
-    --I/O Register as FF      | 21/240                              |  9%
-  CLS                         | 679/11520                           |  6%
+    --I/O Register as FF      | 25/240                              |  11%
+  CLS                         | 1962/11520                          |  18%
   I/O Port                    | 77/86                               |  90%
   I/O Buf                     | 69                                  | -
     --Input Buf               | 6                                   | -
@@ -84,7 +84,7 @@
   Clock Resource| Usage         | Utilization 
   ------------------------------------------
   PRIMARY       | 3/8           | 38%
-  LW            | 3/8           | 38%
+  LW            | 6/8           | 75%
   GCLK_PIN      | 30/30         | 100%
   PLLA          | 1/6           | 17%
   ==========================================
@@ -95,12 +95,15 @@
   -------------------------------------------
   Signal         | Global Clock   | Location
   -------------------------------------------
-  clk_50m_d      | PRIMARY        |  TR TL BL
-  clk215m        | PRIMARY        |  BR BL
+  clk_50m_d      | PRIMARY        |  TR TL
+  clk215m        | PRIMARY        |  TL BR BL
   clk42m         | PRIMARY        |  TR TL BR BL
   ff_spi_reset_n | LW             |  -
+  ff_z80_reset_n | LW             |  -
   slot_reset_n_d | LW             |  -
+  ff_ppi_reset_n | LW             |  -
   ff_ssram_reset_n| LW             |  -
+  w_z80_active   | LW             |  -
   ===========================================
 
 

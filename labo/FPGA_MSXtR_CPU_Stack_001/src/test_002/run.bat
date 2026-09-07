@@ -11,12 +11,14 @@ vlog ..\msx_slot\msx_slot_decode.v
 vlog ..\msx_slot\msx_slot.v
 vlog ..\address_decode\address_decode.v
 vlog ..\memory_mapper\memory_mapper.v
+vlog ..\secondary_slot\secondary_slot.v
 vlog ..\ssram\ssram.v
 vlog ..\ssram\ssram_test_model.v
 vlog ..\bootrom\ram.v
 vlog ..\bootrom\rom.v
 vlog ..\bootrom\bootrom.v
 vlog ..\ppi\ppi.v
+vlog flashrom_test_model.v
 vlog ..\cz80\cz80_alu.v
 vlog ..\cz80\cz80_mcode.v
 vlog ..\cz80\cz80_reg.v

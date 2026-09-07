@@ -106,6 +106,7 @@ module fpga_msxtr_cpu_stack (
 	reg		[1:0]	ff_button_d1;
 
 	wire			w_int_p;
+	wire			w_cpu_int_p;
 
 	wire 			w_z80_m1;
 	wire 			w_z80_mreq;
@@ -130,8 +131,11 @@ module fpga_msxtr_cpu_stack (
 	wire			w_bus_io;
 	wire			w_bus_write;
 	wire			w_bus_valid;
+	wire			w_bus_ready;
 	wire	[7:0]	w_bus_wdata;
 	wire	[15:0]	w_bus_address;
+	wire	[7:0]	w_bus_rdata;
+	wire			w_bus_rdata_en;
 
 	wire			w_bus_ctrl_io;
 	wire			w_bus_ctrl_write;
@@ -141,6 +145,22 @@ module fpga_msxtr_cpu_stack (
 	wire	[15:0]	w_bus_ctrl_address;
 	wire	[7:0]	w_bus_ctrl_rdata;
 	wire			w_bus_ctrl_rdata_en;
+	wire			w_bus_owner;
+	wire	[3:0]	w_keyboard_matrix_row;
+	wire	[7:0]	w_keyboard_matrix;
+	wire			w_keyboard_matrix_valid;
+	wire			w_active_bus_owner;
+	wire			w_mux_bus_m1;
+	wire			w_mux_bus_io;
+	wire			w_mux_bus_write;
+	wire			w_mux_bus_valid;
+	wire			w_mux_bus_ready;
+	wire	[7:0]	w_mux_bus_wdata;
+	wire	[15:0]	w_mux_bus_address;
+	wire	[7:0]	w_mux_bus_rdata;
+	wire			w_mux_bus_rdata_en;
+	wire	[19:0]	w_mux_flashrom_address;
+	wire			w_mux_flashrom_en;
 
 	wire			w_bus_bootrom_cs;
 	wire	[7:0]	w_bus_bootrom_rdata;
@@ -154,9 +174,6 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_primary_slot;
 	wire			w_keyboard_caps_led;
 	wire			w_one_bit_sound;
-	wire	[3:0]	w_keyboard_matrix_row;
-	wire	[7:0]	w_keyboard_matrix;
-	wire			w_keyboard_matrix_valid;
 
 	wire			w_bus_uart_cs;
 	wire	[7:0]	w_bus_uart_rdata;
@@ -177,6 +194,8 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_bus_erom_rdata;
 	wire			w_bus_erom_rdata_en;
 	wire			w_bus_erom_ready;
+
+	assign w_cpu_int_p = 1'b0;
 
 	wire			w_z80_active;
 	wire			w_r800_active;
@@ -204,6 +223,10 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_device_ppi_rdata;
 	wire			w_device_ppi_rdata_en;
 
+	wire			w_device_secondary_ready;
+	wire	[7:0]	w_device_secondary_rdata;
+	wire			w_device_secondary_rdata_en;
+
 	wire			w_device_mapper_cs;
 	wire			w_device_mapper_ready;
 	wire	[7:0]	w_device_mapper_rdata;
@@ -215,6 +238,9 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_device_ssram_rdata;
 	wire			w_device_ssram_rdata_en;
 	wire	[20:0]	w_ssram_address;				//	{ mapper_segment, device_address[13:0] }
+	wire			w_slot3_0_selected;
+	wire	[1:0]	w_access_primary_slot;
+	wire	[1:0]	w_access_secondary_slot3;
 
 	wire			w_bootrom_en;
 	wire	[19:0]	w_flashrom_address;
@@ -282,9 +308,9 @@ module fpga_msxtr_cpu_stack (
 
 	always @( posedge clk42m ) begin
 		ff_clock_reset_n		<= w_msx_reset_n;
-//		ff_z80_reset_n			<= 1'b0;
-//		ff_r800_reset_n			<= 1'b0;
-//		ff_s2026_reset_n		<= 1'b0;
+		ff_z80_reset_n			<= w_msx_reset_n;
+		ff_r800_reset_n			<= w_msx_reset_n;
+		ff_s2026_reset_n		<= w_msx_reset_n;
 		ff_slot_reset_n			<= w_msx_reset_n;
 //		ff_extio_reset_n		<= 1'b0;
 //		ff_config_rom_reset_n	<= 1'b0;
@@ -316,9 +342,14 @@ module fpga_msxtr_cpu_stack (
 		.spi_mosi				( mcu_mosi					),
 		.spi_miso				( mcu_miso					),
 		.spi_intr				( mcu_intr					),
+		.slot_wait_n			( slot_wait_n				),
 		.msx_reset_n			( w_msx_reset_n				),
 		.msx_pause				(							),
 		.bootrom_en				( w_bootrom_en				),
+		.bus_owner				( w_bus_owner				),
+		.keyboard_matrix_row	( w_keyboard_matrix_row		),
+		.keyboard_matrix		( w_keyboard_matrix			),
+		.keyboard_matrix_valid	( w_keyboard_matrix_valid	),
 		.debug_signal			( 8'h00						),
 		.flashrom_address		( w_flashrom_address		),
 		.flashrom_en			( w_flashrom_en				)
@@ -327,20 +358,58 @@ module fpga_msxtr_cpu_stack (
 	// --------------------------------------------------------------------
 	//	MSX Slot signal controller
 	// --------------------------------------------------------------------
+	msx_bus_mux u_msx_bus_mux (
+		.reset_n				( ff_slot_reset_n			),
+		.clk					( clk42m					),
+		.bus_owner				( w_bus_owner				),
+		.active_bus_owner		( w_active_bus_owner		),
+		.pico_bus_m1			( 1'b0						),
+		.pico_bus_address		( w_bus_ctrl_address		),
+		.pico_bus_io			( w_bus_ctrl_io				),
+		.pico_bus_write			( w_bus_ctrl_write			),
+		.pico_bus_valid			( w_bus_ctrl_valid			),
+		.pico_bus_ready			( w_bus_ctrl_ready			),
+		.pico_bus_wdata			( w_bus_ctrl_wdata			),
+		.pico_bus_rdata			( w_bus_ctrl_rdata			),
+		.pico_bus_rdata_en		( w_bus_ctrl_rdata_en		),
+		.pico_flashrom_address	( w_flashrom_address		),
+		.pico_flashrom_en		( w_flashrom_en				),
+		.cpu_bus_m1				( w_bus_m1					),
+		.cpu_bus_address		( w_bus_address				),
+		.cpu_bus_io				( w_bus_io					),
+		.cpu_bus_write			( w_bus_write				),
+		.cpu_bus_valid			( w_bus_valid				),
+		.cpu_bus_ready			( w_bus_ready				),
+		.cpu_bus_wdata			( w_bus_wdata				),
+		.cpu_bus_rdata			( w_bus_rdata				),
+		.cpu_bus_rdata_en		( w_bus_rdata_en			),
+		.msx_bus_m1				( w_mux_bus_m1				),
+		.msx_bus_address		( w_mux_bus_address			),
+		.msx_bus_io				( w_mux_bus_io				),
+		.msx_bus_write			( w_mux_bus_write			),
+		.msx_bus_valid			( w_mux_bus_valid			),
+		.msx_bus_ready			( w_mux_bus_ready			),
+		.msx_bus_wdata			( w_mux_bus_wdata			),
+		.msx_bus_rdata			( w_mux_bus_rdata			),
+		.msx_bus_rdata_en		( w_mux_bus_rdata_en		),
+		.msx_flashrom_address	( w_mux_flashrom_address	),
+		.msx_flashrom_en		( w_mux_flashrom_en			)
+	);
+
 	msx_slot u_msx_slot (
 		.reset_n				( ff_slot_reset_n			),
 		.clk_42m				( clk42m					),
-		.bus_m1					( w_bus_m1					),
-		.bus_address			( w_bus_ctrl_address		),
-		.bus_io					( w_bus_ctrl_io				),
-		.bus_write				( w_bus_ctrl_write			),
-		.bus_valid				( w_bus_ctrl_valid			),
-		.bus_ready				( w_bus_ctrl_ready			),
-		.bus_wdata				( w_bus_ctrl_wdata			),
-		.bus_rdata				( w_bus_ctrl_rdata			),
-		.bus_rdata_en			( w_bus_ctrl_rdata_en		),
-		.flashrom_address		( w_flashrom_address		),
-		.flashrom_en			( w_flashrom_en				),
+		.bus_m1					( w_mux_bus_m1				),
+		.bus_address			( w_mux_bus_address			),
+		.bus_io					( w_mux_bus_io				),
+		.bus_write				( w_mux_bus_write			),
+		.bus_valid				( w_mux_bus_valid			),
+		.bus_ready				( w_mux_bus_ready			),
+		.bus_wdata				( w_mux_bus_wdata			),
+		.bus_rdata				( w_mux_bus_rdata			),
+		.bus_rdata_en			( w_mux_bus_rdata_en		),
+		.flashrom_address		( w_mux_flashrom_address	),
+		.flashrom_en			( w_mux_flashrom_en			),
 		.primary_slot			( w_primary_slot			),
 		.secondary_slot0		( w_secondary_slot0			),
 		.secondary_slot3		( w_secondary_slot3			),
@@ -382,107 +451,114 @@ module fpga_msxtr_cpu_stack (
 
 	assign w_high_speed_mode	= 1'b0;
 
-//	// --------------------------------------------------------------------
-//	//	Z80 core
-//	// --------------------------------------------------------------------
-//
-//	//	Legasy compatible CPU core
-//	cz80_inst u_z80 (
-//		.reset_n				( ff_z80_reset_n			),
-//		.clk					( clk42m					),
-//		.enable					( w_z80_active				),
-//		.wait_p					( 1'b0						),
-//		.int_p					( w_int_p					),
-//		.nmi_n					( 1'b1						),
-//		.busrq					( 1'b0						),
-//		.m1						( w_z80_m1					),
-//		.mreq					( w_z80_mreq				),
-//		.iorq					( w_z80_iorq				),
-//		.rd						( w_z80_rd					),
-//		.wr						( w_z80_wr					),
-//		.rfsh					( w_z80_rfsh				),
-//		.halt_n					( 							),
-//		.busak					( 							),
-//		.a						( w_z80_a					),
-//		.wdata					( w_z80_wdata				),
-//		.rdata					( w_z80_rdata				)
-//	);
-//
-//	//	Highspeed CPU core
-//	cz80_inst u_r800 (
-//		.reset_n				( ff_r800_reset_n			),
-//		.clk					( clk42m					),
-//		.enable					( w_r800_active				),
-//		.wait_p					( 1'b0						),
-//		.int_p					( w_int_p					),
-//		.nmi_n					( 1'b1						),
-//		.busrq					( 1'b0						),
-//		.m1						( w_r800_m1					),
-//		.mreq					( w_r800_mreq				),
-//		.iorq					( w_r800_iorq				),
-//		.rd						( w_r800_rd					),
-//		.wr						( w_r800_wr					),
-//		.rfsh					( w_r800_rfsh				),
-//		.halt_n					( 							),
-//		.busak					( 							),
-//		.a						( w_r800_a					),
-//		.wdata					( w_r800_wdata				),
-//		.rdata					( w_r800_rdata				)
-//	);
-//
-//	assign w_int_p			= 1'b0;
-//
-//	// --------------------------------------------------------------------
-//	//	System Controller
-//	// --------------------------------------------------------------------
-//	s2026 u_s2026 (
-//		.reset_n				( ff_s2026_reset_n			),
-//		.clk					( clk42m					),
-//		.enable_z80				( w_3_579m					),
-//		.enable_r800			( w_21m						),
-//		.z80_m1					( w_z80_m1					),
-//		.z80_mreq				( w_z80_mreq				),
-//		.z80_iorq				( w_z80_iorq				),
-//		.z80_rd					( w_z80_rd					),
-//		.z80_wr					( w_z80_wr					),
-//		.z80_a					( w_z80_a					),
-//		.z80_wdata				( w_z80_wdata				),
-//		.z80_rdata				( w_z80_rdata				),
-//		.r800_m1				( w_r800_m1					),
-//		.r800_mreq				( w_r800_mreq				),
-//		.r800_iorq				( w_r800_iorq				),
-//		.r800_rd				( w_r800_rd					),
-//		.r800_wr				( w_r800_wr					),
-//		.r800_a					( w_r800_a					),
-//		.r800_wdata				( w_r800_wdata				),
-//		.r800_rdata				( w_r800_rdata				),
-//		.bus_bootrom_cs			( w_bus_bootrom_cs			),
-//		.bus_bootrom_rdata		( w_bus_bootrom_rdata		),
-//		.bus_bootrom_rdata_en	( w_bus_bootrom_rdata_en	),
-//		.bus_bootrom_ready		( w_bus_bootrom_ready		),
-//		.bus_ppi_cs				( w_bus_ppi_cs				),
-//		.bus_ppi_rdata			( w_bus_ppi_rdata			),
-//		.bus_ppi_rdata_en		( w_bus_ppi_rdata_en		),
-//		.bus_ppi_ready			( w_bus_ppi_ready			),
-//		.bus_uart_cs			( w_bus_uart_cs				),
-//		.bus_uart_rdata			( w_bus_uart_rdata			),
-//		.bus_uart_rdata_en		( w_bus_uart_rdata_en		),
-//		.bus_uart_ready			( w_bus_uart_ready			),
-//		.bus_extio_cs			( w_bus_extio_cs			),
-//		.bus_extio_rdata		( w_bus_extio_rdata			),
-//		.bus_extio_rdata_en		( w_bus_extio_rdata_en		),
-//		.bus_extio_ready		( w_bus_extio_ready			),
-//		.bus_m1					( w_bus_m1					),
-//		.bus_io					( w_bus_io					),
-//		.bus_write				( w_bus_write				),
-//		.bus_valid				( w_bus_valid				),
-//		.bus_wdata				( w_bus_wdata				),
-//		.bus_address			( w_bus_address				),
-//		.z80_active				( w_z80_active				),
-//		.r800_active			( w_r800_active				),
-//		.processor_mode			( w_processor_mode			)		//	0: R800, 1: Z80
-//	);
-//
+	// --------------------------------------------------------------------
+	//	Secondary slot
+	// --------------------------------------------------------------------
+	secondary_slot u_secondary_slot (
+		.clk					( clk42m						),
+		.reset_n				( ff_slot_reset_n				),
+		.bus_io					( w_device_io					),
+		.bus_address			( w_device_address				),
+		.bus_write				( w_device_write				),
+		.bus_wdata				( w_device_wdata				),
+		.bus_valid				( w_device_valid				),
+		.bus_ready				( w_device_secondary_ready		),
+		.bus_rdata				( w_device_secondary_rdata		),
+		.bus_rdata_en			( w_device_secondary_rdata_en	),
+		.primary_slot			( w_primary_slot				),
+		.secondary_slot0		( w_secondary_slot0				),
+		.secondary_slot3		( w_secondary_slot3				)
+	);
+
+	// --------------------------------------------------------------------
+	//	Z80 core
+	// --------------------------------------------------------------------
+
+	//	Legasy compatible CPU core
+	cz80_inst u_z80 (
+		.reset_n				( ff_z80_reset_n			),
+		.clk					( clk42m					),
+		.enable					( w_z80_active				),
+		.wait_p					( 1'b0						),
+		.int_p					( w_cpu_int_p				),
+		.nmi_n					( 1'b1						),
+		.busrq					( 1'b0						),
+		.m1						( w_z80_m1					),
+		.mreq					( w_z80_mreq				),
+		.iorq					( w_z80_iorq				),
+		.rd						( w_z80_rd					),
+		.wr						( w_z80_wr					),
+		.rfsh					( w_z80_rfsh				),
+		.halt_n					( 							),
+		.busak					( 							),
+		.a						( w_z80_a					),
+		.wdata					( w_z80_wdata				),
+		.rdata					( w_z80_rdata				)
+	);
+
+	//	Highspeed CPU core
+	cr800_inst u_r800 (
+		.reset_n				( ff_r800_reset_n			),
+		.clk					( clk42m					),
+		.enable					( w_r800_active				),
+		.wait_p					( 1'b0						),
+		.int_p					( w_cpu_int_p				),
+		.nmi_n					( 1'b1						),
+		.busrq					( 1'b0						),
+		.m1						( w_r800_m1					),
+		.mreq					( w_r800_mreq				),
+		.iorq					( w_r800_iorq				),
+		.rd						( w_r800_rd					),
+		.wr						( w_r800_wr					),
+		.rfsh					( w_r800_rfsh				),
+		.halt_n					( 							),
+		.busak					( 							),
+		.a						( w_r800_a					),
+		.wdata					( w_r800_wdata				),
+		.rdata					( w_r800_rdata				)
+	);
+
+	// --------------------------------------------------------------------
+	//	CPU selector
+	// --------------------------------------------------------------------
+	s2026_cpu_controller u_s2026_cpu_controller (
+		.reset_n				( ff_s2026_reset_n			),
+		.clk					( clk42m					),
+		.enable_z80				( w_3_579m					),
+		.enable_r800			( w_21m						),
+		.cpu_pause				( ~w_active_bus_owner		),
+		.cpu_change_req			( 1'b0						),
+		.cpu_change_target		( 1'b0						),
+		.z80_m1					( w_z80_m1					),
+		.z80_mreq				( w_z80_mreq				),
+		.z80_iorq				( w_z80_iorq				),
+		.z80_rd					( w_z80_rd					),
+		.z80_wr					( w_z80_wr					),
+		.z80_a					( w_z80_a					),
+		.z80_wdata				( w_z80_wdata				),
+		.z80_rdata				( w_z80_rdata				),
+		.r800_m1				( w_r800_m1					),
+		.r800_mreq				( w_r800_mreq				),
+		.r800_iorq				( w_r800_iorq				),
+		.r800_rd				( w_r800_rd					),
+		.r800_wr				( w_r800_wr					),
+		.r800_a					( w_r800_a					),
+		.r800_wdata				( w_r800_wdata				),
+		.r800_rdata				( w_r800_rdata				),
+		.bus_m1					( w_bus_m1					),
+		.bus_io					( w_bus_io					),
+		.bus_write				( w_bus_write				),
+		.bus_valid				( w_bus_valid				),
+		.bus_ready				( w_bus_ready				),
+		.bus_wdata				( w_bus_wdata				),
+		.bus_address			( w_bus_address				),
+		.bus_rdata				( w_bus_rdata				),
+		.bus_rdata_en			( w_bus_rdata_en			),
+		.z80_active				( w_z80_active				),
+		.r800_active			( w_r800_active				),
+		.processor_mode			( w_processor_mode			)		//	0: R800, 1: Z80
+	);
+
 //	// --------------------------------------------------------------------
 //	//	Extended I/O
 //	// --------------------------------------------------------------------
@@ -536,21 +612,41 @@ module fpga_msxtr_cpu_stack (
 		.device_address			( w_device_address			),
 		.device_io				( w_device_io				),
 		.bootrom_en				( w_bootrom_en				),
+		.slot3_0_selected		( w_slot3_0_selected		),
 		.bootrom_cs				( w_device_bootrom_cs		),
 		.ppi_cs					( w_device_ppi_cs			),
 		.memory_mapper_cs		( w_device_mapper_cs		),
 		.ssram_cs				( w_device_ssram_cs			)
 	);
 
+	assign w_access_primary_slot	=	(w_device_address[15:14] == 2'd0) ? w_primary_slot[1:0] :
+										(w_device_address[15:14] == 2'd1) ? w_primary_slot[3:2] :
+										(w_device_address[15:14] == 2'd2) ? w_primary_slot[5:4] : w_primary_slot[7:6];
+	assign w_access_secondary_slot3 =	(w_device_address[15:14] == 2'd0) ? w_secondary_slot3[1:0] :
+										(w_device_address[15:14] == 2'd1) ? w_secondary_slot3[3:2] :
+										(w_device_address[15:14] == 2'd2) ? w_secondary_slot3[5:4] : w_secondary_slot3[7:6];
+	assign w_slot3_0_selected		=	(w_access_primary_slot == 2'd3) && (w_access_secondary_slot3 == 2'd0);
+
 	//	bootrom / ppi / memory_mapper / ssram の cs は排他的なので、応答をそのまま束ねて device_* へ返す
-	assign w_device_rdata		= w_device_ppi_cs    ? w_device_ppi_rdata    :
-								  w_device_mapper_cs ? w_device_mapper_rdata :
-								  w_device_ssram_cs  ? w_device_ssram_rdata  : w_device_bootrom_rdata;
-	assign w_device_rdata_en	= w_device_bootrom_rdata_en | w_device_ppi_rdata_en | w_device_mapper_rdata_en | w_device_ssram_rdata_en;
-	assign w_device_ready		= w_device_bootrom_cs ? w_device_bootrom_ready :
-								  w_device_ppi_cs     ? w_device_ppi_ready     :
-								  w_device_mapper_cs  ? w_device_mapper_ready  :
-								  w_device_ssram_cs   ? w_device_ssram_ready   : 1'b1;
+	assign w_device_rdata		= w_device_ppi_rdata_en			? w_device_ppi_rdata    	:
+								  w_device_mapper_rdata_en		? w_device_mapper_rdata 	:
+								  w_device_ssram_rdata_en		? w_device_ssram_rdata  	: 
+								  w_device_secondary_rdata_en	? w_device_secondary_rdata	: 
+								  w_device_bootrom_rdata_en		? w_device_bootrom_rdata	: 
+								  8'b0;
+
+	assign w_device_rdata_en	= w_device_ppi_rdata_en			| 
+								  w_device_mapper_rdata_en		| 
+								  w_device_ssram_rdata_en		| 
+								  w_device_secondary_rdata_en	| 
+								  w_device_bootrom_rdata_en;
+
+	 assign w_device_ready		= w_device_ppi_rdata_en			? w_device_ppi_ready    	: 
+								  w_device_mapper_rdata_en		? w_device_mapper_ready  	: 
+								  w_device_ssram_rdata_en		? w_device_ssram_ready   	: 
+								  w_device_secondary_rdata_en	? w_device_secondary_ready	: 
+								  w_device_bootrom_rdata_en		? w_device_bootrom_ready	: 
+								  1'b0;
 
 	// --------------------------------------------------------------------
 	//	BOOT ROM
@@ -586,9 +682,9 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_caps_led		( w_keyboard_caps_led		),
 		.one_bit_sound			( w_one_bit_sound			),
 		//	keyboard scanner (STM32 I2C receiver) is not implemented yet
-		.keyboard_matrix_row	( 4'd0						),
-		.keyboard_matrix		( 8'hFF						),
-		.keyboard_matrix_valid	( 1'b0						)
+		.keyboard_matrix_row	( w_keyboard_matrix_row		),
+		.keyboard_matrix		( w_keyboard_matrix			),
+		.keyboard_matrix_valid	( w_keyboard_matrix_valid	)
 	);
 
 	// --------------------------------------------------------------------

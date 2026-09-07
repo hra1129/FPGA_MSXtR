@@ -12,12 +12,10 @@ Common
 			Source ☑Internal
 
 Clkout0
-	Expected Frequency(5.469~1400)MHz: 200.48MHz   ※ 28.64 * 7 = 200.48  ※実クロック 200.45452MHz
+	Expected Frequency(5.469~1400)MHz: 214.7727MHz   ※ 28.64 * 7.5 = 214.8  ※実クロック 214.7727MHz
 	Tolerance(%): 0.0
 	Phase(degree)
 	☑Static 0
-
-	204.06 (28.64*7.125)
 
 Clkout1
 	Expected Frequency(5.469~1400)MHz: 42.96MHz   ※ 28.64 * 1.5 = 42.96  ※実クロック 42.95454MHz
