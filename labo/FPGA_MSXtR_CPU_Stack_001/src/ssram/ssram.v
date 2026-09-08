@@ -16,6 +16,7 @@ module ssram (
 	output			bus_ready,
 	output	[7:0]	bus_rdata,
 	output			bus_rdata_en,
+	output			startup_busy,
 	//	SPI SRAM I/F
 	output			sram_sclk,
 	output			sram_ce0_n,
@@ -44,6 +45,7 @@ module ssram (
 	localparam		c_state_address5	= 5'd17;
 	localparam		c_state_write0		= 5'd18;
 	localparam		c_state_write1		= 5'd19;
+	localparam		c_state_write_hold	= 5'd30;
 	localparam		c_state_dummy0		= 5'd20;
 	localparam		c_state_dummy1		= 5'd21;
 	localparam		c_state_dummy2		= 5'd22;
@@ -75,6 +77,9 @@ module ssram (
 	reg		[7:0]	ff_rdata;
 	reg				ff_rdata_en;
 	reg				ff_read_complete;		// Toggle signal for read complete
+	reg				ff_startup_done_serial;
+	reg				ff_startup_done_clk_d0;
+	reg				ff_startup_done_clk_d1;
 	reg				ff_write;
 	reg				ff_read;
 	reg		[4:0]	ff_state;
@@ -198,7 +203,7 @@ module ssram (
 					endcase
 				end
 			end
-			c_state_write1,
+			c_state_write_hold,
 			c_state_read2: begin
 				ff_sram_ce0_n <= 1'b1;
 				ff_sram_ce1_n <= 1'b1;
@@ -326,6 +331,7 @@ module ssram (
 			ff_read		<= 1'b0;
 			ff_write	<= 1'b0;
 			ff_powerup_wait <= 15'd0;
+			ff_startup_done_serial <= 1'b0;
 		end
 		else if( w_state_tick ) begin
 			case( ff_state )
@@ -391,6 +397,7 @@ module ssram (
 				ff_so		<= 4'bzzzz;
 				ff_active	<= 1'b1;		// Init complete (stays high)
 				ff_ce_n		<= 1'b1;
+				ff_startup_done_serial <= 1'b1;
 			end
 			//	IDLE -----------------------------------------------------------
 			c_state_idle: begin
@@ -465,8 +472,12 @@ module ssram (
 				ff_state	<= c_state_write1;
 			end
 			c_state_write1: begin
-				//	finish: BYTE WRITE
+				//	last nibble clocked out; keep CE_n asserted one more SCLK period for tCSH margin
 				ff_so		<= 4'bzzzz;
+				ff_state	<= c_state_write_hold;
+			end
+			c_state_write_hold: begin
+				//	finish: BYTE WRITE
 				ff_state	<= c_state_idle;
 				ff_active	<= 1'b1;
 				ff_ce_n		<= 1'b1;
@@ -520,6 +531,17 @@ module ssram (
 		end
 	end
 
+	always @( posedge clk ) begin
+		if( !n_reset ) begin
+			ff_startup_done_clk_d0 <= 1'b0;
+			ff_startup_done_clk_d1 <= 1'b0;
+		end
+		else begin
+			ff_startup_done_clk_d0 <= ff_startup_done_serial;
+			ff_startup_done_clk_d1 <= ff_startup_done_clk_d0;
+		end
+	end
+
 	// Sample read data on SCLK rising edge
 	always @( posedge clk_serial ) begin
 		if( !n_reset ) begin
@@ -559,7 +581,7 @@ module ssram (
 		end
 	end
 
-	assign sram_sclk	= ff_sclk_div;
+	assign sram_sclk	= ff_sclk_div && (ff_state != c_state_write_hold);
 	assign sram_ce0_n	= ff_sram_ce0_n;
 	assign sram_ce1_n	= ff_sram_ce1_n;
 	assign sram_ce2_n	= ff_sram_ce2_n;
@@ -568,4 +590,5 @@ module ssram (
 	assign bus_ready	= ff_ready;
 	assign bus_rdata	= ff_rdata;
 	assign bus_rdata_en = ff_rdata_en;
+	assign startup_busy = ~ff_startup_done_clk_d1;
 endmodule

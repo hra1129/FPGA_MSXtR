@@ -187,56 +187,191 @@ static void test_ppi_port_a_readback( void ) {
 
 // ---------------------------------------------------------
 static void test_ssram_memory( void ) {
-	uint32_t fail_count;
-	uint32_t address;
-	int i;
-	uint8_t write_value;
-	uint8_t read_value;
-	uint8_t debug_signal;
-	uint8_t original_fd;
-	uint8_t original_fe;
-	uint8_t original_ff;
+	char s_line[16 * 3 + 1];
+	char *p_dest;
+	uint16_t address;
+	int i, j;
+	uint8_t rom_data;
 
-	//	memory mapper: page1/page2/page3 に直線マッピングを設定
-	original_fd = fpga_inport( 0xFD );
-	original_fe = fpga_inport( 0xFE );
-	original_ff = fpga_inport( 0xFF );
-	fpga_outport( 0xFD, 1 );
-	fpga_outport( 0xFE, 2 );
-	fpga_outport( 0xFF, 3 );
-
-	fail_count = 0;
-	printf( "SerialSRAM test start (0x4000-0xFFFF)\r\n" );
-
-	for( address = 0x4000; address <= 0xFFFF; address++ ) {
-		printf( "%04Xh: ", (unsigned int)address );
-		for( i = 0; i < 256; i++ ) {
-			write_value = (uint8_t)i;
-			fpga_poke( (uint16_t)address, write_value );
-			sleep_us(1);
-			read_value = fpga_peek( (uint16_t)address );
-			if( read_value != write_value ) {
-				debug_signal = fpga_get_debug_signal();
-				printf( "Fail: write=0x%02X read=0x%02X debug=0x%02X debug_vs_write=%s debug_vs_read=%s\r\n",
-					write_value,
-					read_value,
-					debug_signal,
-					(debug_signal == write_value) ? "OK" : "NG",
-					(debug_signal == read_value) ? "OK" : "NG" );
-				fail_count++;
-				break;
+	printf( "Dump SLOT#3-0\r\n" );
+	fpga_outport( 0xA8, 0xFF );			// 全ページ SLOT#3 を選択
+	fpga_poke( 0xFFFF, 0 );				// 全ページ SLOT#3-0 を選択
+	fpga_outport( 0xFC, 0x00 );			// Memory Mapper Segment#0: 0
+	fpga_outport( 0xFD, 0x00 );			// Memory Mapper Segment#0: 0
+	fpga_outport( 0xFE, 0x00 );			// Memory Mapper Segment#0: 0
+	fpga_outport( 0xFF, 0x00 );			// Memory Mapper Segment#0: 0
+	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
+	printf( "-- SLOT#3 Secondary Slot Selector: 0x%02X\r\n", fpga_peek( 0xFFFF ) );
+	printf( "-- Mapper Segment#: 0,0,0,0\r\n" );
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			fpga_poke( address + j, j + i * 16 );
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
 			}
 		}
-		if( i == 256 ) {
-			printf( "OK\r\n" );
-		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
 	}
-
-	//	memory mapper の設定を元に戻す
-	fpga_outport( 0xFD, original_fd );
-	fpga_outport( 0xFE, original_fe );
-	fpga_outport( 0xFF, original_ff );
-	printf( "SerialSRAM test end: fail=%lu\r\n", (unsigned long)fail_count );
+	printf("----\r\n");
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16 + 0x4000);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16 + 0x8000);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16 + 0xC000);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+	fpga_outport( 0xFC, 0x01 );			// Memory Mapper Segment#0: 1
+	fpga_outport( 0xFD, 0x00 );			// Memory Mapper Segment#0: 0
+	fpga_outport( 0xFE, 0x01 );			// Memory Mapper Segment#0: 1
+	fpga_outport( 0xFF, 0x00 );			// Memory Mapper Segment#0: 0
+	printf( "-- Mapper Segment#: 1,0,1,0\r\n" );
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			fpga_poke( address + j, (j + i * 16) ^ 255 );
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16 + 0x4000);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16 + 0x8000);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16 + 0xC000);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+	printf( "-- Fill 00h test.\r\n" );
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			fpga_poke( address + j, 0 );
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(i * 16);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+	printf("----\r\n");
 }
 
 // ---------------------------------------------------------

@@ -52,6 +52,7 @@ module ip_spi (
 	output			spi_intr,
 	//	MSX Hardware control
 	input			slot_wait_n,
+	input			ssram_startup_busy,
 	output			msx_reset_n,
 	output			msx_pause,
 	output			bootrom_en,
@@ -237,7 +238,7 @@ module ip_spi (
 			//   02h, io#, (dummy byte)            ... I/O read (return data on dummy byte)
 			//   03h, addr_l, addr_h, data         ... Memory write
 			//   04h, addr_l, addr_h, (dummy byte) ... Memory read (return data on dummy byte)
-			//   05h, (dummy byte)                 ... Busy check (return 01h if bus_valid is asserted, else 00h)
+			//   05h, (dummy byte)                 ... Busy check (bit0: bus busy, bit1: slot wait, bit2: SerialSRAM startup busy)
 			//   06h                               ... MSX Hardware reset ON  (msx_reset_n = 0)
 			//   07h                               ... MSX Hardware reset OFF (msx_reset_n = 1)
 			//   08h                               ... MSX Hardware pause ON  (msx_pause = 1)
@@ -288,7 +289,7 @@ module ip_spi (
 					8'h05: begin
 						//	busy check --> respond immediately, no bus access involved
 						ff_state		<= ST_SEND;
-						ff_spi_wdata	<= { 6'd0, ~ff_slot_wait_n, ff_bus_valid };
+						ff_spi_wdata	<= { 5'd0, ssram_startup_busy, ~ff_slot_wait_n, ff_bus_valid };
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b1;
 					end

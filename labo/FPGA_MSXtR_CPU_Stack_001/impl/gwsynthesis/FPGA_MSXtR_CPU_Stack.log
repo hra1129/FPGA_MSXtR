@@ -102,7 +102,7 @@ Running technical mapping ...
 [75%] Tech-Mapping Phase 2 completed
 [80%] Tech-Mapping Phase 3 completed
 [90%] Tech-Mapping Phase 4 completed
-WARN  (NL0002) : The module "cr800_inst" instantiated to "u_r800" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":519)
+WARN  (NL0002) : The module "cr800_inst" instantiated to "u_r800" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":523)
 WARN  (NL0002) : The module "cr800" instantiated to "u_cr800" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\cr800\cr800_inst.v":140)
 WARN  (NL0002) : The module "cr800_alu" instantiated to "u_alu" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\cr800\cr800.v":308)
 WARN  (NL0002) : The module "cr800_mcode" instantiated to "u_mcode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\cr800\cr800.v":293)

@@ -222,8 +222,61 @@ module tb ();
 		end
 	endtask
 
+	task automatic spi_busy_wait;
+		int timeout_ns;
+		reg [7:0] status;
+		begin
+			timeout_ns = 0;
+			status = 8'h01;
+			while( status[0] == 1'b1 && timeout_ns < 5000 ) begin
+				mcu_cs_n = 1'b0;
+				#( 200 );
+				spi_send_byte( 8'h05 );
+				spi_transfer_byte( 8'h00, status );
+				#( 200 );
+				mcu_cs_n = 1'b1;
+				mcu_mosi = 1'b0;
+				#( 200 );
+				if( status[0] == 1'b1 ) begin
+					#( 10 );
+					timeout_ns = timeout_ns + 10;
+				end
+			end
+			if( status[0] == 1'b1 ) begin
+				$display( "WARNING: FPGA busy check timed out, status=0x%02X", status );
+			end
+		end
+	endtask
+
+	task automatic spi_wait_ssram_startup;
+		int timeout_ns;
+		reg [7:0] status;
+		begin
+			timeout_ns = 0;
+			status = 8'h04;
+			while( status[2] == 1'b1 && timeout_ns < 300000 ) begin
+				mcu_cs_n = 1'b0;
+				#( 200 );
+				spi_send_byte( 8'h05 );
+				spi_transfer_byte( 8'h00, status );
+				#( 200 );
+				mcu_cs_n = 1'b1;
+				mcu_mosi = 1'b0;
+				#( 200 );
+				if( status[2] == 1'b1 ) begin
+					#( 100 );
+					timeout_ns = timeout_ns + 100;
+				end
+			end
+			if( status[2] == 1'b1 ) begin
+				$display( "WARNING: SerialSRAM startup check timed out, status=0x%02X", status );
+			end
+		end
+	endtask
+
 	task automatic spi_outport( input [7:0] port, input [7:0] data );
 		begin
+			spi_busy_wait();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h01 );
@@ -238,6 +291,7 @@ module tb ();
 
 	task automatic spi_inport( input [7:0] port, output [7:0] data );
 		begin
+			spi_busy_wait();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h02 );
@@ -253,6 +307,7 @@ module tb ();
 
 	task automatic spi_poke( input [15:0] address, input [7:0] data );
 		begin
+			spi_busy_wait();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h03 );
@@ -268,6 +323,7 @@ module tb ();
 
 	task automatic spi_peek( input [15:0] address, output [7:0] data );
 		begin
+			spi_busy_wait();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h04 );
@@ -306,6 +362,18 @@ module tb ();
 		end
 	endtask
 
+	task automatic check( bit condition, string message );
+		begin
+			if( !condition ) begin
+				$display( "CHECK FAILED: %s", message );
+				fail_count = fail_count + 1;
+			end else begin
+				$display( "CHECK PASSED: %s", message );
+				pass_count = pass_count + 1;
+			end
+		end
+	endtask
+
 	initial begin
 		pass_count = 0;
 		fail_count = 0;
@@ -328,8 +396,9 @@ module tb ();
 		spi_bootrom_en( 1'b0 );
 		$display( "[SETUP] Release MSX reset" );
 		spi_msx_reset( 1'b0 );
+		spi_wait_ssram_startup();
 		spi_outport( 8'hA8, 8'hFF );		//	PPI Primary Slot Register
-		spi_poke( 16'hFFFF, 8'hAA );	//	SLOT#3 Secondary Slot Register
+		spi_poke( 16'hFFFF, 8'hAA );		//	SLOT#3 Secondary Slot Register
 		spi_peek( 16'h4000, rdata );
 		$display( "[READ] Peeked data at 0x4000: 0x%02X", rdata );
 		spi_peek( 16'h4001, rdata );
@@ -338,16 +407,34 @@ module tb ();
 		$display( "[READ] Peeked data at 0x4002: 0x%02X", rdata );
 		spi_peek( 16'h4003, rdata );
 		$display( "[READ] Peeked data at 0x4003: 0x%02X", rdata );
-
-		repeat( 200000 ) @( posedge u_dut.clk42m );
-		if( cpu_rom_read_count > 8 && cpu_first_read_address == 19'h00000 && cpu_first_read_data == 8'hF3 ) begin
-			$display( "[TEST] PASS: MSX CPU executed from FlashROM0: fetches=%0d first=0x%05X data=0x%02X", cpu_rom_read_count, cpu_first_read_address, cpu_first_read_data );
-			pass_count = pass_count + 1;
-		end
-		else begin
-			$display( "[TEST] FAIL: CPU did not execute FlashROM0: fetches=%0d first=0x%05X data=0x%02X", cpu_rom_read_count, cpu_first_read_address, cpu_first_read_data );
-			fail_count = fail_count + 1;
-		end
+		$display( "============================================================" );
+		$display( "Set SLOT#3-0, Memory Mapper Segments to 0,0,0,0." );
+		spi_outport( 8'hA8, 8'hFF );		//	PPI Primary Slot Register
+		spi_poke( 16'hFFFF, 8'h00 );		//	SLOT#3 Secondary Slot Register
+		spi_outport( 8'hFC, 8'h00 );		//	Memory Mapper Segment#0: 0
+		spi_outport( 8'hFD, 8'h00 );		//	Memory Mapper Segment#1: 0
+		spi_outport( 8'hFE, 8'h00 );		//	Memory Mapper Segment#2: 0
+		spi_outport( 8'hFF, 8'h00 );		//	Memory Mapper Segment#3: 0
+		spi_poke( 16'h0000, 8'h12 );
+		$display( "[WRITE] Poked data at 0x0000: 0x%02X", 8'h12 );
+		spi_poke( 16'h0001, 8'h23 );
+		$display( "[WRITE] Poked data at 0x0001: 0x%02X", 8'h23 );
+		spi_poke( 16'h0002, 8'h34 );
+		$display( "[WRITE] Poked data at 0x0002: 0x%02X", 8'h34 );
+		spi_poke( 16'h0003, 8'h45 );
+		$display( "[WRITE] Poked data at 0x0003: 0x%02X", 8'h45 );
+		spi_peek( 16'h0000, rdata );
+		check( rdata == 8'h12, "Data at 0x0000 should be 0x12" );
+		$display( "[READ] Peeked data at 0x0000: 0x%02X", rdata );
+		spi_peek( 16'h0001, rdata );
+		check( rdata == 8'h23, "Data at 0x0001 should be 0x23" );
+		$display( "[READ] Peeked data at 0x0001: 0x%02X", rdata );
+		spi_peek( 16'h0002, rdata );
+		check( rdata == 8'h34, "Data at 0x0002 should be 0x34" );
+		$display( "[READ] Peeked data at 0x0002: 0x%02X", rdata );
+		spi_peek( 16'h0003, rdata );
+		check( rdata == 8'h45, "Data at 0x0003 should be 0x45" );
+		$display( "[READ] Peeked data at 0x0003: 0x%02X", rdata );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );

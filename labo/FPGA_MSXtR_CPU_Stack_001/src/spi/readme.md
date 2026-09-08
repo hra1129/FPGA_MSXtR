@@ -74,7 +74,16 @@ FPGAがBUSY状態かどうかを確認する要求です。
 |順番|値|内容|
 |---|---|---|
 |#1|05h|FPGA BUSY check|
-|#2|応答|FPGAがBUSY状態の場合は、01hを返す。BUSY状態でない場合は、00hを返す。(FPGAから出力)|
+|#2|応答|busy status を返す。(FPGAから出力)|
+
+busy status の bit 定義:
+
+|bit|内容|
+|---|---|
+|bit0|FPGA内部BUSY。BUSY状態の場合は1、BUSY状態でない場合は0。|
+|bit1|MSX slot WAIT。WAIT中の場合は1、WAIT中でない場合は0。|
+|bit2|SerialSRAM起動BUSY。SerialSRAM起動中の場合は1、起動完了済みの場合は0。|
+|bit7-3|予約。0を返す。|
 
 # MSX Hardware reset ON
 PicoからFPGAに対して、MSXのハードウェアリセットを要求するコマンドです。

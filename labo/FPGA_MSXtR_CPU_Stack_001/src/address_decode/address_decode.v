@@ -45,7 +45,7 @@ module address_decode (
 	//	Memory access (page0: 0000h-3FFFh) -> BOOT ROM
 	assign bootrom_cs		= bootrom_en & ~device_io & ( device_address[15:14] == 2'd0 );
 	//	Memory access (page1-3: 4000h-FFFFh) -> Serial SRAM (via memory mapper)
-	assign ssram_cs			= slot3_0_selected & ~device_io & ( device_address[15:14] != 2'd0 );
+	assign ssram_cs			= slot3_0_selected & ~device_io & ( device_address != 16'hFFFF );
 	//	I/O A8h-ABh -> i8255 PPI (primary_slot / keyboard / cassette / command)
 	assign ppi_cs			= device_io & ( device_address[7:2] == 6'b101010 );
 	//	I/O FCh-FFh -> Memory mapper segment registers

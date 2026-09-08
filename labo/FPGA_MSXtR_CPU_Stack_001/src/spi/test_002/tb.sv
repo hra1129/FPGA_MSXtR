@@ -90,6 +90,8 @@ module tb ();
 	reg				spi_mosi;
 	wire			spi_miso;
 	wire			spi_intr;
+	reg				slot_wait_n;
+	reg				ssram_startup_busy;
 	wire			bootrom_en;
 	wire			bus_owner;
 	wire	[3:0]	keyboard_matrix_row;
@@ -185,6 +187,8 @@ module tb ();
 		.spi_mosi		( spi_mosi		),
 		.spi_miso		( spi_miso		),
 		.spi_intr		( spi_intr		),
+		.slot_wait_n	( slot_wait_n	),
+		.ssram_startup_busy	( ssram_startup_busy	),
 		.msx_reset_n	( 				),
 		.msx_pause		( 				),
 		.bootrom_en		( bootrom_en	),
@@ -262,6 +266,8 @@ module tb ();
 		spi_cs_n	= 1'b1;
 		spi_clk		= 1'b0;
 		spi_mosi	= 1'b0;
+		slot_wait_n = 1'b1;
+		ssram_startup_busy = 1'b0;
 		debug_signal = 8'h00;
 		test_no		= 0;
 		pass_count	= 0;
@@ -1250,6 +1256,57 @@ module tb ();
 					$display( "[TEST %0d] FAIL: row %0d = 0x%02X (expected 0x%02X)", test_no, i, captured_keyboard[i], expected[i] );
 					fail_count = fail_count + 1;
 				end
+			end
+		end
+
+		// ================================================================
+		//	Test 15: Busy check status includes SerialSRAM startup busy on bit2
+		// ================================================================
+		test_no = 15;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Busy check status: SerialSRAM startup busy bit", test_no );
+
+		begin
+			int cnt_before;
+			reg [7:0] status;
+
+			cnt_before = bus_valid_count;
+			ssram_startup_busy = 1'b1;
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h05 );
+			spi_transfer_byte( 8'h00, status );
+			repeat( 20 ) @( posedge clk );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( status === 8'h04 && bus_valid_count === cnt_before ) begin
+				$display( "[TEST %0d] PASS: startup busy status = 0x%02X", test_no, status );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: startup busy status = 0x%02X, bus_count=%0d", test_no, status, bus_valid_count );
+				fail_count = fail_count + 1;
+			end
+
+			ssram_startup_busy = 1'b0;
+			spi_cs_n = 1'b0;
+			repeat( 20 ) @( posedge clk );
+			spi_send_byte( 8'h05 );
+			spi_transfer_byte( 8'h00, status );
+			repeat( 20 ) @( posedge clk );
+			spi_cs_n = 1'b1;
+			spi_mosi = 1'b0;
+			repeat( 10 ) @( posedge clk );
+
+			if( status === 8'h00 && bus_valid_count === cnt_before ) begin
+				$display( "[TEST %0d] PASS: startup ready status = 0x%02X", test_no, status );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				$display( "[TEST %0d] FAIL: startup ready status = 0x%02X, bus_count=%0d", test_no, status, bus_valid_count );
+				fail_count = fail_count + 1;
 			end
 		end
 

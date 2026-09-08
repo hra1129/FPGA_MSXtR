@@ -223,6 +223,7 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_device_ppi_rdata;
 	wire			w_device_ppi_rdata_en;
 
+	wire			w_device_secondary_cs;
 	wire			w_device_secondary_ready;
 	wire	[7:0]	w_device_secondary_rdata;
 	wire			w_device_secondary_rdata_en;
@@ -234,9 +235,11 @@ module fpga_msxtr_cpu_stack (
 	wire	[6:0]	w_mapper_segment;				//	SRAM address [20:14]
 
 	wire			w_device_ssram_cs;
+	wire			w_device_ssram_active;
 	wire			w_device_ssram_ready;
 	wire	[7:0]	w_device_ssram_rdata;
 	wire			w_device_ssram_rdata_en;
+	wire			w_ssram_startup_busy;
 	wire	[20:0]	w_ssram_address;				//	{ mapper_segment, device_address[13:0] }
 	wire			w_slot3_0_selected;
 	wire	[1:0]	w_access_primary_slot;
@@ -343,6 +346,7 @@ module fpga_msxtr_cpu_stack (
 		.spi_miso				( mcu_miso					),
 		.spi_intr				( mcu_intr					),
 		.slot_wait_n			( slot_wait_n				),
+		.ssram_startup_busy		( w_ssram_startup_busy		),
 		.msx_reset_n			( w_msx_reset_n				),
 		.msx_pause				(							),
 		.bootrom_en				( w_bootrom_en				),
@@ -627,11 +631,15 @@ module fpga_msxtr_cpu_stack (
 										(w_device_address[15:14] == 2'd2) ? w_secondary_slot3[5:4] : w_secondary_slot3[7:6];
 	assign w_slot3_0_selected		=	(w_access_primary_slot == 2'd3) && (w_access_secondary_slot3 == 2'd0);
 
+	assign w_device_secondary_cs	= ~w_device_io && (w_device_address == 16'hFFFF) &&
+								  ((w_primary_slot[7:6] == 2'd0) || (w_primary_slot[7:6] == 2'd3));
+	assign w_device_ssram_active	= w_device_ssram_cs & ~w_device_secondary_cs;
+
 	//	bootrom / ppi / memory_mapper / ssram の cs は排他的なので、応答をそのまま束ねて device_* へ返す
 	assign w_device_rdata		= w_device_ppi_rdata_en			? w_device_ppi_rdata    	:
 								  w_device_mapper_rdata_en		? w_device_mapper_rdata 	:
-								  w_device_ssram_rdata_en		? w_device_ssram_rdata  	: 
 								  w_device_secondary_rdata_en	? w_device_secondary_rdata	: 
+								  w_device_ssram_rdata_en		? w_device_ssram_rdata  	: 
 								  w_device_bootrom_rdata_en		? w_device_bootrom_rdata	: 
 								  8'b0;
 
@@ -641,11 +649,11 @@ module fpga_msxtr_cpu_stack (
 								  w_device_secondary_rdata_en	| 
 								  w_device_bootrom_rdata_en;
 
-	 assign w_device_ready		= w_device_ppi_rdata_en			? w_device_ppi_ready    	: 
-								  w_device_mapper_rdata_en		? w_device_mapper_ready  	: 
-								  w_device_ssram_rdata_en		? w_device_ssram_ready   	: 
-								  w_device_secondary_rdata_en	? w_device_secondary_ready	: 
-								  w_device_bootrom_rdata_en		? w_device_bootrom_ready	: 
+	 assign w_device_ready		= w_device_ppi_cs				? w_device_ppi_ready    	: 
+								  w_device_mapper_cs			? w_device_mapper_ready  	: 
+								  w_device_secondary_cs			? w_device_secondary_ready	: 
+								  w_device_ssram_active			? w_device_ssram_ready   	: 
+								  w_device_bootrom_cs			? w_device_bootrom_ready	: 
 								  1'b0;
 
 	// --------------------------------------------------------------------
@@ -714,7 +722,7 @@ module fpga_msxtr_cpu_stack (
 		.n_reset				( ff_ssram_reset_n			),
 		.clk					( clk42m					),
 		.clk_serial				( clk215m					),
-		.bus_cs					( w_device_ssram_cs			),
+		.bus_cs					( w_device_ssram_active		),
 		.bus_address			( w_ssram_address			),
 		.bus_write				( w_device_write			),
 		.bus_valid				( w_device_valid			),
@@ -722,6 +730,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_ready				( w_device_ssram_ready		),
 		.bus_rdata				( w_device_ssram_rdata		),
 		.bus_rdata_en			( w_device_ssram_rdata_en	),
+		.startup_busy			( w_ssram_startup_busy		),
 		.sram_sclk				( sram_sclk					),
 		.sram_ce0_n				( sram_ce0_n				),
 		.sram_ce1_n				( sram_ce1_n				),
