@@ -371,8 +371,14 @@ void fpga_bootrom_enable( bool enable ) {
 }
 
 // ---------------------------------------------------------
+//	バス所有権の切り替えは msx_bus_mux 側の実際の切り替え完了を待ってから
+//	FPGA が INTR をアサートする。1byte 読み出すことで INTR をクリアする。
 void fpga_set_bus_owner( uint8_t owner ) {
 	uint8_t cmd;
+	uint8_t dummy;
+	uint8_t data;
+	absolute_time_t timeout_time;
+	bool intr_ready;
 
 	if( !fpga_wait_ready() ) {
 		return;
@@ -383,6 +389,27 @@ void fpga_set_bus_owner( uint8_t owner ) {
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 	cmd = owner & 0x01;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+
+	// INTR ピンが 1 になるまで待つ（バス所有権が実際に切り替わるまで、50ms タイムアウト）
+	timeout_time = make_timeout_time_ms( 50 );
+	intr_ready = false;
+
+	while( !time_reached( timeout_time ) ) {
+		if( gpio_get( SPI0_INTR_PIN ) ) {
+			intr_ready = true;
+			break;
+		}
+	}
+
+	if( !intr_ready ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		printf( "FPGA Timeout. (bus owner switch)\n" );
+		return;
+	}
+
+	dummy = 0x00;
+	spi_write_read_blocking( SPI0_PORT, &dummy, &data, 1 );
+
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 }

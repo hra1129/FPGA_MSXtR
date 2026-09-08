@@ -95,6 +95,8 @@ module fpga_msxtr_cpu_stack (
 	reg				ff_ppi_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
 	reg				ff_mapper_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
 	reg				ff_ssram_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	reg				ff_rtc_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_system_flag_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
 	reg				ff_uart_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
 
 	reg		[3:0]	ff_3_579m = 4'd0;
@@ -234,6 +236,19 @@ module fpga_msxtr_cpu_stack (
 	wire			w_device_mapper_rdata_en;
 	wire	[6:0]	w_mapper_segment;				//	SRAM address [20:14]
 
+	wire			w_device_rtc_cs;
+	wire			w_device_rtc_ready;
+	wire	[7:0]	w_device_rtc_rdata;
+	wire			w_device_rtc_rdata_en;
+
+	wire			w_device_system_flag_cs;
+	wire			w_device_system_flag_ready;
+	wire	[7:0]	w_device_system_flag_rdata;
+	wire			w_device_system_flag_rdata_en;
+	wire	[7:0]	w_system_flag_offset;			//	device_address[7:0] - F3h (0,1,2)
+	wire			w_kanji1_en;
+	wire			w_kanji2_en;
+
 	wire			w_device_ssram_cs;
 	wire			w_device_ssram_active;
 	wire			w_device_ssram_ready;
@@ -322,6 +337,8 @@ module fpga_msxtr_cpu_stack (
 		ff_ppi_reset_n			<= w_msx_reset_n;
 		ff_mapper_reset_n		<= w_msx_reset_n;
 		ff_ssram_reset_n		<= w_msx_reset_n;
+		ff_rtc_reset_n			<= w_msx_reset_n;
+		ff_system_flag_reset_n	<= w_msx_reset_n;
 //		ff_uart_reset_n			<= 1'b0;
 	end
 
@@ -347,6 +364,7 @@ module fpga_msxtr_cpu_stack (
 		.spi_intr				( mcu_intr					),
 		.slot_wait_n			( slot_wait_n				),
 		.ssram_startup_busy		( w_ssram_startup_busy		),
+		.active_bus_owner		( w_active_bus_owner		),
 		.msx_reset_n			( w_msx_reset_n				),
 		.msx_pause				(							),
 		.bootrom_en				( w_bootrom_en				),
@@ -620,8 +638,12 @@ module fpga_msxtr_cpu_stack (
 		.bootrom_cs				( w_device_bootrom_cs		),
 		.ppi_cs					( w_device_ppi_cs			),
 		.memory_mapper_cs		( w_device_mapper_cs		),
-		.ssram_cs				( w_device_ssram_cs			)
+		.ssram_cs				( w_device_ssram_cs			),
+		.rtc_cs					( w_device_rtc_cs			),
+		.system_flag_cs			( w_device_system_flag_cs	)
 	);
+
+	assign w_system_flag_offset	= w_device_address[7:0] - 8'hF3;
 
 	assign w_access_primary_slot	=	(w_device_address[15:14] == 2'd0) ? w_primary_slot[1:0] :
 										(w_device_address[15:14] == 2'd1) ? w_primary_slot[3:2] :
@@ -640,6 +662,8 @@ module fpga_msxtr_cpu_stack (
 								  w_device_mapper_rdata_en		? w_device_mapper_rdata 	:
 								  w_device_secondary_rdata_en	? w_device_secondary_rdata	: 
 								  w_device_ssram_rdata_en		? w_device_ssram_rdata  	: 
+								  w_device_rtc_rdata_en			? w_device_rtc_rdata		: 
+								  w_device_system_flag_rdata_en	? w_device_system_flag_rdata	: 
 								  w_device_bootrom_rdata_en		? w_device_bootrom_rdata	: 
 								  8'b0;
 
@@ -647,12 +671,16 @@ module fpga_msxtr_cpu_stack (
 								  w_device_mapper_rdata_en		| 
 								  w_device_ssram_rdata_en		| 
 								  w_device_secondary_rdata_en	| 
+								  w_device_rtc_rdata_en			| 
+								  w_device_system_flag_rdata_en	| 
 								  w_device_bootrom_rdata_en;
 
 	 assign w_device_ready		= w_device_ppi_cs				? w_device_ppi_ready    	: 
 								  w_device_mapper_cs			? w_device_mapper_ready  	: 
 								  w_device_secondary_cs			? w_device_secondary_ready	: 
 								  w_device_ssram_active			? w_device_ssram_ready   	: 
+								  w_device_rtc_cs				? w_device_rtc_ready		: 
+								  w_device_system_flag_cs		? w_device_system_flag_ready	: 
 								  w_device_bootrom_cs			? w_device_bootrom_ready	: 
 								  1'b0;
 
@@ -689,7 +717,6 @@ module fpga_msxtr_cpu_stack (
 		.primary_slot			( w_primary_slot			),
 		.keyboard_caps_led		( w_keyboard_caps_led		),
 		.one_bit_sound			( w_one_bit_sound			),
-		//	keyboard scanner (STM32 I2C receiver) is not implemented yet
 		.keyboard_matrix_row	( w_keyboard_matrix_row		),
 		.keyboard_matrix		( w_keyboard_matrix			),
 		.keyboard_matrix_valid	( w_keyboard_matrix_valid	)
@@ -737,6 +764,41 @@ module fpga_msxtr_cpu_stack (
 		.sram_ce2_n				( sram_ce2_n				),
 		.sram_ce3_n				( sram_ce3_n				),
 		.sram_sio				( sram_sio					)
+	);
+
+	// --------------------------------------------------------------------
+	//	RTC (MSX2 CLOCK-IC, I/O B4h-B5h)
+	// --------------------------------------------------------------------
+	rtc u_rtc (
+		.clk					( clk42m					),
+		.reset_n				( ff_rtc_reset_n			),
+		.enable					( w_3_579m					),
+		.bus_cs					( w_device_rtc_cs			),
+		.bus_write				( w_device_write			),
+		.bus_valid				( w_device_valid			),
+		.bus_ready				( w_device_rtc_ready		),
+		.bus_address			( w_device_address[0]		),
+		.bus_wdata				( w_device_wdata			),
+		.bus_rdata				( w_device_rtc_rdata		),
+		.bus_rdata_en			( w_device_rtc_rdata_en		)
+	);
+
+	// --------------------------------------------------------------------
+	//	System flag latches (I/O F3h-F5h, F5h bit0/1: Kanji JIS1/JIS2 enable)
+	// --------------------------------------------------------------------
+	system_flag u_system_flag (
+		.clk					( clk42m						),
+		.reset_n				( ff_system_flag_reset_n		),
+		.bus_cs					( w_device_system_flag_cs		),
+		.bus_address			( w_system_flag_offset[1:0]		),
+		.bus_write				( w_device_write				),
+		.bus_wdata				( w_device_wdata				),
+		.bus_valid				( w_device_valid				),
+		.bus_ready				( w_device_system_flag_ready	),
+		.bus_rdata				( w_device_system_flag_rdata	),
+		.bus_rdata_en			( w_device_system_flag_rdata_en ),
+		.kanji1_en				( w_kanji1_en					),
+		.kanji2_en				( w_kanji2_en					)
 	);
 
 //	// --------------------------------------------------------------------

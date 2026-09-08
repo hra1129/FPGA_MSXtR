@@ -53,6 +53,7 @@ module ip_spi (
 	//	MSX Hardware control
 	input			slot_wait_n,
 	input			ssram_startup_busy,
+	input			active_bus_owner,
 	output			msx_reset_n,
 	output			msx_pause,
 	output			bootrom_en,
@@ -78,6 +79,7 @@ module ip_spi (
 	localparam		ST_FLASH_ADDR_H	= 4'd11;
 	localparam		ST_BUS_OWNER	= 4'd12;
 	localparam		ST_KEYBOARD	= 4'd13;
+	localparam		ST_BUS_OWNER_WAIT = 4'd14;
 	localparam		SPI_RX_WDATA	= 8'h64;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
@@ -208,6 +210,15 @@ module ip_spi (
 			if( bus_rdata_en ) begin
 				ff_state		<= ST_SEND;
 				ff_spi_wdata	<= bus_rdata;
+				ff_spi_valid	<= 1'b1;
+				ff_spi_write	<= 1'b1;
+			end
+		end
+		else if( ff_state == ST_BUS_OWNER_WAIT ) begin
+			//	実際に msx_bus_mux 側のバス所有権が切り替わるまで待ってから intr を上げる
+			if( active_bus_owner == ff_bus_owner ) begin
+				ff_state		<= ST_SEND;
+				ff_spi_wdata	<= SPI_RX_WDATA;
 				ff_spi_valid	<= 1'b1;
 				ff_spi_write	<= 1'b1;
 			end
@@ -456,10 +467,7 @@ module ip_spi (
 			ST_BUS_OWNER: begin
 				if( spi_rdata_en ) begin
 					ff_bus_owner	<= spi_rdata[0];
-					ff_state		<= ST_COMMAND;
-					ff_spi_wdata	<= SPI_RX_WDATA;
-					ff_spi_valid	<= 1'b1;
-					ff_spi_write	<= 1'b0;
+					ff_state		<= ST_BUS_OWNER_WAIT;
 				end
 			end
 			ST_KEYBOARD: begin

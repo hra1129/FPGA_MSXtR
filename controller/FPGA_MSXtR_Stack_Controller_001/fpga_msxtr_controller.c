@@ -383,6 +383,57 @@ static void dump_fpga_debug_signal( void ) {
 }
 
 // ---------------------------------------------------------
+//	RTC(RP5C01A互換) I/O: B4h=レジスタ番号選択, B5h=データ
+static void rtc_set_reg( uint8_t index, uint8_t value ) {
+	fpga_outport( 0xB4, index );
+	fpga_outport( 0xB5, value );
+}
+
+// ---------------------------------------------------------
+static uint8_t rtc_get_reg( uint8_t index ) {
+	fpga_outport( 0xB4, index );
+	return( fpga_inport( 0xB5 ) & 0x0F );
+}
+
+// ---------------------------------------------------------
+static void test_rtc( void ) {
+	int i;
+	uint8_t sec, min, hour, week, day, mon, year;
+
+	printf( "RTC test start\r\n" );
+
+	//	適当な時刻を設定する: 2026/09/08(火) 12:34:56
+	rtc_set_reg( 0, 6 );		//	秒 1の位
+	rtc_set_reg( 1, 5 );		//	秒 10の位
+	rtc_set_reg( 2, 4 );		//	分 1の位
+	rtc_set_reg( 3, 3 );		//	分 10の位
+	rtc_set_reg( 4, 2 );		//	時 1の位
+	rtc_set_reg( 5, 1 );		//	時 10の位
+	rtc_set_reg( 6, 2 );		//	曜日 (0:日 ... 2:火)
+	rtc_set_reg( 7, 8 );		//	日 1の位
+	rtc_set_reg( 8, 0 );		//	日 10の位
+	rtc_set_reg( 9, 9 );		//	月 1の位
+	rtc_set_reg( 10, 0 );		//	月 10の位
+	rtc_set_reg( 11, 6 );		//	年 1の位
+	rtc_set_reg( 12, 2 );		//	年 10の位
+
+	for( i = 0; i < 5; i++ ) {
+		sec  = rtc_get_reg( 1 ) * 10 + rtc_get_reg( 0 );
+		min  = rtc_get_reg( 3 ) * 10 + rtc_get_reg( 2 );
+		hour = rtc_get_reg( 5 ) * 10 + rtc_get_reg( 4 );
+		week = rtc_get_reg( 6 );
+		day  = rtc_get_reg( 8 ) * 10 + rtc_get_reg( 7 );
+		mon  = (rtc_get_reg( 10 ) & 0x01) * 10 + rtc_get_reg( 9 );
+		year = rtc_get_reg( 12 ) * 10 + rtc_get_reg( 11 );
+
+		printf( "20%02u/%02u/%02u(%u) %02u:%02u:%02u\r\n", year, mon, day, week, hour, min, sec );
+		sleep_ms( 1000 );
+	}
+
+	printf( "RTC test end\r\n" );
+}
+
+// ---------------------------------------------------------
 static void i2c0_init(void) {
 	i2c_init(I2C_PORT, I2C_BAUDRATE);
 	gpio_set_function(I2C_SDA_PIN, GPIO_FUNC_I2C);
@@ -951,12 +1002,14 @@ int main(void) {
 			fpga_set_bus_owner( 1 );
 			pico_bus_owner = false;
 		}
+		if( (prev_mat01 & 0x10) && !(keymatrix[1] & 0x10) ) {
+			//	^キーが押されたタイミングなら、RTC に時刻を設定して5秒間読み出す
+			test_rtc();
+		}
 		prev_mat00 = keymatrix[0];
 		prev_mat11 = keymatrix[11];
 		prev_mat01 = keymatrix[1];
-		if( pico_bus_owner ) {
-			fpga_set_keyboard_matrix( keymatrix );
-		}
+		fpga_set_keyboard_matrix( keymatrix );
 
 		for( i = 0; i < 12; i++ ) {
 			matrix = keymatrix[i];

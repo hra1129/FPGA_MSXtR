@@ -44,9 +44,23 @@ module msx_bus_mux (
 	output			msx_flashrom_en
 );
 	reg				ff_active_bus_owner;
+	reg				ff_busy;
 	wire			w_bus_idle;
 
-	assign w_bus_idle = !pico_bus_valid && !cpu_bus_valid;
+	//	読み出しの応答(msx_bus_rdata_en)が返るまでは、CPUのバスサイクル途中とみなして切り替えを保留する
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_busy <= 1'b0;
+		end
+		else if( msx_bus_valid && msx_bus_ready && !msx_bus_write ) begin
+			ff_busy <= 1'b1;
+		end
+		else if( msx_bus_rdata_en ) begin
+			ff_busy <= 1'b0;
+		end
+	end
+
+	assign w_bus_idle = !msx_bus_valid && !ff_busy;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin

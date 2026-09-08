@@ -40,7 +40,9 @@ module address_decode (
 	output			bootrom_cs,
 	output			ppi_cs,
 	output			memory_mapper_cs,
-	output			ssram_cs
+	output			ssram_cs,
+	output			rtc_cs,
+	output			system_flag_cs
 );
 	//	Memory access (page0: 0000h-3FFFh) -> BOOT ROM
 	assign bootrom_cs		= bootrom_en & ~device_io & ( device_address[15:14] == 2'd0 );
@@ -50,4 +52,8 @@ module address_decode (
 	assign ppi_cs			= device_io & ( device_address[7:2] == 6'b101010 );
 	//	I/O FCh-FFh -> Memory mapper segment registers
 	assign memory_mapper_cs	= device_io & ( device_address[7:2] == 6'b111111 );
+	//	I/O B4h-B5h -> MSX2 RTC (CLOCK-IC)
+	assign rtc_cs			= device_io & ( device_address[7:1] == 7'b1011010 );
+	//	I/O F3h-F5h -> system flag latches (F5h bit0/1: Kanji JIS1/JIS2 enable)
+	assign system_flag_cs	= device_io & ( device_address[7:0] >= 8'hF3 ) & ( device_address[7:0] <= 8'hF5 );
 endmodule

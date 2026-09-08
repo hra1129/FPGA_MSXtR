@@ -145,9 +145,6 @@ module s2026 (
 	wire			w_mapper_io_cs;
 	wire			w_secondary_slot0_cs;
 	wire			w_secondary_slot3_cs;
-	wire			w_ppi_cs;
-	wire			w_rtc_cs;
-	wire			w_vdp_cs;
 	wire			w_cartridge_cs;
 	wire			w_ssg_cs;
 	wire			w_opll_cs;
@@ -179,8 +176,6 @@ module s2026 (
 	reg				ff_s2026_meegarom_cs;
 	reg				ff_indicator_cs;
 	reg				ff_sysctl_cs;
-	reg		[7:0]	ff_f4;
-	reg		[1:0]	ff_f5;
 	wire			w_3_911usec;
 	wire			w_counter_reset;
 	wire	[ 7:0]	w_register_read;
@@ -327,22 +322,7 @@ module s2026 (
 	assign w_bootrom_cs				= (w_bus_mem &&  ff_bootrom_mode);
 	assign w_extio_cs				= (w_bus_io  && ( {w_bus_address[7:4], 4'd0} == 8'h40 ));
 	assign w_fpga_cs				= (w_bus_io  &&(( {w_bus_address[7:3], 3'd0} == 8'h98 ) || (w_bus_address == 8'hA9) || (w_bus_address == 8'hAA) || ( {w_bus_address[7:2], 2'd0} == 8'hA0)));
-//	assign w_mapper_cs				= (w_bus_mem && !ff_bootrom_mode && (w_primary_slot == 2'd3) && (w_secondary_slot3 == 2'd0));
-//	assign w_mapper_io_cs			= (w_bus_io  && ( {w_bus_address[7:2], 2'd0} == 8'hFC ));
-//	assign w_secondary_slot0_cs		= (w_bus_mem && !ff_bootrom_mode && (w_primary_slot == 2'd0));
-//	assign w_secondary_slot3_cs		= (w_bus_mem && !ff_bootrom_mode && (w_primary_slot == 2'd3));
-	assign w_ppi_cs					= (w_bus_io  && ( {w_bus_address[7:2], 2'd0} == 8'hA8 ));
-//	assign w_rtc_cs					= (w_bus_io  && ( {w_bus_address[7:1], 1'd0} == 8'hB4 ));
-//	assign w_vdp_cs					= (w_bus_io  && ( {w_bus_address[7:3], 3'd0} == 8'h98 ));
-//	assign w_cartridge_cs			= (w_bus_mem && !ff_bootrom_mode && ((!megarom1_en && w_primary_slot == 2'd1) || (!megarom2_en && w_primary_slot == 2'd2)));
-//	assign w_ssg_cs					= (w_bus_io  && ( {w_bus_address[7:2], 2'd0} == 8'hA0 ));
-//	assign w_opll_cs				= (w_bus_io  && ( {w_bus_address[7:1], 1'd0} == 8'h7C ));
-//	assign w_kanji_cs				= (w_bus_io  && ( {w_bus_address[7:2], 2'd0} == 8'hD8 ));
-//	assign w_megarom1_cs			= (w_bus_mem && !ff_bootrom_mode && megarom1_en && (w_primary_slot == 2'd1));
-//	assign w_megarom2_cs			= (w_bus_mem && !ff_bootrom_mode && megarom2_en && (w_primary_slot == 2'd2));
 	assign w_s2026_cs				= (w_bus_io  && ( {w_bus_address[7:2], 2'd0} == 8'hE4 ));
-//	assign w_s2026_meegarom_cs		= (w_bus_mem && !ff_bootrom_mode && (w_primary_slot == 2'd3) && (w_secondary_slot3 == 2'd3));
-//	assign w_indicator_cs			= (w_bus_io  && (  w_bus_address[7:0]        == 8'hA7 ));
 	assign w_sysctl_cs				= (w_bus_io  && ( {w_bus_address[7:1], 1'd0} == 8'hF4 ));
 
 	always @( posedge clk ) begin
@@ -351,23 +331,7 @@ module s2026 (
 			ff_bootrom_cs			<= 1'b0;
 			ff_extio_cs				<= 1'b0;
 			ff_fpga_cs				<= 1'b0;
-//			ff_mapper_cs			<= 1'b0;
-//			ff_mapper_io_cs			<= 1'b0;
-//			ff_secondary_slot0_cs	<= 1'b0;
-//			ff_secondary_slot3_cs	<= 1'b0;
-			ff_ppi_cs				<= 1'b0;
-//			ff_rtc_cs				<= 1'b0;
-//			ff_vdp_cs				<= 1'b0;
-//			ff_cartridge_cs			<= 1'b0;
-//			ff_ssg_cs				<= 1'b0;
-//			ff_opll_cs				<= 1'b0;
-//			ff_kanji_cs				<= 1'b0;
-//			ff_megarom1_cs			<= 1'b0;
-//			ff_megarom2_cs			<= 1'b0;
 			ff_s2026_cs				<= 1'b0;
-//			ff_s2026_meegarom_cs	<= 1'b0;
-//			ff_indicator_cs			<= 1'b0;
-//			ff_sysctl_cs			<= 1'b0;
 			ff_bus_write			<= 1'b0;
 			ff_bus_m1				<= 1'b0;
 			ff_bus_io				<= 1'b0;
@@ -377,23 +341,7 @@ module s2026 (
 			ff_bootrom_cs			<= w_bootrom_cs;
 			ff_extio_cs				<= w_extio_cs;
 			ff_fpga_cs				<= w_fpga_cs;
-//			ff_mapper_cs			<= w_mapper_cs;
-//			ff_mapper_io_cs			<= w_mapper_io_cs;
-//			ff_secondary_slot0_cs	<= w_secondary_slot0_cs;
-//			ff_secondary_slot3_cs	<= w_secondary_slot3_cs;
-			ff_ppi_cs				<= w_ppi_cs;
-//			ff_rtc_cs				<= w_rtc_cs;
-//			ff_vdp_cs				<= w_vdp_cs;
-//			ff_cartridge_cs			<= w_cartridge_cs;
-//			ff_ssg_cs				<= w_ssg_cs;
-//			ff_opll_cs				<= w_opll_cs;
-//			ff_kanji_cs				<= w_kanji_cs;
-//			ff_megarom1_cs			<= w_megarom1_cs;
-//			ff_megarom2_cs			<= w_megarom2_cs;
 			ff_s2026_cs				<= w_s2026_cs;
-//			ff_s2026_meegarom_cs	<= w_s2026_meegarom_cs;
-//			ff_indicator_cs			<= w_indicator_cs;
-//			ff_sysctl_cs			<= w_sysctl_cs;
 			ff_bus_write			<= w_bus_write;
 			ff_bus_m1				<= w_bus_m1;
 			ff_bus_io				<= w_bus_io;
@@ -436,74 +384,10 @@ module s2026 (
 			ff_bus_rdata	<= bus_fpga_rdata;
 			ff_bus_rdata_en	<= 1'b1;
 		end
-//		else if( w_secondary_slot0_rdata_en ) begin
-//			ff_bus_rdata	<= w_secondary_slot0_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( w_secondary_slot3_rdata_en ) begin
-//			ff_bus_rdata	<= w_secondary_slot3_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( w_mapper_rdata_en ) begin
-//			ff_bus_rdata	<= w_mapper_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-		else if( bus_ppi_rdata_en ) begin
-			ff_bus_rdata	<= bus_ppi_rdata;
-			ff_bus_rdata_en	<= 1'b1;
-		end
-//		else if( bus_rtc_rdata_en ) begin
-//			ff_bus_rdata	<= bus_rtc_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( bus_vdp_rdata_en ) begin
-//			ff_bus_rdata	<= bus_vdp_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( bus_cartridge_rdata_en ) begin
-//			ff_bus_rdata	<= bus_cartridge_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( bus_ssg_rdata_en ) begin
-//			ff_bus_rdata	<= bus_ssg_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( w_kanji_rdata_en ) begin
-//			ff_bus_rdata	<= w_kanji_sdram_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( bus_megarom1_rdata_en ) begin
-//			ff_bus_rdata	<= bus_megarom1_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( bus_megarom2_rdata_en ) begin
-//			ff_bus_rdata	<= bus_megarom2_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( w_megaemu1_rdata_en ) begin
-//			ff_bus_rdata	<= w_megaemu1_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( w_megaemu2_rdata_en ) begin
-//			ff_bus_rdata	<= w_megaemu2_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
 		else if( ff_s2026_cs && ff_bus_valid && !ff_bus_write ) begin
 			ff_bus_rdata	<= w_s2026_rdata;
 			ff_bus_rdata_en	<= 1'b1;
 		end
-//		else if( w_megarom_rdata_en ) begin
-//			ff_bus_rdata	<= w_megarom_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( w_megarom_sdram_rdata_en ) begin
-//			ff_bus_rdata	<= w_megarom_sdram_rdata;
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
-//		else if( ff_sysctl_cs && w_bus_valid && !w_bus_write ) begin
-//			ff_bus_rdata	<= (w_bus_address[0] == 1'b0) ? ff_f4 : { 6'd0, ff_f5 };
-//			ff_bus_rdata_en	<= 1'b1;
-//		end
 		else begin
 			ff_bus_rdata_en	<= 1'b0;
 		end
@@ -518,36 +402,18 @@ module s2026 (
 						  (!w_bootrom_cs        | bus_bootrom_ready   ) &
 						  (!w_extio_cs			| bus_extio_ready     ) &
 						  (!w_fpga_cs			| bus_fpga_ready      ) &
-//						  (!w_mapper_io_cs      | w_mapper_ready      ) &
-						  (!w_ppi_cs            | bus_ppi_ready       ) &
-//						  (!w_rtc_cs            | bus_rtc_ready       ) &
-//						  (!w_cartridge_cs      | bus_cartridge_ready ) &
-//						  (!w_ssg_cs            | bus_ssg_ready       ) &
-//						  (!w_kanji_cs          | w_kanjirom_ready    ) &
 						  (!w_s2026_cs          | w_s2026_ready       );
-//						  (!w_s2026_meegarom_cs | w_megarom_ready     ) &
-//						  (!w_megarom1_cs       | w_megaemu1_ready    ) &
-//						  (!w_megarom2_cs       | w_megaemu2_ready    );
 	assign w_cpu_pause	= w_bus_valid & ~w_bus_ready;
 
 	//--------------------------------------------------------------
 	//	out assignment
 	//--------------------------------------------------------------
 	assign processor_mode	= w_processor_mode;
-//	assign rom_mode			= ff_rom_mode;
-//	assign mapper_segment	= w_mapper_segment;
 
 	assign bus_uart_cs		= ff_uart_cs;
 	assign bus_bootrom_cs	= ff_bootrom_cs;
 	assign bus_extio_cs		= ff_extio_cs;
 	assign bus_fpga_cs		= ff_fpga_cs;
-	assign bus_ppi_cs		= ff_ppi_cs;
-//	assign bus_rtc_cs		= ff_rtc_cs;
-//	assign bus_cartridge_cs	= ff_cartridge_cs;
-//	assign bus_ssg_cs		= ff_ssg_cs;
-//	assign bus_opll_cs		= ff_opll_cs;
-//	assign bus_megarom1_cs	= ff_megarom1_cs;
-//	assign bus_megarom2_cs	= ff_megarom2_cs;
 
 	assign bus_m1			= ff_bus_m1;
 	assign bus_io			= ff_bus_io;
@@ -671,22 +537,6 @@ module s2026 (
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_f4	<= 8'd0;
-			ff_f5	<= 2'd0;
-		end
-		else if( w_sysctl_cs && w_bus_write && w_bus_address[0] == 1'b0 ) begin
-			ff_f4	<= w_bus_wdata;
-		end
-		else if( w_sysctl_cs && w_bus_write && w_bus_address[0] == 1'b1 ) begin
-			ff_f5	<= w_bus_wdata[1:0];
-		end
-	end
-
-	assign kanji1_en	= ff_f5[0];
-	assign kanji2_en	= ff_f5[1];
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
 			ff_bootrom_mode	<= 1'b1;
 		end
 	end
@@ -698,235 +548,4 @@ module s2026 (
 		ff_switch <= 1'b0;
 	end
 
-	// ---------------------------------------------------------
-	//	Secondary Slot #0 instance
-	// ---------------------------------------------------------
-//	s2026_secondary_slot u_secondary_slot0 (
-//		.reset_n				( reset_n						),
-//		.clk					( clk							),
-//		.bus_cs					( ff_secondary_slot0_cs			),
-//		.bus_write				( w_bus_write					),
-//		.bus_valid				( w_bus_valid					),
-//		.bus_ready				( w_secondary_slot0_ready		),
-//		.bus_rdata				( w_secondary_slot0_rdata		),
-//		.bus_rdata_en			( w_secondary_slot0_rdata_en	),
-//		.bus_wdata				( w_bus_wdata					),
-//		.bus_address			( w_bus_address					),
-//		.secondary_slot			( w_secondary_slot0_reg			),
-//		.sltsl_ext0				(								),
-//		.sltsl_ext1				(								),
-//		.sltsl_ext2				(								),
-//		.sltsl_ext3				(								)
-//	);
-
-	// ---------------------------------------------------------
-	//	Secondary Slot #3 instance
-	// ---------------------------------------------------------
-//	s2026_secondary_slot u_secondary_slot3 (
-//		.reset_n				( reset_n						),
-//		.clk					( clk							),
-//		.bus_cs					( ff_secondary_slot3_cs			),
-//		.bus_write				( w_bus_write					),
-//		.bus_valid				( w_bus_valid					),
-//		.bus_ready				( w_secondary_slot3_ready		),
-//		.bus_rdata				( w_secondary_slot3_rdata		),
-//		.bus_rdata_en			( w_secondary_slot3_rdata_en	),
-//		.bus_wdata				( w_bus_wdata					),
-//		.bus_address			( w_bus_address					),
-//		.secondary_slot			( w_secondary_slot3_reg			),
-//		.sltsl_ext0				(								),
-//		.sltsl_ext1				(								),
-//		.sltsl_ext2				(								),
-//		.sltsl_ext3				(								)
-//	);
-
-	// ---------------------------------------------------------
-	//	Memory Mapper instance
-	// ---------------------------------------------------------
-//	s2026_memory_mapper u_memory_mapper (
-//		.reset_n				( reset_n					),
-//		.clk					( clk						),
-//		.bus_cs					( ff_mapper_io_cs			),
-//		.bus_write				( w_bus_write				),
-//		.bus_valid				( w_bus_valid				),
-//		.bus_ready				( w_mapper_ready			),
-//		.bus_rdata				( w_mapper_rdata			),
-//		.bus_rdata_en			( w_mapper_rdata_en			),
-//		.bus_wdata				( w_bus_wdata				),
-//		.bus_address			( w_bus_address				),
-//		.mapper_segment			( w_mapper_segment			)
-//	);
-
-	// ---------------------------------------------------------
-	//	KanjiROM instance
-	// ---------------------------------------------------------
-//	s2026_kanjirom u_kanjirom (
-//		.reset_n				( reset_n						),
-//		.clk					( clk							),
-//		.bus_cs					( ff_kanji_cs					),
-//		.bus_write				( w_bus_write					),
-//		.bus_valid				( w_bus_valid					),
-//		.bus_ready				( w_kanjirom_ready				),
-//		.bus_wdata				( w_bus_wdata					),
-//		.bus_address			( w_bus_address[1:0]			),
-//		.sdram_address			( w_kanjirom_sdram_address		),
-//		.sdram_valid			( w_kanjirom_sdram_valid		),
-//		.sdram_ready			( sdram_rdata_en				),
-//		.sdram_write			( w_kanjirom_sdram_write		),
-//		.sdram_wdata			( w_kanjirom_sdram_wdata		)
-//	);
-
-	// ---------------------------------------------------------
-	//	System MegaROM instance
-	// ---------------------------------------------------------
-//	s2026_megarom u_megarom (
-//		.reset_n				( reset_n						),
-//		.clk					( clk							),
-//		.bus_cs					( ff_s2026_meegarom_cs			),
-//		.bus_write				( w_bus_write					),
-//		.bus_valid				( w_bus_valid					),
-//		.bus_ready				( w_megarom_ready				),
-//		.bus_rdata				( w_megarom_rdata				),
-//		.bus_rdata_en			( w_megarom_rdata_en			),
-//		.bus_wdata				( w_bus_wdata					),
-//		.bus_address			( w_bus_address					),
-//		.sdram_address			( w_megarom_sdram_address		),
-//		.sdram_valid			( w_megarom_sdram_valid			),
-//		.sdram_ready			( sdram_rdata_en				),
-//		.sdram_write			( w_megarom_sdram_write			),
-//		.sdram_wdata			( w_megarom_sdram_wdata			)
-//	);
-
-	// ---------------------------------------------------------
-	//	MegaEmu1 instance (Slot 1)
-	// ---------------------------------------------------------
-//	s2026_megaemu u_slot1_megaemu (
-//		.reset_n			( reset_n					),
-//		.clk				( clk						),
-//		.enable				( megaemu1_en				),
-//		.bus_cs				( ff_megarom1_cs			),
-//		.bus_write			( w_bus_write				),
-//		.bus_valid			( w_bus_valid				),
-//		.bus_ready			( w_megaemu1_ready			),
-//		.bus_rdata			( w_megaemu1_rdata			),
-//		.bus_rdata_en		( w_megaemu1_rdata_en		),
-//		.bus_wdata			( w_bus_wdata				),
-//		.bus_address		( w_bus_address				),
-//		.cmd_cs				( megaemu1_cmd_cs			),
-//		.cmd_action			( megaemu1_cmd_action		),
-//		.cmd_wdata			( megaemu1_cmd_wdata		),
-//		.cmd_valid			( megaemu1_cmd_valid		),
-//		.sdram_address		( w_megaemu1_sdram_address	),
-//		.sdram_valid		( w_megaemu1_sdram_valid	),
-//		.sdram_ready		( sdram_rdata_en			),
-//		.sdram_write		( w_megaemu1_sdram_write	),
-//		.sdram_wdata		( w_megaemu1_sdram_wdata	)
-//	);
-
-	// ---------------------------------------------------------
-	//	MegaEmu2 instance (Slot 2)
-	// ---------------------------------------------------------
-//	s2026_megaemu u_slot2_megaemu (
-//		.reset_n			( reset_n					),
-//		.clk				( clk						),
-//		.enable				( megaemu2_en				),
-//		.bus_cs				( ff_megarom2_cs			),
-//		.bus_write			( w_bus_write				),
-//		.bus_valid			( w_bus_valid				),
-//		.bus_ready			( w_megaemu2_ready			),
-//		.bus_rdata			( w_megaemu2_rdata			),
-//		.bus_rdata_en		( w_megaemu2_rdata_en		),
-//		.bus_wdata			( w_bus_wdata				),
-//		.bus_address		( w_bus_address				),
-//		.cmd_cs				( megaemu2_cmd_cs			),
-//		.cmd_action			( megaemu2_cmd_action		),
-//		.cmd_wdata			( megaemu2_cmd_wdata		),
-//		.cmd_valid			( megaemu2_cmd_valid		),
-//		.sdram_address		( w_megaemu2_sdram_address	),
-//		.sdram_valid		( w_megaemu2_sdram_valid	),
-//		.sdram_ready		( sdram_rdata_en			),
-//		.sdram_write		( w_megaemu2_sdram_write	),
-//		.sdram_wdata		( w_megaemu2_sdram_wdata	)
-//	);
-
-	// ---------------------------------------------------------
-	//	SDRAM Arbitration (KanjiROM / MegaROM / MegaEmu1 / MegaEmu2)
-	//		KanjiROM, MegaROM and MegaEmu are selected by different chip
-	//		selects, so their SDRAM requests do not conflict.
-	// ---------------------------------------------------------
-//	wire			w_sdram_sel_kanjirom	= w_kanjirom_sdram_valid;
-//	wire			w_sdram_sel_megaemu1	= w_megaemu1_sdram_valid;
-//	wire			w_sdram_sel_megaemu2	= w_megaemu2_sdram_valid;
-//
-//	wire	[22:0]	w_megaemu1_sdram_address_23	= { 2'd0, w_megaemu1_sdram_address };
-//	wire	[22:0]	w_megaemu2_sdram_address_23	= { 2'd0, w_megaemu2_sdram_address };
-//
-//	wire	[22:0]	w_sdram_address_byte	= w_sdram_sel_kanjirom  ? { 5'd0, w_kanjirom_sdram_address } :
-//											  w_sdram_sel_megaemu1  ? w_megaemu1_sdram_address_23 :
-//											  w_sdram_sel_megaemu2  ? w_megaemu2_sdram_address_23 :
-//																   w_megarom_sdram_address;
-//
-//	assign sdram_address	= w_sdram_address_byte[22:2];
-//	assign sdram_valid		= w_kanjirom_sdram_valid | w_megarom_sdram_valid | w_megaemu1_sdram_valid | w_megaemu2_sdram_valid;
-//	assign sdram_write		= ~w_sdram_sel_kanjirom &
-//							  ( w_sdram_sel_megaemu1 ? w_megaemu1_sdram_write :
-//							    w_sdram_sel_megaemu2 ? w_megaemu2_sdram_write :
-//													  w_megarom_sdram_write );
-//	assign sdram_refresh	= 1'b0;
-//	assign sdram_wdata		= w_sdram_sel_megaemu1 ? { 4{ w_megaemu1_sdram_wdata } } :
-//							  w_sdram_sel_megaemu2 ? { 4{ w_megaemu2_sdram_wdata } } :
-//													{ 4{ w_megarom_sdram_wdata } };
-//
-//	wire	[1:0]	w_sdram_byte_sel	= w_sdram_address_byte[1:0];
-//	assign sdram_wdata_mask	= ( w_sdram_byte_sel == 2'd0 ) ? 4'b1110 :
-//							  ( w_sdram_byte_sel == 2'd1 ) ? 4'b1101 :
-//							  ( w_sdram_byte_sel == 2'd2 ) ? 4'b1011 : 4'b0111;
-
-	// ---------------------------------------------------------
-	//	SDRAM read data extraction
-	// ---------------------------------------------------------
-//	reg		[1:0]	ff_kanjirom_byte_sel;
-//	reg				ff_kanjirom_reading;
-//	reg		[1:0]	ff_megarom_byte_sel;
-//	reg				ff_megarom_reading;
-//
-//	always @( posedge clk ) begin
-//		if( !reset_n ) begin
-//			ff_kanjirom_reading		<= 1'b0;
-//			ff_kanjirom_byte_sel	<= 2'd0;
-//		end
-//		else if( w_kanjirom_sdram_valid && !ff_kanjirom_reading ) begin
-//			ff_kanjirom_reading		<= 1'b1;
-//			ff_kanjirom_byte_sel	<= w_kanjirom_sdram_address[1:0];
-//		end
-//		else if( sdram_rdata_en ) begin
-//			ff_kanjirom_reading		<= 1'b0;
-//		end
-//	end
-//
-//	always @( posedge clk ) begin
-//		if( !reset_n ) begin
-//			ff_megarom_reading		<= 1'b0;
-//			ff_megarom_byte_sel		<= 2'd0;
-//		end
-//		else if( w_megarom_sdram_valid && !w_megarom_sdram_write && !ff_megarom_reading ) begin
-//			ff_megarom_reading		<= 1'b1;
-//			ff_megarom_byte_sel		<= w_megarom_sdram_address[1:0];
-//		end
-//		else if( sdram_rdata_en ) begin
-//			ff_megarom_reading		<= 1'b0;
-//		end
-//	end
-//
-//	wire	[7:0]	w_kanji_sdram_rdata	= ( ff_kanjirom_byte_sel == 2'd0 ) ? sdram_rdata[ 7: 0] :
-//										  ( ff_kanjirom_byte_sel == 2'd1 ) ? sdram_rdata[15: 8] :
-//										  ( ff_kanjirom_byte_sel == 2'd2 ) ? sdram_rdata[23:16] :
-//																			 sdram_rdata[31:24];
-//	wire			w_kanji_rdata_en	= ff_kanjirom_reading & sdram_rdata_en;
-//
-//	wire	[7:0]	w_megarom_sdram_rdata	= ( ff_megarom_byte_sel == 2'd0 ) ? sdram_rdata[ 7: 0] :
-//											  ( ff_megarom_byte_sel == 2'd1 ) ? sdram_rdata[15: 8] :
-//											  ( ff_megarom_byte_sel == 2'd2 ) ? sdram_rdata[23:16] :
-//																				sdram_rdata[31:24];
-//	wire			w_megarom_sdram_rdata_en	= ff_megarom_reading & sdram_rdata_en;
 endmodule
