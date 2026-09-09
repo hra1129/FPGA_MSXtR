@@ -71,7 +71,6 @@ module s2026_cpu_select (
 	//	Internal bus outputs (stage 2 - bus protocol)
 	output			bus_m1,
 	output			bus_io,
-	output			bus_mem,
 	output			bus_write,
 	output			bus_valid,
 	output	[7:0]	bus_wdata,
@@ -94,7 +93,6 @@ module s2026_cpu_select (
 
 	reg				ff_bus_m1;
 	reg				ff_bus_io;
-	reg				ff_bus_mem;
 	reg				ff_bus_write;
 	reg				ff_bus_valid;
 	reg		[7:0]	ff_bus_wdata;
@@ -150,14 +148,12 @@ module s2026_cpu_select (
 		if( !reset_n ) begin
 			ff_bus_m1		<= 1'b0;
 			ff_bus_io		<= 1'b0;
-			ff_bus_mem		<= 1'b0;
 			ff_bus_write	<= 1'b0;
 			ff_bus_wdata	<= 1'b0;
 		end
 		else if( !ff_bus_valid && w_valid ) begin
 			ff_bus_m1		<= ff_m1;
 			ff_bus_io		<= ff_iorq;
-			ff_bus_mem		<= ff_mreq;
 			ff_bus_write	<= ff_wr;
 			ff_bus_wdata	<= ff_wdata;
 		end
@@ -329,7 +325,6 @@ module s2026_cpu_select (
 	assign address			= ff_bus_address;
 	assign bus_m1			= ff_bus_m1;
 	assign bus_io			= ff_bus_io;
-	assign bus_mem			= ff_bus_mem;
 	assign bus_write		= ff_bus_write;
 	assign bus_valid		= ff_bus_valid;
 	assign bus_wdata		= ff_bus_wdata;

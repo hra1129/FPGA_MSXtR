@@ -30,8 +30,9 @@
         <File path="src/pll_init.v" type="file.verilog" enable="1"/>
         <File path="src/ppi/ppi.v" type="file.verilog" enable="1"/>
         <File path="src/rtc/rtc.v" type="file.verilog" enable="1"/>
-        <File path="src/s2026/s2026_cpu_controller.v" type="file.verilog" enable="1"/>
+        <File path="src/s2026/s2026.v" type="file.verilog" enable="1"/>
         <File path="src/s2026/s2026_cpu_select.v" type="file.verilog" enable="1"/>
+        <File path="src/s2026/s2026_register.v" type="file.verilog" enable="1"/>
         <File path="src/secondary_slot/secondary_slot.v" type="file.verilog" enable="1"/>
         <File path="src/spi/ip_spi.v" type="file.verilog" enable="1"/>
         <File path="src/spi/spi.v" type="file.verilog" enable="1"/>

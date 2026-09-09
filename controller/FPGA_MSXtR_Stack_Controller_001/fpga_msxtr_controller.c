@@ -905,7 +905,7 @@ int main(void) {
 	// を実行し、その間 slot_wait_n = L にしてくる。それが解除されるまで待つ。
 	fpga_bootrom_enable( false );
 	fpga_msx_pause( true );
-	//fpga_set_bus_owner( 1 );
+	fpga_set_bus_owner( 1 );
 	fpga_msx_reset( false );
 
 	// ★ToDo: 現状 /WAIT のあたりがおかしいので下記コードで無限ループに入る、要調査

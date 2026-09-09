@@ -225,6 +225,11 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_device_ppi_rdata;
 	wire			w_device_ppi_rdata_en;
 
+	wire			w_device_s2026_cs;
+	wire			w_device_s2026_ready;
+	wire	[7:0]	w_device_s2026_rdata;
+	wire			w_device_s2026_rdata_en;
+
 	wire			w_device_secondary_cs;
 	wire			w_device_secondary_ready;
 	wire	[7:0]	w_device_secondary_rdata;
@@ -263,6 +268,7 @@ module fpga_msxtr_cpu_stack (
 	wire			w_bootrom_en;
 	wire	[19:0]	w_flashrom_address;
 	wire			w_flashrom_en;
+	wire			w_msx_pause;
 
 	// --------------------------------------------------------------------
 	//	clock
@@ -366,7 +372,7 @@ module fpga_msxtr_cpu_stack (
 		.ssram_startup_busy		( w_ssram_startup_busy		),
 		.active_bus_owner		( w_active_bus_owner		),
 		.msx_reset_n			( w_msx_reset_n				),
-		.msx_pause				(							),
+		.msx_pause				( w_msx_pause				),
 		.bootrom_en				( w_bootrom_en				),
 		.bus_owner				( w_bus_owner				),
 		.keyboard_matrix_row	( w_keyboard_matrix_row		),
@@ -543,14 +549,12 @@ module fpga_msxtr_cpu_stack (
 	// --------------------------------------------------------------------
 	//	CPU selector
 	// --------------------------------------------------------------------
-	s2026_cpu_controller u_s2026_cpu_controller (
+	s2026 u_s2026 (
 		.reset_n				( ff_s2026_reset_n			),
 		.clk					( clk42m					),
 		.enable_z80				( w_3_579m					),
 		.enable_r800			( w_21m						),
-		.cpu_pause				( ~w_active_bus_owner		),
-		.cpu_change_req			( 1'b0						),
-		.cpu_change_target		( 1'b0						),
+		.cpu_pause				( w_msx_pause				),
 		.z80_m1					( w_z80_m1					),
 		.z80_mreq				( w_z80_mreq				),
 		.z80_iorq				( w_z80_iorq				),
@@ -576,6 +580,14 @@ module fpga_msxtr_cpu_stack (
 		.bus_address			( w_bus_address				),
 		.bus_rdata				( w_bus_rdata				),
 		.bus_rdata_en			( w_bus_rdata_en			),
+		.device_cs				( w_device_s2026_cs			),
+		.device_write			( w_device_write			),
+		.device_valid			( w_device_valid			),
+		.device_ready			( w_device_s2026_ready		),
+		.device_wdata			( w_device_wdata			),
+		.device_address			( w_device_address			),
+		.device_rdata			( w_device_s2026_rdata		),
+		.device_rdata_en		( w_device_s2026_rdata_en	),
 		.z80_active				( w_z80_active				),
 		.r800_active			( w_r800_active				),
 		.processor_mode			( w_processor_mode			)		//	0: R800, 1: Z80
@@ -640,7 +652,8 @@ module fpga_msxtr_cpu_stack (
 		.memory_mapper_cs		( w_device_mapper_cs		),
 		.ssram_cs				( w_device_ssram_cs			),
 		.rtc_cs					( w_device_rtc_cs			),
-		.system_flag_cs			( w_device_system_flag_cs	)
+		.system_flag_cs			( w_device_system_flag_cs	),
+		.s2026_cs				( w_device_s2026_cs			)
 	);
 
 	assign w_system_flag_offset	= w_device_address[7:0] - 8'hF3;
@@ -658,13 +671,14 @@ module fpga_msxtr_cpu_stack (
 	assign w_device_ssram_active	= w_device_ssram_cs & ~w_device_secondary_cs;
 
 	//	bootrom / ppi / memory_mapper / ssram の cs は排他的なので、応答をそのまま束ねて device_* へ返す
-	assign w_device_rdata		= w_device_ppi_rdata_en			? w_device_ppi_rdata    	:
-								  w_device_mapper_rdata_en		? w_device_mapper_rdata 	:
-								  w_device_secondary_rdata_en	? w_device_secondary_rdata	: 
-								  w_device_ssram_rdata_en		? w_device_ssram_rdata  	: 
-								  w_device_rtc_rdata_en			? w_device_rtc_rdata		: 
+	assign w_device_rdata		= w_device_ppi_rdata_en			? w_device_ppi_rdata    		:
+								  w_device_mapper_rdata_en		? w_device_mapper_rdata 		:
+								  w_device_secondary_rdata_en	? w_device_secondary_rdata		: 
+								  w_device_ssram_rdata_en		? w_device_ssram_rdata  		: 
+								  w_device_rtc_rdata_en			? w_device_rtc_rdata			: 
 								  w_device_system_flag_rdata_en	? w_device_system_flag_rdata	: 
-								  w_device_bootrom_rdata_en		? w_device_bootrom_rdata	: 
+								  w_device_bootrom_rdata_en		? w_device_bootrom_rdata		: 
+								  w_device_s2026_rdata_en		? w_device_s2026_rdata			:
 								  8'b0;
 
 	assign w_device_rdata_en	= w_device_ppi_rdata_en			| 
@@ -673,15 +687,17 @@ module fpga_msxtr_cpu_stack (
 								  w_device_secondary_rdata_en	| 
 								  w_device_rtc_rdata_en			| 
 								  w_device_system_flag_rdata_en	| 
-								  w_device_bootrom_rdata_en;
+								  w_device_bootrom_rdata_en		|
+								  w_device_s2026_rdata_en;
 
-	 assign w_device_ready		= w_device_ppi_cs				? w_device_ppi_ready    	: 
-								  w_device_mapper_cs			? w_device_mapper_ready  	: 
-								  w_device_secondary_cs			? w_device_secondary_ready	: 
-								  w_device_ssram_active			? w_device_ssram_ready   	: 
-								  w_device_rtc_cs				? w_device_rtc_ready		: 
+	 assign w_device_ready		= w_device_ppi_cs				? w_device_ppi_ready    		: 
+								  w_device_mapper_cs			? w_device_mapper_ready  		: 
+								  w_device_secondary_cs			? w_device_secondary_ready		: 
+								  w_device_ssram_active			? w_device_ssram_ready  	 	: 
+								  w_device_rtc_cs				? w_device_rtc_ready			: 
 								  w_device_system_flag_cs		? w_device_system_flag_ready	: 
-								  w_device_bootrom_cs			? w_device_bootrom_ready	: 
+								  w_device_bootrom_cs			? w_device_bootrom_ready		: 
+								  w_device_s2026_cs				? w_device_s2026_ready			: 
 								  1'b0;
 
 	// --------------------------------------------------------------------
