@@ -285,6 +285,7 @@ module s2026 (
 		.cpu_change_req		( w_cpu_change_req		),
 		.cpu_change_target	( w_cpu_change_target	),
 		.cpu_pause			( w_cpu_pause			),
+		.cpu_wait			( 1'b0					),
 		.rdata				( ff_bus_rdata			),
 		.rdata_en			( ff_bus_rdata_en		),
 		.z80_active			( z80_active			),

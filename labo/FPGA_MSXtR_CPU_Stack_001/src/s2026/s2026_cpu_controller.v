@@ -66,6 +66,7 @@ module s2026_cpu_controller (
 		.cpu_change_req		( cpu_change_req	),
 		.cpu_change_target	( cpu_change_target	),
 		.cpu_pause			( cpu_pause			),
+		.cpu_wait			( 1'b0				),
 		.rdata				( bus_rdata			),
 		.rdata_en			( bus_rdata_en		),
 		.z80_active			( z80_active		),

@@ -57,6 +57,8 @@ module s2026_register (
 	reg				ff_processor_mode;
 	reg		[7:0]	ff_device_rdata;
 	reg				ff_device_rdata_en;
+	wire	[7:0]	w_register_read;
+	wire			w_counter_reset;
 
 	// ---------------------------------------------------------
 	//	S2026 register read logic
@@ -198,7 +200,7 @@ module s2026_register (
 	//--------------------------------------------------------------
 	//	System Timer (16bit freerun counter)
 	//--------------------------------------------------------------
-	wire w_counter_reset	= ( device_cs && (device_address == 2'd2) && device_write && device_valid ) ? 1'b1 : 1'b0;
+	assign w_counter_reset	= ( device_cs && (device_address == 2'd2) && device_write && device_valid ) ? 1'b1 : 1'b0;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin

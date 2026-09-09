@@ -119,6 +119,8 @@ module fpga_msxtr_cpu_stack (
 	wire	[15:0]	w_z80_a;
 	wire	[7:0]	w_z80_wdata;
 	wire	[7:0]	w_z80_rdata;
+	wire	[15:0]	w_z80_pc;			//	debug
+
 	wire 			w_r800_m1;
 	wire 			w_r800_mreq;
 	wire 			w_r800_iorq;
@@ -128,6 +130,7 @@ module fpga_msxtr_cpu_stack (
 	wire	[15:0]	w_r800_a;
 	wire	[7:0]	w_r800_wdata;
 	wire	[7:0]	w_r800_rdata;
+
 	wire			w_processor_mode;
 	wire			w_bus_m1;
 	wire			w_bus_io;
@@ -269,6 +272,7 @@ module fpga_msxtr_cpu_stack (
 	wire	[19:0]	w_flashrom_address;
 	wire			w_flashrom_en;
 	wire			w_msx_pause;
+	wire			w_cpu_wait;
 
 	// --------------------------------------------------------------------
 	//	clock
@@ -378,7 +382,7 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_matrix_row	( w_keyboard_matrix_row		),
 		.keyboard_matrix		( w_keyboard_matrix			),
 		.keyboard_matrix_valid	( w_keyboard_matrix_valid	),
-		.debug_signal			( 8'h00						),
+		.debug_signal			( w_z80_pc					),
 		.flashrom_address		( w_flashrom_address		),
 		.flashrom_en			( w_flashrom_en				)
 	);
@@ -387,7 +391,7 @@ module fpga_msxtr_cpu_stack (
 	//	MSX Slot signal controller
 	// --------------------------------------------------------------------
 	msx_bus_mux u_msx_bus_mux (
-		.reset_n				( ff_slot_reset_n			),
+		.reset_n				( ff_spi_reset_n			),
 		.clk					( clk42m					),
 		.bus_owner				( w_bus_owner				),
 		.active_bus_owner		( w_active_bus_owner		),
@@ -442,6 +446,7 @@ module fpga_msxtr_cpu_stack (
 		.secondary_slot0		( w_secondary_slot0			),
 		.secondary_slot3		( w_secondary_slot3			),
 		.high_speed_mode		( w_high_speed_mode			),
+		.cpu_wait				( w_cpu_wait				),
 		.int_n					( w_int_p					),
 		.slot_m1_n				( slot_m1_n					),
 		.slot_oe_n				( slot_oe_n					),
@@ -521,7 +526,8 @@ module fpga_msxtr_cpu_stack (
 		.busak					( 							),
 		.a						( w_z80_a					),
 		.wdata					( w_z80_wdata				),
-		.rdata					( w_z80_rdata				)
+		.rdata					( w_z80_rdata				),
+		.pc						( w_z80_pc					)		//	debug
 	);
 
 	//	Highspeed CPU core
@@ -555,6 +561,7 @@ module fpga_msxtr_cpu_stack (
 		.enable_z80				( w_3_579m					),
 		.enable_r800			( w_21m						),
 		.cpu_pause				( w_msx_pause				),
+		.cpu_wait				( w_cpu_wait				),
 		.z80_m1					( w_z80_m1					),
 		.z80_mreq				( w_z80_mreq				),
 		.z80_iorq				( w_z80_iorq				),

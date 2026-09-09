@@ -59,6 +59,7 @@ module s2026_cpu_select (
 	input			cpu_change_target,
 	//	Wait control
 	input			cpu_pause,
+	input			cpu_wait,
 	//	Read data (for driving CPU data bus)
 	input	[7:0]	rdata,
 	input			rdata_en,
@@ -317,7 +318,7 @@ module s2026_cpu_select (
 	// ---------------------------------------------------------
 	//	Output assignments
 	// ---------------------------------------------------------
-	assign w_wait_p			= cpu_pause | (ff_bus_valid & ~bus_ready) | ff_read_wait;
+	assign w_wait_p			= cpu_pause | cpu_wait;
 	assign z80_active		= ff_z80_active  & enable_z80  & ~w_wait_p;
 	assign r800_active		= ff_r800_active & enable_r800 & ~w_wait_p;
 	assign processor_mode	= ff_processor_mode;

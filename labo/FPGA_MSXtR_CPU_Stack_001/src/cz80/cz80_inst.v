@@ -78,7 +78,8 @@ module cz80_inst (
 	output			busak		,
 	output	[15:0]	a			,
 	output	[7:0]	wdata		,
-	input	[7:0]	rdata		
+	input	[7:0]	rdata		,
+	output	[15:0]	pc					//	debug
 );
 	wire				w_intcycle_n;
 	wire				w_iorq;
@@ -140,7 +141,8 @@ module cz80_inst (
 		.ts				( w_t_state			),
 		.intcycle_n		( w_intcycle_n		),
 		.inte			( 					),
-		.stop			( 					)
+		.stop			( 					),
+		.p_pc			( pc				)		//	debug
 	);
 
 	always @( posedge clk ) begin

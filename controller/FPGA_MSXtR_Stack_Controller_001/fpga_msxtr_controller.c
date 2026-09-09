@@ -376,10 +376,10 @@ static void test_ssram_memory( void ) {
 
 // ---------------------------------------------------------
 static void dump_fpga_debug_signal( void ) {
-	uint8_t debug_signal;
+	uint16_t debug_signal;
 
 	debug_signal = fpga_get_debug_signal();
-	printf( "FPGA debug signal: %u (0x%02X)\r\n", debug_signal, debug_signal );
+	printf( "FPGA debug signal: %u (0x%04X)\r\n", (unsigned int) debug_signal, (unsigned int) debug_signal );
 }
 
 // ---------------------------------------------------------

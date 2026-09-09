@@ -139,7 +139,7 @@ module ppi (
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_primary_slot <= 8'hFF;
+			ff_primary_slot <= 8'h00;
 		end
 		else if( bus_cs && bus_valid && bus_write && (bus_address == 2'b00) ) begin
 			ff_primary_slot <= bus_wdata;

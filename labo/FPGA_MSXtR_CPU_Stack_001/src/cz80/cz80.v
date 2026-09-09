@@ -83,7 +83,8 @@ module cz80 (
 	output	[2:0]	ts			,
 	output			intcycle_n	,
 	output			inte		,
-	output			stop
+	output			stop		,
+	output	[15:0]	p_pc				//	debug
 );
 
 	localparam		flag_c		= 0;
@@ -291,6 +292,8 @@ module cz80 (
 		.write			( write				),
 		.xybit_undoc	( xybit_undoc		)
 	);
+
+	assign p_pc = pc;		//	debug
 
 	// --------------------------------------------------------------------
 	cz80_alu u_alu (

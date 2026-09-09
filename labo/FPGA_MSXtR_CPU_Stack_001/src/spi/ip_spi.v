@@ -61,26 +61,27 @@ module ip_spi (
 	output	[3:0]	keyboard_matrix_row,
 	output	[7:0]	keyboard_matrix,
 	output			keyboard_matrix_valid,
-	input	[7:0]	debug_signal,
+	input	[15:0]	debug_signal,
 	output	[19:0]	flashrom_address,
 	output			flashrom_en
 );
-	localparam		ST_IDLE			= 4'd0;
-	localparam		ST_COMMAND		= 4'd1;
-	localparam		ST_ADDRESS		= 4'd2;
-	localparam		ST_MEM_ADDR_L	= 4'd3;
-	localparam		ST_MEM_ADDR_H	= 4'd4;
-	localparam		ST_WDATA		= 4'd5;
-	localparam		ST_DO			= 4'd6;
-	localparam		ST_SEND			= 4'd7;
-	localparam		ST_WAIT_RDATA	= 4'd8;
-	localparam		ST_FLASH_ADDR_L	= 4'd9;
-	localparam		ST_FLASH_ADDR_M	= 4'd10;
-	localparam		ST_FLASH_ADDR_H	= 4'd11;
-	localparam		ST_BUS_OWNER	= 4'd12;
-	localparam		ST_KEYBOARD	= 4'd13;
-	localparam		ST_BUS_OWNER_WAIT = 4'd14;
-	localparam		SPI_RX_WDATA	= 8'h64;
+	localparam		ST_IDLE				= 4'd0;
+	localparam		ST_COMMAND			= 4'd1;
+	localparam		ST_ADDRESS			= 4'd2;
+	localparam		ST_MEM_ADDR_L		= 4'd3;
+	localparam		ST_MEM_ADDR_H		= 4'd4;
+	localparam		ST_WDATA			= 4'd5;
+	localparam		ST_DO				= 4'd6;
+	localparam		ST_SEND				= 4'd7;
+	localparam		ST_WAIT_RDATA		= 4'd8;
+	localparam		ST_FLASH_ADDR_L		= 4'd9;
+	localparam		ST_FLASH_ADDR_M		= 4'd10;
+	localparam		ST_FLASH_ADDR_H		= 4'd11;
+	localparam		ST_BUS_OWNER		= 4'd12;
+	localparam		ST_KEYBOARD			= 4'd13;
+	localparam		ST_BUS_OWNER_WAIT	= 4'd14;
+	localparam		ST_DEBUG_H			= 4'd15;
+	localparam		SPI_RX_WDATA		= 8'h64;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
 	reg		[3:0]	ff_state;
@@ -109,7 +110,7 @@ module ip_spi (
 	reg				ff_keyboard_matrix_valid;
 	reg				ff_keyboard_update_toggle;
 	reg				ff_keyboard_update_toggle_d;
-	reg		[7:0]	ff_debug_signal;
+	reg		[15:0]	ff_debug_signal;
 	reg				ff_suppress_intr;
 	reg				ff_suppress_intr_d1;
 	reg		[19:0]	ff_flashrom_address;
@@ -118,7 +119,7 @@ module ip_spi (
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_debug_signal <= 8'h00;
+			ff_debug_signal <= 16'h0000;
 		end
 		else begin
 			ff_debug_signal <= debug_signal;
@@ -214,6 +215,13 @@ module ip_spi (
 				ff_spi_write	<= 1'b1;
 			end
 		end
+		else if( ff_spi_cs_n ) begin
+			ff_state		<= ST_IDLE;
+			ff_spi_valid	<= 1'b0;
+			ff_bus_valid	<= 1'b0;
+			ff_suppress_intr <= 1'b0;
+			ff_flashrom_access <= 1'b0;
+		end
 		else if( ff_state == ST_BUS_OWNER_WAIT ) begin
 			//	実際に msx_bus_mux 側のバス所有権が切り替わるまで待ってから intr を上げる
 			if( active_bus_owner == ff_bus_owner ) begin
@@ -222,13 +230,6 @@ module ip_spi (
 				ff_spi_valid	<= 1'b1;
 				ff_spi_write	<= 1'b1;
 			end
-		end
-		else if( ff_spi_cs_n ) begin
-			ff_state		<= ST_IDLE;
-			ff_spi_valid	<= 1'b0;
-			ff_bus_valid	<= 1'b0;
-			ff_suppress_intr <= 1'b0;
-			ff_flashrom_access <= 1'b0;
 		end
 		else if( ff_spi_valid && !(ff_state == ST_KEYBOARD && spi_rdata_en) ) begin
 			if( spi_ready ) begin
@@ -254,7 +255,7 @@ module ip_spi (
 			//   07h                               ... MSX Hardware reset OFF (msx_reset_n = 1)
 			//   08h                               ... MSX Hardware pause ON  (msx_pause = 1)
 			//   09h                               ... MSX Hardware pause OFF (msx_pause = 0)
-			//   0Ah, (dummy byte)                 ... Debug signal read without SPI interrupt
+			//   0Ah, (dummy byte), (dummy byte)   ... Debug signal read (low, high) without SPI interrupt
 			//   0Bh                               ... MSX BootROM enable  (bootrom_en = 1)
 			//   0Ch                               ... MSX BootROM disable (bootrom_en = 0)
 			//   0Dh, addr_l, addr_m, addr_h, data  ... FlashROM write
@@ -333,8 +334,8 @@ module ip_spi (
 						ff_spi_write	<= 1'b0;
 					end
 					8'h0a: begin
-						ff_state		<= ST_SEND;
-						ff_spi_wdata	<= ff_debug_signal;
+						ff_state		<= ST_DEBUG_H;
+						ff_spi_wdata	<= ff_debug_signal[7:0];
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b1;
 						ff_suppress_intr <= 1'b1;
@@ -468,6 +469,14 @@ module ip_spi (
 				if( spi_rdata_en ) begin
 					ff_bus_owner	<= spi_rdata[0];
 					ff_state		<= ST_BUS_OWNER_WAIT;
+				end
+			end
+			ST_DEBUG_H: begin
+				if( spi_ready ) begin
+					ff_state		<= ST_SEND;
+					ff_spi_wdata	<= ff_debug_signal[15:8];
+					ff_spi_valid	<= 1'b1;
+					ff_spi_write	<= 1'b1;
 				end
 			end
 			ST_KEYBOARD: begin

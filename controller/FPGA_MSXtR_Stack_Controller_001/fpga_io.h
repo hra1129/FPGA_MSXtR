@@ -52,6 +52,6 @@ void fpga_msx_pause( bool pause_on );
 void fpga_bootrom_enable( bool enable );
 void fpga_set_bus_owner( uint8_t owner );
 void fpga_set_keyboard_matrix( const uint8_t *matrix );
-uint8_t fpga_get_debug_signal( void );
+uint16_t fpga_get_debug_signal( void );
 
 #endif

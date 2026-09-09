@@ -37,6 +37,7 @@ module s2026 (
 	input			enable_z80,
 	input			enable_r800,
 	input			cpu_pause,
+	input			cpu_wait,
 	//	Z80 CPU signals
 	input			z80_m1,
 	input			z80_mreq,
@@ -110,6 +111,7 @@ module s2026 (
 		.cpu_change_req		( w_cpu_change_req		),
 		.cpu_change_target	( w_cpu_change_target	),
 		.cpu_pause			( cpu_pause				),
+		.cpu_wait			( cpu_wait				),
 		.rdata				( bus_rdata				),
 		.rdata_en			( bus_rdata_en			),
 		.z80_active			( z80_active			),

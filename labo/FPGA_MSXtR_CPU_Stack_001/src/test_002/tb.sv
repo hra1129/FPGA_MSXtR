@@ -71,6 +71,9 @@ module tb ();
 	reg [18:0] cpu_first_read_address;
 	reg [7:0] cpu_first_read_data;
 	reg [7:0] rdata;
+	reg monitor_cpu_wait;
+	int cpu_wait_count;
+	int cpu_wait_active_violation_count;
 
 	initial begin
 		clk_28m = 1'b0;
@@ -164,6 +167,15 @@ module tb ();
 		end
 	end
 
+	always @( posedge u_dut.clk42m ) begin
+		if( monitor_cpu_wait && u_dut.w_cpu_wait ) begin
+			cpu_wait_count = cpu_wait_count + 1;
+			if( u_dut.w_z80_active ) begin
+				cpu_wait_active_violation_count = cpu_wait_active_violation_count + 1;
+			end
+		end
+	end
+
 	task automatic spi_send_byte( input [7:0] data );
 		int index;
 		begin
@@ -179,11 +191,24 @@ module tb ();
 	endtask
 
 	task automatic spi_set_bus_owner( input owner );
+		int timeout_ns;
+		reg [7:0] response;
 		begin
+			timeout_ns = 0;
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h10 );
 			spi_send_byte( { 7'd0, owner } );
+			while( mcu_intr == 1'b0 && timeout_ns < 5000 ) begin
+				#( 10 );
+				timeout_ns = timeout_ns + 10;
+			end
+			if( mcu_intr == 1'b1 ) begin
+				spi_transfer_byte( 8'h00, response );
+			end
+			else begin
+				$display( "WARNING: bus owner switch timed out" );
+			end
 			#( 200 );
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;
@@ -350,6 +375,35 @@ module tb ();
 		end
 	endtask
 
+	task automatic spi_msx_pause( input pause_on );
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( pause_on ? 8'h08 : 8'h09 );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic spi_get_debug_signal( output [15:0] debug_signal );
+		reg [7:0] data_l;
+		reg [7:0] data_h;
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h0A );
+			spi_transfer_byte( 8'h00, data_l );
+			spi_transfer_byte( 8'h00, data_h );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+			debug_signal = { data_h, data_l };
+		end
+	endtask
+
 	task automatic spi_bootrom_en( input enable );
 		begin
 			mcu_cs_n = 1'b0;
@@ -375,6 +429,11 @@ module tb ();
 	endtask
 
 	initial begin
+		reg [15:0] paused_pc;
+		reg [15:0] running_pc_1;
+		reg [15:0] running_pc_2;
+		int rom_read_count_before;
+
 		pass_count = 0;
 		fail_count = 0;
 		mcu_cs_n = 1'b1;
@@ -388,6 +447,9 @@ module tb ();
 		cpu_rom_read_count = 0;
 		cpu_first_read_address = 19'h7FFFF;
 		cpu_first_read_data = 8'h00;
+		monitor_cpu_wait = 1'b0;
+		cpu_wait_count = 0;
+		cpu_wait_active_violation_count = 0;
 
 		#( 3000 );
 		$display( "[SETUP] Transfer bus ownership to Pico" );
@@ -435,6 +497,44 @@ module tb ();
 		spi_peek( 16'h0003, rdata );
 		check( rdata == 8'h45, "Data at 0x0003 should be 0x45" );
 		$display( "[READ] Peeked data at 0x0003: 0x%02X", rdata );
+
+		$display( "============================================================" );
+		$display( "[BOOT] Run the Pico firmware power-on sequence" );
+		spi_msx_reset( 1'b1 );
+		spi_bootrom_en( 1'b0 );
+		spi_msx_pause( 1'b1 );
+		$display( "[BOOT] Before CPU ownership: reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
+			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
+			u_dut.w_active_bus_owner, u_dut.w_z80_active );
+		spi_set_bus_owner( 1'b1 );
+		$display( "[BOOT] After CPU ownership:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
+			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
+			u_dut.w_active_bus_owner, u_dut.w_z80_active );
+		spi_msx_reset( 1'b0 );
+		#( 10000 );
+		#( 10000 );
+		$display( "[BOOT] After reset release:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
+			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
+			u_dut.w_active_bus_owner, u_dut.w_z80_active );
+		spi_get_debug_signal( paused_pc );
+		rom_read_count_before = cpu_rom_read_count;
+		$display( "[BOOT] PC while paused: 0x%04X", paused_pc );
+		monitor_cpu_wait = 1'b1;
+		spi_msx_pause( 1'b0 );
+		#( 10000 );
+		$display( "[BOOT] After pause release:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
+			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
+			u_dut.w_active_bus_owner, u_dut.w_z80_active );
+		spi_get_debug_signal( running_pc_1 );
+		#( 10000 );
+		spi_get_debug_signal( running_pc_2 );
+		monitor_cpu_wait = 1'b0;
+		$display( "[BOOT] PC after pause release: 0x%04X -> 0x%04X", running_pc_1, running_pc_2 );
+		$display( "[BOOT] CPU FlashROM0 reads after pause release: %0d", cpu_rom_read_count - rom_read_count_before );
+		check( cpu_rom_read_count > rom_read_count_before, "Z80 should read FlashROM0 after pause release" );
+		check( running_pc_1 != paused_pc || running_pc_2 != paused_pc, "Z80 PC should advance after pause release" );
+		check( cpu_wait_count > 0, "MSX slot should assert CPU wait during TW" );
+		check( cpu_wait_active_violation_count == 0, "Z80 active should remain low during TW" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );

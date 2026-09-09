@@ -434,19 +434,22 @@ void fpga_set_keyboard_matrix( const uint8_t *matrix ) {
 }
 
 // ---------------------------------------------------------
-uint8_t fpga_get_debug_signal( void ) {
+uint16_t fpga_get_debug_signal( void ) {
 	uint8_t cmd;
 	uint8_t dummy;
-	uint8_t data;
+	uint8_t data_l;
+	uint8_t data_h;
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = 0x0A;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 	sleep_us( 1 );
 	dummy = 0x00;
-	spi_write_read_blocking( SPI0_PORT, &dummy, &data, 1 );
+	spi_write_read_blocking( SPI0_PORT, &dummy, &data_l, 1 );
+	sleep_us( 1 );
+	spi_write_read_blocking( SPI0_PORT, &dummy, &data_h, 1 );
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 
-	return data;
+	return ((uint16_t) data_h << 8) | data_l;
 }

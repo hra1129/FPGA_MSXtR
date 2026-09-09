@@ -48,6 +48,7 @@ module tb;
 	wire			device_io;
 	wire			device_write;
 	wire			device_valid;
+	wire			cpu_wait;
 	reg			device_ready;
 	wire	[7:0]	device_wdata;
 	reg	[7:0]	device_rdata;
@@ -97,6 +98,7 @@ module tb;
 		.secondary_slot0		( secondary_slot0	),
 		.secondary_slot3		( secondary_slot3	),
 		.high_speed_mode		( high_speed_mode	),
+		.cpu_wait				( cpu_wait			),
 		.int_n					( int_n				),
 		.slot_m1_n				( slot_m1_n			),
 		.slot_oe_n				( slot_oe_n			),
@@ -621,6 +623,7 @@ module tb;
 			m1_wait_count = m1_wait_count + 1;
 		end
 		check( u_msx_slot.ff_internal_wait_active == 1'b1, "M1 access did not activate the internal M1 wait" );
+		check( cpu_wait == 1'b1, "M1 TW did not assert cpu_wait" );
 		wait_rd_n_checked( read_timeout );
 		check( !read_timeout, "M1 access: slot_rd_n did not assert" );
 		check( slot_a == 19'h00000, "M1 access address mismatch" );
