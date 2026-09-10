@@ -52,7 +52,6 @@ module msx_slot #(
 	input	[7:0]	secondary_slot0,
 	input	[7:0]	secondary_slot3,
 	input			high_speed_mode,
-	output			cpu_wait,
 	//	Other signals
 	output			int_n,
 	//	MSX slot interface
@@ -722,7 +721,6 @@ module msx_slot #(
 	assign slot_oe_n		= 1'b0;
 	assign slot_reset_n		= reset_n;
 	assign int_n			= slot_int_n;
-	assign cpu_wait			= ff_internal_wait_active;
 	assign slot_m1_n		= ff_slot_m1_n;
 	assign slot_clock_n		= ff_slot_clock_n;
 	assign slot_sltsl0_n	= ff_slot_sltsl0_n;

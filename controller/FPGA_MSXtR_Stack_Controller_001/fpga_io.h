@@ -39,6 +39,17 @@
 #define IO_VDP_PORT3				0x9B
 #define IO_VDP_PORT4				0x9C
 
+//	SPIコマンド0Ah (Debug signal read) が返す6byteのビットフィールド定義
+typedef struct {
+	uint16_t	z80_pc;				//	Z80 プログラムカウンタ
+	uint16_t	z80_bus_address;	//	Z80コア側バスの現在のアクセスアドレス
+	uint8_t		status_a;			//	bit0:msx_reset_n bit1:msx_pause bit2:z80_active bit3:r800_active
+									//	bit4:bus_owner   bit5:active_bus_owner bit6:ssram_startup_busy bit7:slot_wait_n
+	uint8_t		status_b;			//	bit0:z80_bus_valid bit1:z80_bus_ready bit2:cpu_bus_valid bit3:cpu_bus_ready
+									//	bit4:msx_bus_valid bit5:msx_bus_ready  bit6:z80_bus_m1     bit7:z80_bus_io
+	uint8_t		link_pattern;		//	SPI通信経路確認用の固定パターン。0xA5でなければ通信自体が不成立
+} fpga_debug_signal_t;
+
 void fpga_io_init( void );
 bool fpga_get_wait_status( void );
 void fpga_outport( uint8_t io_address, uint8_t data );
@@ -51,7 +62,12 @@ void fpga_msx_reset( bool reset_on );
 void fpga_msx_pause( bool pause_on );
 void fpga_bootrom_enable( bool enable );
 void fpga_set_bus_owner( uint8_t owner );
+bool fpga_get_bus_owner_timeout( void );
+bool fpga_get_bus_owner_wait_ready_timeout( void );
+bool fpga_get_bootrom_enable_timeout( void );
+bool fpga_get_msx_pause_timeout( void );
+bool fpga_get_msx_reset_timeout( void );
 void fpga_set_keyboard_matrix( const uint8_t *matrix );
-uint16_t fpga_get_debug_signal( void );
+void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal );
 
 #endif

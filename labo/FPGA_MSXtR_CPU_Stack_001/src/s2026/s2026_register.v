@@ -114,7 +114,9 @@ module s2026_register (
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_device_ready <= 1'b0;
+			ff_device_ready 	<= 1'b0;
+			ff_processor_mode	<= 1'b1;
+			ff_cpu_change_req	<= 1'b0;
 		end
 		else begin
 			if( w_device_valid && device_write && (device_address == 2'd1) ) begin

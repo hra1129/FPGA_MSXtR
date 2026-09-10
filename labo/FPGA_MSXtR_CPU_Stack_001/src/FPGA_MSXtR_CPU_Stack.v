@@ -110,26 +110,47 @@ module fpga_msxtr_cpu_stack (
 	wire			w_int_p;
 	wire			w_cpu_int_p;
 
-	wire 			w_z80_m1;
-	wire 			w_z80_mreq;
-	wire 			w_z80_iorq;
-	wire 			w_z80_rd;
-	wire 			w_z80_wr;
-	wire 			w_z80_rfsh;
-	wire	[15:0]	w_z80_a;
-	wire	[7:0]	w_z80_wdata;
-	wire	[7:0]	w_z80_rdata;
+	wire			w_z80_bus_m1;
+	wire			w_z80_bus_io;
+	wire			w_z80_bus_write;
+	wire			w_z80_bus_valid;
+	wire			w_z80_bus_ready;
+	wire	[15:0]	w_z80_bus_address;
+	wire	[7:0]	w_z80_bus_wdata;
+	wire	[7:0]	w_z80_bus_rdata;
+	wire			w_z80_bus_rdata_en;
 	wire	[15:0]	w_z80_pc;			//	debug
 
-	wire 			w_r800_m1;
-	wire 			w_r800_mreq;
-	wire 			w_r800_iorq;
-	wire 			w_r800_rd;
-	wire 			w_r800_wr;
-	wire 			w_r800_rfsh;
-	wire	[15:0]	w_r800_a;
-	wire	[7:0]	w_r800_wdata;
-	wire	[7:0]	w_r800_rdata;
+	//	debug_signal layout (48bit, SPIコマンド0Ahで6byte LSBファーストとして送信)
+	//	  [15: 0] z80_pc          : Z80 プログラムカウンタ
+	//	  [31:16] z80_bus_address : Z80コア側バスの現在のアクセスアドレス
+	//	  [39:32] status_a bit0   : msx_reset_n        (0=リセット中)
+	//	                   bit1   : msx_pause          (1=一時停止中)
+	//	                   bit2   : z80_active         (1=Z80がアクティブCPU)
+	//	                   bit3   : r800_active        (1=R800がアクティブCPU)
+	//	                   bit4   : bus_owner          (SPIで設定したバス所有権要求値)
+	//	                   bit5   : active_bus_owner   (msx_bus_muxで実際に切り替わったバス所有権)
+	//	                   bit6   : ssram_startup_busy (1=SerialSRAM起動シーケンス中)
+	//	                   bit7   : slot_wait_n        (0=外部/WAITアサート中)
+	//	  [47:40] status_b bit0   : z80_bus_valid      (Z80コアからのバス要求)
+	//	                   bit1   : z80_bus_ready      (s2026からZ80への応答)
+	//	                   bit2   : cpu_bus_valid       (s2026選択後のバス要求)
+	//	                   bit3   : cpu_bus_ready       (msx_bus_muxからの応答)
+	//	                   bit4   : msx_bus_valid       (msx_bus_mux選択後のバス要求)
+	//	                   bit5   : msx_bus_ready       (msx_slotからの応答)
+	//	                   bit6   : z80_bus_m1          (M1サイクル中)
+	//	                   bit7   : z80_bus_io          (I/O空間アクセス中)
+	wire	[47:0]	w_debug_signal;
+
+	wire			w_r800_bus_m1;
+	wire			w_r800_bus_io;
+	wire			w_r800_bus_write;
+	wire			w_r800_bus_valid;
+	wire			w_r800_bus_ready;
+	wire	[15:0]	w_r800_bus_address;
+	wire	[7:0]	w_r800_bus_wdata;
+	wire	[7:0]	w_r800_bus_rdata;
+	wire			w_r800_bus_rdata_en;
 
 	wire			w_processor_mode;
 	wire			w_bus_m1;
@@ -199,8 +220,6 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_bus_erom_rdata;
 	wire			w_bus_erom_rdata_en;
 	wire			w_bus_erom_ready;
-
-	assign w_cpu_int_p = 1'b0;
 
 	wire			w_z80_active;
 	wire			w_r800_active;
@@ -272,7 +291,21 @@ module fpga_msxtr_cpu_stack (
 	wire	[19:0]	w_flashrom_address;
 	wire			w_flashrom_en;
 	wire			w_msx_pause;
-	wire			w_cpu_wait;
+
+	assign w_cpu_int_p = 1'b0;
+
+	assign w_debug_signal = {
+			//	status_b [47:40]
+			w_z80_bus_io, w_z80_bus_m1, w_mux_bus_ready, w_mux_bus_valid,
+			w_bus_ready, w_bus_valid, w_z80_bus_ready, w_z80_bus_valid,
+			//	status_a [39:32]
+			slot_wait_n, w_ssram_startup_busy, w_active_bus_owner, w_bus_owner,
+			w_r800_active, w_z80_active, w_msx_pause, w_msx_reset_n,
+			//	z80_bus_address [31:16]
+			w_z80_bus_address,
+			//	z80_pc [15:0]
+			w_z80_pc
+		};
 
 	// --------------------------------------------------------------------
 	//	clock
@@ -382,7 +415,7 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_matrix_row	( w_keyboard_matrix_row		),
 		.keyboard_matrix		( w_keyboard_matrix			),
 		.keyboard_matrix_valid	( w_keyboard_matrix_valid	),
-		.debug_signal			( w_z80_pc					),
+		.debug_signal			( w_debug_signal			),
 		.flashrom_address		( w_flashrom_address		),
 		.flashrom_en			( w_flashrom_en				)
 	);
@@ -446,7 +479,6 @@ module fpga_msxtr_cpu_stack (
 		.secondary_slot0		( w_secondary_slot0			),
 		.secondary_slot3		( w_secondary_slot3			),
 		.high_speed_mode		( w_high_speed_mode			),
-		.cpu_wait				( w_cpu_wait				),
 		.int_n					( w_int_p					),
 		.slot_m1_n				( slot_m1_n					),
 		.slot_oe_n				( slot_oe_n					),
@@ -512,21 +544,17 @@ module fpga_msxtr_cpu_stack (
 		.reset_n				( ff_z80_reset_n			),
 		.clk					( clk42m					),
 		.enable					( w_z80_active				),
-		.wait_p					( 1'b0						),
 		.int_p					( w_cpu_int_p				),
 		.nmi_n					( 1'b1						),
-		.busrq					( 1'b0						),
-		.m1						( w_z80_m1					),
-		.mreq					( w_z80_mreq				),
-		.iorq					( w_z80_iorq				),
-		.rd						( w_z80_rd					),
-		.wr						( w_z80_wr					),
-		.rfsh					( w_z80_rfsh				),
-		.halt_n					( 							),
-		.busak					( 							),
-		.a						( w_z80_a					),
-		.wdata					( w_z80_wdata				),
-		.rdata					( w_z80_rdata				),
+		.bus_m1					( w_z80_bus_m1				),
+		.bus_io					( w_z80_bus_io				),
+		.bus_write				( w_z80_bus_write			),
+		.bus_valid				( w_z80_bus_valid			),
+		.bus_ready				( w_z80_bus_ready			),
+		.bus_address			( w_z80_bus_address			),
+		.bus_wdata				( w_z80_bus_wdata			),
+		.bus_rdata				( w_z80_bus_rdata			),
+		.bus_rdata_en			( w_z80_bus_rdata_en		),
 		.pc						( w_z80_pc					)		//	debug
 	);
 
@@ -535,21 +563,17 @@ module fpga_msxtr_cpu_stack (
 		.reset_n				( ff_r800_reset_n			),
 		.clk					( clk42m					),
 		.enable					( w_r800_active				),
-		.wait_p					( 1'b0						),
 		.int_p					( w_cpu_int_p				),
 		.nmi_n					( 1'b1						),
-		.busrq					( 1'b0						),
-		.m1						( w_r800_m1					),
-		.mreq					( w_r800_mreq				),
-		.iorq					( w_r800_iorq				),
-		.rd						( w_r800_rd					),
-		.wr						( w_r800_wr					),
-		.rfsh					( w_r800_rfsh				),
-		.halt_n					( 							),
-		.busak					( 							),
-		.a						( w_r800_a					),
-		.wdata					( w_r800_wdata				),
-		.rdata					( w_r800_rdata				)
+		.bus_m1					( w_r800_bus_m1				),
+		.bus_io					( w_r800_bus_io				),
+		.bus_write				( w_r800_bus_write			),
+		.bus_valid				( w_r800_bus_valid			),
+		.bus_ready				( w_r800_bus_ready			),
+		.bus_address			( w_r800_bus_address		),
+		.bus_wdata				( w_r800_bus_wdata			),
+		.bus_rdata				( w_r800_bus_rdata			),
+		.bus_rdata_en			( w_r800_bus_rdata_en		)
 	);
 
 	// --------------------------------------------------------------------
@@ -561,23 +585,24 @@ module fpga_msxtr_cpu_stack (
 		.enable_z80				( w_3_579m					),
 		.enable_r800			( w_21m						),
 		.cpu_pause				( w_msx_pause				),
-		.cpu_wait				( w_cpu_wait				),
-		.z80_m1					( w_z80_m1					),
-		.z80_mreq				( w_z80_mreq				),
-		.z80_iorq				( w_z80_iorq				),
-		.z80_rd					( w_z80_rd					),
-		.z80_wr					( w_z80_wr					),
-		.z80_a					( w_z80_a					),
-		.z80_wdata				( w_z80_wdata				),
-		.z80_rdata				( w_z80_rdata				),
-		.r800_m1				( w_r800_m1					),
-		.r800_mreq				( w_r800_mreq				),
-		.r800_iorq				( w_r800_iorq				),
-		.r800_rd				( w_r800_rd					),
-		.r800_wr				( w_r800_wr					),
-		.r800_a					( w_r800_a					),
-		.r800_wdata				( w_r800_wdata				),
-		.r800_rdata				( w_r800_rdata				),
+		.z80_bus_m1				( w_z80_bus_m1				),
+		.z80_bus_io				( w_z80_bus_io				),
+		.z80_bus_write			( w_z80_bus_write			),
+		.z80_bus_valid			( w_z80_bus_valid			),
+		.z80_bus_ready			( w_z80_bus_ready			),
+		.z80_bus_address		( w_z80_bus_address			),
+		.z80_bus_wdata			( w_z80_bus_wdata			),
+		.z80_bus_rdata			( w_z80_bus_rdata			),
+		.z80_bus_rdata_en		( w_z80_bus_rdata_en		),
+		.r800_bus_m1			( w_r800_bus_m1				),
+		.r800_bus_io			( w_r800_bus_io				),
+		.r800_bus_write			( w_r800_bus_write			),
+		.r800_bus_valid			( w_r800_bus_valid			),
+		.r800_bus_ready			( w_r800_bus_ready			),
+		.r800_bus_address		( w_r800_bus_address		),
+		.r800_bus_wdata			( w_r800_bus_wdata			),
+		.r800_bus_rdata			( w_r800_bus_rdata			),
+		.r800_bus_rdata_en		( w_r800_bus_rdata_en		),
 		.bus_m1					( w_bus_m1					),
 		.bus_io					( w_bus_io					),
 		.bus_write				( w_bus_write				),
@@ -592,7 +617,7 @@ module fpga_msxtr_cpu_stack (
 		.device_valid			( w_device_valid			),
 		.device_ready			( w_device_s2026_ready		),
 		.device_wdata			( w_device_wdata			),
-		.device_address			( w_device_address			),
+		.device_address			( w_device_address[1:0]		),
 		.device_rdata			( w_device_s2026_rdata		),
 		.device_rdata_en		( w_device_s2026_rdata_en	),
 		.z80_active				( w_z80_active				),

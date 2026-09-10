@@ -61,7 +61,7 @@ module ip_spi (
 	output	[3:0]	keyboard_matrix_row,
 	output	[7:0]	keyboard_matrix,
 	output			keyboard_matrix_valid,
-	input	[15:0]	debug_signal,
+	input	[47:0]	debug_signal,
 	output	[19:0]	flashrom_address,
 	output			flashrom_en
 );
@@ -82,6 +82,8 @@ module ip_spi (
 	localparam		ST_BUS_OWNER_WAIT	= 4'd14;
 	localparam		ST_DEBUG_H			= 4'd15;
 	localparam		SPI_RX_WDATA		= 8'h64;
+	localparam		DEBUG_SIGNAL_BYTES	= 4'd7;			//	debug_signal 6byte + 通信確認用の固定パターン(0xA5) 1byte
+	localparam		DEBUG_SIGNAL_PATTERN = 8'hA5;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
 	reg		[3:0]	ff_state;
@@ -110,7 +112,8 @@ module ip_spi (
 	reg				ff_keyboard_matrix_valid;
 	reg				ff_keyboard_update_toggle;
 	reg				ff_keyboard_update_toggle_d;
-	reg		[15:0]	ff_debug_signal;
+	reg		[47:0]	ff_debug_signal;
+	reg		[3:0]	ff_debug_byte_index;
 	reg				ff_suppress_intr;
 	reg				ff_suppress_intr_d1;
 	reg		[19:0]	ff_flashrom_address;
@@ -119,7 +122,7 @@ module ip_spi (
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_debug_signal <= 16'h0000;
+			ff_debug_signal <= 48'h0000_0000_0000;
 		end
 		else begin
 			ff_debug_signal <= debug_signal;
@@ -172,35 +175,34 @@ module ip_spi (
 			ff_suppress_intr <= 1'b0;
 			ff_flashrom_address <= 20'd0;
 			ff_flashrom_access <= 1'b0;
+			ff_debug_byte_index <= 4'd0;
+		end
+		//	spi_cs_n解除は異常時のリカバリを兼ねるため、どのステートより優先して ST_IDLE へ戻す
+		else if( ff_spi_cs_n ) begin
+			ff_state		<= ST_IDLE;
+			ff_spi_valid	<= 1'b0;
+			ff_bus_valid	<= 1'b0;
+			ff_suppress_intr <= 1'b0;
+			ff_flashrom_access <= 1'b0;
 		end
 		else if( ff_state == ST_SEND ) begin
 			if( ff_spi_valid && spi_ready ) begin
 				ff_spi_valid	<= 1'b0;
 				ff_spi_write	<= 1'b0;
-				if( ff_spi_cs_n ) begin
-					ff_state <= ST_IDLE;
-				end
-				else begin
-					ff_state		<= ST_COMMAND;
-					ff_spi_wdata	<= SPI_RX_WDATA;
-					ff_spi_valid	<= 1'b1;
-					ff_spi_write	<= 1'b0;
-				end
+				ff_state		<= ST_COMMAND;
+				ff_spi_wdata	<= SPI_RX_WDATA;
+				ff_spi_valid	<= 1'b1;
+				ff_spi_write	<= 1'b0;
 			end
 		end
 		else if( ff_state == ST_DO ) begin
 			if( bus_ready ) begin
 				ff_bus_valid	<= 1'b0;
 				if( ff_bus_write ) begin
-					if( ff_spi_cs_n ) begin
-						ff_state <= ST_IDLE;
-					end
-					else begin
-						ff_state		<= ST_COMMAND;
-						ff_spi_wdata	<= SPI_RX_WDATA;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
-					end
+					ff_state		<= ST_COMMAND;
+					ff_spi_wdata	<= SPI_RX_WDATA;
+					ff_spi_valid	<= 1'b1;
+					ff_spi_write	<= 1'b0;
 				end
 				else begin
 					ff_state		<= ST_WAIT_RDATA;
@@ -214,13 +216,6 @@ module ip_spi (
 				ff_spi_valid	<= 1'b1;
 				ff_spi_write	<= 1'b1;
 			end
-		end
-		else if( ff_spi_cs_n ) begin
-			ff_state		<= ST_IDLE;
-			ff_spi_valid	<= 1'b0;
-			ff_bus_valid	<= 1'b0;
-			ff_suppress_intr <= 1'b0;
-			ff_flashrom_access <= 1'b0;
 		end
 		else if( ff_state == ST_BUS_OWNER_WAIT ) begin
 			//	実際に msx_bus_mux 側のバス所有権が切り替わるまで待ってから intr を上げる
@@ -255,7 +250,7 @@ module ip_spi (
 			//   07h                               ... MSX Hardware reset OFF (msx_reset_n = 1)
 			//   08h                               ... MSX Hardware pause ON  (msx_pause = 1)
 			//   09h                               ... MSX Hardware pause OFF (msx_pause = 0)
-			//   0Ah, (dummy byte), (dummy byte)   ... Debug signal read (low, high) without SPI interrupt
+			//   0Ah, (dummy byte) x DEBUG_SIGNAL_BYTES ... Debug signal read (LSB first, last byte fixed 0xA5) without SPI interrupt
 			//   0Bh                               ... MSX BootROM enable  (bootrom_en = 1)
 			//   0Ch                               ... MSX BootROM disable (bootrom_en = 0)
 			//   0Dh, addr_l, addr_m, addr_h, data  ... FlashROM write
@@ -336,6 +331,7 @@ module ip_spi (
 					8'h0a: begin
 						ff_state		<= ST_DEBUG_H;
 						ff_spi_wdata	<= ff_debug_signal[7:0];
+						ff_debug_byte_index <= 4'd1;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b1;
 						ff_suppress_intr <= 1'b1;
@@ -473,8 +469,16 @@ module ip_spi (
 			end
 			ST_DEBUG_H: begin
 				if( spi_ready ) begin
-					ff_state		<= ST_SEND;
-					ff_spi_wdata	<= ff_debug_signal[15:8];
+					//	byte_index(1..DEBUG_SIGNAL_BYTES-1)を順番に送信し、最後のbyteでST_SENDへ抜ける
+					//	最終byteはff_debug_signal範囲外なので固定パターンを送る(通信経路そのものの確認用)
+					if( ff_debug_byte_index == (DEBUG_SIGNAL_BYTES - 4'd1) ) begin
+						ff_spi_wdata	<= DEBUG_SIGNAL_PATTERN;
+						ff_state	<= ST_SEND;
+					end
+					else begin
+						ff_spi_wdata	<= ff_debug_signal[ ff_debug_byte_index * 8 +: 8 ];
+						ff_debug_byte_index <= ff_debug_byte_index + 4'd1;
+					end
 					ff_spi_valid	<= 1'b1;
 					ff_spi_write	<= 1'b1;
 				end

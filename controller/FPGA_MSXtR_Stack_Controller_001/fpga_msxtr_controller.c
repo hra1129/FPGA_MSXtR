@@ -376,10 +376,48 @@ static void test_ssram_memory( void ) {
 
 // ---------------------------------------------------------
 static void dump_fpga_debug_signal( void ) {
-	uint16_t debug_signal;
+	fpga_debug_signal_t debug_signal;
 
-	debug_signal = fpga_get_debug_signal();
-	printf( "FPGA debug signal: %u (0x%04X)\r\n", (unsigned int) debug_signal, (unsigned int) debug_signal );
+	fpga_get_debug_signal( &debug_signal );
+	printf( "FPGA debug signal: PC=0x%04X BUS_ADDR=0x%04X STATUS_A=0x%02X STATUS_B=0x%02X\r\n",
+			debug_signal.z80_pc,
+			debug_signal.z80_bus_address,
+			debug_signal.status_a,
+			debug_signal.status_b );
+	printf( "  msx_reset_n=%u msx_pause=%u z80_active=%u r800_active=%u\r\n",
+			(debug_signal.status_a >> 0) & 0x01,
+			(debug_signal.status_a >> 1) & 0x01,
+			(debug_signal.status_a >> 2) & 0x01,
+			(debug_signal.status_a >> 3) & 0x01 );
+	printf( "  bus_owner=%u active_bus_owner=%u ssram_startup_busy=%u slot_wait_n=%u\r\n",
+			(debug_signal.status_a >> 4) & 0x01,
+			(debug_signal.status_a >> 5) & 0x01,
+			(debug_signal.status_a >> 6) & 0x01,
+			(debug_signal.status_a >> 7) & 0x01 );
+	printf( "  z80_bus_valid=%u z80_bus_ready=%u cpu_bus_valid=%u cpu_bus_ready=%u\r\n",
+			(debug_signal.status_b >> 0) & 0x01,
+			(debug_signal.status_b >> 1) & 0x01,
+			(debug_signal.status_b >> 2) & 0x01,
+			(debug_signal.status_b >> 3) & 0x01 );
+	printf( "  msx_bus_valid=%u msx_bus_ready=%u z80_bus_m1=%u z80_bus_io=%u\r\n",
+			(debug_signal.status_b >> 4) & 0x01,
+			(debug_signal.status_b >> 5) & 0x01,
+			(debug_signal.status_b >> 6) & 0x01,
+			(debug_signal.status_b >> 7) & 0x01 );
+	if( debug_signal.link_pattern == 0xA5 ) {
+		printf( "  link_pattern=0x%02X (OK)\r\n", debug_signal.link_pattern );
+	}
+	else {
+		printf( "  link_pattern=0x%02X (NG, expected 0xA5 -- SPI通信自体を疑う)\r\n", debug_signal.link_pattern );
+	}
+	printf( "  bus_owner_timeout=%u (起動シーケンス中の fpga_set_bus_owner() がタイムアウトしたか)\r\n",
+			fpga_get_bus_owner_timeout() );
+	printf( "  init_seq_timeout: bootrom_enable=%u msx_pause=%u bus_owner_wait_ready=%u bus_owner_intr=%u msx_reset=%u\r\n",
+			fpga_get_bootrom_enable_timeout(),
+			fpga_get_msx_pause_timeout(),
+			fpga_get_bus_owner_wait_ready_timeout(),
+			fpga_get_bus_owner_timeout(),
+			fpga_get_msx_reset_timeout() );
 }
 
 // ---------------------------------------------------------
@@ -901,9 +939,11 @@ int main(void) {
 	// 他のボードが起動しているかわからないので、念のため 100ms 待機する
 	sleep_ms(100);
 
+#if 1
+	// Z80 にバス権がある状態で起動する場合 =======================================
 	// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
 	// を実行し、その間 slot_wait_n = L にしてくる。それが解除されるまで待つ。
-	fpga_bootrom_enable( false );
+	fpga_bootrom_enable( true );
 	fpga_msx_pause( true );
 	fpga_set_bus_owner( 1 );
 	fpga_msx_reset( false );
@@ -915,13 +955,28 @@ int main(void) {
 	//}
 	sleep_ms( 500 );		//	★代用
 	fpga_msx_pause( false );
+#else
+	// Pico にバス権がある状態で起動する場合 =======================================
+	// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
+	// を実行し、その間 slot_wait_n = L にしてくる。それが解除されるまで待つ。
+	fpga_bootrom_enable( false );
+	fpga_msx_reset( false );
 
-	prev_reset_pressed = mode_switch_is_reset_pressed();
+	// ★ToDo: 現状 /WAIT のあたりがおかしいので下記コードで無限ループに入る、要調査
+	//while( fpga_get_wait_status() ) {
+	//	printf( "Waiting for FPGA to be ready...\n" );
+	//	sleep_us( 10 );
+	//}
+	sleep_ms( 500 );		//	★代用
 
 	//	VDPに対して初期化処理を行う
 	vdp_set_screen1();
 	vdp_set_screen1_font();
 	vdp_set_screen1_message();
+#endif
+
+	prev_reset_pressed = mode_switch_is_reset_pressed();
+
 	while (true) {
 		reset_pressed = mode_switch_is_reset_pressed();
 		if( reset_pressed != prev_reset_pressed ) {

@@ -37,6 +37,13 @@
 #define FPGA_INIT_COMMAND 0xFF
 #define FPGA_INIT_READY   0x64
 
+//	初期化シーケンスで使う各コマンドがタイムアウトしたかを後から確認するための記録
+static bool s_bus_owner_timeout = false;
+static bool s_bootrom_enable_timeout = false;
+static bool s_msx_pause_timeout = false;
+static bool s_msx_reset_timeout = false;
+static bool s_bus_owner_wait_ready_timeout = false;
+
 // ---------------------------------------------------------
 void fpga_access_begin( void ) {
 	gpio_put( SPI0_CSN_PIN, 0 );
@@ -325,8 +332,10 @@ void fpga_msx_reset( bool reset_on ) {
 	uint8_t cmd;
 
 	if( !fpga_wait_ready() ) {
+		s_msx_reset_timeout = true;
 		return;
 	}
+	s_msx_reset_timeout = false;
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = reset_on ? 0x06 : 0x07;
@@ -345,8 +354,10 @@ void fpga_msx_pause( bool pause_on ) {
 	uint8_t cmd;
 
 	if( !fpga_wait_ready() ) {
+		s_msx_pause_timeout = true;
 		return;
 	}
+	s_msx_pause_timeout = false;
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = pause_on ? 0x08 : 0x09;
@@ -360,8 +371,10 @@ void fpga_bootrom_enable( bool enable ) {
 	uint8_t cmd;
 
 	if( !fpga_wait_ready() ) {
+		s_bootrom_enable_timeout = true;
 		return;
 	}
+	s_bootrom_enable_timeout = false;
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = enable ? 0x0B : 0x0C;
@@ -381,8 +394,12 @@ void fpga_set_bus_owner( uint8_t owner ) {
 	bool intr_ready;
 
 	if( !fpga_wait_ready() ) {
+		s_bus_owner_wait_ready_timeout = true;
 		return;
 	}
+	s_bus_owner_wait_ready_timeout = false;
+
+	s_bus_owner_timeout = false;
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = 0x10;
@@ -404,6 +421,7 @@ void fpga_set_bus_owner( uint8_t owner ) {
 	if( !intr_ready ) {
 		gpio_put( SPI0_CSN_PIN, 1 );
 		printf( "FPGA Timeout. (bus owner switch)\n" );
+		s_bus_owner_timeout = true;
 		return;
 	}
 
@@ -412,6 +430,31 @@ void fpga_set_bus_owner( uint8_t owner ) {
 
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
+}
+
+// ---------------------------------------------------------
+bool fpga_get_bus_owner_timeout( void ) {
+	return s_bus_owner_timeout;
+}
+
+// ---------------------------------------------------------
+bool fpga_get_bus_owner_wait_ready_timeout( void ) {
+	return s_bus_owner_wait_ready_timeout;
+}
+
+// ---------------------------------------------------------
+bool fpga_get_bootrom_enable_timeout( void ) {
+	return s_bootrom_enable_timeout;
+}
+
+// ---------------------------------------------------------
+bool fpga_get_msx_pause_timeout( void ) {
+	return s_msx_pause_timeout;
+}
+
+// ---------------------------------------------------------
+bool fpga_get_msx_reset_timeout( void ) {
+	return s_msx_reset_timeout;
 }
 
 // ---------------------------------------------------------
@@ -434,22 +477,26 @@ void fpga_set_keyboard_matrix( const uint8_t *matrix ) {
 }
 
 // ---------------------------------------------------------
-uint16_t fpga_get_debug_signal( void ) {
+void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal ) {
 	uint8_t cmd;
 	uint8_t dummy;
-	uint8_t data_l;
-	uint8_t data_h;
+	uint8_t data[7];
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = 0x0A;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 	sleep_us( 1 );
 	dummy = 0x00;
-	spi_write_read_blocking( SPI0_PORT, &dummy, &data_l, 1 );
-	sleep_us( 1 );
-	spi_write_read_blocking( SPI0_PORT, &dummy, &data_h, 1 );
+	for( int index = 0; index < 7; index++ ) {
+		spi_write_read_blocking( SPI0_PORT, &dummy, &data[index], 1 );
+		sleep_us( 1 );
+	}
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 
-	return ((uint16_t) data_h << 8) | data_l;
+	debug_signal->z80_pc			= ((uint16_t) data[1] << 8) | data[0];
+	debug_signal->z80_bus_address	= ((uint16_t) data[3] << 8) | data[2];
+	debug_signal->status_a			= data[4];
+	debug_signal->status_b			= data[5];
+	debug_signal->link_pattern		= data[6];
 }

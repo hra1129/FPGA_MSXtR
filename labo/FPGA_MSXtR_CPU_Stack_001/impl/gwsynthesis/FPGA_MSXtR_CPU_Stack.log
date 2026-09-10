@@ -27,16 +27,16 @@ Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\pll_init.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ppi\ppi.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\rtc\rtc.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026_cpu_select.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026_register.v'
+Undeclared symbol 'w_s2026_rdata', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026_register.v":66)
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\secondary_slot\secondary_slot.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi\ip_spi.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi\spi.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\spi_rom\ip_spi_rom.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\ssram\ssram.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\system_flag\system_flag.v'
-Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026.v'
-Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026_register.v'
-Undeclared symbol 'w_s2026_rdata', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026_register.v":66)
 Compiling module 'fpga_msxtr_cpu_stack'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":24)
 Compiling module 'Gowin_PLL'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\gowin_pll\gowin_pll.v":1)
 Compiling module 'Gowin_PLL_MOD'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\gowin_pll\gowin_pll_mod.v":11)
@@ -74,7 +74,6 @@ Compiling module 's2026_cpu_select'("C:\Users\hra\Documents\github\HRA_product\F
 Compiling module 's2026_register'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026_register.v":34)
 WARN  (EX3791) : Expression size 8 truncated to fit in target size 1("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026_register.v":69)
 WARN  (EX1998) : Net 'ff_switch' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026_register.v":51)
-WARN  (EX3670) : Actual bit length 16 differs from formal bit length 2 for port 'device_address'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":595)
 Compiling module 'address_decode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\address_decode\address_decode.v":34)
 Compiling module 'bootrom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\bootrom\bootrom.v":34)
 Compiling module 'rom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\bootrom\rom.v":34)
@@ -86,7 +85,6 @@ Compiling module 'rtc'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Extracting RAM for identifier 'ff_memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\rtc\rtc.v":93)
 Compiling module 'system_flag'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\system_flag\system_flag.v":44)
 NOTE  (EX0101) : Current top module is "fpga_msxtr_cpu_stack"
-WARN  (EX0211) : The output port "processor_mode" of module "s2026" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\s2026\s2026.v":81)
 WARN  (EX0211) : The output port "srom_sclk" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":68)
 WARN  (EX0211) : The output port "srom_cs_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":69)
 WARN  (EX0211) : The output port "srom_mosi" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001\src\FPGA_MSXtR_CPU_Stack.v":70)

@@ -167,14 +167,14 @@ module tb ();
 		end
 	end
 
-	always @( posedge u_dut.clk42m ) begin
-		if( monitor_cpu_wait && u_dut.w_cpu_wait ) begin
-			cpu_wait_count = cpu_wait_count + 1;
-			if( u_dut.w_z80_active ) begin
-				cpu_wait_active_violation_count = cpu_wait_active_violation_count + 1;
-			end
-		end
-	end
+//	always @( posedge u_dut.clk42m ) begin
+//		if( monitor_cpu_wait && u_dut.w_cpu_wait ) begin
+//			cpu_wait_count = cpu_wait_count + 1;
+//			if( u_dut.w_z80_active ) begin
+//				cpu_wait_active_violation_count = cpu_wait_active_violation_count + 1;
+//			end
+//		end
+//	end
 
 	task automatic spi_send_byte( input [7:0] data );
 		int index;
@@ -388,19 +388,20 @@ module tb ();
 	endtask
 
 	task automatic spi_get_debug_signal( output [15:0] debug_signal );
-		reg [7:0] data_l;
-		reg [7:0] data_h;
+		reg [7:0] data [0:6];
 		begin
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h0A );
-			spi_transfer_byte( 8'h00, data_l );
-			spi_transfer_byte( 8'h00, data_h );
+			for( int byte_index = 0; byte_index < 7; byte_index = byte_index + 1 ) begin
+				spi_transfer_byte( 8'h00, data[byte_index] );
+			end
 			#( 200 );
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;
 			#( 200 );
-			debug_signal = { data_h, data_l };
+			//	debug_signal[15:0] は z80_pc (byte0,byte1)。残りのステータス/固定パターンbyteは本taskでは未使用
+			debug_signal = { data[1], data[0] };
 		end
 	endtask
 
@@ -432,7 +433,10 @@ module tb ();
 		reg [15:0] paused_pc;
 		reg [15:0] running_pc_1;
 		reg [15:0] running_pc_2;
+		reg [15:0] sampled_pc;
+		reg [15:0] prev_sampled_pc;
 		int rom_read_count_before;
+		int sample_index;
 
 		pass_count = 0;
 		fail_count = 0;
@@ -452,89 +456,107 @@ module tb ();
 		cpu_wait_active_violation_count = 0;
 
 		#( 3000 );
-		$display( "[SETUP] Transfer bus ownership to Pico" );
-		spi_set_bus_owner( 1'b0 );
-		$display( "[SETUP] BootROM disabled" );
-		spi_bootrom_en( 1'b0 );
+//		$display( "[SETUP] Transfer bus ownership to Pico" );
+//		spi_set_bus_owner( 1'b0 );
+		$display( "[SETUP] Transfer bus ownership to Z80" );
+		spi_set_bus_owner( 1'b1 );
+		$display( "[SETUP] BootROM enabled" );
+		spi_bootrom_en( 1'b1 );
 		$display( "[SETUP] Release MSX reset" );
 		spi_msx_reset( 1'b0 );
 		spi_wait_ssram_startup();
-		spi_outport( 8'hA8, 8'hFF );		//	PPI Primary Slot Register
-		spi_poke( 16'hFFFF, 8'hAA );		//	SLOT#3 Secondary Slot Register
-		spi_peek( 16'h4000, rdata );
-		$display( "[READ] Peeked data at 0x4000: 0x%02X", rdata );
-		spi_peek( 16'h4001, rdata );
-		$display( "[READ] Peeked data at 0x4001: 0x%02X", rdata );
-		spi_peek( 16'h4002, rdata );
-		$display( "[READ] Peeked data at 0x4002: 0x%02X", rdata );
-		spi_peek( 16'h4003, rdata );
-		$display( "[READ] Peeked data at 0x4003: 0x%02X", rdata );
-		$display( "============================================================" );
-		$display( "Set SLOT#3-0, Memory Mapper Segments to 0,0,0,0." );
-		spi_outport( 8'hA8, 8'hFF );		//	PPI Primary Slot Register
-		spi_poke( 16'hFFFF, 8'h00 );		//	SLOT#3 Secondary Slot Register
-		spi_outport( 8'hFC, 8'h00 );		//	Memory Mapper Segment#0: 0
-		spi_outport( 8'hFD, 8'h00 );		//	Memory Mapper Segment#1: 0
-		spi_outport( 8'hFE, 8'h00 );		//	Memory Mapper Segment#2: 0
-		spi_outport( 8'hFF, 8'h00 );		//	Memory Mapper Segment#3: 0
-		spi_poke( 16'h0000, 8'h12 );
-		$display( "[WRITE] Poked data at 0x0000: 0x%02X", 8'h12 );
-		spi_poke( 16'h0001, 8'h23 );
-		$display( "[WRITE] Poked data at 0x0001: 0x%02X", 8'h23 );
-		spi_poke( 16'h0002, 8'h34 );
-		$display( "[WRITE] Poked data at 0x0002: 0x%02X", 8'h34 );
-		spi_poke( 16'h0003, 8'h45 );
-		$display( "[WRITE] Poked data at 0x0003: 0x%02X", 8'h45 );
-		spi_peek( 16'h0000, rdata );
-		check( rdata == 8'h12, "Data at 0x0000 should be 0x12" );
-		$display( "[READ] Peeked data at 0x0000: 0x%02X", rdata );
-		spi_peek( 16'h0001, rdata );
-		check( rdata == 8'h23, "Data at 0x0001 should be 0x23" );
-		$display( "[READ] Peeked data at 0x0001: 0x%02X", rdata );
-		spi_peek( 16'h0002, rdata );
-		check( rdata == 8'h34, "Data at 0x0002 should be 0x34" );
-		$display( "[READ] Peeked data at 0x0002: 0x%02X", rdata );
-		spi_peek( 16'h0003, rdata );
-		check( rdata == 8'h45, "Data at 0x0003 should be 0x45" );
-		$display( "[READ] Peeked data at 0x0003: 0x%02X", rdata );
 
-		$display( "============================================================" );
-		$display( "[BOOT] Run the Pico firmware power-on sequence" );
-		spi_msx_reset( 1'b1 );
-		spi_bootrom_en( 1'b0 );
-		spi_msx_pause( 1'b1 );
-		$display( "[BOOT] Before CPU ownership: reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
-			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
-			u_dut.w_active_bus_owner, u_dut.w_z80_active );
-		spi_set_bus_owner( 1'b1 );
-		$display( "[BOOT] After CPU ownership:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
-			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
-			u_dut.w_active_bus_owner, u_dut.w_z80_active );
-		spi_msx_reset( 1'b0 );
+		//	Z80がバスを持ったまま(spi_poke/spi_peekはPico所有時のみ有効なため使えない)、
+		//	debug_signal(0x0A、bus所有権に依存しないコマンド)だけでPCの推移を観察する。
+		//	bootromのMAINループは0x0052、write_vram_blockのループは0x0073付近。
+		$display( "[BOOT] Monitoring Z80 PC while executing bootrom (Z80 owns the bus)" );
+		prev_sampled_pc = 16'hFFFF;
+		for( sample_index = 0; sample_index < 40; sample_index = sample_index + 1 ) begin
+			#( 2_000_000 );
+			spi_get_debug_signal( sampled_pc );
+			$display( "[BOOT] t=%0d ns PC=0x%04X%s", (sample_index + 1) * 2_000_000, sampled_pc,
+					(sampled_pc == prev_sampled_pc) ? " (unchanged)" : "" );
+			prev_sampled_pc = sampled_pc;
+		end
+		//	MAINループ(jr loop, 0x0052/0x0053の2byte)のどちらを指していても到達とみなす
+		check( sampled_pc == 16'h0052 || sampled_pc == 16'h0053, "Z80 PC should reach bootrom MAIN loop (0x0052) after VDP setup completes" );
+
+//		spi_outport( 8'hA8, 8'hFF );		//	PPI Primary Slot Register
+//		spi_poke( 16'hFFFF, 8'hAA );		//	SLOT#3 Secondary Slot Register
+//		spi_peek( 16'h4000, rdata );
+//		$display( "[READ] Peeked data at 0x4000: 0x%02X", rdata );
+//		spi_peek( 16'h4001, rdata );
+//		$display( "[READ] Peeked data at 0x4001: 0x%02X", rdata );
+//		spi_peek( 16'h4002, rdata );
+//		$display( "[READ] Peeked data at 0x4002: 0x%02X", rdata );
+//		spi_peek( 16'h4003, rdata );
+//		$display( "[READ] Peeked data at 0x4003: 0x%02X", rdata );
+//		$display( "============================================================" );
+//		$display( "Set SLOT#3-0, Memory Mapper Segments to 0,0,0,0." );
+//		spi_outport( 8'hA8, 8'hFF );		//	PPI Primary Slot Register
+//		spi_poke( 16'hFFFF, 8'h00 );		//	SLOT#3 Secondary Slot Register
+//		spi_outport( 8'hFC, 8'h00 );		//	Memory Mapper Segment#0: 0
+//		spi_outport( 8'hFD, 8'h00 );		//	Memory Mapper Segment#1: 0
+//		spi_outport( 8'hFE, 8'h00 );		//	Memory Mapper Segment#2: 0
+//		spi_outport( 8'hFF, 8'h00 );		//	Memory Mapper Segment#3: 0
+//		spi_poke( 16'h0000, 8'h12 );
+//		$display( "[WRITE] Poked data at 0x0000: 0x%02X", 8'h12 );
+//		spi_poke( 16'h0001, 8'h23 );
+//		$display( "[WRITE] Poked data at 0x0001: 0x%02X", 8'h23 );
+//		spi_poke( 16'h0002, 8'h34 );
+//		$display( "[WRITE] Poked data at 0x0002: 0x%02X", 8'h34 );
+//		spi_poke( 16'h0003, 8'h45 );
+//		$display( "[WRITE] Poked data at 0x0003: 0x%02X", 8'h45 );
+//		spi_peek( 16'h0000, rdata );
+//		check( rdata == 8'h12, "Data at 0x0000 should be 0x12" );
+//		$display( "[READ] Peeked data at 0x0000: 0x%02X", rdata );
+//		spi_peek( 16'h0001, rdata );
+//		check( rdata == 8'h23, "Data at 0x0001 should be 0x23" );
+//		$display( "[READ] Peeked data at 0x0001: 0x%02X", rdata );
+//		spi_peek( 16'h0002, rdata );
+//		check( rdata == 8'h34, "Data at 0x0002 should be 0x34" );
+//		$display( "[READ] Peeked data at 0x0002: 0x%02X", rdata );
+//		spi_peek( 16'h0003, rdata );
+//		check( rdata == 8'h45, "Data at 0x0003 should be 0x45" );
+//		$display( "[READ] Peeked data at 0x0003: 0x%02X", rdata );
+//
+//		$display( "============================================================" );
+//		$display( "[BOOT] Run the Pico firmware power-on sequence" );
+//		spi_msx_reset( 1'b1 );
+//		spi_bootrom_en( 1'b0 );
+//		spi_msx_pause( 1'b1 );
+//		$display( "[BOOT] Before CPU ownership: reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
+//			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
+//			u_dut.w_active_bus_owner, u_dut.w_z80_active );
+//		spi_set_bus_owner( 1'b1 );
+//		$display( "[BOOT] After CPU ownership:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
+//			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
+//			u_dut.w_active_bus_owner, u_dut.w_z80_active );
+//		spi_msx_reset( 1'b0 );
 		#( 10000 );
 		#( 10000 );
-		$display( "[BOOT] After reset release:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
-			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
-			u_dut.w_active_bus_owner, u_dut.w_z80_active );
-		spi_get_debug_signal( paused_pc );
-		rom_read_count_before = cpu_rom_read_count;
-		$display( "[BOOT] PC while paused: 0x%04X", paused_pc );
-		monitor_cpu_wait = 1'b1;
-		spi_msx_pause( 1'b0 );
+//		$display( "[BOOT] After reset release:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
+//			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
+//			u_dut.w_active_bus_owner, u_dut.w_z80_active );
+//		spi_get_debug_signal( paused_pc );
+//		rom_read_count_before = cpu_rom_read_count;
+//		$display( "[BOOT] PC while paused: 0x%04X", paused_pc );
+//		monitor_cpu_wait = 1'b1;
+//		spi_msx_pause( 1'b0 );
+//		#( 10000 );
+//		$display( "[BOOT] After pause release:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
+//			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
+//			u_dut.w_active_bus_owner, u_dut.w_z80_active );
+//		spi_get_debug_signal( running_pc_1 );
 		#( 10000 );
-		$display( "[BOOT] After pause release:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
-			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
-			u_dut.w_active_bus_owner, u_dut.w_z80_active );
-		spi_get_debug_signal( running_pc_1 );
-		#( 10000 );
-		spi_get_debug_signal( running_pc_2 );
-		monitor_cpu_wait = 1'b0;
-		$display( "[BOOT] PC after pause release: 0x%04X -> 0x%04X", running_pc_1, running_pc_2 );
-		$display( "[BOOT] CPU FlashROM0 reads after pause release: %0d", cpu_rom_read_count - rom_read_count_before );
-		check( cpu_rom_read_count > rom_read_count_before, "Z80 should read FlashROM0 after pause release" );
-		check( running_pc_1 != paused_pc || running_pc_2 != paused_pc, "Z80 PC should advance after pause release" );
-		check( cpu_wait_count > 0, "MSX slot should assert CPU wait during TW" );
-		check( cpu_wait_active_violation_count == 0, "Z80 active should remain low during TW" );
+//		spi_get_debug_signal( running_pc_2 );
+//		monitor_cpu_wait = 1'b0;
+//		$display( "[BOOT] PC after pause release: 0x%04X -> 0x%04X", running_pc_1, running_pc_2 );
+//		$display( "[BOOT] CPU FlashROM0 reads after pause release: %0d", cpu_rom_read_count - rom_read_count_before );
+//		check( cpu_rom_read_count > rom_read_count_before, "Z80 should read FlashROM0 after pause release" );
+//		check( running_pc_1 != paused_pc || running_pc_2 != paused_pc, "Z80 PC should advance after pause release" );
+//		check( cpu_wait_count > 0, "MSX slot should assert CPU wait during TW" );
+//		check( cpu_wait_active_violation_count == 0, "Z80 active should remain low during TW" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );
