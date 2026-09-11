@@ -83,7 +83,7 @@ table.detail_table th.label {  min-width: 8%; width: 8%; }
 </tr>
 <tr>
 <td class="label">Created Time</td>
-<td>Thu Sep 10 21:19:49 2026
+<td>Fri Sep 11 21:22:42 2026
 </td>
 </tr>
 <tr>
@@ -97,11 +97,11 @@ table.detail_table th.label {  min-width: 8%; width: 8%; }
 <tr>
 <td class="label">Place & Route Process</td>
 <td>Running placement:
-   Placement Phase 0: CPU time = 0h 0m 0.606s, Elapsed time = 0h 0m 0.607s
-   Placement Phase 1: CPU time = 0h 0m 0.246s, Elapsed time = 0h 0m 0.247s
-   Placement Phase 2: CPU time = 0h 0m 1s, Elapsed time = 0h 0m 1s
-   Placement Phase 3: CPU time = 0h 0m 1s, Elapsed time = 0h 0m 1s
-   Total Placement: CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
+   Placement Phase 0: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
+   Placement Phase 1: CPU time = 0h 0m 0.592s, Elapsed time = 0h 0m 0.592s
+   Placement Phase 2: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
+   Placement Phase 3: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
+   Total Placement: CPU time = 0h 0m 8s, Elapsed time = 0h 0m 8s
 Running routing:
    Routing Phase 0: CPU time = 0h 0m 0.004s, Elapsed time = 0h 0m 0.004s
    Routing Phase 1: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
@@ -114,7 +114,7 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">Total Time and Memory Usage</td>
-<td>CPU time = 0h 0m 10s, Elapsed time = 0h 0m 10s, Peak memory usage = 724MB</td>
+<td>CPU time = 0h 0m 13s, Elapsed time = 0h 0m 13s, Peak memory usage = 756MB</td>
 </tr>
 </table>
 <br/>
@@ -129,12 +129,12 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">Logic</td>
-<td>5354/23040</td>
+<td>5398/23040</td>
 <td>24%</td>
 </tr>
 <tr>
 <td class="label">&nbsp &nbsp --LUT,ALU,ROM16</td>
-<td>5354(5104 LUT, 250 ALU, 0 ROM16)</td>
+<td>5398(5145 LUT, 253 ALU, 0 ROM16)</td>
 <td>-</td>
 </tr>
 <tr>
@@ -144,7 +144,7 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">Register</td>
-<td>1943/23280</td>
+<td>1945/23280</td>
 <td>9%</td>
 </tr>
 <tr>
@@ -154,7 +154,7 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">&nbsp &nbsp --Logic Register as FF</td>
-<td>1919/23040</td>
+<td>1921/23040</td>
 <td>9%</td>
 </tr>
 <tr>
@@ -169,7 +169,7 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">CLS</td>
-<td>3507/11520</td>
+<td>3545/11520</td>
 <td>31%</td>
 </tr>
 <tr>
@@ -256,13 +256,13 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">PRIMARY</td>
-<td>3/8</td>
-<td>38%</td>
+<td>4/8</td>
+<td>50%</td>
 </tr>
 <tr>
 <td class="label">LW</td>
-<td>8/8</td>
-<td>100%</td>
+<td>7/8</td>
+<td>88%</td>
 </tr>
 <tr>
 <td class="label">GCLK_PIN</td>
@@ -291,12 +291,17 @@ Generate output files:
 <tr>
 <td class="label">clk215m</td>
 <td>PRIMARY</td>
-<td> TL BR</td>
+<td> BR BL</td>
 </tr>
 <tr>
 <td class="label">clk42m</td>
 <td>PRIMARY</td>
 <td> TR TL BR BL</td>
+</tr>
+<tr>
+<td class="label">u_rtc/ff_memory_rdata_3_8</td>
+<td>PRIMARY</td>
+<td> TR</td>
 </tr>
 <tr>
 <td class="label">ff_spi_reset_n</td>
@@ -330,11 +335,6 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">w_z80_active</td>
-<td>LW</td>
-<td> -</td>
-</tr>
-<tr>
-<td class="label">w_r800_active</td>
 <td>LW</td>
 <td> -</td>
 </tr>

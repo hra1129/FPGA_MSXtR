@@ -238,7 +238,7 @@ vdp_screen1_reg::
 ;	表示メッセージ (controller/vdp_control.c: vdp_set_screen1_message() 相当)
 ; ----------------------------------------------------------------------------
 message::
-				db		"FPGA MSXtR VDP/PICO Test.", 0
+				db		"FPGA MSXtR BootROM Test.", 0
 message_end::
 
 				include	"vdp_screen1_font.asm"
