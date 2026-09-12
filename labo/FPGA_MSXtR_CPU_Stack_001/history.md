@@ -128,3 +128,119 @@ VDP ボードの SDRAM 初期化中は /WAIT がアサートされる設計の�
 - labo/FPGA_MSXtR_CPU_Stack_000/src/FPGA_MSXtR_CPU_Stack.v — debugger 組み込み、バイパス撤去
 - controller/FPGA_MSXtR_Stack_Controller_000/fpga_msxtr_controller.c — 起動シーケンス修正
 - controller/FPGA_MSXtR_Stack_Controller_000/fpga_io.c/.h — デバッグコマンド追加
+
+---
+
+## 2026-09-12 作業履歴 (FPGA_MSXtR_CPU_Stack_001: CPU切替・バスプロトコル改修・診断機能拡張)
+
+実機 (Tang Nano 20K × 2 + Raspberry Pi Pico2W) 上で turboR BIOS (msxtr.rom) を起動した際の
+Z80 $\rightarrow$ R800 切替後の動作不具合の診断・原因究明、ならびにバス・CPU切替・SPI診断周りの
+大規模な改修とテスト環境整備を実施した。
+
+---
+
+### 1. SPI デバッグ信号 (0x0A) の拡張とリカバリ安定化
+
+**背景・目的:**
+実機で Z80 / R800 がどこで停止・暴走しているかを正確に把握するため、診断情報の大幅拡張を実施。
+
+**実装内容:**
+- **SPI 応答フォーマット拡張**: 176bit (22byte) 診断信号 ＋ 末尾 `0xA5` 固定リンクチェックバイト (計 23byte)
+- **FSM 異常リカバリの最優先化**: `ip_spi.v` で `spi_cs_n` 解除 (`1'b1`) を `!reset_n` 直後の最優先条件とし、どのステートからでも確実に `ST_IDLE` へ復帰可能にした。
+- **Pico 側 4 キーダンプ機能の拡充** (`fpga_msxtr_controller.c`):
+  - Z80 PC / R800 PC、現在のプロセッサモード (Z80/R800)
+  - CPU 切替要求フラグ / 目標CPU / FSMステート / 切替要求回数 / モード遷移回数
+  - Z80 / R800 各バスのアドレス、`valid`、`ready`、`active`、リセット状態
+  - S2026 内部レジスタ状態 (index, rom_mode, switch, 各クロックイネーブル)
+  - スロット選択状態 (A8h, SSL0, SSL3, 物理 `/SLTSL0..3`, `/CS1..12`, `BUSDIR`, 制御線, データ方向)
+  - FFFFh への書込みトラップフラグ (`seen`, `is_39`, `by_r800`) およびその瞬間の R800 PC
+  - 割り込みピン状態・エッジ回数・ACK回数、SPIリンクパターン (0xA5) 検証
+
+---
+
+### 2. CPU バスプロトコルの刷新と Z80 / R800 コアのバスハンドシェイク改修
+
+**不具合事象:**
+BootROM 内でサブルーチン CALL を実行した際、スタックへの戻りアドレス書き込みが欠落し、戻り先が不定になって暴走する現象が発生。
+
+**原因:**
+`cz80_inst.v` / `cr800_inst.v` が Z80 の raw タイミングピン（`ff_rd`, `ff_wr_n_i`）を擬似生成してバス要求を出していたため、要求受理 (`bus_ready`) と `bus_valid` のアサート期間が噛み合っていなかった。また、`OUT (n),A` 命令で `acc` の値が `bus_valid` より 1 サイクル遅れて出力されるスキューが存在していた。
+
+**改修内容:**
+- **バスハンドシェイクの正常化**:
+  - `ff_bus_valid`, `ff_requested`, `ff_t_state_d` による「同一 T-state で 1 回のみ要求を発行し、書き込みは `bus_ready`、読み出しは `bus_rdata_en` を受けるまで `bus_valid` を保持し、完了まで CPU コアに Tw (Wait) を挿入する」方式へ全面改修。
+  - Z80 側 (`cz80_inst.v`) および R800 側 (`cr800_inst.v`) の両方に同一仕様を適用。
+- **`OUT (n),A` データスキュー解消**:
+  - `cz80.v` および `cr800.v` に `w_do` を追加し、`OUT (n),A` 実行時は内部レジスタ `acc` を即座にデータバス出力ピンへバイパス出力するよう修正。
+
+---
+
+### 3. Slot Board 接続時のデータバス競合防止
+
+**不具合事象:**
+Slot Board 接続時、オンボード ROM (Main ROM / Sub ROM) や漢字 ROM の読み出しデータが不定値（化け）になる。
+
+**原因:**
+オンボード ROM 読み出し時にも外部スロットの `/SLTSL` や `/IORQ` がアサートされ、Slot Board 上のトランシーバ (U3) が外部バスデータを CPU 側へドライブして内部 ROM データと衝突していた。
+
+**改修内容 (`msx_slot.v`):**
+- オンボード ROM アクセス時 (`w_onboard_rom_access = 1`) は外部 `/SLTSL0..3` を非アサート (`1'b1`) に維持。
+- 漢字 ROM アクセス時は外部 `/IORQ` を非アサート (`1'b1`) に維持。
+- オンボード ROM アクセス時は `slot_data_dir = 1'b1` (CPU $\rightarrow$ Slot 方向) に固定し、外部トランシーバからの逆流ドライブを遮断。
+
+---
+
+### 4. S2026 の CPU 切替機構の確立と単体・結合テストの構築
+
+**仕様確認:**
+- turboR では Z80 と R800 は独立した CPU コアであり、レジスタコピー等は行わない。
+- 各 CPU は非選択時に `enable = 0` となり内部状態（PC を含む全レジスタ）をそのまま保持する。再選択時は以前停止した位置から即座に再開する。
+- 共有バスは選択中 CPU のみが排他的に使用し、非選択 CPU への `ready` や `rdata_en` はマスクされる。
+
+**テスト環境構築:**
+- **`src/s2026/test_001`**: S2026 単体での CPU 切替・状態保持・バス MUX テストに置換（PASS = 23, FAIL = 0）。
+- **`src/test_003` (新規作成)**:
+  - `src/bootrom` をコピーして独立させた専用 BootROM 環境を作成。
+  - Z80 が BootROM (0000h) から起動 $\rightarrow$ UART 'Z' 出力 $\rightarrow$ スロット初期化 $\rightarrow$ S2026 で R800 へ切替 $\rightarrow$ R800 が 0000h から起動 $\rightarrow$ UART 'R' 出力 $\rightarrow$ S2026 で Z80 へ切り戻し $\rightarrow$ Z80 が停止位置から再開して UART 'B' 出力、という一連の切替ハンドシェイクを TOP 結合レベルで完全検証（PASS = 9, FAIL = 0）。
+
+---
+
+### 5. MSXturboR 実機ブートシーケンスの組み込み（R800 初期 DI フェッチ）
+
+**背景:**
+実機 turboR では、電源投入直後はまず R800 で 1 命令 (`0000h: DI`) をフェッチ・実行して R800 内部の割り込みを禁止 (IFF=0) にし、PC を `0001h` (`JP 126Bh`) に進めた状態で Z80 に切り替わってコールドブートが始まるという実機挙動が判明。
+
+**改修内容 (`s2026_cpu_select.v`):**
+- リセット解除直後は初期状態を R800 (`processor_mode = 0`) とし、R800 が `0000h` の `DI` 命令 (F3h) を実行完了するまでステップ制御。
+- `DI` 実行完了（T3 で `inte_ff1/2 <= 0`、PC=`0001h`）後、自動的に `processor_mode <= 1` (Z80) へ遷移して Z80 を起動。
+
+---
+
+### 6. A7h ポート実装と SPI コマンド 11h による LED 状態送出
+
+**仕様・実装:**
+- I/O ポート A7h に `pause_led.v` を接続し、R800 LED / Pause LED 制御を実装。
+- SPI コマンド `11h`（キーボード更新）のプロトコルを拡張:
+  - 1 バイト目: コマンド `0x11`
+  - 2 バイト目: FPGA から **LED 状態バイト** (`bit0: r800_led, bit1: pause_led, bit2: caps_led, bit3: kana_led`) を Pico へ返却
+  - 3〜14 バイト目: Pico からキーマトリクス 12 バイトを受信
+- Pico 側 (`fpga_msxtr_controller.c` / `fpga_io.c`) で取得した LED 状態を STM32 キーボードコントローラへ I2C 転送する経路を整備。
+- `src/spi/test_002` にてコマンド 11h の LED 読み出し・マトリクス更新を検証（PASS = 63, FAIL = 0）。
+
+---
+
+### 関連ファイル一覧 (今回変更・追加したもの)
+
+- labo/FPGA_MSXtR_CPU_Stack_001/src/spi/ip_spi.v — 23byteデバッグ信号、コマンド11h LED返却、CS解除最優先化
+- labo/FPGA_MSXtR_CPU_Stack_001/src/cz80/cz80_inst.v, cz80.v — Z80 バスハンドシェイク正常化、OUT早期データ出力
+- labo/FPGA_MSXtR_CPU_Stack_001/src/cr800/cr800_inst.v, cr800.v — R800 バスハンドシェイク正常化、OUT早期データ出力、PC出力
+- labo/FPGA_MSXtR_CPU_Stack_001/src/s2026/s2026_cpu_select.v — 初回 R800 DI フェッチ付き CPU 切替ステートマシン
+- labo/FPGA_MSXtR_CPU_Stack_001/src/s2026/s2026_register.v — `w_s2026_rdata` 8bit宣言、レジスタ6ハンドシェイク
+- labo/FPGA_MSXtR_CPU_Stack_001/src/address_decode/address_decode.v — `s2026_cs`, `pause_led_cs` デコード適正化
+- labo/FPGA_MSXtR_CPU_Stack_001/src/pause_led/pause_led.v — A7h Pause/R800 LEDポート
+- labo/FPGA_MSXtR_CPU_Stack_001/src/msx_slot/msx_slot.v — オンボードROM/漢字ROM時の外部バス絶縁
+- labo/FPGA_MSXtR_CPU_Stack_001/src/FPGA_MSXtR_CPU_Stack.v — デバッグ信号統合、FFFFh書込みトラップ、LED信号配線
+- labo/FPGA_MSXtR_CPU_Stack_001/src/s2026/test_001/ — S2026 CPU切替単体テスト
+- labo/FPGA_MSXtR_CPU_Stack_001/src/test_003/ — BootROM CPU切替統合テスト (新規)
+- controller/FPGA_MSXtR_Stack_Controller_001/fpga_io.h, fpga_io.c — 23byteデバッグデコード、コマンド11h LED取得
+- controller/FPGA_MSXtR_Stack_Controller_001/fpga_msxtr_controller.c — 4キーダンプ表示拡充、LED状態反映
