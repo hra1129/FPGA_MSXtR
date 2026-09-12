@@ -11,6 +11,7 @@ vlog ..\msx_slot\msx_slot_decode.v
 vlog ..\msx_slot\msx_slot.v
 vlog ..\address_decode\address_decode.v
 vlog ..\memory_mapper\memory_mapper.v
+vlog ..\secondary_slot\secondary_slot.v
 vlog ..\ssram\ssram.v
 vlog ..\ssram\ssram_test_model.v
 vlog ..\bootrom\ram.v
@@ -28,8 +29,11 @@ vlog ..\cr800\cr800_reg.v
 vlog ..\cr800\cr800.v
 vlog ..\cr800\cr800_inst.v
 vlog ..\msx_bus_mux\msx_bus_mux.v
+vlog ..\s2026\s2026_register.v
 vlog ..\s2026\s2026_cpu_select.v
-vlog ..\s2026\s2026_cpu_controller.v
+vlog ..\s2026\s2026.v
+vlog ..\rtc\rtc.v
+vlog ..\system_flag\system_flag.v
 vlog ..\FPGA_MSXtR_CPU_Stack.v
 vlog tb.sv
 
@@ -37,4 +41,3 @@ vsim -c -t 1ps tb -do "add wave -r *; run -all; quit -f"
 
 if exist transcript move transcript log.txt
 endlocal
-pause

@@ -51,13 +51,19 @@ module ppi (
 	//	Keyboard matrix input
 	input	[3:0]	keyboard_matrix_row,
 	input	[7:0]	keyboard_matrix,
-	input			keyboard_matrix_valid
+	input			keyboard_matrix_valid,
+	output	[3:0]	debug_keyboard_matrix_row,
+	output	[7:0]	debug_keyboard_matrix_data,
+	output	[7:0]	debug_keyboard_update_count,
+	output	[7:0]	debug_keyboard_read_count
 );
 
 	// ---------------------------------------------------------
 	//	Keyboard matrix
 	// ---------------------------------------------------------
 	reg		[7:0]	ff_keyboard_matrix [0:15];
+	reg		[7:0]	ff_keyboard_update_count;
+	reg		[7:0]	ff_keyboard_read_count;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -77,9 +83,11 @@ module ppi (
 			ff_keyboard_matrix[13] <= 8'hFF;
 			ff_keyboard_matrix[14] <= 8'hFF;
 			ff_keyboard_matrix[15] <= 8'hFF;
+			ff_keyboard_update_count <= 8'd0;
 		end
 		else if( keyboard_matrix_valid ) begin
 			ff_keyboard_matrix[ keyboard_matrix_row ] <= keyboard_matrix;
+			ff_keyboard_update_count <= ff_keyboard_update_count + 8'd1;
 		end
 	end
 
@@ -169,6 +177,7 @@ module ppi (
 		if( !reset_n ) begin
 			ff_bus_rdata		<= 8'hFF;
 			ff_bus_rdata_en		<= 1'b0;
+			ff_keyboard_read_count	<= 8'd0;
 		end
 		else if( bus_cs && bus_valid && !bus_write ) begin
 			case( bus_address )
@@ -180,6 +189,9 @@ module ppi (
 				end
 			endcase
 			ff_bus_rdata_en <= 1'b1;
+			if( bus_address == 2'b01 ) begin
+				ff_keyboard_read_count <= ff_keyboard_read_count + 8'd1;
+			end
 		end
 		else begin
 			ff_bus_rdata_en <= 1'b0;
@@ -192,4 +204,8 @@ module ppi (
 	assign primary_slot			= ff_primary_slot;
 	assign keyboard_caps_led	= ff_keybard_caps_led;
 	assign one_bit_sound		= ff_one_bit_sound;
+	assign debug_keyboard_matrix_row	= ff_keyboard_matrix_row;
+	assign debug_keyboard_matrix_data	= ff_keyboard_matrix[ ff_keyboard_matrix_row ];
+	assign debug_keyboard_update_count	= ff_keyboard_update_count;
+	assign debug_keyboard_read_count	= ff_keyboard_read_count;
 endmodule

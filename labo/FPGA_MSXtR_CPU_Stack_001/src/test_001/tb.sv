@@ -319,6 +319,24 @@ module tb ();
 		end
 	endtask
 
+	task automatic spi_set_keyboard_matrix(
+		input [7:0] matrix [0:11]
+	);
+		int index;
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h11 );
+			for( index = 0; index < 12; index++ ) begin
+				spi_send_byte( matrix[index] );
+			end
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
 	// --------------------------------------------------------------------
 	//	Task: spi_wait_intr
 	//	  Waits for mcu_intr (read data loaded into the SPI shifter).
@@ -1245,9 +1263,99 @@ module tb ();
 		end
 
 		// ================================================================
-		//	Test 12: Pico bus request is held while CPU owns the bus
+		//	Test 12: Keyboard matrix update through SPI and PPI read-back
 		// ================================================================
 		test_no = 12;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] Keyboard matrix SPI update and PPI A9h read-back", test_no );
+
+		begin
+			int row;
+			int byte_index;
+			reg [7:0] expected [0:11];
+			reg [7:0] io_data;
+			reg [7:0] debug_data [0:11];
+			reg keyboard_failed;
+
+			keyboard_failed = 1'b0;
+			for( row = 0; row < 12; row++ ) begin
+				expected[row] = 8'hF0 ^ row[7:0];
+			end
+
+			spi_set_keyboard_matrix( expected );
+			repeat( 20 ) @( posedge u_dut.clk42m );
+
+			for( row = 0; row < 12; row++ ) begin
+				if( u_dut.u_ppi.ff_keyboard_matrix[row] !== expected[row] ) begin
+					$display( "[TEST %0d] FAIL: PPI matrix row %0d stored=0x%02X expected=0x%02X",
+							test_no, row, u_dut.u_ppi.ff_keyboard_matrix[row], expected[row] );
+					keyboard_failed = 1'b1;
+				end
+
+				spi_io_write( 8'hAA, row[7:0] );
+				spi_io_read( 8'hA9, io_data );
+				if( io_data !== expected[row] ) begin
+					$display( "[TEST %0d] FAIL: PPI row %0d A9h read=0x%02X expected=0x%02X",
+							test_no, row, io_data, expected[row] );
+					keyboard_failed = 1'b1;
+				end
+			end
+
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h0A );
+			for( byte_index = 0; byte_index < 12; byte_index++ ) begin
+				spi_transfer_byte( 8'h00, debug_data[byte_index] );
+			end
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+
+			if( debug_data[2] !== expected[11] || debug_data[3] !== 8'hBB ||
+				debug_data[4] !== expected[11] || debug_data[5] !== 8'd12 ||
+				debug_data[6] !== 8'd12 || debug_data[7] !== 8'd12 || debug_data[8][0] !== 1'b1 ||
+				debug_data[9] !== 8'd0 || debug_data[10] !== 8'd0 || debug_data[11] !== 8'hA5 ) begin
+				$display( "[TEST %0d] FAIL: debug last_data=%02X rows=%02X selected_data=%02X spi_count=%0d ppi_count=%0d read_count=%0d int_status=%02X edge=%0d ack=%0d link=%02X",
+					test_no, debug_data[2], debug_data[3], debug_data[4], debug_data[5],
+					debug_data[6], debug_data[7], debug_data[8], debug_data[9], debug_data[10], debug_data[11] );
+				keyboard_failed = 1'b1;
+			end
+
+			slot_int_n = 1'b0;
+			repeat( 4 ) @( posedge u_dut.clk42m );
+			slot_int_n = 1'b1;
+			repeat( 4 ) @( posedge u_dut.clk42m );
+
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h0A );
+			for( byte_index = 0; byte_index < 12; byte_index++ ) begin
+				spi_transfer_byte( 8'h00, debug_data[byte_index] );
+			end
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+
+			if( debug_data[8][3:0] !== 4'b0011 || debug_data[9] !== 8'd1 ||
+				debug_data[10] !== 8'd0 || debug_data[11] !== 8'hA5 ) begin
+				$display( "[TEST %0d] FAIL: interrupt debug status=%02X edge=%0d ack=%0d link=%02X",
+					test_no, debug_data[8], debug_data[9], debug_data[10], debug_data[11] );
+				keyboard_failed = 1'b1;
+			end
+
+			if( !keyboard_failed ) begin
+				$display( "[TEST %0d] PASS: keyboard and interrupt debug counters match", test_no );
+				pass_count = pass_count + 1;
+			end
+			else begin
+				fail_count = fail_count + 1;
+			end
+		end
+
+		// ================================================================
+		//	Test 13: Pico bus request is held while CPU owns the bus
+		// ================================================================
+		test_no = 13;
 		$display( "------------------------------------------------------------" );
 		$display( "[TEST %0d] Pico bus request waits while CPU owns the bus", test_no );
 

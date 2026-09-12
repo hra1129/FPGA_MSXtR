@@ -61,7 +61,8 @@ module ip_spi (
 	output	[3:0]	keyboard_matrix_row,
 	output	[7:0]	keyboard_matrix,
 	output			keyboard_matrix_valid,
-	input	[47:0]	debug_signal,
+	output	[7:0]	keyboard_update_count,
+	input	[87:0]	debug_signal,
 	output	[19:0]	flashrom_address,
 	output			flashrom_en
 );
@@ -82,7 +83,7 @@ module ip_spi (
 	localparam		ST_BUS_OWNER_WAIT	= 4'd14;
 	localparam		ST_DEBUG_H			= 4'd15;
 	localparam		SPI_RX_WDATA		= 8'h64;
-	localparam		DEBUG_SIGNAL_BYTES	= 4'd7;			//	debug_signal 6byte + 通信確認用の固定パターン(0xA5) 1byte
+	localparam		DEBUG_SIGNAL_BYTES	= 4'd12;		//	debug_signal 11byte + 通信確認用の固定パターン(0xA5) 1byte
 	localparam		DEBUG_SIGNAL_PATTERN = 8'hA5;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
@@ -112,22 +113,14 @@ module ip_spi (
 	reg				ff_keyboard_matrix_valid;
 	reg				ff_keyboard_update_toggle;
 	reg				ff_keyboard_update_toggle_d;
-	reg		[47:0]	ff_debug_signal;
+	reg		[7:0]	ff_keyboard_update_count;
+	reg		[87:0]	ff_debug_signal;
 	reg		[3:0]	ff_debug_byte_index;
 	reg				ff_suppress_intr;
 	reg				ff_suppress_intr_d1;
 	reg		[19:0]	ff_flashrom_address;
 	reg				ff_flashrom_access;
 	reg				ff_slot_wait_n;
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_debug_signal <= 48'h0000_0000_0000;
-		end
-		else begin
-			ff_debug_signal <= debug_signal;
-		end
-	end
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -172,6 +165,8 @@ module ip_spi (
 			ff_keyboard_output_row	<= 4'd0;
 			ff_keyboard_output_data	<= 8'hFF;
 			ff_keyboard_update_toggle	<= 1'b0;
+			ff_keyboard_update_count	<= 8'd0;
+			ff_debug_signal <= 88'd0;
 			ff_suppress_intr <= 1'b0;
 			ff_flashrom_address <= 20'd0;
 			ff_flashrom_access <= 1'b0;
@@ -330,7 +325,8 @@ module ip_spi (
 					end
 					8'h0a: begin
 						ff_state		<= ST_DEBUG_H;
-						ff_spi_wdata	<= ff_debug_signal[7:0];
+						ff_debug_signal <= debug_signal;
+						ff_spi_wdata	<= debug_signal[7:0];
 						ff_debug_byte_index <= 4'd1;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b1;
@@ -489,6 +485,7 @@ module ip_spi (
 					ff_keyboard_output_row	<= ff_keyboard_matrix_row;
 					ff_keyboard_output_data	<= spi_rdata;
 					ff_keyboard_update_toggle	<= ~ff_keyboard_update_toggle;
+					ff_keyboard_update_count	<= ff_keyboard_update_count + 8'd1;
 					if( ff_keyboard_matrix_row == 4'd11 ) begin
 						ff_state		<= ST_COMMAND;
 					end
@@ -600,4 +597,5 @@ module ip_spi (
 	assign keyboard_matrix_row		= ff_keyboard_output_row;
 	assign keyboard_matrix			= ff_keyboard_output_data;
 	assign keyboard_matrix_valid	= ff_keyboard_matrix_valid;
+	assign keyboard_update_count	= ff_keyboard_update_count;
 endmodule

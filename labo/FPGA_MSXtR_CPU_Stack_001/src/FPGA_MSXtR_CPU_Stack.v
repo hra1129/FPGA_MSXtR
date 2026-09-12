@@ -107,7 +107,6 @@ module fpga_msxtr_cpu_stack (
 	reg		[1:0]	ff_button_d0;
 	reg		[1:0]	ff_button_d1;
 
-	wire			w_int_p;
 	wire			w_cpu_int_p;
 
 	wire			w_z80_bus_m1;
@@ -120,27 +119,10 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_z80_bus_rdata;
 	wire			w_z80_bus_rdata_en;
 	wire	[15:0]	w_z80_pc;			//	debug
+	wire			w_z80_int_ack;
 
-	//	debug_signal layout (48bit, SPIコマンド0Ahで6byte LSBファーストとして送信)
-	//	  [15: 0] z80_pc          : Z80 プログラムカウンタ
-	//	  [31:16] z80_bus_address : Z80コア側バスの現在のアクセスアドレス
-	//	  [39:32] status_a bit0   : msx_reset_n        (0=リセット中)
-	//	                   bit1   : msx_pause          (1=一時停止中)
-	//	                   bit2   : z80_active         (1=Z80がアクティブCPU)
-	//	                   bit3   : r800_active        (1=R800がアクティブCPU)
-	//	                   bit4   : bus_owner          (SPIで設定したバス所有権要求値)
-	//	                   bit5   : active_bus_owner   (msx_bus_muxで実際に切り替わったバス所有権)
-	//	                   bit6   : ssram_startup_busy (1=SerialSRAM起動シーケンス中)
-	//	                   bit7   : slot_wait_n        (0=外部/WAITアサート中)
-	//	  [47:40] status_b bit0   : z80_bus_valid      (Z80コアからのバス要求)
-	//	                   bit1   : z80_bus_ready      (s2026からZ80への応答)
-	//	                   bit2   : cpu_bus_valid       (s2026選択後のバス要求)
-	//	                   bit3   : cpu_bus_ready       (msx_bus_muxからの応答)
-	//	                   bit4   : msx_bus_valid       (msx_bus_mux選択後のバス要求)
-	//	                   bit5   : msx_bus_ready       (msx_slotからの応答)
-	//	                   bit6   : z80_bus_m1          (M1サイクル中)
-	//	                   bit7   : z80_bus_io          (I/O空間アクセス中)
-	wire	[47:0]	w_debug_signal;
+	//	debug_signal: キーボード経路と割り込み経路
+	wire	[87:0]	w_debug_signal;
 
 	wire			w_r800_bus_m1;
 	wire			w_r800_bus_io;
@@ -175,6 +157,17 @@ module fpga_msxtr_cpu_stack (
 	wire	[3:0]	w_keyboard_matrix_row;
 	wire	[7:0]	w_keyboard_matrix;
 	wire			w_keyboard_matrix_valid;
+	wire	[7:0]	w_keyboard_update_count;
+	wire	[3:0]	w_ppi_debug_keyboard_matrix_row;
+	wire	[7:0]	w_ppi_debug_keyboard_matrix_data;
+	wire	[7:0]	w_ppi_debug_keyboard_update_count;
+	wire	[7:0]	w_ppi_debug_keyboard_read_count;
+	reg				ff_slot_int_n_d0;
+	reg				ff_slot_int_n_d1;
+	reg				ff_slot_int_n_d2;
+	reg		[7:0]	ff_slot_int_count;
+	reg				ff_z80_int_ack_d;
+	reg		[7:0]	ff_z80_int_ack_count;
 	wire			w_active_bus_owner;
 	wire			w_mux_bus_m1;
 	wire			w_mux_bus_io;
@@ -292,18 +285,46 @@ module fpga_msxtr_cpu_stack (
 	wire			w_flashrom_en;
 	wire			w_msx_pause;
 
-	assign w_cpu_int_p = 1'b0;
+	always @( posedge clk42m ) begin
+		if( !ff_z80_reset_n ) begin
+			ff_slot_int_n_d0 <= 1'b1;
+			ff_slot_int_n_d1 <= 1'b1;
+			ff_slot_int_n_d2 <= 1'b1;
+			ff_slot_int_count <= 8'd0;
+		end
+		else begin
+			ff_slot_int_n_d0 <= slot_int_n;
+			ff_slot_int_n_d1 <= ff_slot_int_n_d0;
+			ff_slot_int_n_d2 <= ff_slot_int_n_d1;
+			if( ff_slot_int_n_d2 && !ff_slot_int_n_d1 ) begin
+				ff_slot_int_count <= ff_slot_int_count + 8'd1;
+			end
+		end
+	end
+
+	always @( posedge clk42m ) begin
+		if( !ff_z80_reset_n ) begin
+			ff_z80_int_ack_d <= 1'b0;
+			ff_z80_int_ack_count <= 8'd0;
+		end
+		else begin
+			ff_z80_int_ack_d <= w_z80_int_ack;
+			if( !ff_z80_int_ack_d && w_z80_int_ack ) begin
+				ff_z80_int_ack_count <= ff_z80_int_ack_count + 8'd1;
+			end
+		end
+	end
 
 	assign w_debug_signal = {
-			//	status_b [47:40]
-			w_z80_bus_io, w_z80_bus_m1, w_mux_bus_ready, w_mux_bus_valid,
-			w_bus_ready, w_bus_valid, w_z80_bus_ready, w_z80_bus_valid,
-			//	status_a [39:32]
-			slot_wait_n, w_ssram_startup_busy, w_active_bus_owner, w_bus_owner,
-			w_r800_active, w_z80_active, w_msx_pause, w_msx_reset_n,
-			//	z80_bus_address [31:16]
-			w_z80_bus_address,
-			//	z80_pc [15:0]
+			ff_z80_int_ack_count,
+			ff_slot_int_count,
+			3'd0, w_z80_active, w_z80_int_ack, w_cpu_int_p, w_cpu_int_p, ff_slot_int_n_d1,
+			w_ppi_debug_keyboard_read_count,
+			w_ppi_debug_keyboard_update_count,
+			w_keyboard_update_count,
+			w_ppi_debug_keyboard_matrix_data,
+			w_ppi_debug_keyboard_matrix_row, w_keyboard_matrix_row,
+			w_keyboard_matrix,
 			w_z80_pc
 		};
 
@@ -415,6 +436,7 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_matrix_row	( w_keyboard_matrix_row		),
 		.keyboard_matrix		( w_keyboard_matrix			),
 		.keyboard_matrix_valid	( w_keyboard_matrix_valid	),
+		.keyboard_update_count	( w_keyboard_update_count	),
 		.debug_signal			( w_debug_signal			),
 		.flashrom_address		( w_flashrom_address		),
 		.flashrom_en			( w_flashrom_en				)
@@ -479,7 +501,7 @@ module fpga_msxtr_cpu_stack (
 		.secondary_slot0		( w_secondary_slot0			),
 		.secondary_slot3		( w_secondary_slot3			),
 		.high_speed_mode		( w_high_speed_mode			),
-		.int_n					( w_int_p					),
+		.int_n					( w_cpu_int_p				),
 		.slot_m1_n				( slot_m1_n					),
 		.slot_oe_n				( slot_oe_n					),
 		.slot_clock_n			( slot_clock_n				),
@@ -555,7 +577,8 @@ module fpga_msxtr_cpu_stack (
 		.bus_wdata				( w_z80_bus_wdata			),
 		.bus_rdata				( w_z80_bus_rdata			),
 		.bus_rdata_en			( w_z80_bus_rdata_en		),
-		.pc						( w_z80_pc					)		//	debug
+		.pc						( w_z80_pc					),
+		.int_ack				( w_z80_int_ack				)		//	debug
 	);
 
 	//	Highspeed CPU core
@@ -767,7 +790,11 @@ module fpga_msxtr_cpu_stack (
 		.one_bit_sound			( w_one_bit_sound			),
 		.keyboard_matrix_row	( w_keyboard_matrix_row		),
 		.keyboard_matrix		( w_keyboard_matrix			),
-		.keyboard_matrix_valid	( w_keyboard_matrix_valid	)
+		.keyboard_matrix_valid	( w_keyboard_matrix_valid	),
+		.debug_keyboard_matrix_row	( w_ppi_debug_keyboard_matrix_row	),
+		.debug_keyboard_matrix_data	( w_ppi_debug_keyboard_matrix_data	),
+		.debug_keyboard_update_count	( w_ppi_debug_keyboard_update_count	),
+		.debug_keyboard_read_count	( w_ppi_debug_keyboard_read_count	)
 	);
 
 	// --------------------------------------------------------------------

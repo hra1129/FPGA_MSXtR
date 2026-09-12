@@ -74,6 +74,14 @@ module tb ();
 	reg monitor_cpu_wait;
 	int cpu_wait_count;
 	int cpu_wait_active_violation_count;
+	int ppi_a8_write_count;
+	int ppi_a8_bad_write_count;
+	reg [7:0] ppi_a8_last_wdata;
+	reg [7:0] keyboard_expected [0:11];
+	int keyboard_aa_write_count;
+	int keyboard_a9_read_count;
+	int keyboard_a9_bad_data_count;
+	int keyboard_z80_bad_data_count;
 
 	initial begin
 		clk_28m = 1'b0;
@@ -163,6 +171,41 @@ module tb ();
 			if( cpu_rom_read_count == 1 ) begin
 				cpu_first_read_address = slot_a;
 				cpu_first_read_data = slot_d;
+			end
+		end
+	end
+
+	always @( posedge u_dut.clk42m ) begin
+		if( u_dut.w_z80_bus_valid && u_dut.w_z80_bus_ready &&
+			u_dut.w_z80_bus_write && u_dut.w_z80_bus_io &&
+			u_dut.w_z80_bus_address == 16'h50A8 ) begin
+			ppi_a8_write_count = ppi_a8_write_count + 1;
+			ppi_a8_last_wdata = u_dut.w_z80_bus_wdata;
+			if( u_dut.w_z80_bus_wdata != 8'h50 ) begin
+				ppi_a8_bad_write_count = ppi_a8_bad_write_count + 1;
+			end
+			$display( "[BUS] OUT address=0x%04X data=0x%02X", u_dut.w_z80_bus_address, u_dut.w_z80_bus_wdata );
+		end
+	end
+
+	always @( posedge u_dut.clk42m ) begin
+		if( u_dut.w_z80_bus_valid && u_dut.w_z80_bus_ready &&
+			u_dut.w_z80_bus_write && u_dut.w_z80_bus_io &&
+			u_dut.w_z80_bus_address[7:0] == 8'hAA ) begin
+			keyboard_aa_write_count = keyboard_aa_write_count + 1;
+		end
+
+		if( u_dut.w_z80_bus_rdata_en && !u_dut.w_z80_bus_write &&
+			u_dut.w_z80_bus_io && u_dut.w_z80_bus_address[7:0] == 8'hA9 ) begin
+			#1;
+			keyboard_a9_read_count = keyboard_a9_read_count + 1;
+			if( u_dut.w_ppi_debug_keyboard_matrix_row < 4'd12 ) begin
+				if( u_dut.w_z80_bus_rdata !== keyboard_expected[u_dut.w_ppi_debug_keyboard_matrix_row] ) begin
+					keyboard_a9_bad_data_count = keyboard_a9_bad_data_count + 1;
+				end
+				if( u_dut.u_z80.ff_di_reg !== keyboard_expected[u_dut.w_ppi_debug_keyboard_matrix_row] ) begin
+					keyboard_z80_bad_data_count = keyboard_z80_bad_data_count + 1;
+				end
 			end
 		end
 	end
@@ -387,20 +430,35 @@ module tb ();
 		end
 	endtask
 
+	task automatic spi_set_keyboard_matrix( input [7:0] matrix [0:11] );
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h11 );
+			for( int row = 0; row < 12; row = row + 1 ) begin
+				spi_send_byte( matrix[row] );
+			end
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
 	task automatic spi_get_debug_signal( output [15:0] debug_signal );
-		reg [7:0] data [0:6];
+		reg [7:0] data [0:11];
 		begin
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h0A );
-			for( int byte_index = 0; byte_index < 7; byte_index = byte_index + 1 ) begin
+			for( int byte_index = 0; byte_index < 12; byte_index = byte_index + 1 ) begin
 				spi_transfer_byte( 8'h00, data[byte_index] );
 			end
 			#( 200 );
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;
 			#( 200 );
-			//	debug_signal[15:0] は z80_pc (byte0,byte1)。残りのステータス/固定パターンbyteは本taskでは未使用
+			//	debug_signal[15:0] は z80_pc (byte0,byte1)。残りのキーボード診断/固定パターンbyteは本taskでは未使用
 			debug_signal = { data[1], data[0] };
 		end
 	endtask
@@ -437,6 +495,7 @@ module tb ();
 		reg [15:0] prev_sampled_pc;
 		int rom_read_count_before;
 		int sample_index;
+		reg [7:0] keyboard_debug [0:8];
 
 		pass_count = 0;
 		fail_count = 0;
@@ -454,17 +513,30 @@ module tb ();
 		monitor_cpu_wait = 1'b0;
 		cpu_wait_count = 0;
 		cpu_wait_active_violation_count = 0;
+		ppi_a8_write_count = 0;
+		ppi_a8_bad_write_count = 0;
+		ppi_a8_last_wdata = 8'h00;
+		keyboard_aa_write_count = 0;
+		keyboard_a9_read_count = 0;
+		keyboard_a9_bad_data_count = 0;
+		keyboard_z80_bad_data_count = 0;
+		for( int row = 0; row < 12; row = row + 1 ) begin
+			keyboard_expected[row] = 8'hFF;
+		end
+		keyboard_expected[5] = 8'hFE;
 
 		#( 3000 );
+		force u_dut.w_3_579m = 1'b1;
 //		$display( "[SETUP] Transfer bus ownership to Pico" );
 //		spi_set_bus_owner( 1'b0 );
 		$display( "[SETUP] Transfer bus ownership to Z80" );
 		spi_set_bus_owner( 1'b1 );
-		$display( "[SETUP] BootROM enabled" );
-		spi_bootrom_en( 1'b1 );
+		$display( "[SETUP] BootROM disabled" );
+		spi_bootrom_en( 1'b0 );
 		$display( "[SETUP] Release MSX reset" );
 		spi_msx_reset( 1'b0 );
 		spi_wait_ssram_startup();
+		spi_set_keyboard_matrix( keyboard_expected );
 
 		//	Z80がバスを持ったまま(spi_poke/spi_peekはPico所有時のみ有効なため使えない)、
 		//	debug_signal(0x0A、bus所有権に依存しないコマンド)だけでPCの推移を観察する。
@@ -478,8 +550,29 @@ module tb ();
 					(sampled_pc == prev_sampled_pc) ? " (unchanged)" : "" );
 			prev_sampled_pc = sampled_pc;
 		end
-		//	MAINループ(jr loop, 0x0052/0x0053の2byte)のどちらを指していても到達とみなす
-		check( sampled_pc == 16'h0052 || sampled_pc == 16'h0053, "Z80 PC should reach bootrom MAIN loop (0x0052) after VDP setup completes" );
+		check( ppi_a8_write_count > 0, "BIOS should execute OUT (0xA8),A with address 0x50A8" );
+		check( ppi_a8_bad_write_count == 0 && ppi_a8_last_wdata == 8'h50,
+				"OUT (0xA8),A should transfer 0x50 when the request is accepted" );
+		check( keyboard_aa_write_count > 0, "BIOS should select keyboard rows through PPI port AAh" );
+		check( keyboard_a9_read_count > 0, "BIOS should read keyboard rows through PPI port A9h" );
+		check( keyboard_a9_bad_data_count == 0, "PPI A9h reads should match the selected keyboard row" );
+		check( keyboard_z80_bad_data_count == 0, "Z80 ff_di_reg should capture the PPI A9h response" );
+
+		mcu_cs_n = 1'b0;
+		#( 200 );
+		spi_send_byte( 8'h0A );
+		for( int byte_index = 0; byte_index < 9; byte_index = byte_index + 1 ) begin
+			spi_transfer_byte( 8'h00, keyboard_debug[byte_index] );
+		end
+		mcu_cs_n = 1'b1;
+		mcu_mosi = 1'b0;
+		#( 200 );
+		check( keyboard_debug[2] == keyboard_expected[11] && keyboard_debug[3][3:0] == 4'd11,
+				"debug signal should report the last SPI keyboard row and data" );
+		check( keyboard_debug[5] == 8'd12 && keyboard_debug[6] == 8'd12,
+				"SPI and PPI keyboard update counters should match" );
+		check( keyboard_debug[7] != 8'd0 && keyboard_debug[8] == 8'hA5,
+				"debug signal should report A9h reads and a valid link pattern" );
 
 //		spi_outport( 8'hA8, 8'hFF );		//	PPI Primary Slot Register
 //		spi_poke( 16'hFFFF, 8'hAA );		//	SLOT#3 Secondary Slot Register

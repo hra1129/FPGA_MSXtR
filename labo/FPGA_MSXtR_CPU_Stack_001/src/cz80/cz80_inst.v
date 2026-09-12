@@ -76,7 +76,8 @@ module cz80_inst (
 	output	[7:0]	bus_wdata	,
 	input	[7:0]	bus_rdata	,
 	input			bus_rdata_en,
-	output	[15:0]	pc					//	debug
+	output	[15:0]	pc,
+	output			int_ack				//	debug
 );
 	wire				w_intcycle_n;
 	wire				w_iorq;
@@ -124,6 +125,7 @@ module cz80_inst (
 	assign bus_io		= ~ff_iorq_n_i;
 	assign bus_write	= w_write;
 	assign bus_valid	= ff_bus_valid;
+	assign int_ack		= ~w_intcycle_n;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin

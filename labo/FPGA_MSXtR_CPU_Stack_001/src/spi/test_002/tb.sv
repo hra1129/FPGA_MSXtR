@@ -34,8 +34,8 @@
 //			  → bus_io=0, bus_address=16bit(addr_l,addr_h), bus_wdata=data, bus_valid=1
 //		0x04: Memory read   [cmd=0x04][addr_l][addr_h][dummy]       (4 bytes)
 //			  → bus_io=0, bus_write=0, bus_address=16bit(addr_l,addr_h), returns bus_rdata on dummy byte
-//		0x0A: Debug read    [cmd=0x0A][dummy]x7                     (8 bytes)
-//			  -> returns registered 48bit debug_signal LSB byte first, then a fixed 0xA5 link-check byte, without asserting spi_intr
+//		0x0A: Debug read    [cmd=0x0A][dummy]x12                    (13 bytes)
+//			  -> returns registered 88bit debug_signal LSB byte first, then a fixed 0xA5 link-check byte, without asserting spi_intr
 //		0x0B: BootROM enable                                       (1 byte)
 //			  -> bootrom_en=1, no bus access
 //		0x0C: BootROM disable                                      (1 byte)
@@ -92,12 +92,14 @@ module tb ();
 	wire			spi_intr;
 	reg				slot_wait_n;
 	reg				ssram_startup_busy;
+	reg				active_bus_owner;
 	wire			bootrom_en;
 	wire			bus_owner;
 	wire	[3:0]	keyboard_matrix_row;
 	wire	[7:0]	keyboard_matrix;
 	wire			keyboard_matrix_valid;
-	reg		[47:0]	debug_signal;
+	wire	[7:0]	keyboard_rx_count;
+	reg		[87:0]	debug_signal;
 	wire	[19:0]	flashrom_address;
 	wire			flashrom_en;
 
@@ -189,6 +191,7 @@ module tb ();
 		.spi_intr		( spi_intr		),
 		.slot_wait_n	( slot_wait_n	),
 		.ssram_startup_busy	( ssram_startup_busy	),
+		.active_bus_owner	( active_bus_owner	),
 		.msx_reset_n	( 				),
 		.msx_pause		( 				),
 		.bootrom_en		( bootrom_en	),
@@ -196,6 +199,7 @@ module tb ();
 		.keyboard_matrix_row	( keyboard_matrix_row	),
 		.keyboard_matrix		( keyboard_matrix		),
 		.keyboard_matrix_valid	( keyboard_matrix_valid	),
+		.keyboard_update_count	( keyboard_rx_count		),
 		.debug_signal	( debug_signal	),
 		.flashrom_address	( flashrom_address	),
 		.flashrom_en		( flashrom_en		)
@@ -268,7 +272,8 @@ module tb ();
 		spi_mosi	= 1'b0;
 		slot_wait_n = 1'b1;
 		ssram_startup_busy = 1'b0;
-		debug_signal = 48'h0000_0000_0000;
+		active_bus_owner = 1'b0;
+		debug_signal = 88'h000000_0000_0000_0000_0000;
 		test_no		= 0;
 		pass_count	= 0;
 		fail_count	= 0;
@@ -878,18 +883,18 @@ module tb ();
 		// ================================================================
 		test_no = 9;
 		$display( "------------------------------------------------------------" );
-		$display( "[TEST %0d] Debug signal read: cmd=0x0A, expect data=0x123456789ABC (byte0 first)", test_no );
+		$display( "[TEST %0d] Debug signal read: cmd=0x0A, expect data=0x123456789ABCDEF0123456 (byte0 first)", test_no );
 
 		reset_n = 1'b0;
 		repeat( 3 ) @( posedge clk );
 		reset_n = 1'b1;
-		debug_signal = 48'h123456789ABC;
+		debug_signal = 88'h123456789ABCDEF0123456;
 		repeat( 5 ) @( posedge clk );
 
 		begin
 			int cnt_before;
-			reg [7:0] read_data [0:6];
-			reg [47:0] read_value;
+			reg [7:0] read_data [0:11];
+			reg [87:0] read_value;
 			cnt_before = bus_valid_count;
 
 			spi_cs_n = 1'b0;
@@ -906,29 +911,29 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			for( int byte_index = 0; byte_index < 7; byte_index = byte_index + 1 ) begin
+			for( int byte_index = 0; byte_index < 12; byte_index = byte_index + 1 ) begin
 				spi_transfer_byte( 8'h00, read_data[byte_index] );
 			end
 			spi_cs_n = 1'b1;
 			spi_mosi = 1'b0;
 			repeat( 10 ) @( posedge clk );
 
-			read_value = { read_data[5], read_data[4], read_data[3], read_data[2], read_data[1], read_data[0] };
-			if( read_value === 48'h123456789ABC ) begin
-				$display( "[TEST %0d] PASS: debug response = 0x%012X", test_no, read_value );
+			read_value = { read_data[10], read_data[9], read_data[8], read_data[7], read_data[6], read_data[5], read_data[4], read_data[3], read_data[2], read_data[1], read_data[0] };
+			if( read_value === 88'h123456789ABCDEF0123456 ) begin
+				$display( "[TEST %0d] PASS: debug response = 0x%022X", test_no, read_value );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: debug response = 0x%012X (expected 0x123456789ABC)", test_no, read_value );
+				$display( "[TEST %0d] FAIL: debug response = 0x%022X (expected 0x123456789ABCDEF0123456)", test_no, read_value );
 				fail_count = fail_count + 1;
 			end
 
-			if( read_data[6] === 8'hA5 ) begin
-				$display( "[TEST %0d] PASS: link pattern byte = 0x%02X", test_no, read_data[6] );
+			if( read_data[11] === 8'hA5 ) begin
+				$display( "[TEST %0d] PASS: link pattern byte = 0x%02X", test_no, read_data[11] );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: link pattern byte = 0x%02X (expected 0xA5)", test_no, read_data[6] );
+				$display( "[TEST %0d] FAIL: link pattern byte = 0x%02X (expected 0xA5)", test_no, read_data[11] );
 				fail_count = fail_count + 1;
 			end
 
@@ -1250,12 +1255,14 @@ module tb ();
 			spi_mosi = 1'b0;
 			repeat( 10 ) @( posedge clk );
 
-			if( keyboard_update_count === 12 && bus_valid_count === cnt_before && spi_intr === 1'b0 ) begin
+			if( keyboard_update_count === 12 && keyboard_rx_count === 8'd12 &&
+				bus_valid_count === cnt_before && spi_intr === 1'b0 ) begin
 				$display( "[TEST %0d] PASS: 12 rows updated without bus access or interrupt", test_no );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: update_count=%0d bus_count=%0d spi_intr=%b", test_no, keyboard_update_count, bus_valid_count, spi_intr );
+				$display( "[TEST %0d] FAIL: valid_count=%0d rx_count=%0d bus_count=%0d spi_intr=%b",
+					test_no, keyboard_update_count, keyboard_rx_count, bus_valid_count, spi_intr );
 				fail_count = fail_count + 1;
 			end
 

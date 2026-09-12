@@ -480,23 +480,30 @@ void fpga_set_keyboard_matrix( const uint8_t *matrix ) {
 void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal ) {
 	uint8_t cmd;
 	uint8_t dummy;
-	uint8_t data[7];
+	uint8_t data[12];
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = 0x0A;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 	sleep_us( 1 );
 	dummy = 0x00;
-	for( int index = 0; index < 7; index++ ) {
+	for( int index = 0; index < 12; index++ ) {
 		spi_write_read_blocking( SPI0_PORT, &dummy, &data[index], 1 );
 		sleep_us( 1 );
 	}
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 
-	debug_signal->z80_pc			= ((uint16_t) data[1] << 8) | data[0];
-	debug_signal->z80_bus_address	= ((uint16_t) data[3] << 8) | data[2];
-	debug_signal->status_a			= data[4];
-	debug_signal->status_b			= data[5];
-	debug_signal->link_pattern		= data[6];
+	debug_signal->z80_pc				= ((uint16_t) data[1] << 8) | data[0];
+	debug_signal->spi_last_data			= data[2];
+	debug_signal->spi_last_row			= data[3] & 0x0F;
+	debug_signal->ppi_selected_row		= data[3] >> 4;
+	debug_signal->ppi_selected_data		= data[4];
+	debug_signal->spi_update_count		= data[5];
+	debug_signal->ppi_update_count		= data[6];
+	debug_signal->ppi_read_count			= data[7];
+	debug_signal->interrupt_status		= data[8];
+	debug_signal->slot_interrupt_count	= data[9];
+	debug_signal->z80_interrupt_ack_count	= data[10];
+	debug_signal->link_pattern			= data[11];
 }

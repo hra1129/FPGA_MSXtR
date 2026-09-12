@@ -210,6 +210,7 @@ module cz80 (
 	wire			ldw;
 	wire			ldsphl;
 	wire			iorq_i;
+	wire	[7:0]	w_do;
 	wire	[2:0]	special_ld;
 	wire			exchangedh;
 	wire			exchangerp;
@@ -1029,6 +1030,7 @@ module cz80 (
 
 	assign m1_n			= ff_m1_n;
 	assign a			= ff_a;
-	assign do			= ff_do;
+	assign w_do			= (iset == 2'b00 && ir == 8'hD3 && mcycle == 3'd3 && iorq_i && write) ? acc : ff_do;
+	assign do			= w_do;
 	assign auto_wait	= ((intcycle || nmicycle) && mcycle == 3'd1);
 endmodule
