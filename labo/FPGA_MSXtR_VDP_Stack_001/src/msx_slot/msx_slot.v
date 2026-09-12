@@ -250,7 +250,7 @@ module msx_slot(
 	assign bus_write		= ff_write;
 	assign bus_valid		= ff_valid;
 	assign p_slot_data		= ff_ioreq_d3 ? ff_rdata: 8'hZZ;
-	assign p_slot_int_n		= int_n ? 1'b0: 1'bz;
+	assign p_slot_int_n		= int_n ? 1'bz: 1'b0;
 
 	//	0: Cartridge <- CPU (Write or Idle), 1: Cartridge -> CPU (Read)
 	assign p_slot_data_dir	= ff_ioreq_d3;

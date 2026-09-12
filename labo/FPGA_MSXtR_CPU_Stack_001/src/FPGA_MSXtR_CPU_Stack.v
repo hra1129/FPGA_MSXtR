@@ -107,6 +107,7 @@ module fpga_msxtr_cpu_stack (
 	reg		[1:0]	ff_button_d0;
 	reg		[1:0]	ff_button_d1;
 
+	wire			w_int_n;
 	wire			w_cpu_int_p;
 
 	wire			w_z80_bus_m1;
@@ -501,7 +502,7 @@ module fpga_msxtr_cpu_stack (
 		.secondary_slot0		( w_secondary_slot0			),
 		.secondary_slot3		( w_secondary_slot3			),
 		.high_speed_mode		( w_high_speed_mode			),
-		.int_n					( w_cpu_int_p				),
+		.int_n					( w_int_n					),
 		.slot_m1_n				( slot_m1_n					),
 		.slot_oe_n				( slot_oe_n					),
 		.slot_clock_n			( slot_clock_n				),
@@ -536,6 +537,7 @@ module fpga_msxtr_cpu_stack (
 		.device_rdata_en		( w_device_rdata_en			)
 	);
 
+	assign w_cpu_int_p			= ~w_int_n;
 	assign w_high_speed_mode	= 1'b0;
 
 	// --------------------------------------------------------------------
