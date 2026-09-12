@@ -35,8 +35,7 @@ module secondary_slot (
 	input			clk,
 	input			reset_n,
 	//	internal bus interface
-	input			bus_io,
-	input	[15:0]	bus_address,
+	input			bus_cs,
 	input			bus_write,
 	input	[7:0]	bus_wdata,
 	input			bus_valid,
@@ -59,7 +58,7 @@ module secondary_slot (
 			ff_secondary_slot0 <= 8'b0;
 			ff_secondary_slot3 <= 8'b0;
 		end
-		else if( ~bus_io && bus_valid && (bus_address == 16'hFFFF) && (primary_slot[7:6] == 2'd0) ) begin
+		else if( bus_cs && bus_valid && (primary_slot[7:6] == 2'd0) ) begin
 			if( bus_write ) begin
 				ff_secondary_slot0 <= bus_wdata;
 				ff_rdata_en <= 1'b0;
@@ -69,7 +68,7 @@ module secondary_slot (
 				ff_rdata_en <= 1'b1;
 			end
 		end
-		else if( ~bus_io && bus_valid && (bus_address == 16'hFFFF) && (primary_slot[7:6] == 2'd3) ) begin
+		else if( bus_cs && bus_valid && (primary_slot[7:6] == 2'd3) ) begin
 			if( bus_write ) begin
 				ff_secondary_slot3 <= bus_wdata;
 				ff_rdata_en <= 1'b0;

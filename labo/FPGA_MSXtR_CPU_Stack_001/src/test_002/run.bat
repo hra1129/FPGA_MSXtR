@@ -6,6 +6,7 @@ vlib work
 
 vlog gowin_pll.v
 vlog ..\spi\spi.v
+vlog ..\pause_led\pause_led.v
 vlog ..\spi\ip_spi.v
 vlog ..\msx_slot\msx_slot_decode.v
 vlog ..\msx_slot\msx_slot.v
@@ -42,4 +43,3 @@ vsim -c -t 1ps tb -do "add wave -r *; run -all; quit -f"
 
 if exist transcript move transcript log.txt
 endlocal
-pause

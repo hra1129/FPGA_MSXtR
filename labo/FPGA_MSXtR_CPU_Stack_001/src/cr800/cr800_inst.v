@@ -75,15 +75,14 @@ module cr800_inst (
 	output	[15:0]	bus_address	,
 	output	[7:0]	bus_wdata	,
 	input	[7:0]	bus_rdata	,
-	input			bus_rdata_en
+	input			bus_rdata_en,
+	output	[15:0]	pc					//	debug
 );
 	wire				w_intcycle_n;
 	wire				w_iorq;
 	wire				w_noread;
 	wire				w_write;
-	reg					ff_rd;
 	reg					ff_iorq_n_i;
-	reg					ff_wr_n_i;
 	wire				w_rfsh_n;
 	wire				w_busak_n;
 	reg		[7:0]		ff_di_reg;
@@ -92,34 +91,68 @@ module cr800_inst (
 	wire	[2:0]		w_m_cycle;
 	wire	[2:0]		w_t_state;
 	wire				w_m1_n;
-	wire				w_pending;
-	wire				w_write_intent;
+	reg					ff_bus_valid;
+	reg					ff_requested;
+	reg		[2:0]		ff_t_state_d;
+	wire				w_mem_write_now;
+	wire				w_io_write_now;
+	wire				w_write_now;
+	wire				w_m1_read_now;
+	wire				w_other_read_now;
+	wire				w_read_now;
+	wire				w_transaction_phase;
+	wire				w_new_tstate;
 	wire				w_complete;
-	reg					ff_done;
 
-	//	bus_valid はデータフェーズ(read/write)の間のみアサートする
-	//	(M1フェッチに付随するリフレッシュ用MREQ再アサート区間はバス転送を伴わないため対象外)
-	//	ff_iorq_n_i / ff_wr_n_i はリセット時1(非アクティブ)となる負論理相当のレジスタ
-	//	bus_ready は「受付可能」パルス(msx_slotはシーケンス開始時と完了時の2回高くなる)であり、
-	//	実際のデータ確定は read は bus_rdata_en、write は受付(bus_ready)そのもので判断する
+	//	同一T-stateで要求を1回だけ発行し、writeはbus_ready、readはbus_rdata_enまでvalidを保持する
+	assign w_mem_write_now		= w_write & !w_iorq & ( w_t_state == 3'd2 );
+	assign w_io_write_now		= w_write &  w_iorq & ( w_t_state == 3'd1 ) & !ff_iorq_n_i;
+	assign w_write_now			= w_mem_write_now | w_io_write_now;
+	assign w_m1_read_now		= ( w_m_cycle == 3'd1 ) & ( w_t_state == 3'd1 ) & w_intcycle_n;
+	assign w_other_read_now		= ( w_m_cycle != 3'd1 ) & ( w_t_state == 3'd1 ) & !w_noread & !w_write &
+									( !w_iorq | ( w_iorq & !ff_iorq_n_i ) );
+	assign w_read_now			= w_m1_read_now | w_other_read_now;
+	assign w_transaction_phase	= w_write_now | w_read_now;
+	assign w_new_tstate			= ( w_t_state != ff_t_state_d );
+	assign w_complete			= ff_bus_valid & ( w_write ? bus_ready : bus_rdata_en );
+
 	assign bus_m1		= ~w_m1_n;
 	assign bus_io		= ~ff_iorq_n_i;
-	assign bus_write	= ~ff_wr_n_i;
-	assign w_pending	= ff_rd | ~ff_wr_n_i;
-	assign w_write_intent	= ~ff_wr_n_i;
-	assign w_complete	= w_pending & ( w_write_intent ? bus_ready : bus_rdata_en );
-	//	一度完了を検知したら CPU コアが t_state==3 に到達して w_pending を解くまで bus_valid を下げ続ける
-	assign bus_valid	= w_pending & ~(ff_done | w_complete);
+	assign bus_write	= w_write;
+	assign bus_valid	= ff_bus_valid;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_done <= 1'b0;
+			ff_t_state_d <= 3'd0;
 		end
-		else if( !w_pending ) begin
-			ff_done <= 1'b0;
+		else begin
+			ff_t_state_d <= w_t_state;
 		end
-		else if( w_complete ) begin
-			ff_done <= 1'b1;
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_bus_valid <= 1'b0;
+		end
+		else if( ff_bus_valid ) begin
+			if( w_complete ) begin
+				ff_bus_valid <= 1'b0;
+			end
+		end
+		else if( w_transaction_phase & ~ff_requested ) begin
+			ff_bus_valid <= 1'b1;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_requested <= 1'b0;
+		end
+		else if( w_new_tstate ) begin
+			ff_requested <= 1'b0;
+		end
+		else if( w_transaction_phase & ~ff_requested ) begin
+			ff_requested <= 1'b1;
 		end
 	end
 
@@ -146,7 +179,8 @@ module cr800_inst (
 		.ts				( w_t_state			),
 		.intcycle_n		( w_intcycle_n		),
 		.inte			( 					),
-		.stop			( 					)
+		.stop			( 					),
+		.p_pc			( pc				)
 	);
 
 	//	読み出しデータは bus_rdata_en のサイクルでのみ有効なので、その瞬間に直接ラッチする
@@ -159,9 +193,9 @@ module cr800_inst (
 		end
 	end
 
-	//	完了(ff_done または今サイクルの w_complete)を検知するまで Tw を挿入して CPU コアを待たせる
+	//	要求開始から完了までTwを挿入してCPUコアを待たせる
 	always @( posedge clk ) begin
-		ff_wait_n			<= ~(w_pending & ~(ff_done | w_complete));
+		ff_wait_n			<= ~( ( ff_bus_valid | ( w_transaction_phase & ~ff_requested ) ) & ~w_complete );
 	end
 
 	always @( posedge clk ) begin
@@ -175,53 +209,21 @@ module cr800_inst (
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_wr_n_i <= 1'b1;
-		end
-		else if( !w_iorq ) begin
-			if( w_t_state == 3'd2 ) begin
-				ff_wr_n_i <= ~w_write;
-			end
-			else if( w_t_state == 3'd3 ) begin
-				ff_wr_n_i <= 1'b1;
-			end
-		end
-		else begin
-			if( w_t_state == 3'd1 && !ff_iorq_n_i ) begin
-				ff_wr_n_i <= ~w_write;
-			end
-			else if( w_t_state == 3'd3 ) begin
-				ff_wr_n_i <= 1'b1;
-			end
-		end
-	end
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_rd <= 1'b0;
 			ff_iorq_n_i <= 1'b1;
 		end
 		else if( w_m_cycle == 3'd1 ) begin
 			if( w_t_state == 3'd1 ) begin
-				ff_rd <= w_intcycle_n;
 				ff_iorq_n_i <= w_intcycle_n;
 			end
 			else if( w_t_state == 3'd3 ) begin
-				ff_rd <= 1'b0;
 				ff_iorq_n_i <= 1'b1;
 			end
 		end
 		else begin
 			if( w_t_state == 3'd1 && !w_noread ) begin
 				ff_iorq_n_i <= ~w_iorq;
-				if( !w_iorq ) begin
-					ff_rd <= ~w_write;
-				end
-				else if( !ff_iorq_n_i ) begin
-					ff_rd <= ~w_write;
-				end
 			end
 			if( w_t_state == 3'd3 ) begin
-				ff_rd <= 1'b0;
 				ff_iorq_n_i <= 1'b1;
 			end
 		end

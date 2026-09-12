@@ -65,6 +65,7 @@ module s2026_cpu_select (
 	output			z80_active,
 	output			r800_active,
 	output			processor_mode,
+	output	[1:0]	debug_cpu_change_state,
 	//	Merged internal bus (msx_slot 側)
 	output			bus_m1,
 	output			bus_io,
@@ -77,6 +78,7 @@ module s2026_cpu_select (
 	input			bus_rdata_en
 );
 	reg		[1:0]	ff_cpu_change_state = 2'b01;
+	reg		[2:0]	ff_boot_step = 3'd0;
 	reg				ff_z80_active;
 	reg				ff_r800_active;
 	reg				ff_processor_mode = 1'b1;
@@ -108,10 +110,47 @@ module s2026_cpu_select (
 	// ---------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_cpu_change_state	<= 2'b01;
-			ff_processor_mode	<= 1'b1;
-			ff_z80_active		<= 1'b1;
-			ff_r800_active		<= 1'b0;
+			ff_boot_step		<= 3'd0;
+			ff_cpu_change_state	<= 2'b00;
+			ff_processor_mode	<= 1'b0;
+			ff_z80_active		<= 1'b0;
+			ff_r800_active		<= 1'b1;
+		end
+		else if( ff_boot_step != 3'd5 ) begin
+			//	MSXturboR boot sequence:
+			//	Execute 1st instruction (0000h: DI) on R800 before switching to Z80.
+			if( ff_boot_step == 3'd0 ) begin
+				if( r800_bus_valid && r800_bus_rdata_en && r800_bus_m1 && (r800_bus_address == 16'h0000) ) begin
+					ff_boot_step <= 3'd1;
+				end
+			end
+			else if( ff_boot_step == 3'd1 ) begin
+				if( enable_r800 ) begin
+					ff_boot_step <= 3'd2;
+				end
+			end
+			else if( ff_boot_step == 3'd2 ) begin
+				if( enable_r800 ) begin
+					ff_boot_step <= 3'd3;
+				end
+			end
+			else if( ff_boot_step == 3'd3 ) begin
+				if( enable_r800 ) begin
+					ff_boot_step <= 3'd4;
+				end
+			end
+			else if( ff_boot_step == 3'd4 ) begin
+				ff_processor_mode	<= 1'b1;
+				ff_r800_active		<= 1'b0;
+				ff_cpu_change_state	<= 2'b01;
+				if( enable_z80 ) begin
+					ff_z80_active	<= 1'b1;
+					ff_boot_step	<= 3'd5;
+				end
+				else begin
+					ff_z80_active	<= 1'b0;
+				end
+			end
 		end
 		else begin
 			if( ff_cpu_change_state[1] == 1'b1 ) begin
@@ -170,4 +209,5 @@ module s2026_cpu_select (
 	assign z80_active		= ff_z80_active  & enable_z80  & ~w_wait_p;
 	assign r800_active		= ff_r800_active & enable_r800 & ~w_wait_p;
 	assign processor_mode	= ff_processor_mode;
+	assign debug_cpu_change_state = ff_cpu_change_state;
 endmodule

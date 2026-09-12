@@ -379,24 +379,74 @@ static void dump_fpga_debug_signal( void ) {
 	fpga_debug_signal_t debug_signal;
 
 	fpga_get_debug_signal( &debug_signal );
-	printf( "FPGA keyboard debug: PC=0x%04X\r\n", debug_signal.z80_pc );
-	printf( "  SPI last: row=%u data=0x%02X update_count=%u\r\n",
-			debug_signal.spi_last_row,
-			debug_signal.spi_last_data,
-			debug_signal.spi_update_count );
-	printf( "  PPI: selected_row=%u selected_data=0x%02X update_count=%u A9_read_count=%u\r\n",
-			debug_signal.ppi_selected_row,
-			debug_signal.ppi_selected_data,
-			debug_signal.ppi_update_count,
-			debug_signal.ppi_read_count );
-	printf( "  INT: slot_n=%u msx_slot_n=%u cpu_int_p=%u z80_ack=%u z80_active=%u edge_count=%u ack_count=%u\r\n",
+	printf( "FPGA CPU debug: Z80_PC=0x%04X R800_PC=0x%04X mode=%s\r\n",
+			debug_signal.z80_pc,
+			debug_signal.r800_pc,
+			(debug_signal.cpu_status & 0x01) ? "Z80" : "R800" );
+	printf( "  CPU switch: req=%u target=%s state=%u req_count=%u mode_count=%u\r\n",
+			(debug_signal.cpu_status >> 1) & 0x01,
+			(debug_signal.cpu_status & 0x04) ? "Z80" : "R800",
+			(debug_signal.cpu_status >> 3) & 0x03,
+			debug_signal.cpu_change_request_count,
+			debug_signal.cpu_mode_change_count );
+	printf( "  Z80 bus: addr=0x%04X valid=%u ready=%u active=%u reset_n=%u\r\n",
+			debug_signal.z80_bus_address,
+			(debug_signal.cpu_status >> 5) & 0x01,
+			(debug_signal.bus_status >> 0) & 0x01,
+			(debug_signal.bus_status >> 3) & 0x01,
+			(debug_signal.bus_status >> 6) & 0x01 );
+	printf( "  R800 bus: addr=0x%04X valid=%u ready=%u active=%u reset_n=%u\r\n",
+			debug_signal.r800_bus_address,
+			(debug_signal.cpu_status >> 6) & 0x01,
+			(debug_signal.bus_status >> 1) & 0x01,
+			(debug_signal.bus_status >> 4) & 0x01,
+			(debug_signal.bus_status >> 7) & 0x01 );
+	printf( "  Shared bus: valid=%u ready=%u pause=%u S2026[index=%u rom=%u switch=%u z80_clk=%u r800_clk=%u]\r\n",
+			(debug_signal.cpu_status >> 7) & 0x01,
+			(debug_signal.bus_status >> 2) & 0x01,
+			(debug_signal.bus_status >> 5) & 0x01,
+			debug_signal.s2026_status & 0x0F,
+			(debug_signal.s2026_status >> 4) & 0x01,
+			(debug_signal.s2026_status >> 5) & 0x01,
+			(debug_signal.s2026_status >> 6) & 0x01,
+			(debug_signal.s2026_status >> 7) & 0x01 );
+	printf( "  Slot map: A8=0x%02X SSL0=0x%02X SSL3=0x%02X current=P%u-%u page=%u io=%u write=%u\r\n",
+			debug_signal.primary_slot,
+			debug_signal.secondary_slot0,
+			debug_signal.secondary_slot3,
+			debug_signal.slot_decode_status & 0x03,
+			(debug_signal.slot_decode_status >> 2) & 0x03,
+			(debug_signal.slot_decode_status >> 4) & 0x03,
+			(debug_signal.slot_decode_status >> 6) & 0x01,
+			(debug_signal.slot_decode_status >> 7) & 0x01 );
+	printf( "  Slot select(n): SLTSL=%u%u%u%u CS1=%u CS2=%u CS12=%u BUSDIR=%u\r\n",
+			(debug_signal.slot_select_status >> 3) & 0x01,
+			(debug_signal.slot_select_status >> 2) & 0x01,
+			(debug_signal.slot_select_status >> 1) & 0x01,
+			(debug_signal.slot_select_status >> 0) & 0x01,
+			(debug_signal.slot_select_status >> 4) & 0x01,
+			(debug_signal.slot_select_status >> 5) & 0x01,
+			(debug_signal.slot_select_status >> 6) & 0x01,
+			(debug_signal.slot_select_status >> 7) & 0x01 );
+	printf( "  Slot bus(n): M1=%u MERQ=%u IORQ=%u RD=%u WR=%u ROM0=%u ROM1=%u DATA_DIR=%u\r\n",
+			(debug_signal.slot_bus_status >> 0) & 0x01,
+			(debug_signal.slot_bus_status >> 1) & 0x01,
+			(debug_signal.slot_bus_status >> 2) & 0x01,
+			(debug_signal.slot_bus_status >> 3) & 0x01,
+			(debug_signal.slot_bus_status >> 4) & 0x01,
+			(debug_signal.slot_bus_status >> 5) & 0x01,
+			(debug_signal.slot_bus_status >> 6) & 0x01,
+			(debug_signal.slot_bus_status >> 7) & 0x01 );
+	printf( "  INT/Trap: slot_n=%u msx_slot_n=%u cpu_int_p=%u z80_ack=%u z80_act=%u | FFFF_wr[seen=%u is_39=%u by_r800=%u r800_pc=0x%04X]\r\n",
 			(debug_signal.interrupt_status >> 0) & 0x01,
 			(debug_signal.interrupt_status >> 1) & 0x01,
 			(debug_signal.interrupt_status >> 2) & 0x01,
 			(debug_signal.interrupt_status >> 3) & 0x01,
 			(debug_signal.interrupt_status >> 4) & 0x01,
-			debug_signal.slot_interrupt_count,
-			debug_signal.z80_interrupt_ack_count );
+			(debug_signal.interrupt_status >> 5) & 0x01,
+			(debug_signal.interrupt_status >> 6) & 0x01,
+			(debug_signal.interrupt_status >> 7) & 0x01,
+			debug_signal.ffff_write_r800_pc );
 	if( debug_signal.link_pattern == 0xA5 ) {
 		printf( "  link_pattern=0x%02X (OK)\r\n", debug_signal.link_pattern );
 	}
@@ -873,17 +923,16 @@ static void dir_sd_root(void) {
 
 // ---------------------------------------------------------
 // Core 1: I2C通信（キーボード）+ printf
+static volatile uint8_t s_fpga_led_state = 0;
+
 static void core1_entry(void) {
 	keyboard_init(I2C_PORT, I2C_ADDR);
 	sdcard_init_and_mount();  // SPI1 + SDカードドライバ初期化
 
-	uint8_t led_state  = 0;
-
 	while (true) {
-		keyboard_update( led_state );
+		keyboard_update( s_fpga_led_state );
 		memcpy( keymatrix, keyboard_get_matrix(), KEYBOARD_KEY_MATRIX_SIZE );
 
-		led_state++;
 		sleep_ms(10);
 	}
 }
@@ -1049,7 +1098,7 @@ int main(void) {
 		prev_mat00 = keymatrix[0];
 		prev_mat11 = keymatrix[11];
 		prev_mat01 = keymatrix[1];
-		fpga_set_keyboard_matrix( keymatrix );
+		s_fpga_led_state = fpga_set_keyboard_matrix( keymatrix );
 
 		for( i = 0; i < 12; i++ ) {
 			matrix = keymatrix[i];

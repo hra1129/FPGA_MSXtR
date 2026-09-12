@@ -56,38 +56,43 @@ module ip_spi (
 	input			active_bus_owner,
 	output			msx_reset_n,
 	output			msx_pause,
+	input			r800_led,
+	input			pause_led,
+	input			caps_led,
+	input			kana_led,
 	output			bootrom_en,
 	output			bus_owner,
 	output	[3:0]	keyboard_matrix_row,
 	output	[7:0]	keyboard_matrix,
 	output			keyboard_matrix_valid,
 	output	[7:0]	keyboard_update_count,
-	input	[87:0]	debug_signal,
+	input	[175:0]	debug_signal,
 	output	[19:0]	flashrom_address,
 	output			flashrom_en
 );
-	localparam		ST_IDLE				= 4'd0;
-	localparam		ST_COMMAND			= 4'd1;
-	localparam		ST_ADDRESS			= 4'd2;
-	localparam		ST_MEM_ADDR_L		= 4'd3;
-	localparam		ST_MEM_ADDR_H		= 4'd4;
-	localparam		ST_WDATA			= 4'd5;
-	localparam		ST_DO				= 4'd6;
-	localparam		ST_SEND				= 4'd7;
-	localparam		ST_WAIT_RDATA		= 4'd8;
-	localparam		ST_FLASH_ADDR_L		= 4'd9;
-	localparam		ST_FLASH_ADDR_M		= 4'd10;
-	localparam		ST_FLASH_ADDR_H		= 4'd11;
-	localparam		ST_BUS_OWNER		= 4'd12;
-	localparam		ST_KEYBOARD			= 4'd13;
-	localparam		ST_BUS_OWNER_WAIT	= 4'd14;
-	localparam		ST_DEBUG_H			= 4'd15;
-	localparam		SPI_RX_WDATA		= 8'h64;
-	localparam		DEBUG_SIGNAL_BYTES	= 4'd12;		//	debug_signal 11byte + 通信確認用の固定パターン(0xA5) 1byte
-	localparam		DEBUG_SIGNAL_PATTERN = 8'hA5;
+	localparam	[4:0]	ST_IDLE				 = 5'd0;
+	localparam	[4:0]	ST_COMMAND			 = 5'd1;
+	localparam	[4:0]	ST_ADDRESS			 = 5'd2;
+	localparam	[4:0]	ST_MEM_ADDR_L		 = 5'd3;
+	localparam	[4:0]	ST_MEM_ADDR_H		 = 5'd4;
+	localparam	[4:0]	ST_WDATA			 = 5'd5;
+	localparam	[4:0]	ST_DO				 = 5'd6;
+	localparam	[4:0]	ST_SEND				 = 5'd7;
+	localparam	[4:0]	ST_WAIT_RDATA		 = 5'd8;
+	localparam	[4:0]	ST_FLASH_ADDR_L		 = 5'd9;
+	localparam	[4:0]	ST_FLASH_ADDR_M		 = 5'd10;
+	localparam	[4:0]	ST_FLASH_ADDR_H		 = 5'd11;
+	localparam	[4:0]	ST_BUS_OWNER		 = 5'd12;
+	localparam	[4:0]	ST_KEYBOARD			 = 5'd13;
+	localparam	[4:0]	ST_BUS_OWNER_WAIT	 = 5'd14;
+	localparam	[4:0]	ST_DEBUG_H			 = 5'd15;
+	localparam	[4:0]	ST_KEYBOARD_SEND	 = 5'd16;
+	localparam			SPI_RX_WDATA		 = 8'h64;
+	localparam	[4:0]	DEBUG_SIGNAL_BYTES	 = 5'd23;	//	debug_signal 22byte + 通信確認用の固定パターン(0xA5) 1byte
+	localparam			DEBUG_SIGNAL_PATTERN = 8'hA5;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
-	reg		[3:0]	ff_state;
+	reg		[4:0]	ff_state;
 	reg		[7:0]	ff_spi_wdata;
 	reg				ff_spi_write;
 	reg				ff_spi_valid;
@@ -114,8 +119,8 @@ module ip_spi (
 	reg				ff_keyboard_update_toggle;
 	reg				ff_keyboard_update_toggle_d;
 	reg		[7:0]	ff_keyboard_update_count;
-	reg		[87:0]	ff_debug_signal;
-	reg		[3:0]	ff_debug_byte_index;
+	reg		[175:0]	ff_debug_signal;
+	reg		[4:0]	ff_debug_byte_index;
 	reg				ff_suppress_intr;
 	reg				ff_suppress_intr_d1;
 	reg		[19:0]	ff_flashrom_address;
@@ -166,11 +171,11 @@ module ip_spi (
 			ff_keyboard_output_data	<= 8'hFF;
 			ff_keyboard_update_toggle	<= 1'b0;
 			ff_keyboard_update_count	<= 8'd0;
-			ff_debug_signal <= 88'd0;
+			ff_debug_signal <= 176'd0;
 			ff_suppress_intr <= 1'b0;
 			ff_flashrom_address <= 20'd0;
 			ff_flashrom_access <= 1'b0;
-			ff_debug_byte_index <= 4'd0;
+			ff_debug_byte_index <= 5'd0;
 		end
 		//	spi_cs_n解除は異常時のリカバリを兼ねるため、どのステートより優先して ST_IDLE へ戻す
 		else if( ff_spi_cs_n ) begin
@@ -327,7 +332,7 @@ module ip_spi (
 						ff_state		<= ST_DEBUG_H;
 						ff_debug_signal <= debug_signal;
 						ff_spi_wdata	<= debug_signal[7:0];
-						ff_debug_byte_index <= 4'd1;
+						ff_debug_byte_index <= 5'd1;
 						ff_spi_valid	<= 1'b1;
 						ff_spi_write	<= 1'b1;
 						ff_suppress_intr <= 1'b1;
@@ -368,10 +373,12 @@ module ip_spi (
 						ff_spi_write	<= 1'b0;
 					end
 					8'h11: begin
-						ff_state		<= ST_KEYBOARD;
+						ff_state				<= ST_KEYBOARD_SEND;
+						ff_spi_wdata			<= { 4'd0, r800_led, kana_led, caps_led, pause_led };
+						ff_spi_valid			<= 1'b1;
+						ff_spi_write			<= 1'b1;
+						ff_suppress_intr		<= 1'b1;
 						ff_keyboard_matrix_row	<= 4'd0;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
 					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command
@@ -467,16 +474,25 @@ module ip_spi (
 				if( spi_ready ) begin
 					//	byte_index(1..DEBUG_SIGNAL_BYTES-1)を順番に送信し、最後のbyteでST_SENDへ抜ける
 					//	最終byteはff_debug_signal範囲外なので固定パターンを送る(通信経路そのものの確認用)
-					if( ff_debug_byte_index == (DEBUG_SIGNAL_BYTES - 4'd1) ) begin
+					if( ff_debug_byte_index == (DEBUG_SIGNAL_BYTES - 5'd1) ) begin
 						ff_spi_wdata	<= DEBUG_SIGNAL_PATTERN;
 						ff_state	<= ST_SEND;
 					end
 					else begin
 						ff_spi_wdata	<= ff_debug_signal[ ff_debug_byte_index * 8 +: 8 ];
-						ff_debug_byte_index <= ff_debug_byte_index + 4'd1;
+						ff_debug_byte_index <= ff_debug_byte_index + 5'd1;
 					end
 					ff_spi_valid	<= 1'b1;
 					ff_spi_write	<= 1'b1;
+				end
+			end
+			ST_KEYBOARD_SEND: begin
+				if( spi_ready ) begin
+					ff_state		<= ST_KEYBOARD;
+					ff_spi_wdata	<= SPI_RX_WDATA;
+					ff_spi_valid	<= 1'b1;
+					ff_spi_write	<= 1'b0;
+					ff_suppress_intr <= 1'b0;
 				end
 			end
 			ST_KEYBOARD: begin

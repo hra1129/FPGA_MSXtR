@@ -44,7 +44,10 @@ module s2026_register (
 	output			device_rdata_en,
 	output			cpu_change_req,
 	output			cpu_change_target,
-	input			processor_mode
+	input			processor_mode,
+	output	[3:0]	debug_register_index,
+	output			debug_rom_mode,
+	output			debug_switch
 );
 	reg		[3:0]	ff_register_index;
 	reg				ff_rom_mode;
@@ -57,6 +60,7 @@ module s2026_register (
 	reg				ff_processor_mode;
 	reg		[7:0]	ff_device_rdata;
 	reg				ff_device_rdata_en;
+	wire	[7:0]	w_s2026_rdata;
 	wire	[7:0]	w_register_read;
 	wire			w_counter_reset;
 
@@ -140,6 +144,9 @@ module s2026_register (
 
 	assign cpu_change_req		= ff_cpu_change_req;
 	assign cpu_change_target	= ff_processor_mode;
+	assign debug_register_index	= ff_register_index;
+	assign debug_rom_mode		= ff_rom_mode;
+	assign debug_switch			= ff_switch;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin

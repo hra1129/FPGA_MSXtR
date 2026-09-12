@@ -1,468 +1,338 @@
 `timescale 1ns/1ps
 
 module tb;
-	localparam real CLK_PERIOD_PS = 1_000_000_000_000.0 / 42_954_540.0;
+	localparam real c_clk_period = 1000.0 / 42.95454;
 
-	reg			reset_n;
 	reg			clk;
-	reg			enable_z80;
-	reg			enable_r800;
+	reg			reset_n;
+	reg	[3:0]	ff_div12;
+	reg			ff_div2;
+	wire			enable_z80;
+	wire			enable_r800;
+	reg			cpu_pause;
 
-	reg			z80_m1_n;
-	reg			z80_mreq_n;
-	reg			z80_iorq_n;
-	reg			z80_rd_n;
-	reg			z80_wr_n;
-	reg	[15:0]	z80_a;
-	reg	[7:0]	z80_wdata;
-	wire	[7:0]	z80_rdata;
+	reg			z80_bus_m1;
+	reg			z80_bus_io;
+	reg			z80_bus_write;
+	reg			z80_bus_valid;
+	wire			z80_bus_ready;
+	reg	[15:0]	z80_bus_address;
+	reg	[7:0]	z80_bus_wdata;
+	wire	[7:0]	z80_bus_rdata;
+	wire			z80_bus_rdata_en;
 
-	reg			r800_m1_n;
-	reg			r800_mreq_n;
-	reg			r800_iorq_n;
-	reg			r800_rd_n;
-	reg			r800_wr_n;
-	reg	[15:0]	r800_a;
-	reg	[7:0]	r800_wdata;
-	wire	[7:0]	r800_rdata;
+	reg			r800_bus_m1;
+	reg			r800_bus_io;
+	reg			r800_bus_write;
+	reg			r800_bus_valid;
+	wire			r800_bus_ready;
+	reg	[15:0]	r800_bus_address;
+	reg	[7:0]	r800_bus_wdata;
+	wire	[7:0]	r800_bus_rdata;
+	wire			r800_bus_rdata_en;
 
-	wire			wait_n;
 	wire			bus_m1;
 	wire			bus_io;
 	wire			bus_write;
 	wire			bus_valid;
+	reg			bus_ready;
 	wire	[7:0]	bus_wdata;
 	wire	[15:0]	bus_address;
+	reg	[7:0]	bus_rdata;
+	reg			bus_rdata_en;
 
-	wire			bus_uart_cs;
-	reg	[7:0]	bus_uart_rdata;
-	reg			bus_uart_rdata_en;
-	reg			bus_uart_ready;
-
-	wire			bus_bootrom_cs;
-	reg	[7:0]	bus_bootrom_rdata;
-	reg			bus_bootrom_rdata_en;
-	reg			bus_bootrom_ready;
+	reg			device_cs;
+	reg			device_write;
+	reg			device_valid;
+	wire			device_ready;
+	reg	[7:0]	device_wdata;
+	reg	[1:0]	device_address;
+	wire	[7:0]	device_rdata;
+	wire			device_rdata_en;
 
 	wire			z80_active;
 	wire			r800_active;
 	wire			processor_mode;
+	wire			debug_cpu_change_req;
+	wire			debug_cpu_change_target;
+	wire	[1:0]	debug_cpu_change_state;
+	wire	[3:0]	debug_register_index;
+	wire			debug_rom_mode;
+	wire			debug_switch;
 
-	integer		trans_count;
-	reg			prev_bus_valid;
-	reg			mon_bus_m1;
-	reg			mon_bus_io;
-	reg			mon_bus_write;
-	reg			mon_uart_cs;
-	reg			mon_bootrom_cs;
-	reg	[15:0]	mon_address;
-	reg	[7:0]	mon_wdata;
+	reg	[15:0]	z80_pc;
+	reg	[15:0]	r800_pc;
+	reg	[15:0]	z80_saved_pc;
+	reg	[15:0]	r800_saved_pc;
+	integer		pass_count;
+	integer		fail_count;
 
-	reg	[3:0]	div12;
-	reg			div2;
-	integer		before_count;
-	reg	[7:0]	read_data;
-	reg			wait_read_done;
+	assign enable_z80 = (ff_div12 == 4'd11);
+	assign enable_r800 = (ff_div2 == 1'b1);
 
 	s2026 u_dut (
 		.reset_n				( reset_n				),
 		.clk					( clk					),
-		.enable_z80				( enable_z80			),
+		.enable_z80			( enable_z80			),
 		.enable_r800			( enable_r800			),
-		.wait_n					( wait_n				),
-		.z80_m1_n				( z80_m1_n				),
-		.z80_mreq_n				( z80_mreq_n			),
-		.z80_iorq_n				( z80_iorq_n			),
-		.z80_rd_n				( z80_rd_n				),
-		.z80_wr_n				( z80_wr_n				),
-		.z80_a					( z80_a					),
-		.z80_wdata				( z80_wdata				),
-		.z80_rdata				( z80_rdata				),
-		.r800_m1_n				( r800_m1_n				),
-		.r800_mreq_n			( r800_mreq_n			),
-		.r800_iorq_n			( r800_iorq_n			),
-		.r800_rd_n				( r800_rd_n				),
-		.r800_wr_n				( r800_wr_n				),
-		.r800_a					( r800_a				),
-		.r800_wdata				( r800_wdata			),
-		.r800_rdata				( r800_rdata			),
+		.cpu_pause				( cpu_pause			),
+		.z80_bus_m1			( z80_bus_m1			),
+		.z80_bus_io				( z80_bus_io			),
+		.z80_bus_write			( z80_bus_write		),
+		.z80_bus_valid			( z80_bus_valid		),
+		.z80_bus_ready			( z80_bus_ready		),
+		.z80_bus_address		( z80_bus_address		),
+		.z80_bus_wdata			( z80_bus_wdata		),
+		.z80_bus_rdata			( z80_bus_rdata		),
+		.z80_bus_rdata_en		( z80_bus_rdata_en		),
+		.r800_bus_m1			( r800_bus_m1			),
+		.r800_bus_io			( r800_bus_io			),
+		.r800_bus_write		( r800_bus_write		),
+		.r800_bus_valid			( r800_bus_valid		),
+		.r800_bus_ready			( r800_bus_ready		),
+		.r800_bus_address		( r800_bus_address		),
+		.r800_bus_wdata			( r800_bus_wdata		),
+		.r800_bus_rdata			( r800_bus_rdata		),
+		.r800_bus_rdata_en		( r800_bus_rdata_en		),
 		.bus_m1					( bus_m1				),
 		.bus_io					( bus_io				),
-		.bus_write				( bus_write				),
-		.bus_valid				( bus_valid				),
-		.bus_wdata				( bus_wdata				),
+		.bus_write				( bus_write			),
+		.bus_valid				( bus_valid			),
+		.bus_ready				( bus_ready			),
+		.bus_wdata				( bus_wdata			),
 		.bus_address			( bus_address			),
-		.bus_uart_cs			( bus_uart_cs			),
-		.bus_uart_rdata			( bus_uart_rdata		),
-		.bus_uart_rdata_en		( bus_uart_rdata_en		),
-		.bus_uart_ready			( bus_uart_ready		),
-		.bus_bootrom_cs			( bus_bootrom_cs		),
-		.bus_bootrom_rdata		( bus_bootrom_rdata		),
-		.bus_bootrom_rdata_en	( bus_bootrom_rdata_en	),
-		.bus_bootrom_ready		( bus_bootrom_ready		),
+		.bus_rdata				( bus_rdata			),
+		.bus_rdata_en			( bus_rdata_en			),
+		.device_cs				( device_cs			),
+		.device_write			( device_write			),
+		.device_valid			( device_valid			),
+		.device_ready			( device_ready			),
+		.device_wdata			( device_wdata			),
+		.device_address			( device_address		),
+		.device_rdata			( device_rdata			),
+		.device_rdata_en		( device_rdata_en		),
 		.z80_active				( z80_active			),
 		.r800_active			( r800_active			),
-		.processor_mode			( processor_mode		)
+		.processor_mode			( processor_mode		),
+		.debug_cpu_change_req	( debug_cpu_change_req	),
+		.debug_cpu_change_target( debug_cpu_change_target),
+		.debug_cpu_change_state	( debug_cpu_change_state	),
+		.debug_register_index	( debug_register_index	),
+		.debug_rom_mode			( debug_rom_mode		),
+		.debug_switch			( debug_switch			)
 	);
 
-	always #(CLK_PERIOD_PS / 2.0) begin
-		clk <= ~clk;
+	initial begin
+		clk = 1'b0;
+		forever #( c_clk_period / 2.0 ) clk = ~clk;
 	end
 
-	always @(posedge clk) begin
-		if (!reset_n) begin
-			div12 <= 4'd0;
-			div2 <= 1'b0;
-			enable_z80 <= 1'b0;
-			enable_r800 <= 1'b0;
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_div12 <= 4'd0;
+			ff_div2 <= 1'b0;
 		end
 		else begin
-			enable_z80 <= (div12 == 4'd0);
-			if (div12 == 4'd11) begin
-				div12 <= 4'd0;
+			ff_div12 <= enable_z80 ? 4'd0 : ff_div12 + 4'd1;
+			ff_div2 <= ~ff_div2;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			z80_pc <= 16'h0000;
+			r800_pc <= 16'h0000;
+		end
+		else begin
+			if( z80_active ) begin
+				z80_pc <= z80_pc + 16'd1;
+			end
+			if( r800_active ) begin
+				r800_pc <= r800_pc + 16'd1;
+			end
+		end
+	end
+
+	task automatic check;
+		input condition;
+		input [8*96-1:0] message;
+		begin
+			if( condition ) begin
+				$display( "PASS: %0s", message );
+				pass_count = pass_count + 1;
 			end
 			else begin
-				div12 <= div12 + 4'd1;
-			end
-
-			enable_r800 <= (div2 == 1'b0);
-			div2 <= ~div2;
-		end
-	end
-
-	function automatic [7:0] bootrom_func;
-		input [15:0] addr;
-		begin
-			bootrom_func = addr[7:0] ^ 8'h5A;
-		end
-	endfunction
-
-	always @(*) begin
-		bus_uart_rdata = 8'h00;
-		bus_uart_rdata_en = 1'b0;
-		if (bus_uart_cs && bus_valid && !bus_write) begin
-			bus_uart_rdata = 8'hA5;
-			bus_uart_rdata_en = 1'b1;
-		end
-	end
-
-	always @(*) begin
-		bus_bootrom_rdata = 8'h00;
-		bus_bootrom_rdata_en = 1'b0;
-		if (bus_bootrom_cs && bus_valid && !bus_write) begin
-			bus_bootrom_rdata = bootrom_func(bus_address);
-			bus_bootrom_rdata_en = 1'b1;
-		end
-	end
-
-	always @(posedge clk) begin
-		if (!reset_n) begin
-			prev_bus_valid <= 1'b0;
-			trans_count <= 0;
-			mon_bus_m1 <= 1'b0;
-			mon_bus_io <= 1'b0;
-			mon_bus_write <= 1'b0;
-			mon_uart_cs <= 1'b0;
-			mon_bootrom_cs <= 1'b0;
-			mon_address <= 16'h0000;
-			mon_wdata <= 8'h00;
-		end
-		else begin
-			prev_bus_valid <= bus_valid;
-			if (!prev_bus_valid && bus_valid) begin
-				trans_count <= trans_count + 1;
-				mon_bus_m1 <= bus_m1;
-				mon_bus_io <= bus_io;
-				mon_bus_write <= bus_write;
-				mon_uart_cs <= bus_uart_cs;
-				mon_bootrom_cs <= bus_bootrom_cs;
-				mon_address <= bus_address;
-				mon_wdata <= bus_wdata;
-			end
-		end
-	end
-
-	task automatic wait_z80_tick;
-		begin
-			@(posedge clk);
-			while (!enable_z80) begin
-				@(posedge clk);
+				$display( "FAIL: %0s", message );
+				fail_count = fail_count + 1;
 			end
 		end
 	endtask
 
-	task automatic wait_new_transaction;
-		input integer prev_count;
+	task automatic device_write_reg;
+		input [1:0] address;
+		input [7:0] data;
+		begin
+			while( !device_ready ) begin
+				@( posedge clk );
+			end
+			@( posedge clk );
+			device_cs <= 1'b1;
+			device_write <= 1'b1;
+			device_valid <= 1'b1;
+			device_address <= address;
+			device_wdata <= data;
+			@( posedge clk );
+			device_cs <= 1'b0;
+			device_write <= 1'b0;
+			device_valid <= 1'b0;
+			device_address <= 2'd0;
+			device_wdata <= 8'd0;
+		end
+	endtask
+
+	task automatic request_cpu;
+		input target_z80;
+		begin
+			device_write_reg( 2'd0, 8'd6 );
+			device_write_reg( 2'd1, target_z80 ? 8'h20 : 8'h00 );
+		end
+	endtask
+
+	task automatic wait_processor_mode;
+		input expected_mode;
 		integer timeout;
 		begin
 			timeout = 0;
-			while (trans_count == prev_count && timeout < 3000) begin
-				@(posedge clk);
+			while( processor_mode != expected_mode && timeout < 200 ) begin
+				@( posedge clk );
 				timeout = timeout + 1;
 			end
-			if (trans_count == prev_count) begin
-				$display("ERROR: transaction timeout");
-				$fatal(1);
-			end
+			check( processor_mode == expected_mode, "processor_mode changed to requested CPU" );
 		end
 	endtask
 
-	task automatic wait_bus_valid_low;
+	task automatic wait_z80_pc;
+		input [15:0] target_pc;
 		integer timeout;
 		begin
 			timeout = 0;
-			while (bus_valid && timeout < 3000) begin
-				@(posedge clk);
+			while( z80_pc < target_pc && timeout < 1000 ) begin
+				@( posedge clk );
 				timeout = timeout + 1;
 			end
-			if (bus_valid) begin
-				$display("ERROR: bus_valid did not deassert");
-				$fatal(1);
+			check( z80_pc >= target_pc, "Z80 reached the switch address" );
+		end
+	endtask
+
+	task automatic wait_r800_pc;
+		input [15:0] target_pc;
+		integer timeout;
+		begin
+			timeout = 0;
+			while( r800_pc < target_pc && timeout < 1000 ) begin
+				@( posedge clk );
+				timeout = timeout + 1;
 			end
-		end
-	endtask
-
-	task automatic wait_z80_wait_release;
-		begin
-			while (!wait_n) begin
-				wait_z80_tick();
-			end
-		end
-	endtask
-
-	task automatic z80_io_write;
-		input [15:0] addr;
-		input [7:0] data;
-		begin
-			wait_z80_tick();
-			z80_a <= addr;
-			z80_wdata <= data;
-			z80_m1_n <= 1'b1;
-			z80_mreq_n <= 1'b1;
-			z80_iorq_n <= 1'b0;
-			z80_rd_n <= 1'b1;
-			z80_wr_n <= 1'b0;
-
-			wait_z80_tick();
-			wait_z80_wait_release();
-			z80_iorq_n <= 1'b1;
-			z80_wr_n <= 1'b1;
-			z80_wdata <= 8'h00;
-		end
-	endtask
-
-	task automatic z80_io_read;
-		input [15:0] addr;
-		output [7:0] data;
-		begin
-			wait_z80_tick();
-			z80_a <= addr;
-			z80_m1_n <= 1'b1;
-			z80_mreq_n <= 1'b1;
-			z80_iorq_n <= 1'b0;
-			z80_rd_n <= 1'b0;
-			z80_wr_n <= 1'b1;
-
-			wait_z80_tick();
-			wait_z80_wait_release();
-			data = z80_rdata;
-			z80_iorq_n <= 1'b1;
-			z80_rd_n <= 1'b1;
-		end
-	endtask
-
-	task automatic z80_mem_read;
-		input [15:0] addr;
-		output [7:0] data;
-		begin
-			wait_z80_tick();
-			z80_a <= addr;
-			z80_m1_n <= 1'b1;
-			z80_mreq_n <= 1'b0;
-			z80_iorq_n <= 1'b1;
-			z80_rd_n <= 1'b0;
-			z80_wr_n <= 1'b1;
-
-			wait_z80_tick();
-			wait_z80_wait_release();
-			data = z80_rdata;
-			z80_mreq_n <= 1'b1;
-			z80_rd_n <= 1'b1;
-		end
-	endtask
-
-	task automatic z80_mem_write;
-		input [15:0] addr;
-		input [7:0] data;
-		begin
-			wait_z80_tick();
-			z80_a <= addr;
-			z80_wdata <= data;
-			z80_m1_n <= 1'b1;
-			z80_mreq_n <= 1'b0;
-			z80_iorq_n <= 1'b1;
-			z80_rd_n <= 1'b1;
-			z80_wr_n <= 1'b0;
-
-			wait_z80_tick();
-			wait_z80_wait_release();
-			z80_mreq_n <= 1'b1;
-			z80_wr_n <= 1'b1;
-			z80_wdata <= 8'h00;
+			check( r800_pc >= target_pc, "R800 reached the switch address" );
 		end
 	endtask
 
 	initial begin
-		clk = 1'b0;
+		pass_count = 0;
+		fail_count = 0;
 		reset_n = 1'b0;
-		enable_z80 = 1'b0;
-		enable_r800 = 1'b0;
-		div12 = 4'd0;
-		div2 = 1'b0;
-		trans_count = 0;
-		prev_bus_valid = 1'b0;
+		ff_div12 = 4'd0;
+		ff_div2 = 1'b0;
+		cpu_pause = 1'b0;
+		z80_bus_m1 = 1'b0;
+		z80_bus_io = 1'b0;
+		z80_bus_write = 1'b0;
+		z80_bus_valid = 1'b0;
+		z80_bus_address = 16'h1111;
+		z80_bus_wdata = 8'h11;
+		r800_bus_m1 = 1'b0;
+		r800_bus_io = 1'b0;
+		r800_bus_write = 1'b0;
+		r800_bus_valid = 1'b0;
+		r800_bus_address = 16'h8888;
+		r800_bus_wdata = 8'h88;
+		bus_ready = 1'b1;
+		bus_rdata = 8'hA5;
+		bus_rdata_en = 1'b0;
+		device_cs = 1'b0;
+		device_write = 1'b0;
+		device_valid = 1'b0;
+		device_wdata = 8'd0;
+		device_address = 2'd0;
 
-		z80_m1_n = 1'b1;
-		z80_mreq_n = 1'b1;
-		z80_iorq_n = 1'b1;
-		z80_rd_n = 1'b1;
-		z80_wr_n = 1'b1;
-		z80_a = 16'h0000;
-		z80_wdata = 8'h00;
-
-		r800_m1_n = 1'b1;
-		r800_mreq_n = 1'b1;
-		r800_iorq_n = 1'b1;
-		r800_rd_n = 1'b1;
-		r800_wr_n = 1'b1;
-		r800_a = 16'h0000;
-		r800_wdata = 8'h00;
-
-		bus_uart_ready = 1'b1;
-		bus_bootrom_ready = 1'b1;
-
-		repeat (20) @(posedge clk);
+		repeat( 8 ) @( posedge clk );
 		reset_n = 1'b1;
-		repeat (2) wait_z80_tick();
+		repeat( 2 ) @( posedge clk );
 
-		before_count = trans_count;
-		z80_io_write(16'h00E4, 8'h06);
-		wait_new_transaction(before_count);
-		if (!(mon_bus_io && mon_bus_write && !mon_bus_m1 && mon_address == 16'h00E4 && mon_wdata == 8'h06 && !mon_uart_cs && !mon_bootrom_cs)) begin
-			$display("ERROR: IO write E4 bus conversion mismatch");
-			$fatal(1);
-		end
+		// Initial R800 0000h (DI) fetch before switching to Z80
+		r800_bus_m1 = 1'b1;
+		r800_bus_valid = 1'b1;
+		r800_bus_address = 16'h0000;
+		bus_rdata = 8'hF3;
+		bus_rdata_en = 1'b1;
+		@( posedge clk );
+		bus_rdata_en = 1'b0;
+		r800_bus_valid = 1'b0;
+		r800_bus_m1 = 1'b0;
+		r800_bus_address = 16'h8888;
+		repeat( 8 ) @( posedge clk );
 
-		before_count = trans_count;
-		z80_io_read(16'h00E4, read_data);
-		wait_new_transaction(before_count);
-		if (!(mon_bus_io && !mon_bus_write && !mon_bus_m1 && mon_address == 16'h00E4 && !mon_uart_cs && !mon_bootrom_cs)) begin
-			$display("ERROR: IO read E4 bus conversion mismatch");
-			$fatal(1);
-		end
-		if (read_data !== 8'h06) begin
-			$display("ERROR: IO read E4 data mismatch expected=06 got=%02h", read_data);
-			$fatal(1);
-		end
+		check( processor_mode == 1'b1, "reset selects Z80 after R800 DI fetch" );
+		check( z80_pc == 16'h0000, "Z80 starts from PC=0000h" );
+		check( r800_pc > 16'h0000, "R800 executed initial DI fetch" );
 
-		before_count = trans_count;
-		z80_io_read(16'h0010, read_data);
-		wait_new_transaction(before_count);
-		if (!(mon_bus_io && !mon_bus_write && !mon_bus_m1 && mon_address == 16'h0010 && mon_uart_cs && !mon_bootrom_cs)) begin
-			$display("ERROR: UART read bus conversion mismatch");
-			$fatal(1);
-		end
-		if (read_data !== 8'hA5) begin
-			$display("ERROR: UART read data mismatch expected=A5 got=%02h", read_data);
-			$fatal(1);
-		end
+		wait_z80_pc( 16'h0010 );
+		check( r800_pc == 16'h0004, "R800 remains stopped while Z80 runs" );
+		check( bus_address == z80_bus_address && bus_wdata == z80_bus_wdata, "bus mux selects Z80 signals" );
+		check( z80_bus_ready == 1'b1 && r800_bus_ready == 1'b0, "ready is returned only to Z80" );
 
-		before_count = trans_count;
-		z80_io_write(16'h0011, 8'hC3);
-		wait_new_transaction(before_count);
-		if (!(mon_bus_io && mon_bus_write && !mon_bus_m1 && mon_address == 16'h0011 && mon_wdata == 8'hC3 && mon_uart_cs && !mon_bootrom_cs)) begin
-			$display("ERROR: UART write bus conversion mismatch");
-			$fatal(1);
-		end
+		z80_bus_valid = 1'b1;
+		request_cpu( 1'b0 );
+		repeat( 4 ) @( posedge clk );
+		check( debug_cpu_change_state == 2'b10 && processor_mode == 1'b1,
+				"Z80 to R800 switch waits for Z80 bus idle" );
+		z80_bus_valid = 1'b0;
+		wait_processor_mode( 1'b0 );
+		z80_saved_pc = z80_pc;
+		r800_saved_pc = r800_pc;
+		check( r800_pc == r800_saved_pc, "R800 resumes from preserved PC on selection" );
+		check( bus_address == r800_bus_address && bus_wdata == r800_bus_wdata, "bus mux selects R800 signals" );
+		check( z80_bus_ready == 1'b0 && r800_bus_ready == 1'b1, "ready is returned only to R800" );
 
-		before_count = trans_count;
-		z80_mem_read(16'h1234, read_data);
-		wait_new_transaction(before_count);
-		if (!(!mon_bus_io && !mon_bus_write && !mon_bus_m1 && mon_address == 16'h1234 && !mon_uart_cs && mon_bootrom_cs)) begin
-			$display("ERROR: MEM read bus conversion mismatch");
-			$fatal(1);
-		end
-		if (read_data !== bootrom_func(16'h1234)) begin
-			$display("ERROR: MEM read data mismatch expected=%02h got=%02h", bootrom_func(16'h1234), read_data);
-			$fatal(1);
-		end
+		wait_r800_pc( 16'h0020 );
+		check( z80_pc == z80_saved_pc, "Z80 state is held while R800 runs" );
 
-		before_count = trans_count;
-		z80_mem_write(16'h1235, 8'h5C);
-		wait_new_transaction(before_count);
-		if (!(!mon_bus_io && mon_bus_write && !mon_bus_m1 && mon_address == 16'h1235 && mon_wdata == 8'h5C && !mon_uart_cs && mon_bootrom_cs)) begin
-			$display("ERROR: MEM write bus conversion mismatch");
-			$fatal(1);
-		end
+		r800_bus_valid = 1'b1;
+		request_cpu( 1'b1 );
+		repeat( 4 ) @( posedge clk );
+		check( debug_cpu_change_state == 2'b11 && processor_mode == 1'b0,
+				"R800 to Z80 switch waits for R800 bus idle" );
+		r800_bus_valid = 1'b0;
+		wait_processor_mode( 1'b1 );
+		r800_saved_pc = r800_pc;
+		check( z80_pc == z80_saved_pc, "Z80 resumes from its preserved PC" );
+		wait_z80_pc( z80_saved_pc + 16'h0008 );
+		check( r800_pc == r800_saved_pc, "R800 state is held while Z80 runs" );
 
-		bus_uart_ready = 1'b0;
-		before_count = trans_count;
-		wait_read_done = 1'b0;
-		fork
-			begin
-				z80_io_read(16'h0010, read_data);
-				wait_read_done = 1'b1;
-			end
-		join_none
-		wait_new_transaction(before_count);
-		if (!(mon_bus_io && !mon_bus_write && !mon_bus_m1 && mon_address == 16'h0010 && mon_uart_cs && !mon_bootrom_cs)) begin
-			$display("ERROR: UART wait-state bus conversion mismatch");
-			$fatal(1);
-		end
-		if (!bus_valid) begin
-			$display("ERROR: bus_valid dropped while bus_ready is low");
-			$fatal(1);
-		end
-		if (wait_n) begin
-			$display("ERROR: wait_n is not asserted low during wait-state");
-			$fatal(1);
-		end
-		if (z80_iorq_n || z80_rd_n || !z80_wr_n) begin
-			$display("ERROR: Z80 read control signals are not stretched during wait-state");
-			$fatal(1);
-		end
-		repeat (16) @(posedge clk);
-		if (!bus_valid) begin
-			$display("ERROR: bus_valid did not stay asserted during wait-state");
-			$fatal(1);
-		end
-		if (wait_n) begin
-			$display("ERROR: wait_n was released before bus_ready");
-			$fatal(1);
-		end
-		if (z80_iorq_n || z80_rd_n || !z80_wr_n) begin
-			$display("ERROR: Z80 read control signals did not keep stretched state");
-			$fatal(1);
-		end
-		if (trans_count != (before_count + 1)) begin
-			$display("ERROR: unexpected transaction count change during wait-state");
-			$fatal(1);
-		end
-		bus_uart_ready = 1'b1;
-		wait_bus_valid_low();
-		while (!wait_read_done) begin
-			@(posedge clk);
-		end
-		if (!(z80_iorq_n && z80_rd_n && z80_wr_n)) begin
-			$display("ERROR: Z80 read control signals did not release after wait-state");
-			$fatal(1);
-		end
-		if (read_data !== 8'hA5) begin
-			$display("ERROR: UART wait-state read data mismatch expected=A5 got=%02h", read_data);
-			$fatal(1);
-		end
+		request_cpu( 1'b0 );
+		wait_processor_mode( 1'b0 );
+		check( r800_pc == r800_saved_pc, "R800 resumes from its preserved PC" );
+		wait_r800_pc( r800_saved_pc + 16'h0008 );
+		check( z80_pc >= z80_saved_pc + 16'h0008, "Z80 remains at its latest preserved PC" );
 
-		$display("PASS: s2026 Z80->bus conversion test completed");
+		$display( "============================================================" );
+		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );
+		if( fail_count == 0 ) begin
+			$display( "All tests PASSED." );
+		end
+		else begin
+			$display( "Some tests FAILED." );
+		end
 		$finish;
 	end
 endmodule

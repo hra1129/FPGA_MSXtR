@@ -6,6 +6,7 @@ vlib work
 
 vlog gowin_pll.v
 vlog ..\spi\spi.v
+vlog ..\pause_led\pause_led.v
 vlog ..\spi\ip_spi.v
 vlog ..\msx_slot\msx_slot_decode.v
 vlog ..\msx_slot\msx_slot.v
@@ -18,6 +19,7 @@ vlog ..\bootrom\ram.v
 vlog ..\bootrom\rom.v
 vlog ..\bootrom\bootrom.v
 vlog ..\ppi\ppi.v
+vlog flashrom_test_model.v
 vlog ..\cz80\cz80_alu.v
 vlog ..\cz80\cz80_mcode.v
 vlog ..\cz80\cz80_reg.v

@@ -97,6 +97,7 @@ module fpga_msxtr_cpu_stack (
 	reg				ff_ssram_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
 	reg				ff_rtc_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
 	reg				ff_system_flag_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
+	reg				ff_pause_led_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
 	reg				ff_uart_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
 
 	reg		[3:0]	ff_3_579m = 4'd0;
@@ -122,8 +123,8 @@ module fpga_msxtr_cpu_stack (
 	wire	[15:0]	w_z80_pc;			//	debug
 	wire			w_z80_int_ack;
 
-	//	debug_signal: キーボード経路と割り込み経路
-	wire	[87:0]	w_debug_signal;
+	//	debug_signal: スロット・割り込み・CPU切替経路
+	wire	[175:0]	w_debug_signal;
 
 	wire			w_r800_bus_m1;
 	wire			w_r800_bus_io;
@@ -134,8 +135,19 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_r800_bus_wdata;
 	wire	[7:0]	w_r800_bus_rdata;
 	wire			w_r800_bus_rdata_en;
+	wire	[15:0]	w_r800_pc;
 
 	wire			w_processor_mode;
+	wire			w_s2026_cpu_change_req;
+	wire			w_s2026_cpu_change_target;
+	wire	[1:0]	w_s2026_cpu_change_state;
+	wire	[3:0]	w_s2026_register_index;
+	wire			w_s2026_rom_mode;
+	wire			w_s2026_switch;
+	reg				ff_cpu_change_req_d;
+	reg		[7:0]	ff_cpu_change_req_count;
+	reg				ff_processor_mode_d;
+	reg		[7:0]	ff_processor_mode_change_count;
 	wire			w_bus_m1;
 	wire			w_bus_io;
 	wire			w_bus_write;
@@ -163,12 +175,24 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_ppi_debug_keyboard_matrix_data;
 	wire	[7:0]	w_ppi_debug_keyboard_update_count;
 	wire	[7:0]	w_ppi_debug_keyboard_read_count;
+	wire	[1:0]	w_debug_slot_page;
+	wire	[1:0]	w_debug_primary_slot;
+	wire	[1:0]	w_debug_secondary_slot0;
+	wire	[1:0]	w_debug_secondary_slot3;
+	wire	[1:0]	w_debug_secondary_slot;
+	wire	[7:0]	w_debug_slot_decode_status;
+	wire	[7:0]	w_debug_slot_select_status;
+	wire	[7:0]	w_debug_slot_bus_status;
 	reg				ff_slot_int_n_d0;
 	reg				ff_slot_int_n_d1;
 	reg				ff_slot_int_n_d2;
 	reg		[7:0]	ff_slot_int_count;
 	reg				ff_z80_int_ack_d;
 	reg		[7:0]	ff_z80_int_ack_count;
+	reg				ff_ffff_write_seen;
+	reg				ff_ffff_39_seen;
+	reg				ff_ffff_r800_write_seen;
+	reg		[15:0]	ff_ffff_39_r800_pc;
 	wire			w_active_bus_owner;
 	wire			w_mux_bus_m1;
 	wire			w_mux_bus_io;
@@ -192,7 +216,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_bus_ppi_rdata_en;
 	wire			w_bus_ppi_ready;
 	wire	[7:0]	w_primary_slot;
-	wire			w_keyboard_caps_led;
 	wire			w_one_bit_sound;
 
 	wire			w_bus_uart_cs;
@@ -262,6 +285,11 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_device_rtc_rdata;
 	wire			w_device_rtc_rdata_en;
 
+	wire			w_device_pause_led_cs;
+	wire			w_device_pause_led_ready;
+	wire	[7:0]	w_device_pause_led_rdata;
+	wire			w_device_pause_led_rdata_en;
+
 	wire			w_device_system_flag_cs;
 	wire			w_device_system_flag_ready;
 	wire	[7:0]	w_device_system_flag_rdata;
@@ -285,6 +313,11 @@ module fpga_msxtr_cpu_stack (
 	wire	[19:0]	w_flashrom_address;
 	wire			w_flashrom_en;
 	wire			w_msx_pause;
+
+	wire			w_r800_led;
+	wire			w_pause_led;
+	wire			w_caps_led;
+	wire			w_kana_led;
 
 	always @( posedge clk42m ) begin
 		if( !ff_z80_reset_n ) begin
@@ -316,16 +349,92 @@ module fpga_msxtr_cpu_stack (
 		end
 	end
 
+	always @( posedge clk42m ) begin
+		if( !w_msx_reset_n ) begin
+			ff_ffff_write_seen		<= 1'b0;
+			ff_ffff_39_seen			<= 1'b0;
+			ff_ffff_r800_write_seen	<= 1'b0;
+			ff_ffff_39_r800_pc		<= 16'h0000;
+		end
+		else if( w_mux_bus_valid && w_mux_bus_ready && w_mux_bus_write && !w_mux_bus_io && (w_mux_bus_address == 16'hFFFF) ) begin
+			ff_ffff_write_seen		<= 1'b1;
+			if( w_mux_bus_wdata == 8'h39 ) begin
+				ff_ffff_39_seen		<= 1'b1;
+				if( !ff_ffff_39_seen ) begin
+					ff_ffff_39_r800_pc <= w_r800_pc;
+				end
+			end
+			if( !w_processor_mode ) begin
+				ff_ffff_r800_write_seen <= 1'b1;
+				if( !ff_ffff_r800_write_seen && !ff_ffff_39_seen ) begin
+					ff_ffff_39_r800_pc <= w_r800_pc;
+				end
+			end
+		end
+	end
+
+	always @( posedge clk42m ) begin
+		if( !ff_s2026_reset_n ) begin
+			ff_cpu_change_req_d <= 1'b0;
+			ff_cpu_change_req_count <= 8'd0;
+			ff_processor_mode_d <= 1'b1;
+			ff_processor_mode_change_count <= 8'd0;
+		end
+		else begin
+			ff_cpu_change_req_d <= w_s2026_cpu_change_req;
+			ff_processor_mode_d <= w_processor_mode;
+			if( !ff_cpu_change_req_d && w_s2026_cpu_change_req ) begin
+				ff_cpu_change_req_count <= ff_cpu_change_req_count + 8'd1;
+			end
+			if( ff_processor_mode_d != w_processor_mode ) begin
+				ff_processor_mode_change_count <= ff_processor_mode_change_count + 8'd1;
+			end
+		end
+	end
+
+	assign w_debug_slot_page = w_bus_address[15:14];
+	assign w_debug_primary_slot =	(w_debug_slot_page == 2'd0) ? w_primary_slot[1:0] :
+									(w_debug_slot_page == 2'd1) ? w_primary_slot[3:2] :
+									(w_debug_slot_page == 2'd2) ? w_primary_slot[5:4] : w_primary_slot[7:6];
+	assign w_debug_secondary_slot0 =	(w_debug_slot_page == 2'd0) ? w_secondary_slot0[1:0] :
+									(w_debug_slot_page == 2'd1) ? w_secondary_slot0[3:2] :
+									(w_debug_slot_page == 2'd2) ? w_secondary_slot0[5:4] : w_secondary_slot0[7:6];
+	assign w_debug_secondary_slot3 =	(w_debug_slot_page == 2'd0) ? w_secondary_slot3[1:0] :
+									(w_debug_slot_page == 2'd1) ? w_secondary_slot3[3:2] :
+									(w_debug_slot_page == 2'd2) ? w_secondary_slot3[5:4] : w_secondary_slot3[7:6];
+	assign w_debug_secondary_slot =	(w_debug_primary_slot == 2'd0) ? w_debug_secondary_slot0 :
+									(w_debug_primary_slot == 2'd3) ? w_debug_secondary_slot3 : 2'd0;
+	assign w_debug_slot_decode_status = {
+			w_bus_write, w_bus_io, w_debug_slot_page, w_debug_secondary_slot, w_debug_primary_slot
+		};
+	assign w_debug_slot_select_status = {
+			slot_busdir, slot_cs12_n, slot_cs2_n, slot_cs1_n,
+			slot_sltsl3_n, slot_sltsl2_n, slot_sltsl1_n, slot_sltsl0_n
+		};
+	assign w_debug_slot_bus_status = {
+			slot_data_dir, slot_rom1_ce_n, slot_rom0_ce_n, slot_wr_n,
+			slot_rd_n, slot_iorq_n, slot_merq_n, slot_m1_n
+		};
+
 	assign w_debug_signal = {
-			ff_z80_int_ack_count,
-			ff_slot_int_count,
-			3'd0, w_z80_active, w_z80_int_ack, w_cpu_int_p, w_cpu_int_p, ff_slot_int_n_d1,
-			w_ppi_debug_keyboard_read_count,
-			w_ppi_debug_keyboard_update_count,
-			w_keyboard_update_count,
-			w_ppi_debug_keyboard_matrix_data,
-			w_ppi_debug_keyboard_matrix_row, w_keyboard_matrix_row,
-			w_keyboard_matrix,
+			w_21m, w_3_579m, w_s2026_switch, w_s2026_rom_mode, w_s2026_register_index,
+			ff_processor_mode_change_count,
+			ff_cpu_change_req_count,
+			ff_r800_reset_n, ff_z80_reset_n, w_msx_pause, w_r800_active,
+			w_z80_active, w_bus_ready, w_r800_bus_ready, w_z80_bus_ready,
+			w_bus_valid, w_r800_bus_valid, w_z80_bus_valid, w_s2026_cpu_change_state,
+			w_s2026_cpu_change_target, w_s2026_cpu_change_req, w_processor_mode,
+			w_r800_bus_address,
+			w_z80_bus_address,
+			w_r800_pc,
+			ff_ffff_39_r800_pc,
+			ff_ffff_r800_write_seen, ff_ffff_39_seen, ff_ffff_write_seen, w_z80_active, w_z80_int_ack, w_cpu_int_p, w_cpu_int_p, ff_slot_int_n_d1,
+			w_debug_slot_bus_status,
+			w_debug_slot_select_status,
+			w_debug_slot_decode_status,
+			w_secondary_slot3,
+			w_secondary_slot0,
+			w_primary_slot,
 			w_z80_pc
 		};
 
@@ -404,6 +513,7 @@ module fpga_msxtr_cpu_stack (
 		ff_ssram_reset_n		<= w_msx_reset_n;
 		ff_rtc_reset_n			<= w_msx_reset_n;
 		ff_system_flag_reset_n	<= w_msx_reset_n;
+		ff_pause_led_reset_n	<= w_msx_reset_n;
 //		ff_uart_reset_n			<= 1'b0;
 	end
 
@@ -432,6 +542,10 @@ module fpga_msxtr_cpu_stack (
 		.active_bus_owner		( w_active_bus_owner		),
 		.msx_reset_n			( w_msx_reset_n				),
 		.msx_pause				( w_msx_pause				),
+		.r800_led				( w_r800_led				),
+		.pause_led				( w_pause_led				),
+		.caps_led				( w_caps_led				),
+		.kana_led				( w_kana_led				),
 		.bootrom_en				( w_bootrom_en				),
 		.bus_owner				( w_bus_owner				),
 		.keyboard_matrix_row	( w_keyboard_matrix_row		),
@@ -442,6 +556,8 @@ module fpga_msxtr_cpu_stack (
 		.flashrom_address		( w_flashrom_address		),
 		.flashrom_en			( w_flashrom_en				)
 	);
+
+	assign w_kana_led = 1'b0;
 
 	// --------------------------------------------------------------------
 	//	MSX Slot signal controller
@@ -546,8 +662,7 @@ module fpga_msxtr_cpu_stack (
 	secondary_slot u_secondary_slot (
 		.clk					( clk42m						),
 		.reset_n				( ff_slot_reset_n				),
-		.bus_io					( w_device_io					),
-		.bus_address			( w_device_address				),
+		.bus_cs					( w_device_secondary_cs			),
 		.bus_write				( w_device_write				),
 		.bus_wdata				( w_device_wdata				),
 		.bus_valid				( w_device_valid				),
@@ -598,7 +713,8 @@ module fpga_msxtr_cpu_stack (
 		.bus_address			( w_r800_bus_address		),
 		.bus_wdata				( w_r800_bus_wdata			),
 		.bus_rdata				( w_r800_bus_rdata			),
-		.bus_rdata_en			( w_r800_bus_rdata_en		)
+		.bus_rdata_en			( w_r800_bus_rdata_en		),
+		.pc						( w_r800_pc					)		//	debug
 	);
 
 	// --------------------------------------------------------------------
@@ -647,7 +763,13 @@ module fpga_msxtr_cpu_stack (
 		.device_rdata_en		( w_device_s2026_rdata_en	),
 		.z80_active				( w_z80_active				),
 		.r800_active			( w_r800_active				),
-		.processor_mode			( w_processor_mode			)		//	0: R800, 1: Z80
+		.processor_mode			( w_processor_mode			),		//	0: R800, 1: Z80
+		.debug_cpu_change_req	( w_s2026_cpu_change_req	),
+		.debug_cpu_change_target( w_s2026_cpu_change_target	),
+		.debug_cpu_change_state	( w_s2026_cpu_change_state	),
+		.debug_register_index	( w_s2026_register_index	),
+		.debug_rom_mode			( w_s2026_rom_mode			),
+		.debug_switch			( w_s2026_switch			)
 	);
 
 //	// --------------------------------------------------------------------
@@ -710,6 +832,7 @@ module fpga_msxtr_cpu_stack (
 		.ssram_cs				( w_device_ssram_cs			),
 		.rtc_cs					( w_device_rtc_cs			),
 		.system_flag_cs			( w_device_system_flag_cs	),
+		.pause_led_cs			( w_device_pause_led_cs		),
 		.s2026_cs				( w_device_s2026_cs			)
 	);
 
@@ -734,6 +857,7 @@ module fpga_msxtr_cpu_stack (
 								  w_device_ssram_rdata_en		? w_device_ssram_rdata  		: 
 								  w_device_rtc_rdata_en			? w_device_rtc_rdata			: 
 								  w_device_system_flag_rdata_en	? w_device_system_flag_rdata	: 
+								  w_device_pause_led_rdata_en	? w_device_pause_led_rdata		: 
 								  w_device_bootrom_rdata_en		? w_device_bootrom_rdata		: 
 								  w_device_s2026_rdata_en		? w_device_s2026_rdata			:
 								  8'b0;
@@ -744,6 +868,7 @@ module fpga_msxtr_cpu_stack (
 								  w_device_secondary_rdata_en	| 
 								  w_device_rtc_rdata_en			| 
 								  w_device_system_flag_rdata_en	| 
+								  w_device_pause_led_rdata_en	| 
 								  w_device_bootrom_rdata_en		|
 								  w_device_s2026_rdata_en;
 
@@ -753,6 +878,7 @@ module fpga_msxtr_cpu_stack (
 								  w_device_ssram_active			? w_device_ssram_ready  	 	: 
 								  w_device_rtc_cs				? w_device_rtc_ready			: 
 								  w_device_system_flag_cs		? w_device_system_flag_ready	: 
+								  w_device_pause_led_cs			? w_device_pause_led_ready		: 
 								  w_device_bootrom_cs			? w_device_bootrom_ready		: 
 								  w_device_s2026_cs				? w_device_s2026_ready			: 
 								  1'b0;
@@ -788,7 +914,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_rdata				( w_device_ppi_rdata		),
 		.bus_rdata_en			( w_device_ppi_rdata_en		),
 		.primary_slot			( w_primary_slot			),
-		.keyboard_caps_led		( w_keyboard_caps_led		),
+		.keyboard_caps_led		( w_caps_led				),
 		.one_bit_sound			( w_one_bit_sound			),
 		.keyboard_matrix_row	( w_keyboard_matrix_row		),
 		.keyboard_matrix		( w_keyboard_matrix			),
@@ -858,6 +984,24 @@ module fpga_msxtr_cpu_stack (
 		.bus_wdata				( w_device_wdata			),
 		.bus_rdata				( w_device_rtc_rdata		),
 		.bus_rdata_en			( w_device_rtc_rdata_en		)
+	);
+
+	// --------------------------------------------------------------------
+	//	Pause LED (I/O A7h)
+	// --------------------------------------------------------------------
+	pause_led u_pause_led (
+		.clk					( clk42m					),
+		.reset_n				( ff_pause_led_reset_n		),
+		.bus_cs					( w_device_pause_led_cs		),
+		.bus_write				( w_device_write			),
+		.bus_wdata				( w_device_wdata			),
+		.bus_valid				( w_device_valid			),
+		.bus_ready				( w_device_pause_led_ready	),
+		.bus_rdata				( w_device_pause_led_rdata	),
+		.bus_rdata_en			( w_device_pause_led_rdata_en ),
+		.msx_pause				( w_msx_pause				),
+		.r800_led				( w_r800_led				),
+		.pause_led				( w_pause_led				)
 	);
 
 	// --------------------------------------------------------------------

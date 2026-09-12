@@ -43,20 +43,23 @@ module address_decode (
 	output			ssram_cs,
 	output			rtc_cs,
 	output			system_flag_cs,
+	output			pause_led_cs,
 	output			s2026_cs
 );
 	//	Memory access (page0: 0000h-3FFFh) -> BOOT ROM
 	assign bootrom_cs		= bootrom_en & ~device_io & ( device_address[15:14] == 2'd0 );
 	//	Memory access (page1-3: 4000h-FFFFh) -> Serial SRAM (via memory mapper)
 	assign ssram_cs			= slot3_0_selected & ~device_io & ( device_address != 16'hFFFF );
+	//	I/O A7h -> pause LED
+	assign pause_led_cs		= device_io & ( device_address[7:0] == 8'hA7 );
 	//	I/O A8h-ABh -> i8255 PPI (primary_slot / keyboard / cassette / command)
 	assign ppi_cs			= device_io & ( device_address[7:2] == 6'b101010 );
-	//	I/O FCh-FFh -> Memory mapper segment registers
-	assign memory_mapper_cs	= device_io & ( device_address[7:2] == 6'b111111 );
 	//	I/O B4h-B5h -> MSX2 RTC (CLOCK-IC)
 	assign rtc_cs			= device_io & ( device_address[7:1] == 7'b1011010 );
 	//	I/O E4h-E7h -> s2026 register
-	assign s2026_cs			= device_io & ( device_address[7:2] >= 6'b111001 );
+	assign s2026_cs			= device_io & ( device_address[7:2] == 6'b111001 );
 	//	I/O F3h-F5h -> system flag latches (F5h bit0/1: Kanji JIS1/JIS2 enable)
 	assign system_flag_cs	= device_io & ( device_address[7:0] >= 8'hF3 ) & ( device_address[7:0] <= 8'hF5 );
+	//	I/O FCh-FFh -> Memory mapper segment registers
+	assign memory_mapper_cs	= device_io & ( device_address[7:2] == 6'b111111 );
 endmodule

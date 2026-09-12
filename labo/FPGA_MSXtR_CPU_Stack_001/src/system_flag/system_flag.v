@@ -74,9 +74,9 @@ module system_flag (
 		end
 		else if( bus_cs && bus_valid && bus_write ) begin
 			case( bus_address )
-			2'd0:		ff_f3_latch <= bus_wdata;
-			2'd1:		ff_f4_latch <= bus_wdata;
-			2'd2:		ff_f5_latch <= bus_wdata;
+			2'd3:		ff_f3_latch <= bus_wdata;
+			2'd0:		ff_f4_latch <= bus_wdata;
+			2'd1:		ff_f5_latch <= bus_wdata;
 			default:	begin
 					//	hold
 			end
@@ -94,9 +94,9 @@ module system_flag (
 		end
 		else if( bus_cs && bus_valid && !bus_write ) begin
 			case( bus_address )
-			2'd0:		ff_rdata <= ff_f3_latch;
-			2'd1:		ff_rdata <= ff_f4_latch;
-			2'd2:		ff_rdata <= ff_f5_latch;
+			2'd3:		ff_rdata <= ff_f3_latch;
+			2'd0:		ff_rdata <= ff_f4_latch;
+			2'd1:		ff_rdata <= ff_f5_latch;
 			default:	ff_rdata <= 8'hFF;
 			endcase
 			ff_rdata_en	<= 1'b1;

@@ -79,11 +79,21 @@ module s2026 (
 	//	CPU status signals
 	output			z80_active,
 	output			r800_active,
-	output			processor_mode
+	output			processor_mode,
+	output			debug_cpu_change_req,
+	output			debug_cpu_change_target,
+	output	[1:0]	debug_cpu_change_state,
+	output	[3:0]	debug_register_index,
+	output			debug_rom_mode,
+	output			debug_switch
 );
 	wire			w_cpu_change_req;
 	wire			w_cpu_change_target;
 	wire			w_processor_mode;
+	wire	[1:0]	w_cpu_change_state;
+	wire	[3:0]	w_register_index;
+	wire			w_rom_mode;
+	wire			w_switch;
 
 	// ---------------------------------------------------------
 	//	CPU切り替え器
@@ -117,6 +127,7 @@ module s2026 (
 		.z80_active			( z80_active			),
 		.r800_active		( r800_active			),
 		.processor_mode		( w_processor_mode		),
+		.debug_cpu_change_state	( w_cpu_change_state	),
 		.bus_m1				( bus_m1				),
 		.bus_io				( bus_io				),
 		.bus_write			( bus_write				),
@@ -144,8 +155,17 @@ module s2026 (
 		.device_rdata_en	( device_rdata_en		),
 		.cpu_change_req		( w_cpu_change_req		),
 		.cpu_change_target	( w_cpu_change_target	),
-		.processor_mode		( w_processor_mode		)
+		.processor_mode		( w_processor_mode		),
+		.debug_register_index	( w_register_index	),
+		.debug_rom_mode		( w_rom_mode			),
+		.debug_switch			( w_switch			)
 	);
 
-	assign processor_mode = w_processor_mode;
+	assign processor_mode			= w_processor_mode;
+	assign debug_cpu_change_req		= w_cpu_change_req;
+	assign debug_cpu_change_target	= w_cpu_change_target;
+	assign debug_cpu_change_state	= w_cpu_change_state;
+	assign debug_register_index		= w_register_index;
+	assign debug_rom_mode			= w_rom_mode;
+	assign debug_switch				= w_switch;
 endmodule

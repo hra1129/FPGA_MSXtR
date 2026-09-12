@@ -48,7 +48,6 @@ module tb;
 	wire			device_io;
 	wire			device_write;
 	wire			device_valid;
-	wire			cpu_wait;
 	reg			device_ready;
 	wire	[7:0]	device_wdata;
 	reg	[7:0]	device_rdata;
@@ -98,7 +97,6 @@ module tb;
 		.secondary_slot0		( secondary_slot0	),
 		.secondary_slot3		( secondary_slot3	),
 		.high_speed_mode		( high_speed_mode	),
-		.cpu_wait				( cpu_wait			),
 		.int_n					( int_n				),
 		.slot_m1_n				( slot_m1_n			),
 		.slot_oe_n				( slot_oe_n			),
@@ -432,6 +430,9 @@ module tb;
 		check( slot_rom0_ce_n == 1'b0, "SLOT#0-0 page0 did not assert ROM0 CE" );
 		check( slot_rom1_ce_n == 1'b1, "SLOT#0-0 page0 asserted ROM1 CE" );
 		check( slot_a == 19'h00000, "SLOT#0-0 page0 (MAIN-ROM前半) address mismatch" );
+		check( { slot_sltsl0_n, slot_sltsl1_n, slot_sltsl2_n, slot_sltsl3_n } == 4'b1111,
+			"SLOT#0-0 page0 asserted external SLTSL" );
+		check( slot_data_dir == 1'b1, "SLOT#0-0 page0 did not isolate external read data" );
 		wait_rdata_en_checked( read_timeout );
 		check( !read_timeout, "SLOT#0-0 page0: bus_rdata_en did not assert" );
 		check( bus_rdata == 8'hd1, "SLOT#0-0 page0 read data mismatch" );
@@ -486,9 +487,27 @@ module tb;
 		check( slot_cs12_n == 1'b1, "FlashROM0 read asserted CS12" );
 		check( slot_merq_n == 1'b1, "FlashROM0 read asserted MERQ" );
 		check( slot_iorq_n == 1'b1, "FlashROM0 read asserted IORQ" );
+		check( slot_data_dir == 1'b1, "FlashROM0 read did not isolate external read data" );
 		wait_rdata_en_checked( read_timeout );
 		check( !read_timeout, "FlashROM0 read: bus_rdata_en did not assert" );
 		check( bus_rdata == 8'h39, "FlashROM0 read data mismatch" );
+		wait_ready();
+		slot_d_drive	= 1'b0;
+
+		slot_d_drive	= 1'b1;
+		slot_d_rdata	= 8'h6b;
+		issue_access( 1'b0, 1'b1, 1'b0, 16'h00d8, 8'h00 );
+		wait_rd_n_checked( read_timeout );
+		check( !read_timeout, "KanjiROM read: slot_rd_n did not assert" );
+		check( slot_rom0_ce_n == 1'b1, "KanjiROM read asserted ROM0 CE" );
+		check( slot_rom1_ce_n == 1'b0, "KanjiROM read did not assert ROM1 CE" );
+		check( slot_iorq_n == 1'b1, "KanjiROM read asserted external IORQ" );
+		check( { slot_sltsl0_n, slot_sltsl1_n, slot_sltsl2_n, slot_sltsl3_n } == 4'b1111,
+			"KanjiROM read asserted external SLTSL" );
+		check( slot_data_dir == 1'b1, "KanjiROM read did not isolate external read data" );
+		wait_rdata_en_checked( read_timeout );
+		check( !read_timeout, "KanjiROM read: bus_rdata_en did not assert" );
+		check( bus_rdata == 8'h6b, "KanjiROM read data mismatch" );
 		wait_ready();
 		slot_d_drive	= 1'b0;
 
@@ -623,7 +642,6 @@ module tb;
 			m1_wait_count = m1_wait_count + 1;
 		end
 		check( u_msx_slot.ff_internal_wait_active == 1'b1, "M1 access did not activate the internal M1 wait" );
-		check( cpu_wait == 1'b1, "M1 TW did not assert cpu_wait" );
 		wait_rd_n_checked( read_timeout );
 		check( !read_timeout, "M1 access: slot_rd_n did not assert" );
 		check( slot_a == 19'h00000, "M1 access address mismatch" );

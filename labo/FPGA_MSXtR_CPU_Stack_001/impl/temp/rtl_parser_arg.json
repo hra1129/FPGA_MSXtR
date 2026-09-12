@@ -136,6 +136,10 @@
         {
             "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001/src/system_flag/system_flag.v",
             "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001/src/pause_led/pause_led.v",
+            "Type": "verilog"
         }
     ],
     "IncludePath": [

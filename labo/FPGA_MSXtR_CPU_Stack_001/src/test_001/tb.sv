@@ -323,10 +323,12 @@ module tb ();
 		input [7:0] matrix [0:11]
 	);
 		int index;
+		reg [7:0] led_status;
 		begin
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h11 );
+			spi_transfer_byte( 8'h00, led_status );
 			for( index = 0; index < 12; index++ ) begin
 				spi_send_byte( matrix[index] );
 			end
@@ -1274,7 +1276,7 @@ module tb ();
 			int byte_index;
 			reg [7:0] expected [0:11];
 			reg [7:0] io_data;
-			reg [7:0] debug_data [0:11];
+			reg [7:0] debug_data [0:22];
 			reg keyboard_failed;
 
 			keyboard_failed = 1'b0;
@@ -1304,20 +1306,20 @@ module tb ();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h0A );
-			for( byte_index = 0; byte_index < 12; byte_index++ ) begin
+			for( byte_index = 0; byte_index < 23; byte_index++ ) begin
 				spi_transfer_byte( 8'h00, debug_data[byte_index] );
 			end
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;
 			#( 200 );
 
-			if( debug_data[2] !== expected[11] || debug_data[3] !== 8'hBB ||
-				debug_data[4] !== expected[11] || debug_data[5] !== 8'd12 ||
-				debug_data[6] !== 8'd12 || debug_data[7] !== 8'd12 || debug_data[8][0] !== 1'b1 ||
-				debug_data[9] !== 8'd0 || debug_data[10] !== 8'd0 || debug_data[11] !== 8'hA5 ) begin
-				$display( "[TEST %0d] FAIL: debug last_data=%02X rows=%02X selected_data=%02X spi_count=%0d ppi_count=%0d read_count=%0d int_status=%02X edge=%0d ack=%0d link=%02X",
+			if( debug_data[2] !== u_dut.w_primary_slot ||
+				debug_data[3] !== u_dut.w_secondary_slot0 ||
+				debug_data[4] !== u_dut.w_secondary_slot3 || debug_data[8][0] !== 1'b1 ||
+				debug_data[9] !== 8'd0 || debug_data[10] !== 8'd0 || debug_data[22] !== 8'hA5 ) begin
+				$display( "[TEST %0d] FAIL: debug primary=%02X secondary0=%02X secondary3=%02X decode=%02X select=%02X bus=%02X int_status=%02X edge=%0d ack=%0d link=%02X",
 					test_no, debug_data[2], debug_data[3], debug_data[4], debug_data[5],
-					debug_data[6], debug_data[7], debug_data[8], debug_data[9], debug_data[10], debug_data[11] );
+					debug_data[6], debug_data[7], debug_data[8], debug_data[9], debug_data[10], debug_data[22] );
 				keyboard_failed = 1'b1;
 			end
 
@@ -1329,22 +1331,22 @@ module tb ();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h0A );
-			for( byte_index = 0; byte_index < 12; byte_index++ ) begin
+			for( byte_index = 0; byte_index < 23; byte_index++ ) begin
 				spi_transfer_byte( 8'h00, debug_data[byte_index] );
 			end
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;
 			#( 200 );
 
-			if( debug_data[8][3:0] !== 4'b0011 || debug_data[9] !== 8'd1 ||
-				debug_data[10] !== 8'd0 || debug_data[11] !== 8'hA5 ) begin
-				$display( "[TEST %0d] FAIL: interrupt debug status=%02X edge=%0d ack=%0d link=%02X",
-					test_no, debug_data[8], debug_data[9], debug_data[10], debug_data[11] );
+			if( debug_data[8][3:0] !== 4'b0001 || debug_data[9] !== 8'd0 ||
+				debug_data[10] !== 8'd0 || debug_data[22] !== 8'hA5 ) begin
+				$display( "[TEST %0d] FAIL: interrupt debug status=%02X ffff_r800_pc=%04X link=%02X",
+					test_no, debug_data[8], { debug_data[10], debug_data[9] }, debug_data[22] );
 				keyboard_failed = 1'b1;
 			end
 
 			if( !keyboard_failed ) begin
-				$display( "[TEST %0d] PASS: keyboard and interrupt debug counters match", test_no );
+				$display( "[TEST %0d] PASS: keyboard path, slot map, and interrupt debug match", test_no );
 				pass_count = pass_count + 1;
 			end
 			else begin
