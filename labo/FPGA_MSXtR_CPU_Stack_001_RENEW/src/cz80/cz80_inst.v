@@ -77,6 +77,7 @@ module cz80_inst (
 	output			rfsh_n		,
 	input			busreq_n	,
 	output			busack_n	,
+	input			slot_d		,
 	//	Internal bus interface (device transaction, replaces raw Z80 timing pins)
 	output			bus_io		,
 	output			bus_write	,
@@ -386,28 +387,31 @@ module cz80_inst (
 	reg					ff_bus_io;
 	reg					ff_bus_write;
 	reg		[7:0]		ff_bus_rdata;
+	reg					ff_wait_bus_rdata_en;
 	localparam			c_bus_valid_tstate_rise = 3'd1;
 	localparam			c_bus_valid_cycle_rise = 3'd1;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_bus_valid	<= 1'b0;
-			ff_bus_io		<= 1'b0;
-			ff_bus_write	<= 1'b0;
+			ff_bus_valid			<= 1'b0;
+			ff_bus_io				<= 1'b0;
+			ff_bus_write			<= 1'b0;
+			ff_wait_bus_rdata_en	<= 1'b0;
 		end
 		else if( ff_bus_valid ) begin
 			if( bus_ready ) begin
-				ff_bus_valid	<= 1'b0;
+				ff_bus_valid			<= 1'b0;
 			end
-			else if( ff_rd_n && ff_wr_n ) begin
-				//	要求が受け付けられなかった場合のリカバリー策
-				ff_bus_valid	<= 1'b0;
+			else if( (ff_rd_n && ff_wr_n) || bus_rdata_en ) begin
+				ff_bus_valid			<= 1'b0;
+				ff_wait_bus_rdata_en	<= 1'b0;
 			end
 		end
 		else if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
-			ff_bus_valid	<= !w_noread | w_write;
-			ff_bus_io		<= w_iorq;
-			ff_bus_write	<= w_write;
+			ff_bus_valid			<= !w_noread | w_write;
+			ff_bus_io				<= w_iorq;
+			ff_bus_write			<= w_write;
+			ff_wait_bus_rdata_en	<= !w_noread & !w_write;
 		end
 	end
 
@@ -417,11 +421,17 @@ module cz80_inst (
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_bus_rdata <= 8'd0;
+			ff_bus_rdata <= 8'hFF;
 		end
 		else if( bus_rdata_en ) begin
 			ff_bus_rdata <= bus_rdata;
 		end
+		else if( ff_wait_bus_rdata_en && ff_rd_n ) begin
+			ff_bus_rdata <= slot_d;
+		end
+		else if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
+			ff_bus_rdata <= 8'hFF;
+		end	
 	end
 
 	assign int_ack				= ~w_intcycle_n;

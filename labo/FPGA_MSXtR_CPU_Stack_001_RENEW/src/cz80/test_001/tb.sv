@@ -26,6 +26,7 @@ module tb;
 	wire			rd_n;
 	wire			wr_n;
 	wire			rfsh_n;
+	reg				slot_d;
 
 	//	Internal bus interface
 	wire			bus_io;
@@ -62,6 +63,7 @@ module tb;
 		.rfsh_n			( rfsh_n		),
 		.busreq_n		( busreq_n		),
 		.busack_n		( busack_n		),
+		.slot_d			( slot_d		),
 		.bus_io			( bus_io		),
 		.bus_write		( bus_write		),
 		.bus_valid		( bus_valid		),
@@ -184,6 +186,7 @@ module tb;
 		int_n		= 1'b1;
 		nmi_n		= 1'b1;
 		wait_n		= 1'b1;
+		slot_d		= 8'hFF;
 
 		// Reset release
 		repeat( 10 ) @( posedge clk );
