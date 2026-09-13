@@ -1,0 +1,90 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps tb -do "run -all; quit -f" 
+# Start time: 09:44:34 on Aug 30,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.msx_slot
+# Loading work.msx_slot_decode
+# run -all
+# STEP: reset check done, t=360871
+# STEP: clock idle check done, t=3945960
+# PASS: device immediate read data = 0xc1
+# STEP: device immediate read test done, t=5576039
+# PASS: device delayed read data = 0xd2
+# STEP: device delayed read test done, t=7252343
+# PASS: slot fallback read data = 0xe3
+# STEP: slot fallback read test done, t=8928647
+# MON t=8988408 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1892 t_state=0 timing=32 rd_n=1
+# MON t=8993064 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1893 t_state=0 timing=33 rd_n=1
+# MON t=8997720 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1894 t_state=0 timing=34 rd_n=1
+# MON t=9002376 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1895 t_state=0 timing=35 rd_n=1
+# MON t=9007032 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1896 t_state=0 timing=36 rd_n=1
+# MON t=9011688 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1897 t_state=0 timing=37 rd_n=1
+# MON t=9016344 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1898 t_state=0 timing=38 rd_n=1
+# MON t=9021000 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1899 t_state=0 timing=39 rd_n=1
+# MON t=9025656 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1900 t_state=0 timing=40 rd_n=1
+# MON t=9030312 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1901 t_state=0 timing=41 rd_n=1
+# MON t=9034968 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1902 t_state=0 timing=42 rd_n=1
+# MON t=9039624 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1903 t_state=0 timing=43 rd_n=1
+# MON t=9044280 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1904 t_state=0 timing=44 rd_n=1
+# MON t=9048936 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1905 t_state=0 timing=45 rd_n=1
+# MON t=9053592 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1906 t_state=0 timing=46 rd_n=1
+# MON t=9058248 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1907 t_state=0 timing=47 rd_n=1
+# MON t=9062904 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1908 t_state=0 timing=48 rd_n=1
+# MON t=9067560 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1909 t_state=0 timing=49 rd_n=1
+# MON t=9072216 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1910 t_state=0 timing=50 rd_n=1
+# MON t=9076872 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1911 t_state=0 timing=51 rd_n=1
+# MON t=9081528 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1912 t_state=0 timing=52 rd_n=1
+# MON t=9086184 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1913 t_state=0 timing=53 rd_n=1
+# MON t=9090840 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1914 t_state=0 timing=54 rd_n=1
+# MON t=9095496 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1915 t_state=0 timing=55 rd_n=1
+# MON t=9100152 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1916 t_state=0 timing=56 rd_n=1
+# MON t=9104808 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1917 t_state=0 timing=57 rd_n=1
+# MON t=9109464 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1918 t_state=0 timing=58 rd_n=1
+# MON t=9114120 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1919 t_state=0 timing=59 rd_n=1
+# MON t=9118776 seq_pend=1 seq_act=0 req_refresh=0 refresh_pend=0 idle_timer=1920 t_state=0 timing=0 rd_n=1
+# MON t=9123432 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1921 t_state=0 timing=1 rd_n=1
+# MON t=9128088 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1922 t_state=0 timing=2 rd_n=1
+# MON t=9132744 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1923 t_state=0 timing=3 rd_n=1
+# MON t=9137400 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1924 t_state=0 timing=4 rd_n=1
+# MON t=9142056 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1925 t_state=0 timing=5 rd_n=1
+# MON t=9146712 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1926 t_state=0 timing=6 rd_n=1
+# MON t=9151368 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1927 t_state=0 timing=7 rd_n=1
+# MON t=9156024 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1928 t_state=0 timing=8 rd_n=1
+# MON t=9160680 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1929 t_state=0 timing=9 rd_n=1
+# MON t=9165336 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1930 t_state=0 timing=10 rd_n=1
+# MON t=9169992 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1931 t_state=0 timing=11 rd_n=1
+# MON t=9174648 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1932 t_state=0 timing=12 rd_n=1
+# MON t=9179304 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1933 t_state=0 timing=13 rd_n=1
+# MON t=9183960 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1934 t_state=0 timing=14 rd_n=1
+# MON t=9188616 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1935 t_state=0 timing=15 rd_n=1
+# MON t=9193272 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1936 t_state=0 timing=16 rd_n=1
+# MON t=9197928 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1937 t_state=0 timing=17 rd_n=1
+# MON t=9202584 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1938 t_state=0 timing=18 rd_n=1
+# MON t=9207240 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1939 t_state=0 timing=19 rd_n=1
+# MON t=9211896 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1940 t_state=0 timing=20 rd_n=1
+# MON t=9216552 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1941 t_state=0 timing=21 rd_n=1
+# MON t=9221208 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1942 t_state=0 timing=22 rd_n=1
+# MON t=9225864 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1943 t_state=0 timing=23 rd_n=1
+# MON t=9230520 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1944 t_state=0 timing=24 rd_n=1
+# MON t=9235176 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1945 t_state=0 timing=25 rd_n=1
+# MON t=9239832 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1946 t_state=0 timing=26 rd_n=1
+# MON t=9244488 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1947 t_state=0 timing=27 rd_n=1
+# MON t=9249144 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1948 t_state=0 timing=28 rd_n=1
+# MON t=9253800 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1949 t_state=0 timing=29 rd_n=1
+# MON t=9258456 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1950 t_state=0 timing=30 rd_n=1
+# MON t=9263112 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1951 t_state=0 timing=31 rd_n=1
+# MON t=9267768 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1952 t_state=0 timing=32 rd_n=1
+# MON t=9272424 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1953 t_state=0 timing=33 rd_n=1
+# MON t=9277080 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1954 t_state=0 timing=34 rd_n=1
+# MON t=9281736 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1955 t_state=0 timing=35 rd_n=1
+# MON t=9286392 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1956 t_state=0 timing=36 rd_n=1
+# MON t=9291048 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1957 t_state=0 timing=37 rd_n=1
+# MON t=9295704 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1958 t_state=0 timing=38 rd_n=1
+# MON t=9300360 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1959 t_state=0 timing=39 rd_n=1
+# MON t=9305016 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1960 t_state=0 timing=40 rd_n=1
+# MON t=9309672 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1961 t_state=0 timing=41 rd_n=1
+# MON t=9314328 seq_pend=0 seq_act=1 req_refresh=0 refresh_pend=0 idle_timer=1962 t_state=0 timing=42 rd_n=1

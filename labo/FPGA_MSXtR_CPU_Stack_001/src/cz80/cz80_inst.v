@@ -77,6 +77,7 @@ module cz80_inst (
 	input	[7:0]	bus_rdata	,
 	input			bus_rdata_en,
 	output	[15:0]	pc,
+	output	[2:0]	t_state,				//	msx_slotを同期させるためのコア内部T-state
 	output			int_ack				//	debug
 );
 	wire				w_intcycle_n;
@@ -95,6 +96,7 @@ module cz80_inst (
 	reg					ff_bus_valid;
 	reg					ff_requested;
 	reg		[2:0]		ff_t_state_d;
+	reg		[2:0]		ff_bus_t_state;		//	現在のバス転送が始まってからの経過T-state数(msx_slot同期用)
 	wire				w_mem_write_now;
 	wire				w_io_write_now;
 	wire				w_write_now;
@@ -126,6 +128,21 @@ module cz80_inst (
 	assign bus_write	= w_write;
 	assign bus_valid	= ff_bus_valid;
 	assign int_ack		= ~w_intcycle_n;
+	assign t_state		= ff_bus_t_state;
+
+	//	cz80の命令ごとに可変なns(mc内部tstates)ではなく、現在のバス転送が
+	//始まってから何T-state目かだけを数えるmsx_slot向けのカウンタ
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_bus_t_state <= 3'd0;
+		end
+		else if( w_complete ) begin
+			ff_bus_t_state <= 3'd0;
+		end
+		else if( w_new_tstate ) begin
+			ff_bus_t_state <= ff_bus_t_state + 3'd1;
+		end
+	end
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin

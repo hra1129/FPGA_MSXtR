@@ -1,0 +1,380 @@
+// -----------------------------------------------------------------------------
+//	test_003: MSX CPU Power-on Boot and CPU Switch Test via BootROM
+//
+//	Sequence:
+//	  1. BootROM enabled.
+//	  2. Pico gives bus ownership to CPU and releases MSX reset.
+//	  3. Z80 boots from BootROM (0000h), outputs 'Z' to UART (10h),
+//	     configures slot registers (A8h=00h, FFFFh=00h),
+//	     and writes S2026 register 6 (E4h=6, E5h=40h) to switch to R800.
+//	  4. R800 boots from BootROM (0000h), detects bit 5 of S2026 reg 6 == 0,
+//	     outputs 'R' to UART (10h), verifies slot settings,
+//	     and writes S2026 register 6 (E4h=6, E5h=60h) to switch back to Z80.
+//	  5. Z80 resumes from where it paused and outputs 'B' to UART (10h).
+// -----------------------------------------------------------------------------
+
+`timescale 1ns/1ps
+
+module tb ();
+	localparam real c_clk28m_period = 1000.0 / 28.63636;
+	localparam real c_clk50m_period = 1000.0 / 50.0;
+	localparam real c_spi_half = 1000.0 / 70.0 / 2.0;
+
+	int pass_count;
+	int fail_count;
+	reg clk_28m;
+	reg clk_50m;
+	reg mcu_cs_n;
+	reg mcu_sclk;
+	reg mcu_mosi;
+	wire mcu_miso;
+	wire mcu_intr;
+
+	wire sram_ce0_n;
+	wire sram_ce1_n;
+	wire sram_ce2_n;
+	wire sram_ce3_n;
+	wire sram_sclk;
+	wire [3:0] sram_sio;
+
+	wire slot_m1_n;
+	wire slot_oe_n;
+	wire slot_sltsl0_n;
+	wire slot_sltsl1_n;
+	wire slot_sltsl2_n;
+	wire slot_sltsl3_n;
+	wire slot_clock_n;
+	wire slot_cs1_n;
+	wire slot_cs2_n;
+	wire slot_cs12_n;
+	wire [18:0] slot_a;
+	reg slot_int_n;
+	reg slot_wait_n;
+	wire slot_reset_n;
+	reg slot_busdir;
+	wire slot_data_dir;
+	wire slot_wr_n;
+	wire slot_rd_n;
+	wire slot_rom0_ce_n;
+	wire slot_rom1_ce_n;
+	wire slot_rfsh_n;
+	wire slot_iorq_n;
+	wire slot_merq_n;
+	tri [7:0] slot_d;
+
+	wire srom_sclk;
+	wire srom_cs_n;
+	wire srom_mosi;
+	reg srom_miso;
+	wire flash_spi_clk;
+	wire flash_spi_cs_n;
+	wire [3:0] flash_spi_io;
+	wire uart_tx;
+	reg uart_rx;
+
+	int z80_start_count;
+	int r800_start_count;
+	int z80_resume_count;
+
+	initial begin
+		clk_28m = 1'b0;
+		forever #( c_clk28m_period / 2.0 ) clk_28m = ~clk_28m;
+	end
+
+	initial begin
+		clk_50m = 1'b0;
+		forever #( c_clk50m_period / 2.0 ) clk_50m = ~clk_50m;
+	end
+
+	fpga_msxtr_cpu_stack u_dut (
+		.clk_28m		( clk_28m ),
+		.clk_50m		( clk_50m ),
+		.mcu_cs_n		( mcu_cs_n ),
+		.mcu_sclk		( mcu_sclk ),
+		.mcu_mosi		( mcu_mosi ),
+		.mcu_miso		( mcu_miso ),
+		.mcu_intr		( mcu_intr ),
+		.sram_ce0_n		( sram_ce0_n ),
+		.sram_ce1_n		( sram_ce1_n ),
+		.sram_ce2_n		( sram_ce2_n ),
+		.sram_ce3_n		( sram_ce3_n ),
+		.sram_sclk		( sram_sclk ),
+		.sram_sio		( sram_sio ),
+		.slot_m1_n		( slot_m1_n ),
+		.slot_oe_n		( slot_oe_n ),
+		.slot_sltsl0_n	( slot_sltsl0_n ),
+		.slot_sltsl1_n	( slot_sltsl1_n ),
+		.slot_sltsl2_n	( slot_sltsl2_n ),
+		.slot_sltsl3_n	( slot_sltsl3_n ),
+		.slot_clock_n	( slot_clock_n ),
+		.slot_cs1_n		( slot_cs1_n ),
+		.slot_cs2_n		( slot_cs2_n ),
+		.slot_cs12_n	( slot_cs12_n ),
+		.slot_a			( slot_a ),
+		.slot_int_n		( slot_int_n ),
+		.slot_wait_n	( slot_wait_n ),
+		.slot_reset_n	( slot_reset_n ),
+		.slot_busdir	( slot_busdir ),
+		.slot_data_dir	( slot_data_dir ),
+		.slot_wr_n		( slot_wr_n ),
+		.slot_rd_n		( slot_rd_n ),
+		.slot_rom0_ce_n	( slot_rom0_ce_n ),
+		.slot_rom1_ce_n	( slot_rom1_ce_n ),
+		.slot_rfsh_n	( slot_rfsh_n ),
+		.slot_iorq_n	( slot_iorq_n ),
+		.slot_merq_n	( slot_merq_n ),
+		.slot_d			( slot_d ),
+		.srom_sclk		( srom_sclk ),
+		.srom_cs_n		( srom_cs_n ),
+		.srom_mosi		( srom_mosi ),
+		.srom_miso		( srom_miso ),
+		.flash_spi_clk	( flash_spi_clk ),
+		.flash_spi_cs_n	( flash_spi_cs_n ),
+		.flash_spi_io	( flash_spi_io ),
+		.uart_tx		( uart_tx ),
+		.uart_rx		( uart_rx )
+	);
+
+	ssram_test_model u_sram_chip0 ( .sclk( sram_sclk ), .cs_n( sram_ce0_n ), .sio( sram_sio ) );
+	ssram_test_model u_sram_chip1 ( .sclk( sram_sclk ), .cs_n( sram_ce1_n ), .sio( sram_sio ) );
+	ssram_test_model u_sram_chip2 ( .sclk( sram_sclk ), .cs_n( sram_ce2_n ), .sio( sram_sio ) );
+	ssram_test_model u_sram_chip3 ( .sclk( sram_sclk ), .cs_n( sram_ce3_n ), .sio( sram_sio ) );
+
+	flashrom_test_model #(
+		.IMAGE_FILE( "..\\..\\..\\..\\controller\\bios_image_tool\\msxtr.rom" )
+	) u_flashrom0 (
+		.ce_n( slot_rom0_ce_n ),
+		.oe_n( slot_rd_n ),
+		.address( slot_a ),
+		.data( slot_d )
+	);
+
+	flashrom_test_model #(
+		.IMAGE_FILE( "..\\..\\..\\..\\controller\\bios_image_tool\\kanji.rom" )
+	) u_flashrom1 (
+		.ce_n( slot_rom1_ce_n ),
+		.oe_n( slot_rd_n ),
+		.address( slot_a ),
+		.data( slot_d )
+	);
+
+	//	Monitor UART (port 10h) writes from CPU
+	always @( posedge u_dut.clk42m ) begin
+		if( u_dut.w_mux_bus_valid && u_dut.w_mux_bus_ready &&
+			u_dut.w_mux_bus_write && u_dut.w_mux_bus_io &&
+			u_dut.w_mux_bus_address[7:0] == 8'h10 ) begin
+			$display( "[UART OUT] CPU=%s Data=0x%02X ('%c')",
+				u_dut.w_processor_mode ? "Z80" : "R800",
+				u_dut.w_mux_bus_wdata,
+				u_dut.w_mux_bus_wdata );
+			if( u_dut.w_mux_bus_wdata == 8'h5A ) begin
+				z80_start_count = z80_start_count + 1;
+			end
+			if( u_dut.w_mux_bus_wdata == 8'h52 ) begin
+				r800_start_count = r800_start_count + 1;
+			end
+			if( u_dut.w_mux_bus_wdata == 8'h42 ) begin
+				z80_resume_count = z80_resume_count + 1;
+			end
+		end
+	end
+
+	//	Monitor S2026 writes (E4h/E5h)
+	always @( posedge u_dut.clk42m ) begin
+		if( u_dut.w_mux_bus_valid && u_dut.w_mux_bus_ready &&
+			u_dut.w_mux_bus_write && u_dut.w_mux_bus_io &&
+			(u_dut.w_mux_bus_address[7:0] == 8'hE4 || u_dut.w_mux_bus_address[7:0] == 8'hE5) ) begin
+			$display( "[S2026 OUT] CPU=%s Port=0x%02X Data=0x%02X",
+				u_dut.w_processor_mode ? "Z80" : "R800",
+				u_dut.w_mux_bus_address[7:0],
+				u_dut.w_mux_bus_wdata );
+		end
+	end
+
+	//	Monitor I/O IN reads
+	always @( posedge u_dut.clk42m ) begin
+		if( u_dut.w_mux_bus_rdata_en && u_dut.w_mux_bus_io ) begin
+			$display( "[I/O IN] CPU=%s Address=0x%04X Data=0x%02X",
+				u_dut.w_processor_mode ? "Z80" : "R800",
+				u_dut.w_mux_bus_address,
+				u_dut.w_mux_bus_rdata );
+		end
+	end
+
+	task automatic spi_send_byte( input [7:0] data );
+		int index;
+		begin
+			for( index = 7; index >= 0; index-- ) begin
+				mcu_mosi = data[index];
+				#( c_spi_half );
+				mcu_sclk = 1'b1;
+				#( c_spi_half );
+				mcu_sclk = 1'b0;
+			end
+			repeat( 6 ) @( posedge u_dut.clk42m );
+		end
+	endtask
+
+	task automatic spi_transfer_byte( input [7:0] tx_data, output [7:0] rx_data );
+		int index;
+		begin
+			rx_data = 8'h00;
+			for( index = 7; index >= 0; index-- ) begin
+				mcu_mosi = tx_data[index];
+				#( c_spi_half - 1 );
+				rx_data[index] = mcu_miso;
+				#( 1 );
+				mcu_sclk = 1'b1;
+				#( c_spi_half - 1 );
+				mcu_sclk = 1'b0;
+			end
+			repeat( 6 ) @( posedge u_dut.clk42m );
+		end
+	endtask
+
+	task automatic spi_set_bus_owner( input owner );
+		int timeout_ns;
+		reg [7:0] response;
+		begin
+			timeout_ns = 0;
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h10 );
+			spi_send_byte( { 7'd0, owner } );
+			while( mcu_intr == 1'b0 && timeout_ns < 5000 ) begin
+				#( 10 );
+				timeout_ns = timeout_ns + 10;
+			end
+			if( mcu_intr == 1'b1 ) begin
+				spi_transfer_byte( 8'h00, response );
+			end
+			else begin
+				$display( "WARNING: bus owner switch timed out" );
+			end
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic spi_msx_reset( input reset_on );
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( reset_on ? 8'h06 : 8'h07 );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic spi_bootrom_en( input enable );
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( enable ? 8'h0B : 8'h0C );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic spi_get_debug_signal( output [7:0] data [0:22] );
+		begin
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h0A );
+			for( int byte_index = 0; byte_index < 23; byte_index = byte_index + 1 ) begin
+				spi_transfer_byte( 8'h00, data[byte_index] );
+			end
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic check( bit condition, string message );
+		begin
+			if( !condition ) begin
+				$display( "CHECK FAILED: %s", message );
+				fail_count = fail_count + 1;
+			end else begin
+				$display( "CHECK PASSED: %s", message );
+				pass_count = pass_count + 1;
+			end
+		end
+	endtask
+
+	initial begin
+		reg [7:0] debug_data [0:22];
+		int timeout_cycles;
+
+		pass_count = 0;
+		fail_count = 0;
+		z80_start_count = 0;
+		r800_start_count = 0;
+		z80_resume_count = 0;
+		mcu_cs_n = 1'b1;
+		mcu_sclk = 1'b0;
+		mcu_mosi = 1'b0;
+		slot_int_n = 1'b1;
+		slot_wait_n = 1'b1;
+		slot_busdir = 1'b1;
+		srom_miso = 1'b0;
+		uart_rx = 1'b1;
+
+		#( 3000 );
+		$display( "[SETUP] Enable BootROM" );
+		spi_bootrom_en( 1'b1 );
+		$display( "[SETUP] Transfer bus ownership to CPU" );
+		spi_set_bus_owner( 1'b1 );
+		$display( "[SETUP] Release MSX reset" );
+		spi_msx_reset( 1'b0 );
+
+		$display( "[BOOT] Running BootROM CPU switch sequence..." );
+		timeout_cycles = 0;
+		while( z80_resume_count == 0 && timeout_cycles < 200000 ) begin
+			#( 100 );
+			timeout_cycles = timeout_cycles + 1;
+		end
+
+		#( 10000 );
+		spi_get_debug_signal( debug_data );
+
+		$display( "============================================================" );
+		$display( "CPU Diagnostics at end of test:" );
+		$display( "  Z80_PC   = 0x%04X", { debug_data[1], debug_data[0] } );
+		$display( "  R800_PC  = 0x%04X", { debug_data[12], debug_data[11] } );
+		$display( "  mode     = %s", (debug_data[17] & 8'h01) ? "Z80" : "R800" );
+		$display( "  req_cnt  = %0d, mode_cnt = %0d", debug_data[19], debug_data[20] );
+		$display( "  A8       = 0x%02X, SSL0 = 0x%02X, SSL3 = 0x%02X", debug_data[2], debug_data[3], debug_data[4] );
+		$display( "  FFFF_wr  = seen:%u 39:%u r800:%u, r800_pc:0x%04X",
+			(debug_data[8] >> 5) & 1'b1, (debug_data[8] >> 6) & 1'b1, (debug_data[8] >> 7) & 1'b1,
+			{ debug_data[10], debug_data[9] } );
+		$display( "  link     = 0x%02X", debug_data[22] );
+		$display( "============================================================" );
+
+		check( z80_start_count > 0, "Z80 started and executed BootROM ('Z' output)" );
+		check( r800_start_count > 0, "R800 started at 0000h after switch ('R' output)" );
+		check( z80_resume_count > 0, "Z80 resumed after switch back ('B' output)" );
+		check( debug_data[19] == 8'd2, "Two CPU switch requests occurred (Z80->R800, R800->Z80)" );
+		check( debug_data[20] == 8'd4, "Four CPU mode transitions completed (boot: R800->Z80, then Z80->R800, R800->Z80)" );
+		check( (debug_data[17] & 8'h01) == 8'h01, "Final CPU mode is Z80" );
+		check( debug_data[2] == 8'h00, "Primary slot selector A8h preserved as 0x00" );
+		check( debug_data[3] == 8'h00, "Secondary slot 0 selector SSL0 preserved as 0x00" );
+		check( debug_data[22] == 8'hA5, "Debug link pattern is 0xA5" );
+
+		$display( "============================================================" );
+		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );
+		if( fail_count == 0 ) begin
+			$display( "All tests PASSED." );
+		end else begin
+			$display( "Some tests FAILED." );
+		end
+		$finish;
+	end
+endmodule

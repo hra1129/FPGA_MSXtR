@@ -1,0 +1,2 @@
+LOOP equ 0bh
+START equ 00h
