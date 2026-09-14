@@ -32,176 +32,85 @@
 // ----------------------------------------------------------------------------
 
 module s2026_cpu_select (
-	input			reset_n,
+	input			sys_reset_n,
+	input			msx_reset_n,
 	input			clk,
-	input			enable_z80,
-	input			enable_r800,
-	//	Z80 bus I/F (cz80_inst が直接出す bus_valid/ready プロトコル)
-	input			z80_bus_m1,
-	input			z80_bus_io,
-	input			z80_bus_write,
-	input			z80_bus_valid,
-	output			z80_bus_ready,
-	input	[15:0]	z80_bus_address,
-	input	[7:0]	z80_bus_wdata,
-	output	[7:0]	z80_bus_rdata,
-	output			z80_bus_rdata_en,
-	input	[2:0]	z80_t_state,
-	//	R800 bus I/F
-	input			r800_bus_m1,
-	input			r800_bus_io,
-	input			r800_bus_write,
-	input			r800_bus_valid,
-	output			r800_bus_ready,
-	input	[15:0]	r800_bus_address,
-	input	[7:0]	r800_bus_wdata,
-	output	[7:0]	r800_bus_rdata,
-	output			r800_bus_rdata_en,
-	input	[2:0]	r800_t_state,
-	//	CPU change control
+	input			cpu_pause,
+	//	Z80 CPU bus signals
+	output			z80_busrq_n,
+	input			z80_busak_n,
+	//	R800 CPU bus signals
+	output			r800_busrq_n,
+	input			r800_busak_n,
+	//	Pico bus signals
+	output			pico_busrq_n,
+	input			pico_busak_n,
+	input			pico_change_req,
+	input			pico_change_target,
+	//	CPU change control (from s2026_register)
 	input			cpu_change_req,
 	input			cpu_change_target,
-	//	Wait control
-	input			cpu_pause,
 	//	Status
 	output			z80_active,
 	output			r800_active,
 	output			processor_mode,
-	output	[1:0]	debug_cpu_change_state,
-	//	Merged internal bus (msx_slot 側)
-	output			bus_m1,
-	output			bus_io,
-	output			bus_write,
-	output	[15:0]	bus_address,
-	output	[7:0]	bus_wdata,
-	output			bus_valid,
-	input			bus_ready,
-	input	[7:0]	bus_rdata,
-	input			bus_rdata_en,
-	output	[2:0]	bus_t_state
+	output	[1:0]	cpu_sel
 );
-	reg		[1:0]	ff_cpu_change_state = 2'b01;
-	reg		[2:0]	ff_boot_step = 3'd0;
-	reg				ff_z80_active;
-	reg				ff_r800_active;
-	reg				ff_processor_mode = 1'b1;
-	wire			w_wait_p;
+	//	cpu_sel: 00=Z80, 01=R800, 10=PICO(戻り先Z80), 11=PICO(戻り先R800)
+	localparam	ST_IDLE		= 1'b0;
+	localparam	ST_CHANGING	= 1'b1;
+
+	reg				ff_state0 = ST_IDLE;
+	reg				ff_state1 = ST_IDLE;
+	reg		[1:0]	ff_cpu_sel = 2'b00;
+	reg		[1:0]	ff_target_sel = 2'b00;
+	wire			w_all_busak_n;
+
+	assign w_all_busak_n = !(z80_busak_n & msx_reset_n) && !(r800_busak_n & msx_reset_n) && !pico_busak_n;
 
 	// ---------------------------------------------------------
-	//	Bus mux: Z80/R800 のどちらか一方だけが bus_valid をアサートする
-	// ---------------------------------------------------------
-	assign bus_m1			= ff_processor_mode ? z80_bus_m1		: r800_bus_m1;
-	assign bus_io			= ff_processor_mode ? z80_bus_io		: r800_bus_io;
-	assign bus_write		= ff_processor_mode ? z80_bus_write	: r800_bus_write;
-	assign bus_address		= ff_processor_mode ? z80_bus_address	: r800_bus_address;
-	assign bus_wdata		= ff_processor_mode ? z80_bus_wdata	: r800_bus_wdata;
-	assign bus_valid		= ff_processor_mode ? z80_bus_valid	: r800_bus_valid;
-	assign bus_t_state		= ff_processor_mode ? z80_t_state	: r800_t_state;
-
-	assign z80_bus_ready	=  ff_processor_mode ? bus_ready : 1'b0;
-	assign r800_bus_ready	= !ff_processor_mode ? bus_ready : 1'b0;
-	assign z80_bus_rdata	= bus_rdata;
-	assign r800_bus_rdata	= bus_rdata;
-	assign z80_bus_rdata_en	=  ff_processor_mode ? bus_rdata_en : 1'b0;
-	assign r800_bus_rdata_en= !ff_processor_mode ? bus_rdata_en : 1'b0;
-
-	// ---------------------------------------------------------
-	//	CPU change state machine
-	//		00: R800
-	//		01: Z80
-	//		10: Z80 --> R800 changing
-	//		11: R800--> Z80 changing
+	//	CPU/Pico change state machine
 	// ---------------------------------------------------------
 	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_boot_step		<= 3'd0;
-			ff_cpu_change_state	<= 2'b00;
-			ff_processor_mode	<= 1'b0;
-			ff_z80_active		<= 1'b0;
-			ff_r800_active		<= 1'b1;
+		if( !msx_reset_n ) begin
+			//	こちらはMSXリセットがかかるとリセットされる
+			ff_state0			<= ST_IDLE;
+			ff_cpu_sel[0]		<= 1'b0;
+			ff_target_sel[0]	<= 1'b0;
 		end
-		else if( ff_boot_step != 3'd5 ) begin
-			//	MSXturboR boot sequence:
-			//	Execute 1st instruction (0000h: DI) on R800 before switching to Z80.
-			if( ff_boot_step == 3'd0 ) begin
-				if( r800_bus_valid && r800_bus_rdata_en && r800_bus_m1 && (r800_bus_address == 16'h0000) ) begin
-					ff_boot_step <= 3'd1;
-				end
-			end
-			else if( ff_boot_step == 3'd1 ) begin
-				if( enable_r800 ) begin
-					ff_boot_step <= 3'd2;
-				end
-			end
-			else if( ff_boot_step == 3'd2 ) begin
-				if( enable_r800 ) begin
-					ff_boot_step <= 3'd3;
-				end
-			end
-			else if( ff_boot_step == 3'd3 ) begin
-				if( enable_r800 ) begin
-					ff_boot_step <= 3'd4;
-				end
-			end
-			else if( ff_boot_step == 3'd4 ) begin
-				ff_processor_mode	<= 1'b1;
-				ff_r800_active		<= 1'b0;
-				ff_cpu_change_state	<= 2'b01;
-				if( enable_z80 ) begin
-					ff_z80_active	<= 1'b1;
-					ff_boot_step	<= 3'd5;
-				end
-				else begin
-					ff_z80_active	<= 1'b0;
-				end
+		else if( ff_state0 == ST_IDLE ) begin
+			if( cpu_change_req ) begin
+				ff_state0			<= ST_CHANGING;
+				ff_target_sel[0]	<= cpu_change_target;
 			end
 		end
 		else begin
-			if( ff_cpu_change_state[1] == 1'b1 ) begin
-				//	Changing to other CPU
-				if( ff_cpu_change_state[0] == 1'b1 ) begin
-					//	R800 --> Z80
-					if( !r800_bus_valid ) begin
-						ff_processor_mode		<= 1'b1;
-						ff_r800_active			<= 1'b0;
-						if( enable_z80 ) begin
-							ff_cpu_change_state[1]	<= 1'b0;
-							ff_z80_active			<= 1'b1;
-						end
-						else begin
-							ff_z80_active			<= 1'b0;
-						end
-					end
-					else begin
-						ff_z80_active			<= 1'b0;
-						ff_r800_active			<= 1'b1;
-					end
-				end
-				else begin
-					//	Z80 --> R800
-					if( !z80_bus_valid ) begin
-						ff_processor_mode		<= 1'b0;
-						ff_z80_active			<= 1'b0;
-						if( enable_r800 ) begin
-							ff_cpu_change_state[1]	<= 1'b0;
-							ff_r800_active			<= 1'b1;
-						end
-						else begin
-							ff_r800_active			<= 1'b0;
-						end
-					end
-					else begin
-						ff_z80_active			<= 1'b1;
-						ff_r800_active			<= 1'b0;
-					end
-				end
+			//	ST_CHANGING: すべての busak_n が返るまで待ってから切り替える
+			if( w_all_busak_n ) begin
+				ff_cpu_sel[0]	<= ff_target_sel[0];
+				ff_state0		<= ST_IDLE;
 			end
-			else if( cpu_change_req ) begin
-				ff_cpu_change_state[0]	<= cpu_change_target;
-				ff_cpu_change_state[1]	<= cpu_change_target ^ ff_cpu_change_state[0];
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !sys_reset_n ) begin
+			//	こちらは全体のリセットの時にのみリセットされる
+			ff_state1			<= ST_IDLE;
+			ff_cpu_sel[1]		<= 1'b1;
+			ff_target_sel[1]	<= 1'b1;
+		end
+		else if( ff_state1 == ST_IDLE ) begin
+			if( pico_change_req ) begin
+				ff_target_sel[1]	<= pico_change_target;
+				ff_state1			<= ST_CHANGING;
 			end
-			else begin
-				//	hold
+		end
+		else begin
+			//	ST_CHANGING: すべての busak_n が返るまで待ってから切り替える
+			if( w_all_busak_n ) begin
+				ff_cpu_sel[1]	<= ff_target_sel[1];
+				ff_state1		<= ST_IDLE;
 			end
 		end
 	end
@@ -209,9 +118,12 @@ module s2026_cpu_select (
 	// ---------------------------------------------------------
 	//	Output assignments
 	// ---------------------------------------------------------
-	assign w_wait_p			= cpu_pause;
-	assign z80_active		= ff_z80_active  & enable_z80  & ~w_wait_p;
-	assign r800_active		= ff_r800_active & enable_r800 & ~w_wait_p;
-	assign processor_mode	= ff_processor_mode;
-	assign debug_cpu_change_state = ff_cpu_change_state;
+	assign z80_busrq_n		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ( ff_cpu_sel == 2'b00 ) );
+	assign r800_busrq_n		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ( ff_cpu_sel == 2'b01 ) );
+	assign pico_busrq_n		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ff_cpu_sel[1] );
+
+	assign z80_active		= ( ff_cpu_sel == 2'b00 );
+	assign r800_active		= ( ff_cpu_sel == 2'b01 );
+	assign processor_mode	= ff_cpu_sel[0];
+	assign cpu_sel			= ff_cpu_sel;
 endmodule

@@ -41,7 +41,8 @@ module ip_spi (
 	output			bus_valid,
 	input			bus_ready,
 	output	[7:0]	bus_wdata,
-	output	[15:0]	bus_address,
+	output	[19:0]	bus_address,
+	output			bus_flash_en,
 	input	[7:0]	bus_rdata,
 	input			bus_rdata_en,
 	//	SPI
@@ -53,7 +54,7 @@ module ip_spi (
 	//	MSX Hardware control
 	input			slot_wait_n,
 	input			ssram_startup_busy,
-	input			active_bus_owner,
+	input	[1:0]	cpu_sel,
 	output			msx_reset_n,
 	output			msx_pause,
 	input			r800_led,
@@ -61,14 +62,13 @@ module ip_spi (
 	input			caps_led,
 	input			kana_led,
 	output			bootrom_en,
-	output			bus_owner,
+	output			pico_change_req,
+	output			pico_change_target,
 	output	[3:0]	keyboard_matrix_row,
 	output	[7:0]	keyboard_matrix,
 	output			keyboard_matrix_valid,
 	output	[7:0]	keyboard_update_count,
-	input	[175:0]	debug_signal,
-	output	[19:0]	flashrom_address,
-	output			flashrom_en
+	input	[157:0]	debug_signal
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -88,7 +88,7 @@ module ip_spi (
 	localparam	[4:0]	ST_DEBUG_H			 = 5'd15;
 	localparam	[4:0]	ST_KEYBOARD_SEND	 = 5'd16;
 	localparam			SPI_RX_WDATA		 = 8'h64;
-	localparam	[4:0]	DEBUG_SIGNAL_BYTES	 = 5'd23;	//	debug_signal 22byte + 通信確認用の固定パターン(0xA5) 1byte
+	localparam	[4:0]	DEBUG_SIGNAL_BYTES	 = 5'd21;	//	debug_signal 20byte(160bit,ゼロ拡張) + 通信確認用の固定パターン(0xA5) 1byte
 	localparam			DEBUG_SIGNAL_PATTERN = 8'hA5;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
@@ -107,10 +107,11 @@ module ip_spi (
 	reg				ff_bus_io;
 	reg				ff_bus_write;
 	reg				ff_bus_valid;
-	reg				ff_msx_reset_n;
+	reg				ff_msx_reset_n = 1'b0;
 	reg				ff_msx_pause;
 	reg				ff_bootrom_en;
-	reg				ff_bus_owner;
+	reg				ff_pico_change_target;
+	reg				ff_pico_change_req;
 	reg		[3:0]	ff_keyboard_matrix_row;
 	reg		[7:0]	ff_keyboard_matrix;
 	reg		[3:0]	ff_keyboard_output_row;
@@ -119,7 +120,7 @@ module ip_spi (
 	reg				ff_keyboard_update_toggle;
 	reg				ff_keyboard_update_toggle_d;
 	reg		[7:0]	ff_keyboard_update_count;
-	reg		[175:0]	ff_debug_signal;
+	reg		[159:0]	ff_debug_signal;
 	reg		[4:0]	ff_debug_byte_index;
 	reg				ff_suppress_intr;
 	reg				ff_suppress_intr_d1;
@@ -164,14 +165,15 @@ module ip_spi (
 			ff_msx_reset_n	<= 1'b0;
 			ff_msx_pause	<= 1'b0;
 			ff_bootrom_en	<= 1'b1;
-			ff_bus_owner	<= 1'b0;
+			ff_pico_change_target	<= 1'b1;
+			ff_pico_change_req	<= 1'b0;
 			ff_keyboard_matrix_row	<= 4'd0;
 			ff_keyboard_matrix	<= 8'hFF;
 			ff_keyboard_output_row	<= 4'd0;
 			ff_keyboard_output_data	<= 8'hFF;
 			ff_keyboard_update_toggle	<= 1'b0;
 			ff_keyboard_update_count	<= 8'd0;
-			ff_debug_signal <= 176'd0;
+			ff_debug_signal <= 160'd0;
 			ff_suppress_intr <= 1'b0;
 			ff_flashrom_address <= 20'd0;
 			ff_flashrom_access <= 1'b0;
@@ -218,12 +220,13 @@ module ip_spi (
 			end
 		end
 		else if( ff_state == ST_BUS_OWNER_WAIT ) begin
-			//	実際に msx_bus_mux 側のバス所有権が切り替わるまで待ってから intr を上げる
-			if( active_bus_owner == ff_bus_owner ) begin
-				ff_state		<= ST_SEND;
-				ff_spi_wdata	<= SPI_RX_WDATA;
-				ff_spi_valid	<= 1'b1;
-				ff_spi_write	<= 1'b1;
+			//	実際に s2026 側の cpu_sel[1] が切り替わるまで待ってから intr を上げる
+			if( cpu_sel[1] == ff_pico_change_target ) begin
+				ff_pico_change_req	<= 1'b0;
+				ff_state			<= ST_SEND;
+				ff_spi_wdata		<= SPI_RX_WDATA;
+				ff_spi_valid		<= 1'b1;
+				ff_spi_write		<= 1'b1;
 			end
 		end
 		else if( ff_spi_valid && !(ff_state == ST_KEYBOARD && spi_rdata_en) ) begin
@@ -255,7 +258,7 @@ module ip_spi (
 			//   0Ch                               ... MSX BootROM disable (bootrom_en = 0)
 			//   0Dh, addr_l, addr_m, addr_h, data  ... FlashROM write
 			//   0Eh, addr_l, addr_m, addr_h, dummy ... FlashROM read
-			//   10h, owner                         ... Bus owner select (0: SPI/Pico, 1: CPU)
+			//   10h, owner                         ... Bus owner select (0: CPU, 1: SPI/Pico)
 			//   11h, matrix[0..11]                 ... Keyboard matrix update
 			//   FFh                               ... presence check
 			ST_COMMAND: begin
@@ -330,7 +333,7 @@ module ip_spi (
 					end
 					8'h0a: begin
 						ff_state		<= ST_DEBUG_H;
-						ff_debug_signal <= debug_signal;
+						ff_debug_signal <= { 2'd0, debug_signal };
 						ff_spi_wdata	<= debug_signal[7:0];
 						ff_debug_byte_index <= 5'd1;
 						ff_spi_valid	<= 1'b1;
@@ -466,8 +469,10 @@ module ip_spi (
 			end
 			ST_BUS_OWNER: begin
 				if( spi_rdata_en ) begin
-					ff_bus_owner	<= spi_rdata[0];
-					ff_state		<= ST_BUS_OWNER_WAIT;
+					//	コマンドのowner bitは(0:SPI/Pico, 1:CPU)なので、pico_change_target(1:Pico)へは反転して格納する
+					ff_pico_change_target	<= spi_rdata[0];
+					ff_pico_change_req		<= 1'b1;
+					ff_state				<= ST_BUS_OWNER_WAIT;
 				end
 			end
 			ST_DEBUG_H: begin
@@ -590,18 +595,17 @@ module ip_spi (
 	.spi_miso		( spi_miso			)
 	);
 
-	assign spi_intr			= ff_spi_intr;
+	assign spi_intr					= ff_spi_intr;
 
 	// ---------------------------------------------------------
 	//	BUS access
 	// ---------------------------------------------------------
-	assign bus_io			= ff_bus_io;
-	assign bus_write		= ff_bus_write;
-	assign bus_address		= ff_bus_address;
-	assign bus_wdata		= ff_bus_wdata;
-	assign bus_valid		= ff_bus_valid;
-	assign flashrom_address	= ff_flashrom_address;
-	assign flashrom_en		= ff_flashrom_access & ff_bus_valid;
+	assign bus_io					= ff_bus_io;
+	assign bus_write				= ff_bus_write;
+	assign bus_address				= ff_flashrom_access ? ff_flashrom_address :{ 4'd0, ff_bus_address };
+	assign bus_wdata				= ff_bus_wdata;
+	assign bus_valid				= ff_bus_valid;
+	assign bus_flash_en				= ff_flashrom_access;
 
 	// ---------------------------------------------------------
 	//	MSX Hardware control
@@ -609,7 +613,8 @@ module ip_spi (
 	assign msx_reset_n				= ff_msx_reset_n;
 	assign msx_pause				= ff_msx_pause;
 	assign bootrom_en				= ff_bootrom_en;
-	assign bus_owner				= ff_bus_owner;
+	assign pico_change_req			= ff_pico_change_req;
+	assign pico_change_target		= ff_pico_change_target;
 	assign keyboard_matrix_row		= ff_keyboard_output_row;
 	assign keyboard_matrix			= ff_keyboard_output_data;
 	assign keyboard_matrix_valid	= ff_keyboard_matrix_valid;

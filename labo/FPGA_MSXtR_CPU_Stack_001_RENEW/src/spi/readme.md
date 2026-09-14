@@ -138,24 +138,26 @@ PicoからFPGAに対して、MSXのBootROMを無効にする要求です。
 
 # FlashROM への書き込み要求
 Picoから、FPGA(CPU) に搭載の パラレルFlashROM へ書き込む要求です。
+内部バスに対して `bus_flash_en = 1`、`bus_address` に20bitアドレスを出力して書き込みを行います。
 
 |順番|値|内容|
 |---|---|---|
 |#1|0Dh|FlashROM 書き込み要求|
-|#2|アドレス番号(下位8bit)|書き込み対象となるFlashROMのアドレス番号|
-|#3|アドレス番号(中位8bit)|書き込み対象となるFlashROMのアドレス番号|
-|#4|アドレス番号(上位4bit)|書き込み対象となるFlashROMのアドレス番号|
+|#2|アドレス番号(下位8bit)|書き込み対象となるFlashROMのアドレス番号 (bus_address[7:0])|
+|#3|アドレス番号(中位8bit)|書き込み対象となるFlashROMのアドレス番号 (bus_address[15:8])|
+|#4|アドレス番号(上位4bit)|書き込み対象となるFlashROMのアドレス番号 (bus_address[19:16])|
 |#5|データ|指定のFlashROMアドレスに書き込むデータ|
 
 # FlashROM への読み出し要求
 Picoから、FPGA(CPU) に搭載の パラレルFlashROM から読み出す要求です。
+内部バスに対して `bus_flash_en = 1`、`bus_address` に20bitアドレスを出力して読み出しを行います。
 
 |順番|値|内容|
 |---|---|---|
 |#1|0Eh|FlashROM 読み出し要求|
-|#2|アドレス番号(下位8bit)|読み出し対象となるFlashROMのアドレス番号|
-|#3|アドレス番号(中位8bit)|読み出し対象となるFlashROMのアドレス番号|
-|#4|アドレス番号(上位4bit)|読み出し対象となるFlashROMのアドレス番号|
+|#2|アドレス番号(下位8bit)|読み出し対象となるFlashROMのアドレス番号 (bus_address[7:0])|
+|#3|アドレス番号(中位8bit)|読み出し対象となるFlashROMのアドレス番号 (bus_address[15:8])|
+|#4|アドレス番号(上位4bit)|読み出し対象となるFlashROMのアドレス番号 (bus_address[19:16])|
 |-|待機|応答を返せるタイミングで SPI_INTR=1 にする|
 |#5|データ|指定のFlashROMアドレスから読み込んだデータ（FPGAから出力)|
 
@@ -177,3 +179,21 @@ FPGAが存在するかどうかを確認する要求です。
 |順番|値|内容|
 |---|---|---|
 |#1|FFh|FPGA 存在確認|
+
+---
+
+# モジュール I/F 仕様 (ip_spi)
+
+### バス (Master) インタフェース
+
+| ポート名 | 方向 | ビット幅 | 説明 |
+|---|---|---|---|
+| `bus_io` | output | 1 | 1: I/O空間アクセス / 0: メモリ空間アクセス |
+| `bus_write` | output | 1 | 1: ライトアクセス / 0: リードアクセス |
+| `bus_valid` | output | 1 | バストランザクション要求有効 |
+| `bus_ready` | input | 1 | バススレーブ応答 (ライト完了 / リード受付) |
+| `bus_wdata` | output | 8 | バス書き込みデータ |
+| `bus_address` | output | 20 | バスアドレス (通常Memory/IOアクセス時は下位16bitを使用、FlashROMアクセス時は20bit全体を使用) |
+| `bus_flash_en` | output | 1 | FlashROMアクセス有効フラグ (1: FlashROMアクセス / 0: 通常アクセス) |
+| `bus_rdata` | input | 8 | バス読み出しデータ |
+| `bus_rdata_en` | input | 1 | バス読み出しデータ有効パルス |

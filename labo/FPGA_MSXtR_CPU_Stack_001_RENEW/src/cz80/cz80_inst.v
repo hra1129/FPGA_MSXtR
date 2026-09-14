@@ -77,7 +77,7 @@ module cz80_inst (
 	output			rfsh_n		,
 	input			busreq_n	,
 	output			busack_n	,
-	input			slot_d		,
+	input	[7:0]	slot_d		,
 	//	Internal bus interface (device transaction, replaces raw Z80 timing pins)
 	output			bus_io		,
 	output			bus_write	,

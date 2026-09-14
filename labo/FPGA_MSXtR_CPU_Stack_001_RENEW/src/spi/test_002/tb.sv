@@ -41,9 +41,9 @@
 //		0x0C: BootROM disable                                      (1 byte)
 //			  -> bootrom_en=0, no bus access
 //		0x0D: FlashROM write [cmd=0x0D][addr_l][addr_m][addr_h][data]
-//			  -> flashrom_en=1 during bus access, flashrom_address=20bit address
+//			  -> bus_flash_en=1 during bus access, bus_address=20bit address
 //		0x0E: FlashROM read  [cmd=0x0E][addr_l][addr_m][addr_h][dummy]
-//			  -> flashrom_en=1 during bus access, returns bus_rdata on dummy byte
+//			  -> bus_flash_en=1 during bus access, returns bus_rdata on dummy byte
 //		0x10: Bus owner select [cmd=0x10][owner]
 //			  -> bus_owner=owner[0], no bus access
 //		0xFF: Presence check [cmd=0xFF]                             (1 byte)
@@ -80,7 +80,8 @@ module tb ();
 	wire			bus_valid;
 	reg				bus_ready;
 	wire	[7:0]	bus_wdata;
-	wire	[15:0]	bus_address;
+	wire	[19:0]	bus_address;
+	wire			bus_flash_en;
 	reg		[7:0]	bus_rdata;
 	reg				bus_rdata_en;
 
@@ -104,8 +105,6 @@ module tb ();
 	reg				caps_led;
 	reg				kana_led;
 	reg		[175:0]	debug_signal;
-	wire	[19:0]	flashrom_address;
-	wire			flashrom_en;
 
 	//	--------------------------------------------------------------------
 	//	Monitor: count bus_valid pulses and capture last transaction values
@@ -114,11 +113,10 @@ module tb ();
 	//	--------------------------------------------------------------------
 	int				bus_valid_count;
 	reg		[7:0]	captured_wdata;
-	reg		[15:0]	captured_address;
+	reg		[19:0]	captured_address;
 	reg				captured_io;
 	reg				captured_write;
-	reg		[19:0]	captured_flashrom_address;
-	reg				captured_flashrom_en;
+	reg				captured_bus_flash_en;
 	reg				bus_valid_d;		//	1-cycle delayed bus_valid for edge detection
 	int				keyboard_update_count;
 	reg		[7:0]	captured_keyboard [0:11];
@@ -130,12 +128,11 @@ module tb ();
 			bus_valid_d      <= 1'b0;
 			bus_valid_count  <= 0;
 			captured_wdata   <= 8'h00;
-			captured_address <= 16'h0000;
+			captured_address <= 20'h00000;
 			captured_io      <= 1'b0;
 			captured_write   <= 1'b0;
-			captured_flashrom_address <= 20'h00000;
-			captured_flashrom_en      <= 1'b0;
-			keyboard_update_count    <= 0;
+			captured_bus_flash_en <= 1'b0;
+			keyboard_update_count <= 0;
 		end else begin
 			bus_valid_d <= bus_valid;
 			if ( bus_valid && !bus_valid_d ) begin
@@ -144,8 +141,7 @@ module tb ();
 				captured_address <= bus_address;
 				captured_io      <= bus_io;
 				captured_write   <= bus_write;
-				captured_flashrom_address <= flashrom_address;
-				captured_flashrom_en      <= flashrom_en;
+				captured_bus_flash_en <= bus_flash_en;
 			end
 			if( keyboard_matrix_valid ) begin
 				if( keyboard_matrix_row < 4'd12 ) begin
@@ -177,40 +173,39 @@ module tb ();
 	//	DUT: ip_spi (instantiates spi.v internally)
 	// --------------------------------------------------------------------
 	ip_spi u_dut (
-		.reset_n		( reset_n		),
-		.clk			( clk			),
-		.clk_serial		( clk_serial	),
-		.bus_io			( bus_io		),
-		.bus_write		( bus_write		),
-		.bus_valid		( bus_valid		),
-		.bus_ready		( bus_ready		),
-		.bus_wdata		( bus_wdata		),
-		.bus_address	( bus_address	),
-		.bus_rdata		( bus_rdata		),
-		.bus_rdata_en	( bus_rdata_en	),
-		.spi_cs_n		( spi_cs_n		),
-		.spi_clk		( spi_clk		),
-		.spi_mosi		( spi_mosi		),
-		.spi_miso		( spi_miso		),
-		.spi_intr		( spi_intr		),
-		.slot_wait_n	( slot_wait_n	),
-		.ssram_startup_busy	( ssram_startup_busy	),
-		.active_bus_owner	( active_bus_owner	),
-		.msx_reset_n	( 				),
-		.msx_pause		( 				),
-		.r800_led		( r800_led		),
-		.pause_led		( pause_led		),
-		.caps_led		( caps_led		),
-		.kana_led		( kana_led		),
-		.bootrom_en		( bootrom_en	),
-		.bus_owner		( bus_owner		),
-		.keyboard_matrix_row	( keyboard_matrix_row	),
-		.keyboard_matrix		( keyboard_matrix		),
-		.keyboard_matrix_valid	( keyboard_matrix_valid	),
-		.keyboard_update_count	( keyboard_rx_count		),
-		.debug_signal	( debug_signal	),
-		.flashrom_address	( flashrom_address	),
-		.flashrom_en		( flashrom_en		)
+		.reset_n				( reset_n					),
+		.clk					( clk						),
+		.clk_serial				( clk_serial				),
+		.bus_io					( bus_io					),
+		.bus_write				( bus_write					),
+		.bus_valid				( bus_valid					),
+		.bus_ready				( bus_ready					),
+		.bus_wdata				( bus_wdata					),
+		.bus_address			( bus_address				),
+		.bus_flash_en			( bus_flash_en				),
+		.bus_rdata				( bus_rdata					),
+		.bus_rdata_en			( bus_rdata_en				),
+		.spi_cs_n				( spi_cs_n					),
+		.spi_clk				( spi_clk					),
+		.spi_mosi				( spi_mosi					),
+		.spi_miso				( spi_miso					),
+		.spi_intr				( spi_intr					),
+		.slot_wait_n			( slot_wait_n				),
+		.ssram_startup_busy		( ssram_startup_busy		),
+		.active_bus_owner		( active_bus_owner			),
+		.msx_reset_n			( 							),
+		.msx_pause				( 							),
+		.r800_led				( r800_led					),
+		.pause_led				( pause_led					),
+		.caps_led				( caps_led					),
+		.kana_led				( kana_led					),
+		.bootrom_en				( bootrom_en				),
+		.bus_owner				( bus_owner					),
+		.keyboard_matrix_row	( keyboard_matrix_row		),
+		.keyboard_matrix		( keyboard_matrix			),
+		.keyboard_matrix_valid	( keyboard_matrix_valid		),
+		.keyboard_update_count	( keyboard_rx_count			),
+		.debug_signal			( debug_signal				)
 	);
 
 	// --------------------------------------------------------------------
@@ -351,11 +346,11 @@ module tb ();
 			end
 
 			//	Check: bus_address
-			if ( captured_address === 16'h00AB ) begin
-				$display( "[TEST %0d] PASS: bus_address = 0x%04X", test_no, captured_address );
+			if ( captured_address === 20'h000AB ) begin
+				$display( "[TEST %0d] PASS: bus_address = 0x%05X", test_no, captured_address );
 				pass_count = pass_count + 1;
 			end else begin
-				$display( "[TEST %0d] FAIL: bus_address = 0x%04X (expected 0x00AB)", test_no, captured_address );
+				$display( "[TEST %0d] FAIL: bus_address = 0x%05X (expected 0x000AB)", test_no, captured_address );
 				fail_count = fail_count + 1;
 			end
 
@@ -485,11 +480,11 @@ module tb ();
 			end
 
 			//	Check: bus_address
-			if ( captured_address === 16'h0034 ) begin
-				$display( "[TEST %0d] PASS: bus_address = 0x%04X", test_no, captured_address );
+			if ( captured_address === 20'h00034 ) begin
+				$display( "[TEST %0d] PASS: bus_address = 0x%05X", test_no, captured_address );
 				pass_count = pass_count + 1;
 			end else begin
-				$display( "[TEST %0d] FAIL: bus_address = 0x%04X (expected 0x0034)", test_no, captured_address );
+				$display( "[TEST %0d] FAIL: bus_address = 0x%05X (expected 0x00034)", test_no, captured_address );
 				fail_count = fail_count + 1;
 			end
 
@@ -599,11 +594,11 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			if ( captured_address === 16'h0066 ) begin
-				$display( "[TEST %0d] PASS: bus_address = 0x%04X", test_no, captured_address );
+			if ( captured_address === 20'h00066 ) begin
+				$display( "[TEST %0d] PASS: bus_address = 0x%05X", test_no, captured_address );
 				pass_count = pass_count + 1;
 			end else begin
-				$display( "[TEST %0d] FAIL: bus_address = 0x%04X (expected 0x0066)", test_no, captured_address );
+				$display( "[TEST %0d] FAIL: bus_address = 0x%05X (expected 0x00066)", test_no, captured_address );
 				fail_count = fail_count + 1;
 			end
 
@@ -680,11 +675,11 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			if ( captured_address === 16'h1234 ) begin
-				$display( "[TEST %0d] PASS: bus_address = 0x%04X", test_no, captured_address );
+			if ( captured_address === 20'h01234 ) begin
+				$display( "[TEST %0d] PASS: bus_address = 0x%05X", test_no, captured_address );
 				pass_count = pass_count + 1;
 			end else begin
-				$display( "[TEST %0d] FAIL: bus_address = 0x%04X (expected 0x1234)", test_no, captured_address );
+				$display( "[TEST %0d] FAIL: bus_address = 0x%05X (expected 0x01234)", test_no, captured_address );
 				fail_count = fail_count + 1;
 			end
 
@@ -794,11 +789,11 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			if ( captured_address === 16'hABCD ) begin
-				$display( "[TEST %0d] PASS: bus_address = 0x%04X", test_no, captured_address );
+			if ( captured_address === 20'h0ABCD ) begin
+				$display( "[TEST %0d] PASS: bus_address = 0x%05X", test_no, captured_address );
 				pass_count = pass_count + 1;
 			end else begin
-				$display( "[TEST %0d] FAIL: bus_address = 0x%04X (expected 0xABCD)", test_no, captured_address );
+				$display( "[TEST %0d] FAIL: bus_address = 0x%05X (expected 0x0ABCD)", test_no, captured_address );
 				fail_count = fail_count + 1;
 			end
 
@@ -881,11 +876,11 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			if ( captured_address === 16'h0077 && captured_wdata === 8'h88 ) begin
-				$display( "[TEST %0d] PASS: address=0x%04X, wdata=0x%02X after 0xFF", test_no, captured_address, captured_wdata );
+			if ( captured_address === 20'h00077 && captured_wdata === 8'h88 ) begin
+				$display( "[TEST %0d] PASS: address=0x%05X, wdata=0x%02X after 0xFF", test_no, captured_address, captured_wdata );
 				pass_count = pass_count + 1;
 			end else begin
-				$display( "[TEST %0d] FAIL: address=0x%04X, wdata=0x%02X (expected 0x0077 / 0x88)", test_no, captured_address, captured_wdata );
+				$display( "[TEST %0d] FAIL: address=0x%05X, wdata=0x%02X (expected 0x00077 / 0x88)", test_no, captured_address, captured_wdata );
 				fail_count = fail_count + 1;
 			end
 		end
@@ -1021,8 +1016,8 @@ module tb ();
 		//	Test 11: FlashROM Write (command 0x0D)
 		//	  Packet  : [0x0D][addr_l][addr_m][addr_h][data]
 		//	  Expected: bus_valid=1, bus_io=0, bus_write=1,
-		//	            bus_address=0x3456, bus_wdata=0x9A,
-		//	            flashrom_en=1, flashrom_address=0x23456
+		//	            bus_address=0x23456, bus_wdata=0x9A,
+		//	            bus_flash_en=1
 		// ================================================================
 		test_no = 11;
 		$display( "------------------------------------------------------------" );
@@ -1059,21 +1054,12 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			if( captured_io === 1'b0 && captured_write === 1'b1 && captured_address === 16'h3456 && captured_wdata === 8'h9A ) begin
-				$display( "[TEST %0d] PASS: bus access io=%b write=%b address=0x%04X wdata=0x%02X", test_no, captured_io, captured_write, captured_address, captured_wdata );
+			if( captured_io === 1'b0 && captured_write === 1'b1 && captured_address === 20'h23456 && captured_wdata === 8'h9A && captured_bus_flash_en === 1'b1 ) begin
+				$display( "[TEST %0d] PASS: bus access io=%b write=%b address=0x%05X wdata=0x%02X bus_flash_en=%b", test_no, captured_io, captured_write, captured_address, captured_wdata, captured_bus_flash_en );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: bus access io=%b write=%b address=0x%04X wdata=0x%02X", test_no, captured_io, captured_write, captured_address, captured_wdata );
-				fail_count = fail_count + 1;
-			end
-
-			if( captured_flashrom_en === 1'b1 && captured_flashrom_address === 20'h23456 ) begin
-				$display( "[TEST %0d] PASS: flashrom_en=1, flashrom_address=0x%05X", test_no, captured_flashrom_address );
-				pass_count = pass_count + 1;
-			end
-			else begin
-				$display( "[TEST %0d] FAIL: flashrom_en=%b, flashrom_address=0x%05X (expected 1 / 0x23456)", test_no, captured_flashrom_en, captured_flashrom_address );
+				$display( "[TEST %0d] FAIL: bus access io=%b write=%b address=0x%05X (expected 0x23456) wdata=0x%02X bus_flash_en=%b (expected 1)", test_no, captured_io, captured_write, captured_address, captured_wdata, captured_bus_flash_en );
 				fail_count = fail_count + 1;
 			end
 		end
@@ -1146,21 +1132,12 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			if( captured_io === 1'b0 && captured_write === 1'b0 && captured_address === 16'hEDCB ) begin
-				$display( "[TEST %0d] PASS: bus read access io=%b write=%b address=0x%04X", test_no, captured_io, captured_write, captured_address );
+			if( captured_io === 1'b0 && captured_write === 1'b0 && captured_address === 20'hFEDCB && captured_bus_flash_en === 1'b1 ) begin
+				$display( "[TEST %0d] PASS: bus read access io=%b write=%b address=0x%05X bus_flash_en=%b", test_no, captured_io, captured_write, captured_address, captured_bus_flash_en );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: bus read access io=%b write=%b address=0x%04X", test_no, captured_io, captured_write, captured_address );
-				fail_count = fail_count + 1;
-			end
-
-			if( captured_flashrom_en === 1'b1 && captured_flashrom_address === 20'hFEDCB ) begin
-				$display( "[TEST %0d] PASS: flashrom_en=1, flashrom_address=0x%05X", test_no, captured_flashrom_address );
-				pass_count = pass_count + 1;
-			end
-			else begin
-				$display( "[TEST %0d] FAIL: flashrom_en=%b, flashrom_address=0x%05X (expected 1 / 0xFEDCB)", test_no, captured_flashrom_en, captured_flashrom_address );
+				$display( "[TEST %0d] FAIL: bus read access io=%b write=%b address=0x%05X (expected 0xFEDCB) bus_flash_en=%b (expected 1)", test_no, captured_io, captured_write, captured_address, captured_bus_flash_en );
 				fail_count = fail_count + 1;
 			end
 
@@ -1277,13 +1254,13 @@ module tb ();
 			spi_mosi = 1'b0;
 			repeat( 10 ) @( posedge clk );
 
-			if( led_response === 8'h05 && keyboard_update_count === 12 && keyboard_rx_count === 8'd12 &&
+			if( led_response === 8'h0A && keyboard_update_count === 12 && keyboard_rx_count === 8'd12 &&
 				bus_valid_count === cnt_before && spi_intr === 1'b0 ) begin
 				$display( "[TEST %0d] PASS: LED state (0x%02X) read and 12 rows updated without bus access or interrupt", test_no, led_response );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: led_response=0x%02X (expected 0x05) valid_count=%0d rx_count=%0d bus_count=%0d spi_intr=%b",
+				$display( "[TEST %0d] FAIL: led_response=0x%02X (expected 0x0A) valid_count=%0d rx_count=%0d bus_count=%0d spi_intr=%b",
 					test_no, led_response, keyboard_update_count, keyboard_rx_count, bus_valid_count, spi_intr );
 				fail_count = fail_count + 1;
 			end

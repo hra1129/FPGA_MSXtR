@@ -311,7 +311,7 @@ module tb ();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h10 );
-			spi_send_byte( { 7'd0, owner } );
+			spi_send_byte( { 7'd0, ~owner } );
 			#( 200 );
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;

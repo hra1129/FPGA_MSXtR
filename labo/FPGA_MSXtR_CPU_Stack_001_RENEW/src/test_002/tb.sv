@@ -210,7 +210,7 @@ module tb ();
 				if( u_dut.w_z80_bus_rdata !== keyboard_expected[u_dut.w_ppi_debug_keyboard_matrix_row] ) begin
 					keyboard_a9_bad_data_count = keyboard_a9_bad_data_count + 1;
 				end
-				if( u_dut.u_z80.ff_di_reg !== keyboard_expected[u_dut.w_ppi_debug_keyboard_matrix_row] ) begin
+				if( u_dut.u_z80.ff_bus_rdata !== keyboard_expected[u_dut.w_ppi_debug_keyboard_matrix_row] ) begin
 					keyboard_z80_bad_data_count = keyboard_z80_bad_data_count + 1;
 				end
 			end
@@ -248,7 +248,7 @@ module tb ();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h10 );
-			spi_send_byte( { 7'd0, owner } );
+			spi_send_byte( { 7'd0, ~owner } );
 			while( mcu_intr == 1'b0 && timeout_ns < 5000 ) begin
 				#( 10 );
 				timeout_ns = timeout_ns + 10;
@@ -536,7 +536,6 @@ module tb ();
 		keyboard_expected[5] = 8'hFE;
 
 		#( 3000 );
-		force u_dut.w_3_579m = 1'b1;
 //		$display( "[SETUP] Transfer bus ownership to Pico" );
 //		spi_set_bus_owner( 1'b0 );
 		$display( "[SETUP] Transfer bus ownership to Z80" );

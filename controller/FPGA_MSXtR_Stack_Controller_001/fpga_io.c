@@ -404,7 +404,7 @@ void fpga_set_bus_owner( uint8_t owner ) {
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = 0x10;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
-	cmd = owner & 0x01;
+	cmd = ~owner & 0x01;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 
 	// INTR ピンが 1 になるまで待つ（バス所有権が実際に切り替わるまで、50ms タイムアウト）

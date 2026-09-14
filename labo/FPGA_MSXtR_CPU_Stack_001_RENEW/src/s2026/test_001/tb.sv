@@ -3,123 +3,68 @@
 module tb;
 	localparam real c_clk_period = 1000.0 / 42.95454;
 
-	reg			clk;
-	reg			reset_n;
-	reg	[3:0]	ff_div12;
-	reg			ff_div2;
-	wire			enable_z80;
-	wire			enable_r800;
-	reg			cpu_pause;
+	reg				clk;
+	reg				reset_n;
+	reg				cpu_pause;
 
-	reg			z80_bus_m1;
-	reg			z80_bus_io;
-	reg			z80_bus_write;
-	reg			z80_bus_valid;
-	wire			z80_bus_ready;
-	reg	[15:0]	z80_bus_address;
-	reg	[7:0]	z80_bus_wdata;
-	wire	[7:0]	z80_bus_rdata;
-	wire			z80_bus_rdata_en;
+	wire			z80_busrq_n;
+	reg				z80_busak_n;
+	wire			r800_busrq_n;
+	reg				r800_busak_n;
+	wire			pico_busrq_n;
+	reg				pico_busak_n;
+	reg				pico_change_req;
+	reg				pico_change_target;
 
-	reg			r800_bus_m1;
-	reg			r800_bus_io;
-	reg			r800_bus_write;
-	reg			r800_bus_valid;
-	wire			r800_bus_ready;
-	reg	[15:0]	r800_bus_address;
-	reg	[7:0]	r800_bus_wdata;
-	wire	[7:0]	r800_bus_rdata;
-	wire			r800_bus_rdata_en;
-
-	wire			bus_m1;
-	wire			bus_io;
-	wire			bus_write;
-	wire			bus_valid;
-	reg			bus_ready;
-	wire	[7:0]	bus_wdata;
-	wire	[15:0]	bus_address;
-	reg	[7:0]	bus_rdata;
-	reg			bus_rdata_en;
-
-	reg			device_cs;
-	reg			device_write;
-	reg			device_valid;
-	wire			device_ready;
-	reg	[7:0]	device_wdata;
-	reg	[1:0]	device_address;
-	wire	[7:0]	device_rdata;
-	wire			device_rdata_en;
+	reg				bus_cs;
+	reg				bus_write;
+	reg				bus_valid;
+	wire			bus_ready;
+	reg		[7:0]	bus_wdata;
+	reg		[1:0]	bus_address;
+	wire	[7:0]	bus_rdata;
+	wire			bus_rdata_en;
 
 	wire			z80_active;
 	wire			r800_active;
 	wire			processor_mode;
-	wire			debug_cpu_change_req;
-	wire			debug_cpu_change_target;
-	wire	[1:0]	debug_cpu_change_state;
-	wire	[3:0]	debug_register_index;
-	wire			debug_rom_mode;
-	wire			debug_switch;
+	wire	[1:0]	cpu_sel;
 
-	reg	[15:0]	z80_pc;
-	reg	[15:0]	r800_pc;
-	reg	[15:0]	z80_saved_pc;
-	reg	[15:0]	r800_saved_pc;
-	integer		pass_count;
-	integer		fail_count;
+	integer			pass_count;
+	integer			fail_count;
 
-	assign enable_z80 = (ff_div12 == 4'd11);
-	assign enable_r800 = (ff_div2 == 1'b1);
+	//	CPUモデル: busrq_n がアサートされてから busak_n を返すまでの遅延サイクル数
+	integer			z80_ack_delay;
+	integer			r800_ack_delay;
+	integer			pico_ack_delay;
+	integer			z80_ack_counter;
+	integer			r800_ack_counter;
+	integer			pico_ack_counter;
 
 	s2026 u_dut (
-		.reset_n				( reset_n				),
-		.clk					( clk					),
-		.enable_z80			( enable_z80			),
-		.enable_r800			( enable_r800			),
-		.cpu_pause				( cpu_pause			),
-		.z80_bus_m1			( z80_bus_m1			),
-		.z80_bus_io				( z80_bus_io			),
-		.z80_bus_write			( z80_bus_write		),
-		.z80_bus_valid			( z80_bus_valid		),
-		.z80_bus_ready			( z80_bus_ready		),
-		.z80_bus_address		( z80_bus_address		),
-		.z80_bus_wdata			( z80_bus_wdata		),
-		.z80_bus_rdata			( z80_bus_rdata		),
-		.z80_bus_rdata_en		( z80_bus_rdata_en		),
-		.r800_bus_m1			( r800_bus_m1			),
-		.r800_bus_io			( r800_bus_io			),
-		.r800_bus_write		( r800_bus_write		),
-		.r800_bus_valid			( r800_bus_valid		),
-		.r800_bus_ready			( r800_bus_ready		),
-		.r800_bus_address		( r800_bus_address		),
-		.r800_bus_wdata			( r800_bus_wdata		),
-		.r800_bus_rdata			( r800_bus_rdata		),
-		.r800_bus_rdata_en		( r800_bus_rdata_en		),
-		.bus_m1					( bus_m1				),
-		.bus_io					( bus_io				),
-		.bus_write				( bus_write			),
-		.bus_valid				( bus_valid			),
-		.bus_ready				( bus_ready			),
-		.bus_wdata				( bus_wdata			),
-		.bus_address			( bus_address			),
-		.bus_rdata				( bus_rdata			),
-		.bus_rdata_en			( bus_rdata_en			),
-		.device_cs				( device_cs			),
-		.device_write			( device_write			),
-		.device_valid			( device_valid			),
-		.device_ready			( device_ready			),
-		.device_wdata			( device_wdata			),
-		.device_address			( device_address		),
-		.device_rdata			( device_rdata			),
-		.device_rdata_en		( device_rdata_en		),
-		.z80_active				( z80_active			),
-		.r800_active			( r800_active			),
-		.processor_mode			( processor_mode		),
-		.debug_cpu_change_req	( debug_cpu_change_req	),
-		.debug_cpu_change_target( debug_cpu_change_target),
-		.debug_cpu_change_state	( debug_cpu_change_state	),
-		.debug_register_index	( debug_register_index	),
-		.debug_rom_mode			( debug_rom_mode		),
-		.debug_switch			( debug_switch			)
+		.reset_n			( reset_n				),
+		.clk				( clk					),
+		.cpu_pause			( cpu_pause				),
+		.z80_busrq_n		( z80_busrq_n			),
+		.z80_busak_n		( z80_busak_n			),
+		.r800_busrq_n		( r800_busrq_n			),
+		.r800_busak_n		( r800_busak_n			),
+		.pico_busrq_n		( pico_busrq_n			),
+		.pico_busak_n		( pico_busak_n			),
+		.pico_change_req	( pico_change_req		),
+		.pico_change_target	( pico_change_target	),
+		.bus_cs				( bus_cs				),
+		.bus_write			( bus_write				),
+		.bus_valid			( bus_valid				),
+		.bus_ready			( bus_ready				),
+		.bus_wdata			( bus_wdata				),
+		.bus_address		( bus_address			),
+		.bus_rdata			( bus_rdata				),
+		.bus_rdata_en		( bus_rdata_en			),
+		.z80_active			( z80_active			),
+		.r800_active		( r800_active			),
+		.processor_mode		( processor_mode		),
+		.cpu_sel			( cpu_sel				)
 	);
 
 	initial begin
@@ -127,29 +72,43 @@ module tb;
 		forever #( c_clk_period / 2.0 ) clk = ~clk;
 	end
 
+	//	busak_n モデル: busrq_n = 0 が続いた ack_delay サイクル後に busak_n = 0 を返す
 	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_div12 <= 4'd0;
-			ff_div2 <= 1'b0;
+		if( !reset_n || z80_busrq_n ) begin
+			z80_busak_n		<= 1'b1;
+			z80_ack_counter	<= 0;
+		end
+		else if( z80_ack_counter < z80_ack_delay ) begin
+			z80_ack_counter	<= z80_ack_counter + 1;
 		end
 		else begin
-			ff_div12 <= enable_z80 ? 4'd0 : ff_div12 + 4'd1;
-			ff_div2 <= ~ff_div2;
+			z80_busak_n		<= 1'b0;
 		end
 	end
 
 	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			z80_pc <= 16'h0000;
-			r800_pc <= 16'h0000;
+		if( !reset_n || r800_busrq_n ) begin
+			r800_busak_n	<= 1'b1;
+			r800_ack_counter<= 0;
+		end
+		else if( r800_ack_counter < r800_ack_delay ) begin
+			r800_ack_counter<= r800_ack_counter + 1;
 		end
 		else begin
-			if( z80_active ) begin
-				z80_pc <= z80_pc + 16'd1;
-			end
-			if( r800_active ) begin
-				r800_pc <= r800_pc + 16'd1;
-			end
+			r800_busak_n	<= 1'b0;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n || pico_busrq_n ) begin
+			pico_busak_n	<= 1'b1;
+			pico_ack_counter<= 0;
+		end
+		else if( pico_ack_counter < pico_ack_delay ) begin
+			pico_ack_counter<= pico_ack_counter + 1;
+		end
+		else begin
+			pico_busak_n	<= 1'b0;
 		end
 	end
 
@@ -172,158 +131,191 @@ module tb;
 		input [1:0] address;
 		input [7:0] data;
 		begin
-			while( !device_ready ) begin
+			while( !bus_ready ) begin
 				@( posedge clk );
 			end
 			@( posedge clk );
-			device_cs <= 1'b1;
-			device_write <= 1'b1;
-			device_valid <= 1'b1;
-			device_address <= address;
-			device_wdata <= data;
+			bus_cs		<= 1'b1;
+			bus_write	<= 1'b1;
+			bus_valid	<= 1'b1;
+			bus_address	<= address;
+			bus_wdata	<= data;
 			@( posedge clk );
-			device_cs <= 1'b0;
-			device_write <= 1'b0;
-			device_valid <= 1'b0;
-			device_address <= 2'd0;
-			device_wdata <= 8'd0;
+			bus_cs		<= 1'b0;
+			bus_write	<= 1'b0;
+			bus_valid	<= 1'b0;
+			bus_address	<= 2'd0;
+			bus_wdata	<= 8'd0;
 		end
 	endtask
 
-	task automatic request_cpu;
-		input target_z80;
+	//	レジスタ index=6 に書き込み、cpu_change_target ビット(bit5)を発行する
+	task automatic request_cpu_change;
+		input target_r800;
 		begin
 			device_write_reg( 2'd0, 8'd6 );
-			device_write_reg( 2'd1, target_z80 ? 8'h20 : 8'h00 );
+			device_write_reg( 2'd1, target_r800 ? 8'h20 : 8'h00 );
 		end
 	endtask
 
-	task automatic wait_processor_mode;
-		input expected_mode;
-		integer timeout;
+	//	pico_change_req を1クロックだけパルスさせる
+	task automatic request_pico_change;
+		input target_pico;
 		begin
-			timeout = 0;
-			while( processor_mode != expected_mode && timeout < 200 ) begin
-				@( posedge clk );
-				timeout = timeout + 1;
-			end
-			check( processor_mode == expected_mode, "processor_mode changed to requested CPU" );
+			@( posedge clk );
+			pico_change_target	<= target_pico;
+			pico_change_req		<= 1'b1;
+			@( posedge clk );
+			pico_change_req		<= 1'b0;
 		end
 	endtask
 
-	task automatic wait_z80_pc;
-		input [15:0] target_pc;
+	task automatic wait_cpu_sel;
+		input [1:0] expected_sel;
 		integer timeout;
 		begin
 			timeout = 0;
-			while( z80_pc < target_pc && timeout < 1000 ) begin
+			while( cpu_sel != expected_sel && timeout < 200 ) begin
 				@( posedge clk );
 				timeout = timeout + 1;
 			end
-			check( z80_pc >= target_pc, "Z80 reached the switch address" );
+			check( cpu_sel == expected_sel, "cpu_sel changed to requested value" );
 		end
 	endtask
 
-	task automatic wait_r800_pc;
-		input [15:0] target_pc;
+	//	cpu_select が ST_CHANGING (=1) に入るまで待つ (階層参照で内部状態を直接確認)
+	task automatic wait_changing;
 		integer timeout;
 		begin
 			timeout = 0;
-			while( r800_pc < target_pc && timeout < 1000 ) begin
+			while( u_dut.u_cpu_select.ff_state !== 1'b1 && timeout < 200 ) begin
 				@( posedge clk );
 				timeout = timeout + 1;
 			end
-			check( r800_pc >= target_pc, "R800 reached the switch address" );
+			check( u_dut.u_cpu_select.ff_state === 1'b1, "cpu_select entered CHANGING state" );
+		end
+	endtask
+
+	//	レジスタ側の cpu_change_req が下がりきるまで待つ (次のリクエストとの衝突を避ける)
+	task automatic settle;
+		begin
+			repeat( 8 ) @( posedge clk );
 		end
 	endtask
 
 	initial begin
-		pass_count = 0;
-		fail_count = 0;
-		reset_n = 1'b0;
-		ff_div12 = 4'd0;
-		ff_div2 = 1'b0;
-		cpu_pause = 1'b0;
-		z80_bus_m1 = 1'b0;
-		z80_bus_io = 1'b0;
-		z80_bus_write = 1'b0;
-		z80_bus_valid = 1'b0;
-		z80_bus_address = 16'h1111;
-		z80_bus_wdata = 8'h11;
-		r800_bus_m1 = 1'b0;
-		r800_bus_io = 1'b0;
-		r800_bus_write = 1'b0;
-		r800_bus_valid = 1'b0;
-		r800_bus_address = 16'h8888;
-		r800_bus_wdata = 8'h88;
-		bus_ready = 1'b1;
-		bus_rdata = 8'hA5;
-		bus_rdata_en = 1'b0;
-		device_cs = 1'b0;
-		device_write = 1'b0;
-		device_valid = 1'b0;
-		device_wdata = 8'd0;
-		device_address = 2'd0;
+		pass_count			= 0;
+		fail_count			= 0;
+		reset_n				= 1'b0;
+		cpu_pause			= 1'b0;
+		z80_busak_n			= 1'b1;
+		r800_busak_n		= 1'b1;
+		pico_busak_n		= 1'b1;
+		pico_change_req		= 1'b0;
+		pico_change_target	= 1'b0;
+		bus_cs				= 1'b0;
+		bus_write			= 1'b0;
+		bus_valid			= 1'b0;
+		bus_wdata			= 8'd0;
+		bus_address			= 2'd0;
+		z80_ack_delay		= 2;
+		r800_ack_delay		= 3;
+		pico_ack_delay		= 4;
+		z80_ack_counter		= 0;
+		r800_ack_counter	= 0;
+		pico_ack_counter	= 0;
 
 		repeat( 8 ) @( posedge clk );
 		reset_n = 1'b1;
 		repeat( 2 ) @( posedge clk );
 
-		// Initial R800 0000h (DI) fetch before switching to Z80
-		r800_bus_m1 = 1'b1;
-		r800_bus_valid = 1'b1;
-		r800_bus_address = 16'h0000;
-		bus_rdata = 8'hF3;
-		bus_rdata_en = 1'b1;
+		check( cpu_sel == 2'b00, "reset selects Z80 (cpu_sel=00)" );
+		check( z80_active && !r800_active, "z80_active only after reset" );
+		check( processor_mode == 1'b0, "processor_mode=0 for Z80" );
+		check( z80_busrq_n == 1'b1 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
+				"only z80_busrq_n is released after reset" );
+
+		// ---------------------------------------------------------
+		//	register 経由の CPU 切替: Z80 -> R800
+		// ---------------------------------------------------------
+		request_cpu_change( 1'b1 );
+		wait_changing();
+		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
+				"all busrq_n asserted while changing to R800" );
+		wait_cpu_sel( 2'b01 );
+		check( z80_active == 1'b0 && r800_active == 1'b1, "r800_active after switch" );
+		check( processor_mode == 1'b1, "processor_mode=1 for R800" );
+		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b1 && pico_busrq_n == 1'b0,
+				"only r800_busrq_n is released after switching to R800" );
+		settle();
+
+		// ---------------------------------------------------------
+		//	register 経由の CPU 切替: R800 -> Z80
+		// ---------------------------------------------------------
+		request_cpu_change( 1'b0 );
+		wait_changing();
+		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
+				"all busrq_n asserted while changing to Z80" );
+		wait_cpu_sel( 2'b00 );
+		check( z80_active == 1'b1 && r800_active == 1'b0, "z80_active after switch back" );
+		check( processor_mode == 1'b0, "processor_mode=0 for Z80" );
+		settle();
+
+		// ---------------------------------------------------------
+		//	Pico 切替: Z80 -> Pico (戻り先 Z80)
+		// ---------------------------------------------------------
+		request_pico_change( 1'b1 );
+		wait_changing();
+		wait_cpu_sel( 2'b10 );
+		check( z80_active == 1'b0 && r800_active == 1'b0, "neither CPU active while PICO runs" );
+		check( pico_busrq_n == 1'b1 && z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0,
+				"only pico_busrq_n is released while PICO runs" );
+		settle();
+
+		// ---------------------------------------------------------
+		//	Pico 切替: Pico -> Z80 (戻り先が保持されている)
+		// ---------------------------------------------------------
+		request_pico_change( 1'b0 );
+		wait_changing();
+		wait_cpu_sel( 2'b00 );
+		check( z80_active == 1'b1, "returns to Z80 after releasing PICO" );
+		settle();
+
+		// ---------------------------------------------------------
+		//	Pico 切替: R800 -> Pico -> R800 (戻り先が保持されている)
+		// ---------------------------------------------------------
+		request_cpu_change( 1'b1 );
+		wait_changing();
+		wait_cpu_sel( 2'b01 );
+		settle();
+
+		request_pico_change( 1'b1 );
+		wait_changing();
+		wait_cpu_sel( 2'b11 );
+		check( pico_busrq_n == 1'b1 && z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0,
+				"only pico_busrq_n is released while PICO runs (from R800)" );
+		settle();
+
+		request_pico_change( 1'b0 );
+		wait_changing();
+		wait_cpu_sel( 2'b01 );
+		check( r800_active == 1'b1, "returns to R800 after releasing PICO" );
+		settle();
+
+		// ---------------------------------------------------------
+		//	cpu_pause = 1 の間はすべての busrq_n = 0 になる
+		// ---------------------------------------------------------
+		cpu_pause = 1'b1;
 		@( posedge clk );
-		bus_rdata_en = 1'b0;
-		r800_bus_valid = 1'b0;
-		r800_bus_m1 = 1'b0;
-		r800_bus_address = 16'h8888;
-		repeat( 8 ) @( posedge clk );
-
-		check( processor_mode == 1'b1, "reset selects Z80 after R800 DI fetch" );
-		check( z80_pc == 16'h0000, "Z80 starts from PC=0000h" );
-		check( r800_pc > 16'h0000, "R800 executed initial DI fetch" );
-
-		wait_z80_pc( 16'h0010 );
-		check( r800_pc == 16'h0004, "R800 remains stopped while Z80 runs" );
-		check( bus_address == z80_bus_address && bus_wdata == z80_bus_wdata, "bus mux selects Z80 signals" );
-		check( z80_bus_ready == 1'b1 && r800_bus_ready == 1'b0, "ready is returned only to Z80" );
-
-		z80_bus_valid = 1'b1;
-		request_cpu( 1'b0 );
+		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
+				"all busrq_n asserted while cpu_pause is active" );
 		repeat( 4 ) @( posedge clk );
-		check( debug_cpu_change_state == 2'b10 && processor_mode == 1'b1,
-				"Z80 to R800 switch waits for Z80 bus idle" );
-		z80_bus_valid = 1'b0;
-		wait_processor_mode( 1'b0 );
-		z80_saved_pc = z80_pc;
-		r800_saved_pc = r800_pc;
-		check( r800_pc == r800_saved_pc, "R800 resumes from preserved PC on selection" );
-		check( bus_address == r800_bus_address && bus_wdata == r800_bus_wdata, "bus mux selects R800 signals" );
-		check( z80_bus_ready == 1'b0 && r800_bus_ready == 1'b1, "ready is returned only to R800" );
-
-		wait_r800_pc( 16'h0020 );
-		check( z80_pc == z80_saved_pc, "Z80 state is held while R800 runs" );
-
-		r800_bus_valid = 1'b1;
-		request_cpu( 1'b1 );
-		repeat( 4 ) @( posedge clk );
-		check( debug_cpu_change_state == 2'b11 && processor_mode == 1'b0,
-				"R800 to Z80 switch waits for R800 bus idle" );
-		r800_bus_valid = 1'b0;
-		wait_processor_mode( 1'b1 );
-		r800_saved_pc = r800_pc;
-		check( z80_pc == z80_saved_pc, "Z80 resumes from its preserved PC" );
-		wait_z80_pc( z80_saved_pc + 16'h0008 );
-		check( r800_pc == r800_saved_pc, "R800 state is held while Z80 runs" );
-
-		request_cpu( 1'b0 );
-		wait_processor_mode( 1'b0 );
-		check( r800_pc == r800_saved_pc, "R800 resumes from its preserved PC" );
-		wait_r800_pc( r800_saved_pc + 16'h0008 );
-		check( z80_pc >= z80_saved_pc + 16'h0008, "Z80 remains at its latest preserved PC" );
+		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
+				"all busrq_n remain asserted during cpu_pause" );
+		cpu_pause = 1'b0;
+		@( posedge clk );
+		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b1 && pico_busrq_n == 1'b0,
+				"busrq_n returns to the selected CPU after cpu_pause is released" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );

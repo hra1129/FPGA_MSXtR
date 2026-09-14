@@ -1,6 +1,6 @@
 //
-//	CR800 compatible microprocessor core, asynchronous top level
-//	Copyright (c) 2002 Daniel Wallner (jesus@opencores.org)
+//	MCU (Microcontroller Unit) Bus bridge
+//	Copyright (c) 2026 Takayuki Hara
 //
 //	本ソフトウェアおよび本ソフトウェアに基づいて作成された派生物は、以下の条件を
 //	満たす場合に限り、再頒布および使用が許可されます。
@@ -60,14 +60,22 @@
 //	-- Some minor bug fixes.
 //-----------------------------------------------------------------------------
 
-module cr800_inst (
+module cmcu_inst (
 	input			reset_n		,	//	42.95454MHz (master clock) : 3.579545MHz x 12
 	input			clk			,
 	//	Timing signals
 	input	[3:0]	state_count	,	//	0..11
+	//	MCU Side interface
+	input			mcu_io		,
+	input			mcu_write	,
+	input	[19:0]	mcu_address	,
+	input			mcu_flash_en,
+	input			mcu_valid	,
+	output			mcu_ready	,
+	input	[7:0]	mcu_wdata	,
+	output	[7:0]	mcu_rdata	,
+	output			mcu_rdata_en,
 	//	Real Z80 pins
-	input			int_n		,
-	input			nmi_n		,
 	input			wait_n		,
 	output			m1_n		,
 	output			merq_n		,
@@ -83,15 +91,19 @@ module cr800_inst (
 	output			bus_write	,
 	output			bus_valid	,
 	input			bus_ready	,
-	output	[15:0]	bus_address	,
+	output			bus_flash_en,
+	output	[19:0]	bus_address	,
 	output	[7:0]	bus_wdata	,
 	input	[7:0]	bus_rdata	,
-	input			bus_rdata_en,
-	output	[15:0]	pc			,
-	output			int_ack					//	debug
+	input			bus_rdata_en
 );
-	reg					ff_enable;
-	reg					ff_m1_n;
+	reg					ff_mcu_io;
+	reg					ff_mcu_write;
+	reg		[7:0]		ff_mcu_wdata;
+	reg		[19:0]		ff_mcu_address;
+	reg					ff_mcu_flash_en;
+	reg					ff_mcu_refresh;
+
 	reg					ff_merq_n;
 	reg					ff_iorq_n;
 	reg					ff_wait_n;			//	外部からくる /WAIT信号
@@ -99,10 +111,11 @@ module cr800_inst (
 	reg					ff_rd_n;
 	reg					ff_wr_n;
 	reg					ff_rfsh_n;
+	reg		[7:0]		ff_bus_rdata;
+	reg					ff_bus_rdata_en;
 	wire	[2:0]		w_t_state;
 	wire				w_m1_n;
 	wire				w_iorq;
-	wire				w_noread;
 	wire				w_write;
 	wire				w_wait_n;
 	wire				w_rfsh_n;
@@ -111,9 +124,98 @@ module cr800_inst (
 	// ---------------------------------------------------------
 	//	T-State
 	// ---------------------------------------------------------
+	reg					ff_running;
+	reg		[2:0]		ff_t_state;
 	reg		[2:0]		ff_t_state_d;
-	wire				w_new_tstate;
-	reg					ff_new_tstate;
+	reg					ff_tw_done;
+	wire				w_finish;
+	reg		[11:0]		ff_refresh_counter;
+	wire				w_refresh_start;
+	reg					ff_busreq_n;
+	reg					ff_busack_n;
+	wire				w_mcu_ready;
+
+	assign w_mcu_ready	= ( state_count == 4'd0 ) && ~ff_running;
+	assign mcu_ready	= w_mcu_ready;
+	assign bus_address	= ff_mcu_address;
+	assign bus_wdata	= ff_mcu_wdata;
+	assign bus_flash_en	= ff_mcu_flash_en;
+	assign mcu_rdata	= ff_bus_rdata;
+	assign mcu_rdata_en	= ff_bus_rdata_en;
+
+	assign w_m1_n		= 1'b1;
+	assign w_iorq		= ff_mcu_io;
+	assign w_write		= ff_mcu_write & ~ff_mcu_refresh;
+	assign w_rfsh_n		= ~ff_mcu_refresh;
+	assign w_intcycle_n	= 1'b1;
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_running		<= 1'b0;
+			ff_mcu_io		<= 1'b0;
+			ff_mcu_write	<= 1'b0;
+			ff_mcu_wdata	<= 8'd0;
+			ff_mcu_address	<= 20'd0;
+			ff_mcu_flash_en	<= 1'b0;
+			ff_mcu_refresh	<= 1'b0;
+		end
+		else if( w_finish ) begin
+			ff_running		<= 1'b0;
+			ff_mcu_refresh	<= 1'b0;
+		end
+		else if( w_refresh_start && w_mcu_ready ) begin
+			//	Auto refresh start
+			ff_running		<= 1'b1;
+			ff_mcu_io		<= 1'b0;
+			ff_mcu_write	<= 1'b0;
+			ff_mcu_wdata	<= 8'd0;
+			ff_mcu_address	<= 20'd0;
+			ff_mcu_flash_en	<= 1'b0;
+			ff_mcu_refresh	<= 1'b1;
+		end
+		else if( mcu_valid && w_mcu_ready ) begin
+			//	MCU transaction start
+			ff_running		<= 1'b1;
+			ff_mcu_io		<= mcu_io;
+			ff_mcu_write	<= mcu_write;
+			ff_mcu_wdata	<= mcu_wdata;
+			ff_mcu_address	<= mcu_address;
+			ff_mcu_flash_en	<= mcu_flash_en;
+			ff_mcu_refresh	<= 1'b0;
+		end
+	end
+
+	assign w_finish = ( state_count == 4'd0 && ff_t_state == 3'd3 && w_wait_n );
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_t_state	<= 3'd0;
+			ff_tw_done	<= 1'b0;
+		end
+		else if( !ff_running ) begin
+			ff_tw_done <= 1'b0;
+			if( ( ( mcu_valid ) || w_refresh_start ) && state_count == 4'd0 ) begin
+				ff_t_state <= 3'd1;
+			end
+			else begin
+				ff_t_state <= 3'd0;
+			end
+		end
+		else if( state_count == 4'd0 ) begin
+			if( ff_t_state == 3'd2 && !w_wait_n && !ff_tw_done ) begin
+				// 1 Tw insertion for I/O / M1 cycle
+				ff_tw_done <= 1'b1;
+			end
+			else if( ff_t_state == 3'd3 ) begin
+				ff_t_state <= 3'd0;
+			end
+			else begin
+				ff_t_state <= ff_t_state + 3'd1;
+			end
+		end
+	end
+
+	assign w_t_state = ff_t_state;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -124,63 +226,64 @@ module cr800_inst (
 		end
 	end
 
-	assign w_new_tstate			= ( w_t_state != ff_t_state_d );
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_new_tstate <= 1'b0;
-		end
-		else if( state_count == 4'd1 ) begin
-			ff_new_tstate <= w_new_tstate;
-		end
-	end
-
 	// ---------------------------------------------------------
-	//	動作タイミング生成 3.579545MHz
+	//	Auto refresh
 	// ---------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_enable <= 1'b0;
+			ff_refresh_counter <= 12'd0;
 		end
-		else begin
-			if( state_count == 4'd11 ) begin
-				ff_enable <= 1'b1;
+		else if( w_refresh_start && !ff_running && state_count == 4'd0 ) begin
+			ff_refresh_counter <= 12'd0;
+		end
+		else if( state_count == 4'd11 ) begin
+			if( w_refresh_start ) begin
+				//	hold
 			end
 			else begin
-				ff_enable <= 1'b0;
+				ff_refresh_counter <= ff_refresh_counter + 12'd1;
 			end
 		end
 	end
+
+	assign w_refresh_start = ( ff_refresh_counter == 12'd3579 ) || !ff_busreq_n;	//	about 1msec
+
+	// ---------------------------------------------------------
+	//	Bus request handling
+	// ---------------------------------------------------------
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_busreq_n <= 1'b1;
+		end
+		else begin
+			ff_busreq_n <= busreq_n;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_busack_n <= 1'b1;
+		end
+		else if( ff_busreq_n ) begin
+			//	BUS Request inactive
+			ff_busack_n <= 1'b1;
+		end
+		else if( !ff_busreq_n && ff_mcu_refresh && w_finish ) begin
+			//	BUS Request active and MCU refresh finished
+			ff_busack_n <= 1'b0;
+		end
+	end
+
+	assign busack_n = ff_busack_n;
 
 	// ---------------------------------------------------------
 	//	/M1 signal generation
 	// ---------------------------------------------------------
-	localparam			c_m1_tstate_fall = 3'd1;
-	localparam			c_m1_cycle_fall = 4'd5;
-	localparam			c_m1_tstate_rise = 3'd3;
-	localparam			c_m1_cycle_rise = 4'd5;
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_m1_n <= 1'b1;
-		end
-		else if( w_t_state == c_m1_tstate_fall && state_count == c_m1_cycle_fall ) begin
-			ff_m1_n <= w_m1_n;
-		end
-		else if( w_t_state == c_m1_tstate_rise && state_count == c_m1_cycle_rise ) begin
-			ff_m1_n <= 1'b1;
-		end
-	end
-
-	assign m1_n = ff_m1_n;
+	assign m1_n = 1'b1;
 
 	// ---------------------------------------------------------
 	//	/MERQ signal generation
 	// ---------------------------------------------------------
-	localparam			c_merq_m1_tstate_fall = 3'd1;
-	localparam			c_merq_m1_cycle_fall = 4'd11;
-	localparam			c_merq_m1_tstate_rise = 3'd3;
-	localparam			c_merq_m1_cycle_rise = 4'd5;
 	localparam			c_merq_mem_tstate_fall = 3'd1;
 	localparam			c_merq_mem_cycle_fall = 4'd0;
 	localparam			c_merq_mem_tstate_rise = 3'd3;
@@ -190,19 +293,9 @@ module cr800_inst (
 		if( !reset_n ) begin
 			ff_merq_n <= 1'b1;
 		end
-		else if( !ff_m1_n ) begin
-			if(      w_t_state == c_merq_m1_tstate_fall && state_count == c_merq_m1_cycle_fall ) begin
-				ff_merq_n <= 1'b0;
-			end
-			else if( w_t_state == c_merq_m1_tstate_rise && state_count == c_merq_m1_cycle_rise ) begin
-				ff_merq_n <= 1'b1;
-			end
-		end
-		else if( !w_iorq ) begin
+		if( !w_iorq ) begin
 			if(      w_t_state == c_merq_mem_tstate_fall && state_count == c_merq_mem_cycle_fall ) begin
-				if( w_write || !w_noread ) begin
-					ff_merq_n <= 1'b0;
-				end
+				ff_merq_n <= 1'b0;
 			end
 			else if( w_t_state == c_merq_mem_tstate_rise && state_count == c_merq_mem_cycle_rise ) begin
 				ff_merq_n <= 1'b1;
@@ -224,8 +317,8 @@ module cr800_inst (
 		if( !reset_n ) begin
 			ff_iorq_n <= 1'b1;
 		end
-		else if( w_t_state == c_iorq_tstate_fall && state_count == c_iorq_cycle_fall && !ff_new_tstate ) begin
-			ff_iorq_n <= ~w_iorq;
+		else if( w_t_state == c_iorq_tstate_fall && state_count == c_iorq_cycle_fall ) begin
+			ff_iorq_n <= ~ff_mcu_io;
 		end
 		else if( w_t_state == c_iorq_tstate_rise && state_count == c_iorq_cycle_rise ) begin
 			ff_iorq_n <= 1'b1;
@@ -246,9 +339,12 @@ module cr800_inst (
 		if( !reset_n ) begin
 			ff_wait_n_i <= 1'b1;
 		end
-		else if( !ff_m1_n || w_iorq ) begin
-			if(      w_t_state == c_wait_tstate_fall && state_count == c_wait_cycle_fall ) begin
+		else if( w_iorq ) begin
+			if(      w_t_state == c_wait_tstate_fall && state_count == c_wait_cycle_fall && !ff_tw_done ) begin
 				ff_wait_n_i <= 1'b0;
+			end
+			else if( ff_tw_done ) begin
+				ff_wait_n_i <= 1'b1;
 			end
 			else if( w_t_state == c_wait_tstate_rise && state_count == c_wait_cycle_rise ) begin
 				ff_wait_n_i <= 1'b1;
@@ -268,15 +364,11 @@ module cr800_inst (
 		end
 	end
 
-	assign w_wait_n = ff_wait_n & ff_wait_n_i;
+	assign w_wait_n = ff_wait_n & ( ff_wait_n_i | ff_tw_done );
 
 	// ---------------------------------------------------------
 	//	/RD signal generation
 	// ---------------------------------------------------------
-	localparam			c_rd_m1_tstate_fall = 3'd1;
-	localparam			c_rd_m1_cycle_fall = 4'd11;
-	localparam			c_rd_m1_tstate_rise = 3'd3;
-	localparam			c_rd_m1_cycle_rise = 4'd5;
 	localparam			c_rd_mem_tstate_fall = 3'd2;
 	localparam			c_rd_mem_cycle_fall = 4'd1;
 	localparam			c_rd_mem_tstate_rise = 3'd3;
@@ -290,23 +382,15 @@ module cr800_inst (
 		if( !reset_n ) begin
 			ff_rd_n <= 1'b1;
 		end
-		else if( !ff_m1_n ) begin
-			if(      w_t_state == c_rd_m1_tstate_fall && state_count == c_rd_m1_cycle_fall ) begin
-				ff_rd_n <= 1'b0;
-			end
-			else if( w_t_state == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise ) begin
-				ff_rd_n <= 1'b1;
-			end
-		end
-		else if( w_iorq && !w_write ) begin
-			if(      w_t_state == c_rd_io_tstate_fall && state_count == c_rd_io_cycle_fall && !ff_new_tstate ) begin
+		if( w_iorq && !w_write ) begin
+			if(      w_t_state == c_rd_io_tstate_fall && state_count == c_rd_io_cycle_fall ) begin
 				ff_rd_n <= 1'b0;
 			end
 			else if( w_t_state == c_rd_io_tstate_rise && state_count == c_rd_io_cycle_rise ) begin
 				ff_rd_n <= 1'b1;
 			end
 		end
-		else if( !w_noread && !w_write ) begin
+		else if( !w_write ) begin
 			if(      w_t_state == c_rd_mem_tstate_fall && state_count == c_rd_mem_cycle_fall ) begin
 				ff_rd_n <= 1'b0;
 			end
@@ -335,7 +419,7 @@ module cr800_inst (
 			ff_wr_n <= 1'b1;
 		end
 		else if( w_iorq && w_write ) begin
-			if(      w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall && !ff_new_tstate ) begin
+			if(      w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall ) begin
 				ff_wr_n <= 1'b0;
 			end
 			else if( w_t_state == c_wr_io_tstate_rise && state_count == c_wr_io_cycle_rise ) begin
@@ -383,82 +467,68 @@ module cr800_inst (
 	// ---------------------------------------------------------
 	//	Internal bus interface signals
 	// ---------------------------------------------------------
+	localparam			c_rdata_en_tstate_rise = 3'd3;
+	localparam			c_rdata_en_cycle_rise = 4'd10;
 	reg					ff_bus_valid;
-	reg					ff_bus_io;
-	reg					ff_bus_write;
-	reg		[7:0]		ff_bus_rdata;
 	reg					ff_wait_bus_rdata_en;
-	localparam			c_bus_valid_tstate_rise = 3'd1;
-	localparam			c_bus_valid_cycle_rise = 3'd1;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_bus_valid			<= 1'b0;
-			ff_bus_io				<= 1'b0;
-			ff_bus_write			<= 1'b0;
 			ff_wait_bus_rdata_en	<= 1'b0;
 		end
 		else if( ff_bus_valid ) begin
 			if( bus_ready ) begin
 				ff_bus_valid			<= 1'b0;
 			end
-			else if( (ff_rd_n && ff_wr_n) || bus_rdata_en ) begin
+			else if( !ff_mcu_io && w_t_state == c_rd_mem_tstate_rise && state_count == c_rd_mem_cycle_rise ) begin
+				ff_bus_valid			<= 1'b0;
+				ff_wait_bus_rdata_en	<= 1'b0;
+			end
+			else if( ff_mcu_io && w_t_state == c_rd_io_tstate_rise && state_count == c_rd_io_cycle_rise ) begin
 				ff_bus_valid			<= 1'b0;
 				ff_wait_bus_rdata_en	<= 1'b0;
 			end
 		end
-		else if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
-			ff_bus_valid			<= !w_noread | w_write;
-			ff_bus_io				<= w_iorq;
-			ff_bus_write			<= w_write;
-			ff_wait_bus_rdata_en	<= !w_noread & !w_write;
+		else if( ff_wait_bus_rdata_en ) begin
+			if( bus_rdata_en ) begin
+				ff_wait_bus_rdata_en	<= 1'b0;
+			end
+			else if( w_t_state == c_rdata_en_tstate_rise && state_count == c_rdata_en_cycle_rise ) begin
+				ff_wait_bus_rdata_en	<= 1'b0;
+			end
+		end
+		else if( mcu_valid && w_mcu_ready ) begin
+			ff_bus_valid			<= 1'b1;
+			ff_wait_bus_rdata_en	<= !mcu_write;
 		end
 	end
 
 	assign bus_valid	= ff_bus_valid;
-	assign bus_io		= ff_bus_io;
-	assign bus_write	= ff_bus_write;
+	assign bus_io		= ff_mcu_io;
+	assign bus_write	= ff_mcu_write;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_bus_rdata <= 8'hFF;
+			ff_bus_rdata	<= 8'hFF;
+			ff_bus_rdata_en	<= 1'b0;
 		end
-		else if( bus_rdata_en ) begin
-			ff_bus_rdata <= bus_rdata;
+		else if( ff_wait_bus_rdata_en ) begin
+			if( bus_rdata_en ) begin
+				ff_bus_rdata	<= bus_rdata;
+				ff_bus_rdata_en	<= 1'b1;
+			end
+			else if( w_t_state == c_rdata_en_tstate_rise && state_count == c_rdata_en_cycle_rise ) begin
+				ff_bus_rdata	<= slot_d;
+				ff_bus_rdata_en	<= 1'b1;
+			end
+			else begin
+				ff_bus_rdata_en	<= 1'b0;
+			end
 		end
-		else if( ff_wait_bus_rdata_en && ff_rd_n ) begin
-			ff_bus_rdata <= slot_d;
+		else begin
+			ff_bus_rdata_en	<= 1'b0;
 		end
-		else if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
-			ff_bus_rdata <= 8'hFF;
-		end	
 	end
 
-	assign int_ack				= ~w_intcycle_n;
-
-	cr800 u_cr800 (
-		.reset_n		( reset_n			),
-		.clk_n			( clk				),
-		.cen			( ff_enable			),
-		.wait_n			( w_wait_n			),
-		.int_n			( int_n				),
-		.nmi_n			( nmi_n				),
-		.busrq_n		( busreq_n			),
-		.m1_n			( w_m1_n			),
-		.iorq			( w_iorq			),
-		.noread			( w_noread			),
-		.write			( w_write			),
-		.rfsh_n			( w_rfsh_n			),
-		.halt_n			( 					),
-		.busak_n		( busack_n			),
-		.a				( bus_address		),
-		.dinst			( ff_bus_rdata		),
-		.di				( ff_bus_rdata		),
-		.do				( bus_wdata			),
-		.ts				( w_t_state			),
-		.intcycle_n		( w_intcycle_n		),
-		.inte			( 					),
-		.stop			( 					),
-		.p_pc			( pc				)		//	debug
-	);
 endmodule

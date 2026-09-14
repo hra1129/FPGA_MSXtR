@@ -79,7 +79,6 @@ module cr800 (
 	input	[7:0]	dinst		,
 	input	[7:0]	di			,
 	output	[7:0]	do			,
-	output	[2:0]	mc			,
 	output	[2:0]	ts			,
 	output			intcycle_n	,
 	output			inte		,
@@ -293,6 +292,8 @@ module cr800 (
 		.write			( write				),
 		.xybit_undoc	( xybit_undoc		)
 	);
+
+	assign p_pc = pc;		//	debug
 
 	// --------------------------------------------------------------------
 	cr800_alu u_alu (
@@ -1030,6 +1031,5 @@ module cr800 (
 	assign a			= ff_a;
 	assign w_do			= (iset == 2'b00 && ir == 8'hD3 && mcycle == 3'd3 && iorq_i && write) ? acc : ff_do;
 	assign do			= w_do;
-	assign p_pc			= pc;
 	assign auto_wait	= ((intcycle || nmicycle) && mcycle == 3'd1);
 endmodule

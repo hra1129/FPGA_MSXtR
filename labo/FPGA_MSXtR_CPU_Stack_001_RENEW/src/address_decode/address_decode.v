@@ -35,7 +35,35 @@ module address_decode (
 	input	[15:0]	device_address,		//	Z80 address
 	input			device_io,			//	1: I/O access, 0: Memory access
 	input			bootrom_en,
-	input			slot3_0_selected,
+	input			[7:0]	primary_slot,
+	input			[7:0]	secondary_slot3,
+	input			[7:0]	device_ppi_rdata,
+	input				device_ppi_rdata_en,
+	input				device_ppi_ready,
+	input			[7:0]	device_mapper_rdata,
+	input				device_mapper_rdata_en,
+	input				device_mapper_ready,
+	input			[7:0]	device_secondary_rdata,
+	input				device_secondary_rdata_en,
+	input				device_secondary_ready,
+	input			[7:0]	device_ssram_rdata,
+	input				device_ssram_rdata_en,
+	input				device_ssram_ready,
+	input			[7:0]	device_rtc_rdata,
+	input				device_rtc_rdata_en,
+	input				device_rtc_ready,
+	input			[7:0]	device_system_flag_rdata,
+	input				device_system_flag_rdata_en,
+	input				device_system_flag_ready,
+	input			[7:0]	device_pause_led_rdata,
+	input				device_pause_led_rdata_en,
+	input				device_pause_led_ready,
+	input			[7:0]	device_bootrom_rdata,
+	input				device_bootrom_rdata_en,
+	input				device_bootrom_ready,
+	input			[7:0]	device_s2026_rdata,
+	input				device_s2026_rdata_en,
+	input				device_s2026_ready,
 	//	chip select outputs
 	output			bootrom_cs,
 	output			ppi_cs,
@@ -44,8 +72,52 @@ module address_decode (
 	output			rtc_cs,
 	output			system_flag_cs,
 	output			pause_led_cs,
-	output			s2026_cs
+	output			s2026_cs,
+	output			[7:0]	system_flag_offset,
+	output			[1:0]	access_primary_slot,
+	output			[1:0]	access_secondary_slot3,
+	output			slot3_0_selected,
+	output			secondary_cs,
+	output			ssram_active,
+	output			[7:0]	device_rdata,
+	output			device_rdata_en,
+	output			device_ready
 );
+	assign system_flag_offset	= device_address[7:0] - 8'hF3;
+	assign access_primary_slot	= (device_address[15:14] == 2'd0) ? primary_slot[1:0] :
+									  (device_address[15:14] == 2'd1) ? primary_slot[3:2] :
+									  (device_address[15:14] == 2'd2) ? primary_slot[5:4] : primary_slot[7:6];
+	assign access_secondary_slot3 = (device_address[15:14] == 2'd0) ? secondary_slot3[1:0] :
+										(device_address[15:14] == 2'd1) ? secondary_slot3[3:2] :
+										(device_address[15:14] == 2'd2) ? secondary_slot3[5:4] : secondary_slot3[7:6];
+	assign slot3_0_selected		= (access_primary_slot == 2'd3) && (access_secondary_slot3 == 2'd0);
+	assign secondary_cs		= ~device_io && (device_address == 16'hFFFF) &&
+								  ((primary_slot[7:6] == 2'd0) || (primary_slot[7:6] == 2'd3));
+	assign ssram_active		= ssram_cs & ~secondary_cs;
+	assign device_rdata		= device_ppi_rdata_en			? device_ppi_rdata			:
+							  device_mapper_rdata_en		? device_mapper_rdata			:
+							  device_secondary_rdata_en	? device_secondary_rdata	:
+							  device_ssram_rdata_en		? device_ssram_rdata		:
+							  device_rtc_rdata_en			? device_rtc_rdata			:
+							  device_system_flag_rdata_en	? device_system_flag_rdata	:
+							  device_pause_led_rdata_en	? device_pause_led_rdata	:
+							  device_bootrom_rdata_en	? device_bootrom_rdata		:
+							  device_s2026_rdata_en		? device_s2026_rdata		: 8'b0;
+	assign device_rdata_en		= device_ppi_rdata_en | device_mapper_rdata_en |
+							  device_ssram_rdata_en | device_secondary_rdata_en |
+							  device_rtc_rdata_en | device_system_flag_rdata_en |
+							  device_pause_led_rdata_en | device_bootrom_rdata_en |
+							  device_s2026_rdata_en;
+	assign device_ready		= ppi_cs				? device_ppi_ready		:
+							  memory_mapper_cs		? device_mapper_ready		:
+							  secondary_cs				? device_secondary_ready	:
+							  ssram_active				? device_ssram_ready		:
+							  rtc_cs					? device_rtc_ready			:
+							  system_flag_cs			? device_system_flag_ready	:
+							  pause_led_cs				? device_pause_led_ready	:
+							  bootrom_cs				? device_bootrom_ready		:
+							  s2026_cs				? device_s2026_ready		: 1'b0;
+
 	//	Memory access (page0: 0000h-3FFFh) -> BOOT ROM
 	assign bootrom_cs		= bootrom_en & ~device_io & ( device_address[15:14] == 2'd0 );
 	//	Memory access (page1-3: 4000h-FFFFh) -> Serial SRAM (via memory mapper)

@@ -240,7 +240,7 @@ module tb ();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h10 );
-			spi_send_byte( { 7'd0, owner } );
+			spi_send_byte( { 7'd0, ~owner } );
 			while( mcu_intr == 1'b0 && timeout_ns < 5000 ) begin
 				#( 10 );
 				timeout_ns = timeout_ns + 10;

@@ -6,6 +6,8 @@ vlib work
 
 vlog gowin_pll.v
 vlog ..\spi\spi.v
+vlog ..\cmcu\cmcu.v
+vlog ..\msx_bus_mux\msx_bus_mux.v
 vlog ..\pause_led\pause_led.v
 vlog ..\spi\ip_spi.v
 vlog ..\msx_slot\msx_slot_decode.v
