@@ -107,6 +107,8 @@ module cz80_inst (
 	wire				w_wait_n;
 	wire				w_rfsh_n;
 	wire				w_intcycle_n;
+	wire	[15:0]		w_bus_address;
+	reg		[15:0]		ff_bus_address;
 
 	// ---------------------------------------------------------
 	//	T-State
@@ -114,6 +116,7 @@ module cz80_inst (
 	reg		[2:0]		ff_t_state_d;
 	wire				w_new_tstate;
 	reg					ff_new_tstate;
+	reg		[15:0]		ff_refresh_address;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -361,6 +364,10 @@ module cz80_inst (
 	localparam			c_rfsh_cycle_fall = 4'd7;
 	localparam			c_rfsh_tstate_rise = 3'd1;
 	localparam			c_rfsh_cycle_rise = 4'd6;
+	localparam			c_refresh_address_tstate = 3'd3;
+	localparam			c_refresh_address_cycle = 4'd2;
+	localparam			c_bus_address_tstate = 3'd1;
+	localparam			c_bus_address_cycle = 4'd2;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -378,7 +385,26 @@ module cz80_inst (
 		end
 	end
 
-	assign rfsh_n = ff_rfsh_n;
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_refresh_address <= 16'd0;
+		end
+		else if( !w_rfsh_n && w_t_state == c_refresh_address_tstate && state_count == c_refresh_address_cycle ) begin
+			ff_refresh_address <= w_bus_address;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_bus_address <= 16'd0;
+		end
+		else if( w_t_state == c_bus_address_tstate && state_count == c_bus_address_cycle ) begin
+			ff_bus_address <= w_bus_address;
+		end
+	end
+
+	assign bus_address	= ff_rfsh_n ? ff_bus_address : ff_refresh_address;
+	assign rfsh_n		= ff_rfsh_n;
 
 	// ---------------------------------------------------------
 	//	Internal bus interface signals
@@ -451,7 +477,7 @@ module cz80_inst (
 		.rfsh_n			( w_rfsh_n			),
 		.halt_n			( 					),
 		.busak_n		( busack_n			),
-		.a				( bus_address		),
+		.a				( w_bus_address		),
 		.dinst			( ff_bus_rdata		),
 		.di				( ff_bus_rdata		),
 		.do				( bus_wdata			),

@@ -172,14 +172,14 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_mcu_rdata;
 	wire			w_mcu_rdata_en;
 
-	wire			w_pico_io;
-	wire			w_pico_write;
-	wire			w_pico_valid;
-	wire			w_pico_ready;
-	wire	[7:0]	w_pico_wdata;
-	wire	[19:0]	w_pico_address;
-	wire	[7:0]	w_pico_rdata;
-	wire			w_pico_rdata_en;
+	wire			w_pico_bus_io;
+	wire			w_pico_bus_write;
+	wire			w_pico_bus_valid;
+	wire			w_pico_bus_ready;
+	wire	[7:0]	w_pico_bus_wdata;
+	wire	[19:0]	w_pico_bus_address;
+	wire	[7:0]	w_pico_bus_rdata;
+	wire			w_pico_bus_rdata_en;
 
 	wire	[3:0]	w_keyboard_matrix_row;
 	wire	[7:0]	w_keyboard_matrix;
@@ -637,15 +637,15 @@ module fpga_msxtr_cpu_stack (
 		.busreq_n						( w_pico_busrq_n					),
 		.busack_n						( w_pico_busack_n					),
 		.slot_d							( slot_d							),
-		.bus_io							( w_pico_io							),
-		.bus_write						( w_pico_write						),
-		.bus_valid						( w_pico_valid						),
-		.bus_ready						( w_pico_ready						),
-		.bus_flash_en					( w_pico_flash_en					),
-		.bus_address					( w_pico_address					),
-		.bus_wdata						( w_pico_wdata						),
-		.bus_rdata						( w_pico_rdata						),
-		.bus_rdata_en					( w_pico_rdata_en					)
+		.bus_io							( w_pico_bus_io						),
+		.bus_write						( w_pico_bus_write					),
+		.bus_valid						( w_pico_bus_valid					),
+		.bus_ready						( w_pico_bus_ready					),
+		.bus_flash_en					( w_pico_bus_flash_en				),
+		.bus_address					( w_pico_bus_address				),
+		.bus_wdata						( w_pico_bus_wdata					),
+		.bus_rdata						( w_pico_bus_rdata					),
+		.bus_rdata_en					( w_pico_bus_rdata_en				)
 	);
 	assign w_kana_led = 1'b0;
 
@@ -748,15 +748,15 @@ module fpga_msxtr_cpu_stack (
 		.reset_n						( ff_spi_reset_n					),
 		.clk							( clk42m							),
 		.cpu_sel						( w_cpu_sel							),
-		.pico_bus_address				( w_pico_address					),
-		.pico_bus_io					( w_pico_io							),
-		.pico_bus_write					( w_pico_write						),
-		.pico_bus_valid					( w_pico_valid						),
-		.pico_bus_ready					( w_pico_ready						),
-		.pico_bus_wdata					( w_pico_wdata						),
-		.pico_bus_rdata					( w_pico_rdata						),
-		.pico_bus_rdata_en				( w_pico_rdata_en					),
-		.pico_flashrom_en				( w_pico_flash_en					),
+		.pico_bus_address				( w_pico_bus_address				),
+		.pico_bus_io					( w_pico_bus_io						),
+		.pico_bus_write					( w_pico_bus_write					),
+		.pico_bus_valid					( w_pico_bus_valid					),
+		.pico_bus_ready					( w_pico_bus_ready					),
+		.pico_bus_wdata					( w_pico_bus_wdata					),
+		.pico_bus_rdata					( w_pico_bus_rdata					),
+		.pico_bus_rdata_en				( w_pico_bus_rdata_en				),
+		.pico_flashrom_en				( w_pico_bus_flash_en				),
 		.z80_bus_address				( w_z80_bus_address					),
 		.z80_bus_io						( w_z80_bus_io						),
 		.z80_bus_write					( w_z80_bus_write					),
@@ -796,7 +796,7 @@ module fpga_msxtr_cpu_stack (
 		.z80_rd_n						( w_z80_slot_rd_n					),
 		.z80_wr_n						( w_z80_slot_wr_n					),
 		.z80_rfsh_n						( w_z80_slot_rfsh_n					),
-		.z80_address					( w_z80_slot_address				),
+		.z80_address					( w_z80_bus_address					),
 		.z80_wdata						( w_z80_slot_wdata					),
 		.z80_rdata						( w_z80_slot_rdata					),
 		.z80_flash_en					( w_z80_slot_flash_en				),
@@ -810,7 +810,7 @@ module fpga_msxtr_cpu_stack (
 		.r800_rd_n						( w_r800_slot_rd_n					),
 		.r800_wr_n						( w_r800_slot_wr_n					),
 		.r800_rfsh_n					( w_r800_slot_rfsh_n				),
-		.r800_address					( w_r800_slot_address				),
+		.r800_address					( w_r800_bus_address				),
 		.r800_wdata						( w_r800_slot_wdata					),
 		.r800_rdata						( w_r800_slot_rdata					),
 		.r800_flash_en					( w_r800_slot_flash_en				),
@@ -824,12 +824,12 @@ module fpga_msxtr_cpu_stack (
 		.pico_rd_n						( w_pico_slot_rd_n					),
 		.pico_wr_n						( w_pico_slot_wr_n					),
 		.pico_rfsh_n					( w_pico_slot_rfsh_n				),
-		.pico_address					( w_pico_slot_address				),
+		.pico_address					( w_pico_bus_address				),
 		.pico_wdata						( w_pico_slot_wdata					),
 		.pico_rdata						( w_pico_slot_rdata					),
 		.pico_flash_en					( w_pico_slot_flash_en				),
-		.pico_bus_io					( w_pico_io							),
-		.pico_bus_write					( w_pico_write						),
+		.pico_bus_io					( w_pico_bus_io						),
+		.pico_bus_write					( w_pico_bus_write					),
 		.slot_m1_n						( slot_m1_n							),
 		.slot_oe_n						( slot_oe_n							),
 		.slot_clock_n					( slot_clock_n						),
