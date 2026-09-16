@@ -109,6 +109,7 @@ module cz80_inst (
 	wire				w_intcycle_n;
 	wire	[15:0]		w_bus_address;
 	reg		[15:0]		ff_bus_address;
+	reg					ff_bus_m1_n;
 
 	// ---------------------------------------------------------
 	//	T-State
@@ -159,9 +160,11 @@ module cz80_inst (
 	//	/M1 signal generation
 	// ---------------------------------------------------------
 	localparam			c_m1_tstate_fall = 3'd1;
-	localparam			c_m1_cycle_fall = 4'd5;
+	localparam			c_m1_cycle_fall = 4'd1;
 	localparam			c_m1_tstate_rise = 3'd3;
-	localparam			c_m1_cycle_rise = 4'd5;
+	localparam			c_m1_cycle_rise = 4'd1;
+	localparam			c_bus_m1_tstate_rise = 3'd3;
+	localparam			c_bus_m1_cycle_rise = 4'd11;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -175,19 +178,35 @@ module cz80_inst (
 		end
 	end
 
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_bus_m1_n <= 1'b1;
+		end
+		else if( ff_bus_m1_n ) begin
+			if( w_t_state == c_m1_tstate_fall && state_count == c_m1_cycle_fall ) begin
+				ff_bus_m1_n <= w_m1_n;
+			end
+		end
+		else begin
+			if( w_t_state == c_bus_m1_tstate_rise && state_count == c_bus_m1_cycle_rise ) begin
+				ff_bus_m1_n <= 1'b1;
+			end
+		end
+	end
+
 	assign m1_n = ff_m1_n;
 
 	// ---------------------------------------------------------
 	//	/MERQ signal generation
 	// ---------------------------------------------------------
 	localparam			c_merq_m1_tstate_fall = 3'd1;
-	localparam			c_merq_m1_cycle_fall = 4'd11;
+	localparam			c_merq_m1_cycle_fall = 4'd6;
 	localparam			c_merq_m1_tstate_rise = 3'd3;
-	localparam			c_merq_m1_cycle_rise = 4'd5;
+	localparam			c_merq_m1_cycle_rise = 4'd1;
 	localparam			c_merq_mem_tstate_fall = 3'd1;
-	localparam			c_merq_mem_cycle_fall = 4'd0;
+	localparam			c_merq_mem_cycle_fall = 4'd2;
 	localparam			c_merq_mem_tstate_rise = 3'd3;
-	localparam			c_merq_mem_cycle_rise = 4'd8;
+	localparam			c_merq_mem_cycle_rise = 4'd2;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -219,15 +238,15 @@ module cz80_inst (
 	//	/IORQ signal generation
 	// ---------------------------------------------------------
 	localparam			c_iorq_tstate_fall = 3'd1;
-	localparam			c_iorq_cycle_fall = 4'd4;
+	localparam			c_iorq_cycle_fall = 4'd0;
 	localparam			c_iorq_tstate_rise = 3'd3;
-	localparam			c_iorq_cycle_rise = 4'd11;
+	localparam			c_iorq_cycle_rise = 4'd6;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_iorq_n <= 1'b1;
 		end
-		else if( w_t_state == c_iorq_tstate_fall && state_count == c_iorq_cycle_fall && !ff_new_tstate ) begin
+		else if( w_t_state == c_iorq_tstate_fall && state_count == c_iorq_cycle_fall ) begin
 			ff_iorq_n <= ~w_iorq;
 		end
 		else if( w_t_state == c_iorq_tstate_rise && state_count == c_iorq_cycle_rise ) begin
@@ -241,19 +260,19 @@ module cz80_inst (
 	//	/WAIT signal generation
 	// ---------------------------------------------------------
 	localparam			c_wait_tstate_fall = 3'd2;
-	localparam			c_wait_cycle_fall = 4'd0;
-	localparam			c_wait_tstate_rise = 3'd3;
-	localparam			c_wait_cycle_rise = 4'd11;
+	localparam			c_wait_cycle_fall = 4'd6;
+	localparam			c_wait_tstate_rise = 3'd2;
+	localparam			c_wait_cycle_rise = 4'd6;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_wait_n_i <= 1'b1;
 		end
-		else if( !ff_m1_n || w_iorq ) begin
-			if(      w_t_state == c_wait_tstate_fall && state_count == c_wait_cycle_fall ) begin
+		else if( !ff_m1_n ) begin
+			if(      w_t_state == c_wait_tstate_fall && state_count == c_wait_cycle_fall && ff_new_tstate ) begin
 				ff_wait_n_i <= 1'b0;
 			end
-			else if( w_t_state == c_wait_tstate_rise && state_count == c_wait_cycle_rise ) begin
+			else if( w_t_state == c_wait_tstate_rise && state_count == c_wait_cycle_rise && !ff_new_tstate ) begin
 				ff_wait_n_i <= 1'b1;
 			end
 		end
@@ -277,17 +296,17 @@ module cz80_inst (
 	//	/RD signal generation
 	// ---------------------------------------------------------
 	localparam			c_rd_m1_tstate_fall = 3'd1;
-	localparam			c_rd_m1_cycle_fall = 4'd11;
+	localparam			c_rd_m1_cycle_fall = 4'd7;
 	localparam			c_rd_m1_tstate_rise = 3'd3;
-	localparam			c_rd_m1_cycle_rise = 4'd5;
-	localparam			c_rd_mem_tstate_fall = 3'd2;
-	localparam			c_rd_mem_cycle_fall = 4'd1;
+	localparam			c_rd_m1_cycle_rise = 4'd1;
+	localparam			c_rd_mem_tstate_fall = 3'd1;
+	localparam			c_rd_mem_cycle_fall = 4'd2;
 	localparam			c_rd_mem_tstate_rise = 3'd3;
-	localparam			c_rd_mem_cycle_rise = 4'd0;
+	localparam			c_rd_mem_cycle_rise = 4'd2;
 	localparam			c_rd_io_tstate_fall = 3'd1;
-	localparam			c_rd_io_cycle_fall = 4'd4;
+	localparam			c_rd_io_cycle_fall = 4'd0;
 	localparam			c_rd_io_tstate_rise = 3'd3;
-	localparam			c_rd_io_cycle_rise = 4'd11;
+	localparam			c_rd_io_cycle_rise = 4'd6;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -325,20 +344,20 @@ module cz80_inst (
 	//	/WR signal generation
 	// ---------------------------------------------------------
 	localparam			c_wr_mem_tstate_fall = 3'd2;
-	localparam			c_wr_mem_cycle_fall = 4'd11;
+	localparam			c_wr_mem_cycle_fall = 4'd6;
 	localparam			c_wr_mem_tstate_rise = 3'd3;
-	localparam			c_wr_mem_cycle_rise = 4'd10;
+	localparam			c_wr_mem_cycle_rise = 4'd5;
 	localparam			c_wr_io_tstate_fall = 3'd1;
-	localparam			c_wr_io_cycle_fall = 4'd4;
+	localparam			c_wr_io_cycle_fall = 4'd11;
 	localparam			c_wr_io_tstate_rise = 3'd3;
-	localparam			c_wr_io_cycle_rise = 4'd11;
+	localparam			c_wr_io_cycle_rise = 4'd5;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_wr_n <= 1'b1;
 		end
 		else if( w_iorq && w_write ) begin
-			if(      w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall && !ff_new_tstate ) begin
+			if(      w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall ) begin
 				ff_wr_n <= 1'b0;
 			end
 			else if( w_t_state == c_wr_io_tstate_rise && state_count == c_wr_io_cycle_rise ) begin
@@ -361,27 +380,23 @@ module cz80_inst (
 	//	/RFSH signal generation
 	// ---------------------------------------------------------
 	localparam			c_rfsh_tstate_fall = 3'd3;
-	localparam			c_rfsh_cycle_fall = 4'd7;
-	localparam			c_rfsh_tstate_rise = 3'd1;
-	localparam			c_rfsh_cycle_rise = 4'd6;
+	localparam			c_rfsh_cycle_fall = 4'd2;
+	localparam			c_rfsh_tstate_rise = 3'd4;
+	localparam			c_rfsh_cycle_rise = 4'd11;
 	localparam			c_refresh_address_tstate = 3'd3;
-	localparam			c_refresh_address_cycle = 4'd2;
+	localparam			c_refresh_address_cycle = 4'd7;
 	localparam			c_bus_address_tstate = 3'd1;
-	localparam			c_bus_address_cycle = 4'd2;
+	localparam			c_bus_address_cycle = 4'd1;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_rfsh_n <= 1'b1;
 		end
-		else if( !w_rfsh_n ) begin
-			if( w_t_state == c_rfsh_tstate_fall && state_count == c_rfsh_cycle_fall ) begin
-				ff_rfsh_n <= 1'b0;
-			end
+		else if( w_t_state == c_rfsh_tstate_fall && state_count == c_rfsh_cycle_fall && !ff_bus_m1_n ) begin
+			ff_rfsh_n <= 1'b0;
 		end
-		else if( !ff_rfsh_n ) begin
-			if( w_t_state == c_rfsh_tstate_rise && state_count == c_rfsh_cycle_rise ) begin
-				ff_rfsh_n <= 1'b1;
-			end
+		else if( w_t_state == c_rfsh_tstate_rise && state_count == c_rfsh_cycle_rise ) begin
+			ff_rfsh_n <= 1'b1;
 		end
 	end
 
@@ -413,54 +428,90 @@ module cz80_inst (
 	reg					ff_bus_io;
 	reg					ff_bus_write;
 	reg		[7:0]		ff_bus_rdata;
+	reg		[7:0]		ff_bus_wdata;
+	wire	[7:0]		w_bus_wdata;
 	reg					ff_wait_bus_rdata_en;
 	localparam			c_bus_valid_tstate_rise = 3'd1;
-	localparam			c_bus_valid_cycle_rise = 3'd1;
+	localparam			c_bus_valid_cycle_rise = 4'd1;
+	localparam			c_bus_valid_tstate_fall = 3'd2;
+	localparam			c_bus_valid_cycle_fall = 4'd11;
+	localparam			c_bus_valid_mem_tstate_rise = 3'd1;
+	localparam			c_bus_valid_mem_cycle_rise = 4'd1;
+	localparam			c_bus_valid_mem_tstate_fall = 3'd2;
+	localparam			c_bus_valid_mem_cycle_fall = 4'd0;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_bus_valid			<= 1'b0;
 			ff_bus_io				<= 1'b0;
 			ff_bus_write			<= 1'b0;
+			ff_bus_rdata			<= 8'hFF;
 			ff_wait_bus_rdata_en	<= 1'b0;
 		end
-		else if( ff_bus_valid ) begin
-			if( bus_ready ) begin
-				ff_bus_valid			<= 1'b0;
-			end
-			else if( (ff_rd_n && ff_wr_n) || bus_rdata_en ) begin
+		else if( ff_wait_bus_rdata_en ) begin
+			if( bus_rdata_en ) begin
 				ff_bus_valid			<= 1'b0;
 				ff_wait_bus_rdata_en	<= 1'b0;
+				ff_bus_rdata			<= bus_rdata;
+			end
+			else if( !ff_m1_n || ff_bus_io ) begin 
+				if( w_t_state == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall && !ff_new_tstate ) begin
+					//	タイムアウト処理 (M1サイクル・I/Oサイクル)
+					//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
+					//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
+					ff_bus_valid			<= 1'b0;
+					ff_wait_bus_rdata_en	<= 1'b0;
+					ff_bus_rdata			<= slot_d;
+				end
+			end
+			else begin
+				if( w_t_state == c_bus_valid_mem_tstate_fall && state_count == c_bus_valid_mem_cycle_fall ) begin
+					//	タイムアウト処理（メモリサイクル）
+					//	こちらは、/MERQ, /RD のうち /MERQ の方が早く立ち上がるため、そのタイミングでラッチ。
+					ff_bus_valid			<= 1'b0;
+					ff_wait_bus_rdata_en	<= 1'b0;
+					ff_bus_rdata			<= slot_d;
+				end
+			end
+
+			if( ff_bus_valid && bus_ready ) begin
+				ff_bus_valid			<= 1'b0;
 			end
 		end
-		else if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
-			ff_bus_valid			<= !w_noread | w_write;
-			ff_bus_io				<= w_iorq;
-			ff_bus_write			<= w_write;
-			ff_wait_bus_rdata_en	<= !w_noread & !w_write;
+		else if( ff_bus_valid && bus_ready ) begin
+			ff_bus_valid			<= 1'b0;
+		end
+		else if( w_t_state == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall ) begin
+			//	撤収処理
+			ff_wait_bus_rdata_en		<= 1'b0;
+			ff_bus_valid				<= 1'b0;
+			ff_bus_io					<= 1'b0;
+			ff_bus_write				<= 1'b0;
+		end
+		else if( w_write && w_t_state == c_bus_valid_mem_tstate_rise && state_count == c_bus_valid_mem_cycle_rise && !ff_new_tstate ) begin
+			//	リクエスト開始
+			ff_wait_bus_rdata_en		<= 1'b0;
+			ff_bus_valid				<= 1'b1;
+			ff_bus_io					<= w_iorq;
+			ff_bus_write				<= 1'b1;
+			ff_bus_rdata				<= 8'hFF;
+			ff_bus_wdata				<= w_bus_wdata;
+		end
+		else if( !w_write && w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
+			//	リクエスト開始
+			ff_wait_bus_rdata_en		<= !w_noread;
+			ff_bus_valid				<= !w_noread;
+			ff_bus_io					<= w_iorq;
+			ff_bus_write				<= 1'b0;
+			ff_bus_rdata				<= 8'hFF;
 		end
 	end
 
-	assign bus_valid	= ff_bus_valid;
-	assign bus_io		= ff_bus_io;
-	assign bus_write	= ff_bus_write;
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_bus_rdata <= 8'hFF;
-		end
-		else if( bus_rdata_en ) begin
-			ff_bus_rdata <= bus_rdata;
-		end
-		else if( ff_wait_bus_rdata_en && ff_rd_n ) begin
-			ff_bus_rdata <= slot_d;
-		end
-		else if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
-			ff_bus_rdata <= 8'hFF;
-		end	
-	end
-
-	assign int_ack				= ~w_intcycle_n;
+	assign bus_valid		= ff_bus_valid;
+	assign bus_io			= ff_bus_io;
+	assign bus_write		= ff_bus_write;
+	assign bus_wdata		= ff_bus_wdata;
+	assign int_ack			= ~w_intcycle_n;
 
 	cz80 u_cz80 (
 		.reset_n		( reset_n			),
@@ -480,7 +531,7 @@ module cz80_inst (
 		.a				( w_bus_address		),
 		.dinst			( ff_bus_rdata		),
 		.di				( ff_bus_rdata		),
-		.do				( bus_wdata			),
+		.do				( w_bus_wdata		),
 		.ts				( w_t_state			),
 		.intcycle_n		( w_intcycle_n		),
 		.inte			( 					),

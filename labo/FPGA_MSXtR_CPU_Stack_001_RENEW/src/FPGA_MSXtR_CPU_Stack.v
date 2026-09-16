@@ -513,10 +513,11 @@ module fpga_msxtr_cpu_stack (
 			ff_slot_clock_n <= 1'b0;
 		end
 		else begin
-			if( ff_3_579m == 4'd0 ) begin
+			//	cz80コアが出す信号と合わせて反転のタイミングを決定している
+			if( ff_3_579m == 4'd7 ) begin
 				ff_slot_clock_n <= 1'b1;
 			end
-			else if( ff_3_579m == 4'd6 ) begin
+			else if( ff_3_579m == 4'd1 ) begin
 				ff_slot_clock_n <= 1'b0;
 			end
 		end
@@ -557,8 +558,6 @@ module fpga_msxtr_cpu_stack (
 
 	always @( posedge clk42m ) begin
 		ff_clock_reset_n		<= w_msx_reset_n;
-		ff_z80_reset_n			<= w_msx_reset_n;
-		ff_r800_reset_n			<= w_msx_reset_n;
 		ff_s2026_reset_n		<= w_msx_reset_n;
 		ff_slot_reset_n			<= w_msx_reset_n;
 //		ff_extio_reset_n		<= 1'b0;
@@ -572,6 +571,17 @@ module fpga_msxtr_cpu_stack (
 		ff_system_flag_reset_n	<= w_msx_reset_n;
 		ff_pause_led_reset_n	<= w_msx_reset_n;
 //		ff_uart_reset_n			<= 1'b0;
+	end
+
+	always @( posedge clk42m ) begin
+		if( w_ssram_startup_busy ) begin
+			ff_z80_reset_n			<= 1'b0;
+			ff_r800_reset_n			<= 1'b0;
+		end
+		else begin
+			ff_z80_reset_n			<= w_msx_reset_n;
+			ff_r800_reset_n			<= w_msx_reset_n;
+		end
 	end
 
 	// --------------------------------------------------------------------

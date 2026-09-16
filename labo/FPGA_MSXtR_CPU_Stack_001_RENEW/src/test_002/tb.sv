@@ -149,7 +149,8 @@ module tb ();
 	ssram_test_model u_sram_chip3 ( .sclk( sram_sclk ), .cs_n( sram_ce3_n ), .sio( sram_sio ) );
 
 	flashrom_test_model #(
-		.IMAGE_FILE( "..\\..\\..\\..\\controller\\bios_image_tool\\msxtr.rom" )
+//		.IMAGE_FILE( "..\\..\\..\\..\\controller\\bios_image_tool\\msxtr.rom" )
+		.IMAGE_FILE( "..\\..\\..\\..\\controller\\bios_image_tool\\msx1.rom" )
 	) u_flashrom0 (
 		.ce_n( slot_rom0_ce_n ),
 		.oe_n( slot_rd_n ),
