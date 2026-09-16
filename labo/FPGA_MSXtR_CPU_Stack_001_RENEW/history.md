@@ -244,3 +244,46 @@ Slot Board 接続時、オンボード ROM (Main ROM / Sub ROM) や漢字 ROM �
 - labo/FPGA_MSXtR_CPU_Stack_001/src/test_003/ — BootROM CPU切替統合テスト (新規)
 - controller/FPGA_MSXtR_Stack_Controller_001/fpga_io.h, fpga_io.c — 23byteデバッグデコード、コマンド11h LED取得
 - controller/FPGA_MSXtR_Stack_Controller_001/fpga_msxtr_controller.c — 4キーダンプ表示拡充、LED状態反映
+
+---
+
+## 2026-09-17 作業履歴 (FPGA_MSXtR_CPU_Stack_001_RENEW: CZ80 即値ロードの読み出しデータ保持)
+
+### 症状
+
+`LD A,82h` (opcode `3Eh`) を実行しても、CZ80 内部の A レジスタ `acc` に
+即値 `82h` が取り込まれない。
+
+### 原因
+
+`cz80.v` では、メモリリードサイクルの完了後、次マシンサイクルの T1 で
+登録済みの `read_to_reg_r` に従い `acc <= save_mux` を実行する。
+このとき `save_mux` は `di` 入力を参照する。
+
+一方、`cz80_inst.v` では次マシンサイクルの T1 冒頭で新しい `bus_valid` を
+発行するため、同時に `ff_bus_rdata <= 8'hFF` で読み出しデータを初期化していた。
+結果として、前マシンサイクルで取得した即値ではなく `FFh` が `di` に渡されていた。
+
+### 修正
+
+- `cz80_inst.v` に `ff_di` を追加。
+- 各 T1 の開始 (`w_t_state == 3'd1`, `state_count == 4'd1`) で、初期化前の
+  `ff_bus_rdata` を `ff_di` へ退避。
+- `cz80` の `dinst` は従来どおり最新の `ff_bus_rdata` を接続し、命令フェッチの
+  T2 デコードを維持。
+- `di` は T1 中のみ `ff_di` を接続し、T2/T3 は従来どおり `ff_bus_rdata` を接続。
+  これにより T1 で行う前サイクルの書き戻しは保持値を使いつつ、T2/T3 で即値・分岐
+  オフセット・アドレス値を参照する既存動作を維持した。
+- バス要求の発行タイミングおよび CPU の停止/Tw 挿入は変更していない。
+
+### 検証
+
+- `src/cz80/test_001/run.bat`: `DI; LD A,82h; JP loop` の回帰を追加し、
+  `acc=82` を確認。
+- `src/test_002/run.bat`: コンパイルエラー・警告なし、`All tests PASSED`。
+
+### 関連ファイル
+
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/cz80_inst.v — `ff_di` と T1 時の `di` 選択を追加
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/test_001/test_program.asm — `LD A,82h` 回帰プログラム
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/test_001/tb.sv — `acc == 8'h82` の検証を追加

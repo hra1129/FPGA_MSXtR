@@ -1,2 +1,2 @@
-LOOP equ 0bh
+LOOP equ 03h
 START equ 00h

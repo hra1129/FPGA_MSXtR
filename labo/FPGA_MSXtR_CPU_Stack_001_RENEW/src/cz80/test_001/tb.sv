@@ -195,6 +195,12 @@ module tb;
 		// Wait for simulation
 		repeat( 5000 ) @( posedge clk );
 
+		$display( "acc=%02h", u_cz80_inst.u_cz80.acc );
+		if( u_cz80_inst.u_cz80.acc !== 8'h82 ) begin
+			$display( "FAIL: LD A, n loaded %02h instead of 82h.", u_cz80_inst.u_cz80.acc );
+			$fatal;
+		end
+
 		$display( "Simulation finished." );
 		$finish;
 	end

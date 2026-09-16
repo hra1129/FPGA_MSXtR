@@ -428,8 +428,10 @@ module cz80_inst (
 	reg					ff_bus_io;
 	reg					ff_bus_write;
 	reg		[7:0]		ff_bus_rdata;
+	reg		[7:0]		ff_di;
 	reg		[7:0]		ff_bus_wdata;
 	wire	[7:0]		w_bus_wdata;
+	wire	[7:0]		w_cz80_di;
 	reg					ff_wait_bus_rdata_en;
 	localparam			c_bus_valid_tstate_rise = 3'd1;
 	localparam			c_bus_valid_cycle_rise = 4'd1;
@@ -446,64 +448,69 @@ module cz80_inst (
 			ff_bus_io				<= 1'b0;
 			ff_bus_write			<= 1'b0;
 			ff_bus_rdata			<= 8'hFF;
+			ff_di					<= 8'hFF;
 			ff_wait_bus_rdata_en	<= 1'b0;
 		end
-		else if( ff_wait_bus_rdata_en ) begin
-			if( bus_rdata_en ) begin
-				ff_bus_valid			<= 1'b0;
-				ff_wait_bus_rdata_en	<= 1'b0;
-				ff_bus_rdata			<= bus_rdata;
+		else begin
+			if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
+				ff_di <= ff_bus_rdata;
 			end
-			else if( !ff_m1_n || ff_bus_io ) begin 
-				if( w_t_state == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall && !ff_new_tstate ) begin
-					//	タイムアウト処理 (M1サイクル・I/Oサイクル)
-					//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
-					//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
+
+			if( ff_wait_bus_rdata_en ) begin
+				if( bus_rdata_en ) begin
 					ff_bus_valid			<= 1'b0;
 					ff_wait_bus_rdata_en	<= 1'b0;
-					ff_bus_rdata			<= slot_d;
+					ff_bus_rdata			<= bus_rdata;
 				end
-			end
-			else begin
-				if( w_t_state == c_bus_valid_mem_tstate_fall && state_count == c_bus_valid_mem_cycle_fall ) begin
+				else if( !ff_m1_n || ff_bus_io ) begin
+					if( w_t_state == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall && !ff_new_tstate ) begin
+						//	タイムアウト処理 (M1サイクル・I/Oサイクル)
+						//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
+						//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
+						ff_bus_valid			<= 1'b0;
+						ff_wait_bus_rdata_en	<= 1'b0;
+						ff_bus_rdata			<= slot_d;
+					end
+				end
+				else if( w_t_state == c_bus_valid_mem_tstate_fall && state_count == c_bus_valid_mem_cycle_fall ) begin
 					//	タイムアウト処理（メモリサイクル）
 					//	こちらは、/MERQ, /RD のうち /MERQ の方が早く立ち上がるため、そのタイミングでラッチ。
 					ff_bus_valid			<= 1'b0;
 					ff_wait_bus_rdata_en	<= 1'b0;
 					ff_bus_rdata			<= slot_d;
 				end
-			end
 
-			if( ff_bus_valid && bus_ready ) begin
+				if( ff_bus_valid && bus_ready ) begin
+					ff_bus_valid			<= 1'b0;
+				end
+			end
+			else if( ff_bus_valid && bus_ready ) begin
 				ff_bus_valid			<= 1'b0;
 			end
-		end
-		else if( ff_bus_valid && bus_ready ) begin
-			ff_bus_valid			<= 1'b0;
-		end
-		else if( w_t_state == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall ) begin
-			//	撤収処理
-			ff_wait_bus_rdata_en		<= 1'b0;
-			ff_bus_valid				<= 1'b0;
-			ff_bus_io					<= 1'b0;
-			ff_bus_write				<= 1'b0;
-		end
-		else if( w_write && w_t_state == c_bus_valid_mem_tstate_rise && state_count == c_bus_valid_mem_cycle_rise && !ff_new_tstate ) begin
-			//	リクエスト開始
-			ff_wait_bus_rdata_en		<= 1'b0;
-			ff_bus_valid				<= 1'b1;
-			ff_bus_io					<= w_iorq;
-			ff_bus_write				<= 1'b1;
-			ff_bus_rdata				<= 8'hFF;
-			ff_bus_wdata				<= w_bus_wdata;
-		end
-		else if( !w_write && w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
-			//	リクエスト開始
-			ff_wait_bus_rdata_en		<= !w_noread;
-			ff_bus_valid				<= !w_noread;
-			ff_bus_io					<= w_iorq;
-			ff_bus_write				<= 1'b0;
-			ff_bus_rdata				<= 8'hFF;
+			else if( w_t_state == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall ) begin
+				//	撤収処理
+				ff_wait_bus_rdata_en		<= 1'b0;
+				ff_bus_valid				<= 1'b0;
+				ff_bus_io					<= 1'b0;
+				ff_bus_write				<= 1'b0;
+			end
+			else if( w_write && w_t_state == c_bus_valid_mem_tstate_rise && state_count == c_bus_valid_mem_cycle_rise && !ff_new_tstate ) begin
+				//	リクエスト開始
+				ff_wait_bus_rdata_en		<= 1'b0;
+				ff_bus_valid				<= 1'b1;
+				ff_bus_io					<= w_iorq;
+				ff_bus_write				<= 1'b1;
+				ff_bus_rdata				<= 8'hFF;
+				ff_bus_wdata				<= w_bus_wdata;
+			end
+			else if( !w_write && w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
+				//	リクエスト開始
+				ff_wait_bus_rdata_en		<= !w_noread;
+				ff_bus_valid				<= !w_noread;
+				ff_bus_io					<= w_iorq;
+				ff_bus_write				<= 1'b0;
+				ff_bus_rdata				<= 8'hFF;
+			end
 		end
 	end
 
@@ -512,6 +519,7 @@ module cz80_inst (
 	assign bus_write		= ff_bus_write;
 	assign bus_wdata		= ff_bus_wdata;
 	assign int_ack			= ~w_intcycle_n;
+	assign w_cz80_di		= (w_t_state == 3'd1) ? ff_di : ff_bus_rdata;
 
 	cz80 u_cz80 (
 		.reset_n		( reset_n			),
@@ -530,7 +538,7 @@ module cz80_inst (
 		.busak_n		( busack_n			),
 		.a				( w_bus_address		),
 		.dinst			( ff_bus_rdata		),
-		.di				( ff_bus_rdata		),
+		.di				( w_cz80_di			),
 		.do				( w_bus_wdata		),
 		.ts				( w_t_state			),
 		.intcycle_n		( w_intcycle_n		),

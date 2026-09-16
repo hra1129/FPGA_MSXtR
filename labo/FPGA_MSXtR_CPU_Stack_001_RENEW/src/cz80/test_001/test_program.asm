@@ -6,9 +6,6 @@
 			org		0x0000
 start:
 			di
-			ld		a, [0x0000]
-			ld		[0x1000], a
-			out		[0x98], a
-			in		a, [0x98]
+			ld		a, 0x82
 loop:
 			jp		loop
