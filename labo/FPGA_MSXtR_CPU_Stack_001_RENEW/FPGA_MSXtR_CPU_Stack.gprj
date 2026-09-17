@@ -10,6 +10,7 @@
         <File path="src/bootrom/bootrom.v" type="file.verilog" enable="1"/>
         <File path="src/bootrom/ram.v" type="file.verilog" enable="1"/>
         <File path="src/bootrom/rom.v" type="file.verilog" enable="1"/>
+        <File path="src/cmcu/cmcu.v" type="file.verilog" enable="1"/>
         <File path="src/cr800/cr800.v" type="file.verilog" enable="1"/>
         <File path="src/cr800/cr800_alu.v" type="file.verilog" enable="1"/>
         <File path="src/cr800/cr800_inst.v" type="file.verilog" enable="1"/>
