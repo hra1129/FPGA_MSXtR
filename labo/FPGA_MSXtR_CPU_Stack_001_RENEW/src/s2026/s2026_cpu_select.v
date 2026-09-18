@@ -36,15 +36,15 @@ module s2026_cpu_select (
 	input			msx_reset_n,
 	input			clk,
 	input			cpu_pause,
-	//	Z80 CPU bus signals
-	output			z80_busrq_n,
-	input			z80_busak_n,
-	//	R800 CPU bus signals
-	output			r800_busrq_n,
-	input			r800_busak_n,
-	//	Pico bus signals
-	output			pico_busrq_n,
-	input			pico_busak_n,
+	//	Z80 CPU run control (busrq/busakは使わず、コア側でM1境界に停止する方式)
+	output			z80_run_req,
+	input			z80_run_ack,
+	//	R800 CPU run control
+	output			r800_run_req,
+	input			r800_run_ack,
+	//	Pico run control (バスアイドル地点で停止する方式)
+	output			pico_run_req,
+	input			pico_run_ack,
 	input			pico_change_req,
 	input			pico_change_target,
 	//	CPU change control (from s2026_register)
@@ -64,9 +64,11 @@ module s2026_cpu_select (
 	reg				ff_state1 = ST_IDLE;
 	reg		[1:0]	ff_cpu_sel = 2'b00;
 	reg		[1:0]	ff_target_sel = 2'b00;
-	wire			w_all_busak_n;
+	wire			w_all_stopped;
 
-	assign w_all_busak_n = !(z80_busak_n & msx_reset_n) && !(r800_busak_n & msx_reset_n) && !pico_busak_n;
+	//	切替中はz80/r800/picoすべてのrun_reqを落とし、3者ともM1境界/バスアイドル地点で
+	//	停止(run_ack=0)したことを確認してから切替先だけを再稼働させる。
+	assign w_all_stopped = ( !z80_run_ack || !msx_reset_n ) && ( !r800_run_ack || !msx_reset_n ) && !pico_run_ack;
 
 	// ---------------------------------------------------------
 	//	CPU/Pico change state machine
@@ -81,12 +83,12 @@ module s2026_cpu_select (
 		else if( ff_state0 == ST_IDLE ) begin
 			if( cpu_change_req ) begin
 				ff_state0			<= ST_CHANGING;
-				ff_target_sel[0]	<= cpu_change_target;
+				ff_target_sel[0]	<= ~cpu_change_target;
 			end
 		end
 		else begin
-			//	ST_CHANGING: すべての busak_n が返るまで待ってから切り替える
-			if( w_all_busak_n ) begin
+			//	ST_CHANGING: z80/r800/picoすべてが停止(run_ack=0)するまで待ってから切り替える
+			if( w_all_stopped ) begin
 				ff_cpu_sel[0]	<= ff_target_sel[0];
 				ff_state0		<= ST_IDLE;
 			end
@@ -107,8 +109,8 @@ module s2026_cpu_select (
 			end
 		end
 		else begin
-			//	ST_CHANGING: すべての busak_n が返るまで待ってから切り替える
-			if( w_all_busak_n ) begin
+			//	ST_CHANGING: z80/r800/picoすべてが停止(run_ack=0)するまで待ってから切り替える
+			if( w_all_stopped ) begin
 				ff_cpu_sel[1]	<= ff_target_sel[1];
 				ff_state1		<= ST_IDLE;
 			end
@@ -118,12 +120,12 @@ module s2026_cpu_select (
 	// ---------------------------------------------------------
 	//	Output assignments
 	// ---------------------------------------------------------
-	assign z80_busrq_n		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ( ff_cpu_sel == 2'b00 ) );
-	assign r800_busrq_n		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ( ff_cpu_sel == 2'b01 ) );
-	assign pico_busrq_n		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ff_cpu_sel[1] );
+	assign z80_run_req		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ( ff_cpu_sel == 2'b00 ) );
+	assign r800_run_req		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ( ff_cpu_sel == 2'b01 ) );
+	assign pico_run_req		= cpu_pause ? 1'b0 : ( ( ff_state0 == ST_CHANGING || ff_state1 == ST_CHANGING ) ? 1'b0 : ff_cpu_sel[1] );
 
 	assign z80_active		= ( ff_cpu_sel == 2'b00 );
 	assign r800_active		= ( ff_cpu_sel == 2'b01 );
-	assign processor_mode	= ff_cpu_sel[0];
+	assign processor_mode	= ~ff_cpu_sel[0];
 	assign cpu_sel			= ff_cpu_sel;
 endmodule

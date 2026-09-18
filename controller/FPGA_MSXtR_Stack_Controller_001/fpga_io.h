@@ -39,7 +39,7 @@
 #define IO_VDP_PORT3				0x9B
 #define IO_VDP_PORT4				0x9C
 
-//	SPIコマンド0Ahが返す診断22byteと通信確認パターン
+//	SPIコマンド0Ahが返す診断20byteと通信確認パターン
 typedef struct {
 	uint16_t	z80_pc;
 	uint8_t		primary_slot;
@@ -48,16 +48,15 @@ typedef struct {
 	uint8_t		slot_decode_status;	//	bit1:0:primary bit3:2:secondary bit5:4:page bit6:io bit7:write
 	uint8_t		slot_select_status;	//	bit3:0:sltsl3_n..0_n bit4:cs1_n bit5:cs2_n bit6:cs12_n bit7:busdir
 	uint8_t		slot_bus_status;	//	bit0:m1_n bit1:merq_n bit2:iorq_n bit3:rd_n bit4:wr_n bit5:rom0_ce_n bit6:rom1_ce_n bit7:data_dir
-	uint8_t		interrupt_status;	//	bit0:slot_int_n_sync bit1:msx_slot_int_n bit2:cpu_int_p bit3:z80_int_ack bit4:z80_active bit5:ffff_wr bit6:ffff_39 bit7:ffff_r800
+	uint8_t		interrupt_status;	//	bit0:slot_int_n_sync bit1:z80_int_ack bit2:ffff_wr bit3:ffff_39 bit4:ffff_r800
 	uint16_t	ffff_write_r800_pc;	//	FFFFh への 39h/R800 書き込み時の R800 PC
 	uint16_t	r800_pc;
 	uint16_t	z80_bus_address;
 	uint16_t	r800_bus_address;
-	uint8_t		cpu_status;			//	bit0:mode bit1:req bit2:target bit4:3:state bit5:z80_valid bit6:r800_valid bit7:bus_valid
+	uint8_t		cpu_status;			//	bit0:mode bit5:z80_valid bit6:r800_valid bit7:bus_valid
 	uint8_t		bus_status;			//	bit0:z80_ready bit1:r800_ready bit2:bus_ready bit3:z80_active bit4:r800_active bit5:pause bit6:z80_reset_n bit7:r800_reset_n
-	uint8_t		cpu_change_request_count;
 	uint8_t		cpu_mode_change_count;
-	uint8_t		s2026_status;			//	bit3:0:index bit4:rom_mode bit5:switch bit6:z80_clk bit7:r800_clk
+	uint8_t		clock_status;			//	bit0:3.579MHz pulse bit1:21MHz clock
 	uint8_t		link_pattern;		//	SPI通信経路確認用の固定パターン。0xA5でなければ通信自体が不成立
 } fpga_debug_signal_t;
 

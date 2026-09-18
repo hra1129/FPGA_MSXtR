@@ -485,39 +485,55 @@ uint8_t fpga_set_keyboard_matrix( const uint8_t *matrix ) {
 }
 
 // ---------------------------------------------------------
+static uint16_t fpga_debug_get_bits( const uint8_t *data, uint16_t bit_offset, uint8_t bit_width ) {
+	uint16_t value;
+
+	value = 0;
+	for( uint8_t bit_index = 0; bit_index < bit_width; bit_index++ ) {
+		uint16_t source_bit = bit_offset + bit_index;
+		if( data[source_bit >> 3] & (1u << (source_bit & 7)) ) {
+			value |= 1u << bit_index;
+		}
+	}
+	return value;
+}
+
+// ---------------------------------------------------------
 void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal ) {
 	uint8_t cmd;
 	uint8_t dummy;
-	uint8_t data[23];
+	uint8_t data[21];
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = 0x0A;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 	sleep_us( 1 );
 	dummy = 0x00;
-	for( int index = 0; index < 23; index++ ) {
+	for( int index = 0; index < 21; index++ ) {
 		spi_write_read_blocking( SPI0_PORT, &dummy, &data[index], 1 );
 		sleep_us( 1 );
 	}
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 
-	debug_signal->z80_pc				= ((uint16_t) data[1] << 8) | data[0];
+	debug_signal->z80_pc				= fpga_debug_get_bits( data, 0, 16 );
 	debug_signal->primary_slot			= data[2];
 	debug_signal->secondary_slot0		= data[3];
 	debug_signal->secondary_slot3		= data[4];
 	debug_signal->slot_decode_status	= data[5];
 	debug_signal->slot_select_status	= data[6];
 	debug_signal->slot_bus_status		= data[7];
-	debug_signal->interrupt_status		= data[8];
-	debug_signal->ffff_write_r800_pc	= ((uint16_t) data[10] << 8) | data[9];
-	debug_signal->r800_pc				= ((uint16_t) data[12] << 8) | data[11];
-	debug_signal->z80_bus_address		= ((uint16_t) data[14] << 8) | data[13];
-	debug_signal->r800_bus_address		= ((uint16_t) data[16] << 8) | data[15];
-	debug_signal->cpu_status			= data[17];
-	debug_signal->bus_status			= data[18];
-	debug_signal->cpu_change_request_count = data[19];
-	debug_signal->cpu_mode_change_count	= data[20];
-	debug_signal->s2026_status			= data[21];
-	debug_signal->link_pattern			= data[22];
+	debug_signal->interrupt_status		= fpga_debug_get_bits( data, 64, 5 );
+	debug_signal->ffff_write_r800_pc	= fpga_debug_get_bits( data, 69, 16 );
+	debug_signal->r800_pc				= fpga_debug_get_bits( data, 85, 16 );
+	debug_signal->z80_bus_address		= fpga_debug_get_bits( data, 101, 16 );
+	debug_signal->r800_bus_address		= fpga_debug_get_bits( data, 117, 16 );
+	debug_signal->cpu_status			= (fpga_debug_get_bits( data, 133, 1 ) << 0) |
+									  (fpga_debug_get_bits( data, 134, 1 ) << 5) |
+									  (fpga_debug_get_bits( data, 135, 1 ) << 6) |
+									  (fpga_debug_get_bits( data, 136, 1 ) << 7);
+	debug_signal->bus_status			= fpga_debug_get_bits( data, 137, 8 );
+	debug_signal->cpu_mode_change_count	= fpga_debug_get_bits( data, 145, 8 );
+	debug_signal->clock_status			= fpga_debug_get_bits( data, 153, 2 );
+	debug_signal->link_pattern			= data[20];
 }

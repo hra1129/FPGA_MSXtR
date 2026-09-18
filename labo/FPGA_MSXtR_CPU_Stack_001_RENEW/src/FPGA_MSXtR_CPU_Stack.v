@@ -141,12 +141,12 @@ module fpga_msxtr_cpu_stack (
 
 	wire			w_processor_mode;
 	wire	[1:0]	w_cpu_sel;
-	wire			w_z80_busrq_n;
-	wire			w_z80_busack_n;
-	wire			w_r800_busrq_n;
-	wire			w_r800_busack_n;
-	wire			w_pico_busrq_n;
-	wire			w_pico_busack_n;
+	wire			w_z80_run_req;
+	wire			w_z80_run_ack;
+	wire			w_r800_run_req;
+	wire			w_r800_run_ack;
+	wire			w_pico_run_req;
+	wire			w_pico_run_ack;
 	wire			w_pico_change_req;
 	wire			w_pico_change_target;
 	reg				ff_processor_mode_d;
@@ -644,8 +644,8 @@ module fpga_msxtr_cpu_stack (
 		.rd_n							( w_pico_slot_rd_n					),
 		.wr_n							( w_pico_slot_wr_n					),
 		.rfsh_n							( w_pico_slot_rfsh_n				),
-		.busreq_n						( w_pico_busrq_n					),
-		.busack_n						( w_pico_busack_n					),
+		.run_req						( w_pico_run_req					),
+		.run_ack						( w_pico_run_ack					),
 		.slot_d							( slot_d							),
 		.bus_io							( w_pico_bus_io						),
 		.bus_write						( w_pico_bus_write					),
@@ -677,8 +677,8 @@ module fpga_msxtr_cpu_stack (
 		.rd_n							( w_z80_slot_rd_n					),
 		.wr_n							( w_z80_slot_wr_n					),
 		.rfsh_n							( w_z80_slot_rfsh_n					),
-		.busreq_n						( w_z80_busrq_n						),
-		.busack_n						( w_z80_busack_n					),
+		.run_req						( w_z80_run_req					),
+		.run_ack						( w_z80_run_ack					),
 		.slot_d							( slot_d							),
 		.bus_io							( w_z80_bus_io						),
 		.bus_write						( w_z80_bus_write					),
@@ -706,8 +706,8 @@ module fpga_msxtr_cpu_stack (
 		.rd_n							( w_r800_slot_rd_n					),
 		.wr_n							( w_r800_slot_wr_n					),
 		.rfsh_n							( w_r800_slot_rfsh_n				),
-		.busreq_n						( w_r800_busrq_n					),
-		.busack_n						( w_r800_busack_n					),
+		.run_req						( w_r800_run_req					),
+		.run_ack						( w_r800_run_ack					),
 		.slot_d							( slot_d							),
 		.bus_io							( w_r800_bus_io						),
 		.bus_write						( w_r800_bus_write					),
@@ -729,12 +729,12 @@ module fpga_msxtr_cpu_stack (
 		.msx_reset_n					( ff_s2026_reset_n					),
 		.clk							( clk42m							),
 		.cpu_pause						( w_msx_pause						),
-		.z80_busrq_n					( w_z80_busrq_n						),
-		.z80_busak_n					( w_z80_busack_n					),
-		.r800_busrq_n					( w_r800_busrq_n					),
-		.r800_busak_n					( w_r800_busack_n					),
-		.pico_busrq_n					( w_pico_busrq_n					),
-		.pico_busak_n					( w_pico_busack_n					),
+		.z80_run_req					( w_z80_run_req					),
+		.z80_run_ack					( w_z80_run_ack					),
+		.r800_run_req					( w_r800_run_req					),
+		.r800_run_ack					( w_r800_run_ack					),
+		.pico_run_req					( w_pico_run_req					),
+		.pico_run_ack					( w_pico_run_ack					),
 		.pico_change_req				( w_pico_change_req					),
 		.pico_change_target				( w_pico_change_target				),
 		.bus_cs							( w_device_s2026_cs					),

@@ -36,15 +36,15 @@ module s2026 (
 	input			msx_reset_n,
 	input			clk,
 	input			cpu_pause,
-	//	Z80 CPU bus signals
-	output			z80_busrq_n,		//	Z80 に対するバス要求
-	input			z80_busak_n,		//	Z80 に対するバス承認
-	//	R800 CPU bus signals
-	output			r800_busrq_n,		//	R800 に対するバス要求
-	input			r800_busak_n,		//	R800 に対するバス承認
-	//	Pico bus signals
-	output			pico_busrq_n,		//	Pico に対するバス要求
-	input			pico_busak_n,		//	Pico に対するバス承認
+	//	Z80 CPU run control
+	output			z80_run_req,		//	Z80を実行させるか
+	input			z80_run_ack,		//	Z80が実行中(未停止)か
+	//	R800 CPU run control
+	output			r800_run_req,		//	R800を実行させるか
+	input			r800_run_ack,		//	R800が実行中(未停止)か
+	//	Pico run control
+	output			pico_run_req,		//	Picoを実行させるか
+	input			pico_run_ack,		//	Picoが実行中(未停止)か
 	input			pico_change_req,	//	SPI からくる「Pico バス要求シグナル」
 	input			pico_change_target,	//	SPI からくる「Pico バス解放シグナル」
 	//	Bus signals
@@ -74,12 +74,12 @@ module s2026 (
 		.msx_reset_n		( msx_reset_n			),
 		.clk				( clk					),
 		.cpu_pause			( cpu_pause				),
-		.z80_busrq_n		( z80_busrq_n			),
-		.z80_busak_n		( z80_busak_n			),
-		.r800_busrq_n		( r800_busrq_n			),
-		.r800_busak_n		( r800_busak_n			),
-		.pico_busrq_n		( pico_busrq_n			),
-		.pico_busak_n		( pico_busak_n			),
+		.z80_run_req		( z80_run_req			),
+		.z80_run_ack		( z80_run_ack			),
+		.r800_run_req		( r800_run_req			),
+		.r800_run_ack		( r800_run_ack			),
+		.pico_run_req		( pico_run_req			),
+		.pico_run_ack		( pico_run_ack			),
 		.pico_change_req	( pico_change_req		),
 		.pico_change_target	( pico_change_target	),
 		.cpu_change_req		( w_cpu_change_req		),

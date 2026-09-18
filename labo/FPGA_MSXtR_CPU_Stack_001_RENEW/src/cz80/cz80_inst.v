@@ -75,8 +75,8 @@ module cz80_inst (
 	output			rd_n		,
 	output			wr_n		,
 	output			rfsh_n		,
-	input			busreq_n	,
-	output			busack_n	,
+	input			run_req		,	//	1: このコアを実行, 0: 次のM1境界で停止
+	output			run_ack		,	//	1: 実行中(未停止), 0: 停止済み(M1境界で凍結)
 	input	[7:0]	slot_d		,
 	//	Internal bus interface (device transaction, replaces raw Z80 timing pins)
 	output			bus_io		,
@@ -91,6 +91,7 @@ module cz80_inst (
 	output			int_ack					//	debug
 );
 	reg					ff_enable;
+	reg					ff_run;
 	reg					ff_m1_n;
 	reg					ff_merq_n;
 	reg					ff_iorq_n;
@@ -155,6 +156,21 @@ module cz80_inst (
 			end
 		end
 	end
+
+	// ---------------------------------------------------------
+	//	CPU切替: M1サイクル開始 (w_t_state==1, w_m1_n==0, state_count==1) でのみ
+	//	run_req を取り込み、それ以外の期間は現在の実行/凍結状態を維持する。
+	// ---------------------------------------------------------
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_run <= 1'b1;
+		end
+		else if( w_t_state == 3'd1 && w_m1_n == 1'b0 && state_count == 4'd1 ) begin
+			ff_run <= run_req;
+		end
+	end
+
+	assign run_ack = ff_run;
 
 	// ---------------------------------------------------------
 	//	/M1 signal generation
@@ -434,7 +450,7 @@ module cz80_inst (
 	wire	[7:0]		w_cz80_di;
 	reg					ff_wait_bus_rdata_en;
 	localparam			c_bus_valid_tstate_rise = 3'd1;
-	localparam			c_bus_valid_cycle_rise = 4'd1;
+	localparam			c_bus_valid_cycle_rise = 4'd2;
 	localparam			c_bus_valid_tstate_fall = 3'd2;
 	localparam			c_bus_valid_cycle_fall = 4'd11;
 	localparam			c_bus_valid_mem_tstate_rise = 3'd1;
@@ -502,7 +518,7 @@ module cz80_inst (
 				ff_bus_write				<= 1'b1;
 				ff_bus_wdata				<= w_bus_wdata;
 			end
-			else if( !w_write && w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
+			else if( !w_write && w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise && ff_new_tstate ) begin
 				//	リクエスト開始
 				ff_wait_bus_rdata_en		<= !w_noread;
 				ff_bus_valid				<= !w_noread;
@@ -522,18 +538,18 @@ module cz80_inst (
 	cz80 u_cz80 (
 		.reset_n		( reset_n			),
 		.clk_n			( clk				),
-		.cen			( ff_enable			),
+		.cen			( ff_enable & ff_run	),
 		.wait_n			( w_wait_n			),
 		.int_n			( int_n				),
 		.nmi_n			( nmi_n				),
-		.busrq_n		( busreq_n			),
+		.busrq_n		( 1'b1				),	//	CPU切替はcenマスクで行うため、コア内蔵のBUSREQは使用しない
 		.m1_n			( w_m1_n			),
 		.iorq			( w_iorq			),
 		.noread			( w_noread			),
 		.write			( w_write			),
 		.rfsh_n			( w_rfsh_n			),
 		.halt_n			( 					),
-		.busak_n		( busack_n			),
+		.busak_n		( 					),
 		.a				( w_bus_address		),
 		.dinst			( ff_bus_rdata		),
 		.di				( w_cz80_di			),

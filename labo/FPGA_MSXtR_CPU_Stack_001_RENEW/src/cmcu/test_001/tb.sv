@@ -31,8 +31,8 @@ module tb;
 	wire			rd_n;
 	wire			wr_n;
 	wire			rfsh_n;
-	reg				busreq_n;
-	wire			busack_n;
+	reg				run_req;
+	wire			run_ack;
 	reg		[7:0]	slot_d;
 
 	//	Internal bus interface
@@ -76,8 +76,8 @@ module tb;
 		.rd_n			( rd_n			),
 		.wr_n			( wr_n			),
 		.rfsh_n			( rfsh_n		),
-		.busreq_n		( busreq_n		),
-		.busack_n		( busack_n		),
+		.run_req		( run_req		),
+		.run_ack		( run_ack		),
 		.slot_d			( slot_d		),
 		.bus_io			( bus_io		),
 		.bus_write		( bus_write		),
@@ -266,7 +266,7 @@ module tb;
 		mcu_valid		= 1'b0;
 		mcu_wdata		= 8'd0;
 		wait_n			= 1'b1;
-		busreq_n		= 1'b1;
+		run_req			= 1'b1;
 		slot_d			= 8'hFF;
 		bus_ready		= 1'b0;
 		bus_rdata		= 8'h00;
@@ -332,71 +332,66 @@ module tb;
 		$display( "[INFO] Checked auto-refresh operation." );
 
 		test_no = 4'd6;
-		$display( "=== TEST 6: Bus Request forces refresh regardless of refresh counter, then bus grant ===" );
-		// Set refresh counter far away from its timeout value so any refresh seen must be caused by busreq_n
+		$display( "=== TEST 6: run_req/run_ack gate bus ownership at idle point ===" );
 		@( posedge clk );
-		u_cmcu_inst.ff_refresh_counter = 12'd100;
+		if( run_ack !== 1'b1 ) begin
+			$display( "[FAIL] run_ack should be active while run_req is asserted" );
+			error_count = error_count + 1;
+		end
+		else begin
+			$display( "[PASS] run_ack active while run_req is asserted" );
+		end
+
+		// Bus is idle here, so run_ack should follow run_req soon after de-assertion
+		// (it may be delayed briefly if an auto-refresh cycle is in flight).
+		run_req = 1'b0;
+		i = 0;
+		while( run_ack !== 1'b0 && i < 200 ) begin
+			@( posedge clk );
+			i = i + 1;
+		end
+		if( i >= 200 ) begin
+			$display( "[FAIL] run_ack did not drop after run_req de-assertion at idle point" );
+			error_count = error_count + 1;
+		end
+		else begin
+			$display( "[PASS] run_ack dropped after run_req de-assertion at idle point" );
+		end
+
+		// While run_req is de-asserted, a new MCU transaction must not be accepted (mcu_ready stays low).
+		mcu_address	= 20'h00020;
+		mcu_wdata	= 8'h5A;
+		mcu_write	= 1'b1;
+		mcu_io		= 1'b0;
+		mcu_valid	= 1'b1;
 		repeat( 5 ) @( posedge clk );
-		if( busack_n !== 1'b1 ) begin
-			$display( "[FAIL] busack_n should be inactive before busreq_n assertion" );
+		if( mcu_ready !== 1'b0 ) begin
+			$display( "[FAIL] mcu_ready asserted while this owner is stopped (run_req=0)" );
 			error_count = error_count + 1;
 		end
+		else begin
+			$display( "[PASS] mcu_ready stays inactive while stopped (run_req=0)" );
+		end
 
-		busreq_n = 1'b0;
-
-		// Wait until the busreq-driven refresh cycle starts
+		// Re-asserting run_req should resume operation and accept the pending transaction.
+		run_req = 1'b1;
 		i = 0;
-		while( !( u_cmcu_inst.ff_running && u_cmcu_inst.ff_mcu_refresh ) && i < 200 ) begin
+		while( !mcu_ready && i < 200 ) begin
 			@( posedge clk );
 			i = i + 1;
 		end
+		mcu_valid	= 1'b0;
+		mcu_write	= 1'b0;
 		if( i >= 200 ) begin
-			$display( "[FAIL] Refresh cycle was not triggered by busreq_n assertion" );
+			$display( "[FAIL] mcu_ready did not resume after run_req re-assertion" );
 			error_count = error_count + 1;
 		end
 		else begin
-			$display( "[PASS] Refresh cycle triggered by busreq_n assertion" );
-		end
-
-		// busack_n must stay inactive until the forced refresh cycle completes
-		if( busack_n !== 1'b1 ) begin
-			$display( "[FAIL] busack_n asserted before refresh completion" );
-			error_count = error_count + 1;
-		end
-		else begin
-			$display( "[PASS] busack_n stays inactive while refresh is in progress" );
-		end
-
-		// Wait for the refresh cycle to complete
-		i = 0;
-		while( u_cmcu_inst.ff_running && i < 200 ) begin
-			@( posedge clk );
-			i = i + 1;
-		end
-		if( i >= 200 ) begin
-			$display( "[FAIL] Refresh cycle triggered by busreq_n did not complete" );
-			error_count = error_count + 1;
-		end
-		else if( busack_n !== 1'b0 ) begin
-			$display( "[FAIL] busack_n not granted right after refresh completion" );
-			error_count = error_count + 1;
-		end
-		else begin
-			$display( "[PASS] busack_n granted right after refresh completion" );
-		end
-
-		// While the bus is granted, releasing busreq_n should bring busack_n back inactive
-		busreq_n = 1'b1;
-		repeat( 3 ) @( posedge clk );
-		if( busack_n !== 1'b1 ) begin
-			$display( "[FAIL] busack_n not released after busreq_n de-assertion" );
-			error_count = error_count + 1;
-		end
-		else begin
-			$display( "[PASS] busack_n released after busreq_n de-assertion" );
+			$display( "[PASS] mcu_ready resumed after run_req re-assertion" );
 		end
 
 		repeat( 50 ) @( posedge clk );
+
 
 		if( error_count == 0 ) begin
 			$display( "ALL TESTS PASSED!" );

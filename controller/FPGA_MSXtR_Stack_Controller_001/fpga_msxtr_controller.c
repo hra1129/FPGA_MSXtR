@@ -383,12 +383,7 @@ static void dump_fpga_debug_signal( void ) {
 			debug_signal.z80_pc,
 			debug_signal.r800_pc,
 			(debug_signal.cpu_status & 0x01) ? "Z80" : "R800" );
-	printf( "  CPU switch: req=%u target=%s state=%u req_count=%u mode_count=%u\r\n",
-			(debug_signal.cpu_status >> 1) & 0x01,
-			(debug_signal.cpu_status & 0x04) ? "Z80" : "R800",
-			(debug_signal.cpu_status >> 3) & 0x03,
-			debug_signal.cpu_change_request_count,
-			debug_signal.cpu_mode_change_count );
+	printf( "  CPU switch: mode_count=%u\r\n", debug_signal.cpu_mode_change_count );
 	printf( "  Z80 bus: addr=0x%04X valid=%u ready=%u active=%u reset_n=%u\r\n",
 			debug_signal.z80_bus_address,
 			(debug_signal.cpu_status >> 5) & 0x01,
@@ -401,15 +396,12 @@ static void dump_fpga_debug_signal( void ) {
 			(debug_signal.bus_status >> 1) & 0x01,
 			(debug_signal.bus_status >> 4) & 0x01,
 			(debug_signal.bus_status >> 7) & 0x01 );
-	printf( "  Shared bus: valid=%u ready=%u pause=%u S2026[index=%u rom=%u switch=%u z80_clk=%u r800_clk=%u]\r\n",
+	printf( "  Shared bus: valid=%u ready=%u pause=%u clock[3.579m=%u 21m=%u]\r\n",
 			(debug_signal.cpu_status >> 7) & 0x01,
 			(debug_signal.bus_status >> 2) & 0x01,
 			(debug_signal.bus_status >> 5) & 0x01,
-			debug_signal.s2026_status & 0x0F,
-			(debug_signal.s2026_status >> 4) & 0x01,
-			(debug_signal.s2026_status >> 5) & 0x01,
-			(debug_signal.s2026_status >> 6) & 0x01,
-			(debug_signal.s2026_status >> 7) & 0x01 );
+			(debug_signal.clock_status >> 0) & 0x01,
+			(debug_signal.clock_status >> 1) & 0x01 );
 	printf( "  Slot map: A8=0x%02X SSL0=0x%02X SSL3=0x%02X current=P%u-%u page=%u io=%u write=%u\r\n",
 			debug_signal.primary_slot,
 			debug_signal.secondary_slot0,
@@ -437,15 +429,12 @@ static void dump_fpga_debug_signal( void ) {
 			(debug_signal.slot_bus_status >> 5) & 0x01,
 			(debug_signal.slot_bus_status >> 6) & 0x01,
 			(debug_signal.slot_bus_status >> 7) & 0x01 );
-	printf( "  INT/Trap: slot_n=%u msx_slot_n=%u cpu_int_p=%u z80_ack=%u z80_act=%u | FFFF_wr[seen=%u is_39=%u by_r800=%u r800_pc=0x%04X]\r\n",
+	printf( "  INT/Trap: slot_n=%u z80_ack=%u | FFFF_wr[seen=%u is_39=%u by_r800=%u r800_pc=0x%04X]\r\n",
 			(debug_signal.interrupt_status >> 0) & 0x01,
 			(debug_signal.interrupt_status >> 1) & 0x01,
 			(debug_signal.interrupt_status >> 2) & 0x01,
 			(debug_signal.interrupt_status >> 3) & 0x01,
 			(debug_signal.interrupt_status >> 4) & 0x01,
-			(debug_signal.interrupt_status >> 5) & 0x01,
-			(debug_signal.interrupt_status >> 6) & 0x01,
-			(debug_signal.interrupt_status >> 7) & 0x01,
 			debug_signal.ffff_write_r800_pc );
 	if( debug_signal.link_pattern == 0xA5 ) {
 		printf( "  link_pattern=0x%02X (OK)\r\n", debug_signal.link_pattern );
@@ -973,7 +962,7 @@ int main(void) {
 	// 他のボードが起動しているかわからないので、念のため 100ms 待機する
 	sleep_ms(100);
 
-#if 1
+#if 0
 	// Z80 にバス権がある状態で起動する場合 =======================================
 	// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
 	// を実行し、その間 slot_wait_n = L にしてくる。それが解除されるまで待つ。

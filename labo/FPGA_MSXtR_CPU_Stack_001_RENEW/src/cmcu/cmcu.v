@@ -83,8 +83,8 @@ module cmcu_inst (
 	output			rd_n		,
 	output			wr_n		,
 	output			rfsh_n		,
-	input			busreq_n	,
-	output			busack_n	,
+	input			run_req		,	//	1: Picoがバスを所有, 0: アイドル地点で停止
+	output			run_ack		,	//	1: 実行中(未停止), 0: 停止済み
 	input	[7:0]	slot_d		,
 	//	Internal bus interface (device transaction, replaces raw Z80 timing pins)
 	output			bus_io		,
@@ -125,17 +125,16 @@ module cmcu_inst (
 	//	T-State
 	// ---------------------------------------------------------
 	reg					ff_running;
+	reg					ff_run;
 	reg		[2:0]		ff_t_state;
 	reg		[2:0]		ff_t_state_d;
 	reg					ff_tw_done;
 	wire				w_finish;
 	reg		[11:0]		ff_refresh_counter;
 	wire				w_refresh_start;
-	reg					ff_busreq_n;
-	reg					ff_busack_n;
 	wire				w_mcu_ready;
 
-	assign w_mcu_ready	= ( state_count == 4'd0 ) && ~ff_running;
+	assign w_mcu_ready	= ( state_count == 4'd0 ) && ~ff_running && ff_run;
 	assign mcu_ready	= w_mcu_ready;
 	assign bus_address	= ff_mcu_address;
 	assign bus_wdata	= ff_mcu_wdata;
@@ -246,35 +245,21 @@ module cmcu_inst (
 		end
 	end
 
-	assign w_refresh_start = ( ff_refresh_counter == 12'd3579 ) || !ff_busreq_n;	//	about 1msec
+	assign w_refresh_start = ( ff_refresh_counter == 12'd3579 );	//	about 1msec
 
 	// ---------------------------------------------------------
-	//	Bus request handling
+	//	CPU切替: バスがアイドル(!ff_running)の時のみ run_req を取り込む
 	// ---------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_busreq_n <= 1'b1;
+			ff_run <= 1'b0;
 		end
-		else begin
-			ff_busreq_n <= busreq_n;
-		end
-	end
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_busack_n <= 1'b1;
-		end
-		else if( ff_busreq_n ) begin
-			//	BUS Request inactive
-			ff_busack_n <= 1'b1;
-		end
-		else if( !ff_busreq_n && ff_mcu_refresh && w_finish ) begin
-			//	BUS Request active and MCU refresh finished
-			ff_busack_n <= 1'b0;
+		else if( !ff_running ) begin
+			ff_run <= run_req;
 		end
 	end
 
-	assign busack_n = ff_busack_n;
+	assign run_ack = ff_run;
 
 	// ---------------------------------------------------------
 	//	/M1 signal generation

@@ -287,3 +287,161 @@ Slot Board 接続時、オンボード ROM (Main ROM / Sub ROM) や漢字 ROM �
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/cz80_inst.v — `ff_di` と T1 時の `di` 選択を追加
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/test_001/test_program.asm — `LD A,82h` 回帰プログラム
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/test_001/tb.sv — `acc == 8'h82` の検証を追加
+
+---
+
+## 2026-09-17 作業履歴 (S2026 CPU切替方式の刷新: busrq/busack廃止 → enableマスク方式)
+
+### 背景・目的
+
+実機で Pico のシリアル通信に "fpga timeout" が出て停止する不具合の調査から着手。
+調査の結果、CPU切替(Z80/R800/Pico)の従来方式が、Z80/R800コア内蔵の BUSREQ/BUSACK
+機構と `s2026_cpu_select.v` の busak待ちに依存しており、コア内部のFSM不具合と
+絡んで切替がハングしうる構造だと判明。CPU速度安定化のための大改修(cz80_inst.v の
+バスハンドシェイク刷新)は必要な変更だったため維持しつつ、CPU切替の仕組み自体を
+より単純で検証しやすい方式に置き換えることにした。
+
+### 新方式
+
+- busrq_n/busak_n によるハンドシェイクを廃止し、各コアが **M1サイクル開始
+  (`w_t_state==1, w_m1_n==0, state_count==1`)** で `run_req` を取り込んで自らの
+  `cen` をマスクする方式に変更 (`cz80_inst.v`, `cr800_inst.v`)。
+- Pico側 (`cmcu.v`) は **バスアイドル(`!ff_running`)** の瞬間に `run_req` を
+  取り込む方式とし、非オーナー時は新規バスサイクルを一切受理しない
+  (`mcu_ready` を `ff_run` でゲート)。
+- `s2026_cpu_select.v` は、切替時に z80/r800/pico 全員の `run_req` を落とし、
+  3者全ての `run_ack` が0(=全員停止)になるのを待ってから切替先のみを
+  再稼働させる方式 (`w_all_stopped` 待ち) に変更。
+- ついでに見つけた副次バグ修正: `s2026_cpu_select.v` の `sys_reset_n` リセットで
+  `ff_cpu_sel[1]` が誤って`1'b1`(Pico選択状態)にリセットされ、reset直後に
+  Z80が一切走らなくなるバグを `1'b0` に修正。
+
+### cr800_inst.v の最新化
+
+`cr800_inst.v` が `cz80_inst.v` の旧版(タイミング調整・`bus_valid` FSM刷新・
+`ff_di`機構が入る前の状態)のまま放置されていたため、`cz80_inst.v` の最新実装を
+ベースに全面更新(識別子のリネームのみで実質同一ロジックに統一)。
+`git diff --no-index` で命名以外の差分が無いことを確認。
+
+### 検証
+
+- `src/cz80/test_001`, `src/cmcu/test_001`, `src/s2026/test_001`: 全てPASS。
+- `src/test_002`: PASS(BootROM無効化・CPU起動シーケンスとも正常動作を確認)。
+- `src/test_003`: 相変わらず FAIL。ただし原因は今回のCPU切替方式変更とは無関係で、
+  以前から存在する `cz80_inst.v`/`cr800_inst.v` の `bus_valid`/`bus_ready` FSM
+  (コミット 7a9ae3b/5c45712 で導入されたタイムアウト処理まわり)に起因すると
+  切り分け済み。cr800側にも同じFSMを適用したため、同じ症状がR800側にも
+  伝播している。
+
+### 未解決 / 次回への申し送り
+
+- `cz80_inst.v`/`cr800_inst.v` の `bus_valid` FSM (T-state/state_countの
+  固定タイミングで無条件に `bus_valid` を打ち切る/タイムアウトする処理) に
+  何らかの不整合があり、`test_003` (CPU切替を伴う結合テスト) で
+  `mode_cnt` が異常増加し、Z80が `BootROM` 実行中の早い段階で停止する。
+  次回はここを最優先で調査・修正すること。修正時は cz80/cr800 両方に
+  同じ修正を適用する。
+- 実機の "fpga timeout" も、上記 `bus_valid` FSM 不具合によりCPUがバスサイクル
+  途中で固まり、`run_ack` が落ちずCPU切替(バス所有権切替)がタイムアウトする、
+  という説明が最も有力。
+
+### 関連ファイル
+
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/cz80_inst.v, cr800/cr800_inst.v — busrq/busack廃止、run_req/run_ack方式、cr800側の全面最新化
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cmcu/cmcu.v — run_req/run_ack方式、バスアイドル時ラッチ
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/s2026/s2026_cpu_select.v, s2026.v — w_all_stopped方式への刷新、reset初期値バグ修正
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v — 上記に伴う配線名変更
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/test_001/tb.sv, cmcu/test_001/tb.sv, s2026/test_001/tb.sv — run_req/run_ack名への追随、s2026 test_001のreset配線修正
+
+---
+
+## 2026-09-18 朝 作業履歴 (初期SPI確認・Pico初期バス所有権・VDP未表示調査)
+
+### 1. test_002 の初期SPIシーケンスをPicoファーム互換化
+
+固定時間待ちだった `src/test_002/tb.sv` の起動処理を、実機Picoファームと同じ
+SPIコマンドによる確認へ変更した。
+
+- コマンド `FFh` を送り、応答 `64h` を受信するまで接続確認を再試行する
+  `spi_wait_fpga_ready` を追加。
+- 接続確認直後にコマンド `05h` を送り、status bit0がREADYになるまで確認する
+  `spi_wait_ready` を追加。最大30回すべてBUSYの場合は `FPGA Timeout.` を表示して
+  `$stop` する。
+- ModelSimでは接続確認、READY確認ともに1回目で成功した。READY応答は `04h` で、
+  bit0はREADY、bit2のみSerial SRAM初期化中を示していた。
+- `src/test_002/run.bat`: コンパイルエラー・警告なし、`All tests PASSED`。
+
+実機で発生していた `FPGA Timeout.` は、PicoファームをPico起動モードへ切り替えて
+リビルドした後は発生しなくなった。
+
+### 2. SPIデバッグ信号フォーマットのRENEW版への追随
+
+RENEW版 `ip_spi.v` は、旧版の診断22byte＋リンクパターン1byteではなく、
+`debug_signal[157:0]` を160bitへゼロ拡張した20byte＋リンクパターン`A5h`の
+計21byteを返す。Pico側が旧23byte形式のまま読み出していたため整合させた。
+
+- `fpga_get_debug_signal()` の受信長を23byteから21byteへ変更。
+- 158bit信号は途中からbyte境界に揃わないため、bit offsetとbit widthを指定して
+  展開する `fpga_debug_get_bits()` を追加。
+- RENEW版で削除されたCPU切替要求回数、切替FSM状態、S2026レジスタ状態を
+  `fpga_debug_signal_t` と表示から削除。
+- 残存する3.579MHz pulse、21MHz clockを `clock_status` として表示。
+- `src/test_002/tb.sv` のデバッグ読出し長も21byteへ変更。
+- PicoファームのWSLビルド、および `src/test_002/run.bat` はともに成功。
+
+### 3. FPGAリセット直後のPicoバス所有権を修正
+
+Pico起動モードであるにもかかわらず、4キーのデバッグ表示でZ80 PCが進行していた。
+原因は `s2026_cpu_select.v` の `sys_reset_n` リセット時に
+`ff_cpu_sel[1] <= 1'b0` としており、初期状態が `cpu_sel=00` (Z80所有)に
+なっていたことだった。
+
+仕様はFPGA起動直後からPicoがバスを所有することであり、初期値を
+`ff_cpu_sel[1] <= 1'b1`、`ff_target_sel[1] <= 1'b1` に修正した。
+これにより初期状態は `cpu_sel=10` (Pico所有、戻り先Z80)となる。
+
+実機のデバッグ表示で以下を確認した。
+
+- Z80 PC、R800 PCともに `0000h` のまま変化しない。
+- `z80_active=0`、`r800_active=0` で、両CPUが停止している。
+- `link_pattern=A5h` でSPI診断通信は正常。
+
+前日の履歴にある「`ff_cpu_sel[1]=1` がバグなので0へ修正」という記述は誤り。
+Pico初期所有が本来の仕様であり、`ff_cpu_sel[1]=1` が正しい。
+
+なお、Pico側デバッグ表示のprocessor modeはRTLの極性
+(`0: Z80, 1: R800`)と逆に表示されており、現在の `mode=R800` 表示は実際には
+「戻り先Z80」を意味する。表示修正は未実施。
+
+### 4. 未解決: PicoからのVDP初期化が認識されず黒画面
+
+Picoがバスを所有し、`vdp_set_screen1()`、`vdp_set_screen1_font()`、
+`vdp_set_screen1_message()` を実行しているにもかかわらず、VDP画面は黒いまま。
+
+CPU切替・スロット信号改修前は、同じPico所有モードとPicoファームによる
+VDP初期化で正常に表示できていた。そのため、今回の不具合を誤動作していたZ80の
+VDP初期化が隠していたとする仮説は否定される。VDPは物理的に別FPGAでCPU切替を
+認識しないため、CPU Board側のスロット信号改修が最有力原因である。
+
+VDP Stack側 (`labo/FPGA_MSXtR_VDP_Stack_001/src/msx_slot/msx_slot.v`) は、
+`slot_iorq_n` と `slot_wr_n` / `slot_rd_n` を85MHzで2段同期し、両方Lowの期間を
+I/Oアクセスとして検出する。次回はPicoからポート`98h`/`99h`へ書いた際の以下を
+優先して確認する。
+
+- `slot_iorq_n` と `slot_wr_n` が同時に十分な期間Lowになるか。
+- Low期間中に `slot_a[7:0]` が `98h`/`99h`で安定しているか。
+- `slot_d[7:0]` にPicoの書込みデータが正しく出ているか。
+- `slot_data_dir` の極性と実基板のバストランシーバ方向が一致しているか。
+- VDP Stack側で `ff_iorq_wr`、`bus_valid` が立ち、VDPコアへ書込みが届くか。
+
+`slot_clock_n` はVDP Stack側が参照していないため、今回の調査対象外とする。
+
+### 今朝の関連ファイル
+
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/test_002/tb.sv — FFh/64h接続確認、05h READY確認、21byteデバッグ読出し
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/s2026/s2026_cpu_select.v — リセット直後のPicoバス所有を復元
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/spi/ip_spi.v — RENEW版21byteデバッグ応答の確認対象
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/msx_slot/msx_slot.v — 次回のPicoスロット波形調査対象
+- labo/FPGA_MSXtR_VDP_Stack_001/src/msx_slot/msx_slot.v — 次回のVDP側I/O受信確認対象
+- controller/FPGA_MSXtR_Stack_Controller_001/fpga_io.h, fpga_io.c — 21byteデバッグ形式へ追随
+- controller/FPGA_MSXtR_Stack_Controller_001/fpga_msxtr_controller.c — デバッグ表示更新、VDP初期化シーケンス確認対象

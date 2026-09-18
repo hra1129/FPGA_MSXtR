@@ -11,8 +11,8 @@ module tb;
 	reg				clk;
 	reg				reset_n;
 	reg		[3:0]	state_count;
-	reg				busreq_n;
-	wire			busack_n;
+	reg				run_req;
+	wire			run_ack;
 
 	//	Interrupts
 	reg				int_n;
@@ -61,8 +61,8 @@ module tb;
 		.rd_n			( rd_n			),
 		.wr_n			( wr_n			),
 		.rfsh_n			( rfsh_n		),
-		.busreq_n		( busreq_n		),
-		.busack_n		( busack_n		),
+		.run_req		( run_req		),
+		.run_ack		( run_ack		),
 		.slot_d			( slot_d		),
 		.bus_io			( bus_io		),
 		.bus_write		( bus_write		),
@@ -183,6 +183,7 @@ module tb;
 		// Initialize signals
 		clk			= 1'b0;
 		reset_n		= 1'b0;
+		run_req		= 1'b1;
 		int_n		= 1'b1;
 		nmi_n		= 1'b1;
 		wait_n		= 1'b1;

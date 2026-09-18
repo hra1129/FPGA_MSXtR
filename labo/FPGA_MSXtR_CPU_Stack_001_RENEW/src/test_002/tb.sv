@@ -284,6 +284,57 @@ module tb ();
 		end
 	endtask
 
+	task automatic spi_wait_fpga_ready;
+		int attempt_count;
+		reg [7:0] response;
+		begin
+			attempt_count = 0;
+			response = 8'h00;
+			while( response != 8'h64 && attempt_count < 1000 ) begin
+				mcu_cs_n = 1'b0;
+				#( 200 );
+				spi_transfer_byte( 8'hFF, response );
+				#( 200 );
+				mcu_cs_n = 1'b1;
+				mcu_mosi = 1'b0;
+				#( 200 );
+				attempt_count = attempt_count + 1;
+			end
+			if( response != 8'h64 ) begin
+				$fatal( 1, "FPGA connection timed out, response=0x%02X", response );
+			end
+			$display( "[SETUP] FPGA connection established after %0d attempt(s)", attempt_count );
+		end
+	endtask
+
+	task automatic spi_wait_ready;
+		int attempt_count;
+		reg [7:0] status;
+		begin
+			attempt_count = 0;
+			status = 8'h01;
+			while( status[0] == 1'b1 && attempt_count < 30 ) begin
+				mcu_cs_n = 1'b0;
+				#( 200 );
+				spi_send_byte( 8'h05 );
+				spi_transfer_byte( 8'h00, status );
+				#( 200 );
+				mcu_cs_n = 1'b1;
+				mcu_mosi = 1'b0;
+				#( 200 );
+				attempt_count = attempt_count + 1;
+				if( status[0] == 1'b1 ) begin
+					#( 10000 );
+				end
+			end
+			if( status[0] == 1'b1 ) begin
+				$display( "FPGA Timeout." );
+				$stop;
+			end
+			$display( "[SETUP] FPGA ready after %0d attempt(s), status=0x%02X", attempt_count, status );
+		end
+	endtask
+
 	task automatic spi_wait_intr;
 		int timeout_ns;
 		begin
@@ -456,12 +507,12 @@ module tb ();
 	endtask
 
 	task automatic spi_get_debug_signal( output [15:0] debug_signal );
-		reg [7:0] data [0:22];
+		reg [7:0] data [0:20];
 		begin
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h0A );
-			for( int byte_index = 0; byte_index < 23; byte_index = byte_index + 1 ) begin
+			for( int byte_index = 0; byte_index < 21; byte_index = byte_index + 1 ) begin
 				spi_transfer_byte( 8'h00, data[byte_index] );
 			end
 			#( 200 );
@@ -536,7 +587,8 @@ module tb ();
 		end
 		keyboard_expected[5] = 8'hFE;
 
-		#( 3000 );
+		spi_wait_fpga_ready();
+		spi_wait_ready();
 //		$display( "[SETUP] Transfer bus ownership to Pico" );
 //		spi_set_bus_owner( 1'b0 );
 		$display( "[SETUP] Transfer bus ownership to Z80" );

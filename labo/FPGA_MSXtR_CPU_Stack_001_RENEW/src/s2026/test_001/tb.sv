@@ -7,12 +7,12 @@ module tb;
 	reg				reset_n;
 	reg				cpu_pause;
 
-	wire			z80_busrq_n;
-	reg				z80_busak_n;
-	wire			r800_busrq_n;
-	reg				r800_busak_n;
-	wire			pico_busrq_n;
-	reg				pico_busak_n;
+	wire			z80_run_req;
+	reg				z80_run_ack;
+	wire			r800_run_req;
+	reg				r800_run_ack;
+	wire			pico_run_req;
+	reg				pico_run_ack;
 	reg				pico_change_req;
 	reg				pico_change_target;
 
@@ -33,7 +33,7 @@ module tb;
 	integer			pass_count;
 	integer			fail_count;
 
-	//	CPUモデル: busrq_n がアサートされてから busak_n を返すまでの遅延サイクル数
+	//	CPUモデル: run_req が下がってから run_ack を下げるまでの遅延サイクル数
 	integer			z80_ack_delay;
 	integer			r800_ack_delay;
 	integer			pico_ack_delay;
@@ -42,15 +42,16 @@ module tb;
 	integer			pico_ack_counter;
 
 	s2026 u_dut (
-		.reset_n			( reset_n				),
+		.sys_reset_n		( reset_n				),
+		.msx_reset_n		( reset_n				),
 		.clk				( clk					),
 		.cpu_pause			( cpu_pause				),
-		.z80_busrq_n		( z80_busrq_n			),
-		.z80_busak_n		( z80_busak_n			),
-		.r800_busrq_n		( r800_busrq_n			),
-		.r800_busak_n		( r800_busak_n			),
-		.pico_busrq_n		( pico_busrq_n			),
-		.pico_busak_n		( pico_busak_n			),
+		.z80_run_req		( z80_run_req			),
+		.z80_run_ack		( z80_run_ack			),
+		.r800_run_req		( r800_run_req			),
+		.r800_run_ack		( r800_run_ack			),
+		.pico_run_req		( pico_run_req			),
+		.pico_run_ack		( pico_run_ack			),
 		.pico_change_req	( pico_change_req		),
 		.pico_change_target	( pico_change_target	),
 		.bus_cs				( bus_cs				),
@@ -72,43 +73,43 @@ module tb;
 		forever #( c_clk_period / 2.0 ) clk = ~clk;
 	end
 
-	//	busak_n モデル: busrq_n = 0 が続いた ack_delay サイクル後に busak_n = 0 を返す
+	//	run_ack モデル: run_req = 0 が続いた ack_delay サイクル後に run_ack = 0 を返す
 	always @( posedge clk ) begin
-		if( !reset_n || z80_busrq_n ) begin
-			z80_busak_n		<= 1'b1;
+		if( !reset_n || z80_run_req ) begin
+			z80_run_ack		<= 1'b1;
 			z80_ack_counter	<= 0;
 		end
 		else if( z80_ack_counter < z80_ack_delay ) begin
 			z80_ack_counter	<= z80_ack_counter + 1;
 		end
 		else begin
-			z80_busak_n		<= 1'b0;
+			z80_run_ack		<= 1'b0;
 		end
 	end
 
 	always @( posedge clk ) begin
-		if( !reset_n || r800_busrq_n ) begin
-			r800_busak_n	<= 1'b1;
+		if( !reset_n || r800_run_req ) begin
+			r800_run_ack	<= 1'b1;
 			r800_ack_counter<= 0;
 		end
 		else if( r800_ack_counter < r800_ack_delay ) begin
 			r800_ack_counter<= r800_ack_counter + 1;
 		end
 		else begin
-			r800_busak_n	<= 1'b0;
+			r800_run_ack	<= 1'b0;
 		end
 	end
 
 	always @( posedge clk ) begin
-		if( !reset_n || pico_busrq_n ) begin
-			pico_busak_n	<= 1'b1;
+		if( !reset_n || pico_run_req ) begin
+			pico_run_ack	<= 1'b1;
 			pico_ack_counter<= 0;
 		end
 		else if( pico_ack_counter < pico_ack_delay ) begin
 			pico_ack_counter<= pico_ack_counter + 1;
 		end
 		else begin
-			pico_busak_n	<= 1'b0;
+			pico_run_ack	<= 1'b0;
 		end
 	end
 
@@ -188,11 +189,11 @@ module tb;
 		integer timeout;
 		begin
 			timeout = 0;
-			while( u_dut.u_cpu_select.ff_state !== 1'b1 && timeout < 200 ) begin
+			while( ( u_dut.u_cpu_select.ff_state0 !== 1'b1 ) && ( u_dut.u_cpu_select.ff_state1 !== 1'b1 ) && timeout < 200 ) begin
 				@( posedge clk );
 				timeout = timeout + 1;
 			end
-			check( u_dut.u_cpu_select.ff_state === 1'b1, "cpu_select entered CHANGING state" );
+			check( ( u_dut.u_cpu_select.ff_state0 === 1'b1 ) || ( u_dut.u_cpu_select.ff_state1 === 1'b1 ), "cpu_select entered CHANGING state" );
 		end
 	endtask
 
@@ -208,9 +209,9 @@ module tb;
 		fail_count			= 0;
 		reset_n				= 1'b0;
 		cpu_pause			= 1'b0;
-		z80_busak_n			= 1'b1;
-		r800_busak_n		= 1'b1;
-		pico_busak_n		= 1'b1;
+		z80_run_ack			= 1'b1;
+		r800_run_ack		= 1'b1;
+		pico_run_ack		= 1'b1;
 		pico_change_req		= 1'b0;
 		pico_change_target	= 1'b0;
 		bus_cs				= 1'b0;
@@ -232,21 +233,21 @@ module tb;
 		check( cpu_sel == 2'b00, "reset selects Z80 (cpu_sel=00)" );
 		check( z80_active && !r800_active, "z80_active only after reset" );
 		check( processor_mode == 1'b0, "processor_mode=0 for Z80" );
-		check( z80_busrq_n == 1'b1 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
-				"only z80_busrq_n is released after reset" );
+		check( z80_run_req == 1'b1 && r800_run_req == 1'b0 && pico_run_req == 1'b0,
+				"only z80_run_req is released after reset" );
 
 		// ---------------------------------------------------------
 		//	register 経由の CPU 切替: Z80 -> R800
 		// ---------------------------------------------------------
 		request_cpu_change( 1'b1 );
 		wait_changing();
-		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
-				"all busrq_n asserted while changing to R800" );
+		check( z80_run_req == 1'b0 && r800_run_req == 1'b0 && pico_run_req == 1'b0,
+				"all run_req deasserted while changing to R800" );
 		wait_cpu_sel( 2'b01 );
 		check( z80_active == 1'b0 && r800_active == 1'b1, "r800_active after switch" );
 		check( processor_mode == 1'b1, "processor_mode=1 for R800" );
-		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b1 && pico_busrq_n == 1'b0,
-				"only r800_busrq_n is released after switching to R800" );
+		check( z80_run_req == 1'b0 && r800_run_req == 1'b1 && pico_run_req == 1'b0,
+				"only r800_run_req is released after switching to R800" );
 		settle();
 
 		// ---------------------------------------------------------
@@ -254,8 +255,8 @@ module tb;
 		// ---------------------------------------------------------
 		request_cpu_change( 1'b0 );
 		wait_changing();
-		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
-				"all busrq_n asserted while changing to Z80" );
+		check( z80_run_req == 1'b0 && r800_run_req == 1'b0 && pico_run_req == 1'b0,
+				"all run_req deasserted while changing to Z80" );
 		wait_cpu_sel( 2'b00 );
 		check( z80_active == 1'b1 && r800_active == 1'b0, "z80_active after switch back" );
 		check( processor_mode == 1'b0, "processor_mode=0 for Z80" );
@@ -268,8 +269,8 @@ module tb;
 		wait_changing();
 		wait_cpu_sel( 2'b10 );
 		check( z80_active == 1'b0 && r800_active == 1'b0, "neither CPU active while PICO runs" );
-		check( pico_busrq_n == 1'b1 && z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0,
-				"only pico_busrq_n is released while PICO runs" );
+		check( pico_run_req == 1'b1 && z80_run_req == 1'b0 && r800_run_req == 1'b0,
+				"only pico_run_req is released while PICO runs" );
 		settle();
 
 		// ---------------------------------------------------------
@@ -292,8 +293,8 @@ module tb;
 		request_pico_change( 1'b1 );
 		wait_changing();
 		wait_cpu_sel( 2'b11 );
-		check( pico_busrq_n == 1'b1 && z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0,
-				"only pico_busrq_n is released while PICO runs (from R800)" );
+		check( pico_run_req == 1'b1 && z80_run_req == 1'b0 && r800_run_req == 1'b0,
+				"only pico_run_req is released while PICO runs (from R800)" );
 		settle();
 
 		request_pico_change( 1'b0 );
@@ -303,19 +304,19 @@ module tb;
 		settle();
 
 		// ---------------------------------------------------------
-		//	cpu_pause = 1 の間はすべての busrq_n = 0 になる
+		//	cpu_pause = 1 の間はすべての run_req = 0 になる
 		// ---------------------------------------------------------
 		cpu_pause = 1'b1;
 		@( posedge clk );
-		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
-				"all busrq_n asserted while cpu_pause is active" );
+		check( z80_run_req == 1'b0 && r800_run_req == 1'b0 && pico_run_req == 1'b0,
+				"all run_req deasserted while cpu_pause is active" );
 		repeat( 4 ) @( posedge clk );
-		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b0 && pico_busrq_n == 1'b0,
-				"all busrq_n remain asserted during cpu_pause" );
+		check( z80_run_req == 1'b0 && r800_run_req == 1'b0 && pico_run_req == 1'b0,
+				"all run_req remain deasserted during cpu_pause" );
 		cpu_pause = 1'b0;
 		@( posedge clk );
-		check( z80_busrq_n == 1'b0 && r800_busrq_n == 1'b1 && pico_busrq_n == 1'b0,
-				"busrq_n returns to the selected CPU after cpu_pause is released" );
+		check( z80_run_req == 1'b0 && r800_run_req == 1'b1 && pico_run_req == 1'b0,
+				"run_req returns to the selected CPU after cpu_pause is released" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );
