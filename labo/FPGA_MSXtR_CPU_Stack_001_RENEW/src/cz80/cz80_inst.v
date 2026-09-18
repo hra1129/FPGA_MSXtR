@@ -124,6 +124,9 @@ module cz80_inst (
 		if( !reset_n ) begin
 			ff_t_state_d <= 3'd0;
 		end
+		else if( !ff_run ) begin
+			// hold
+		end
 		else begin
 			ff_t_state_d <= w_t_state;
 		end
@@ -134,6 +137,9 @@ module cz80_inst (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_new_tstate <= 1'b0;
+		end
+		else if( !ff_run ) begin
+			// hold
 		end
 		else if( state_count == 4'd1 ) begin
 			ff_new_tstate <= w_new_tstate;
@@ -186,6 +192,9 @@ module cz80_inst (
 		if( !reset_n ) begin
 			ff_m1_n <= 1'b1;
 		end
+		else if( !ff_run ) begin
+			// hold
+		end
 		else if( w_t_state == c_m1_tstate_fall && state_count == c_m1_cycle_fall ) begin
 			ff_m1_n <= w_m1_n;
 		end
@@ -197,6 +206,9 @@ module cz80_inst (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_bus_m1_n <= 1'b1;
+		end
+		else if( !ff_run ) begin
+			// hold
 		end
 		else if( ff_bus_m1_n ) begin
 			if( w_t_state == c_m1_tstate_fall && state_count == c_m1_cycle_fall ) begin
@@ -227,6 +239,9 @@ module cz80_inst (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_merq_n <= 1'b1;
+		end
+		else if( !ff_run ) begin
+			// hold
 		end
 		else if( !ff_m1_n ) begin
 			if(      w_t_state == c_merq_m1_tstate_fall && state_count == c_merq_m1_cycle_fall ) begin
@@ -262,6 +277,9 @@ module cz80_inst (
 		if( !reset_n ) begin
 			ff_iorq_n <= 1'b1;
 		end
+		else if( !ff_run ) begin
+			// hold
+		end
 		else if( w_t_state == c_iorq_tstate_fall && state_count == c_iorq_cycle_fall ) begin
 			ff_iorq_n <= ~w_iorq;
 		end
@@ -283,6 +301,9 @@ module cz80_inst (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_wait_n_i <= 1'b1;
+		end
+		else if( !ff_run ) begin
+			// hold
 		end
 		else if( !ff_m1_n ) begin
 			if(      w_t_state == c_wait_tstate_fall && state_count == c_wait_cycle_fall && ff_new_tstate ) begin
@@ -328,6 +349,9 @@ module cz80_inst (
 		if( !reset_n ) begin
 			ff_rd_n <= 1'b1;
 		end
+		else if( !ff_run ) begin
+			// hold
+		end
 		else if( !ff_m1_n ) begin
 			if(      w_t_state == c_rd_m1_tstate_fall && state_count == c_rd_m1_cycle_fall ) begin
 				ff_rd_n <= 1'b0;
@@ -372,6 +396,9 @@ module cz80_inst (
 		if( !reset_n ) begin
 			ff_wr_n <= 1'b1;
 		end
+		else if( !ff_run ) begin
+			// hold
+		end
 		else if( w_iorq && w_write ) begin
 			if(      w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall ) begin
 				ff_wr_n <= 1'b0;
@@ -408,6 +435,9 @@ module cz80_inst (
 		if( !reset_n ) begin
 			ff_rfsh_n <= 1'b1;
 		end
+		else if( !ff_run ) begin
+			// hold
+		end
 		else if( w_t_state == c_rfsh_tstate_fall && state_count == c_rfsh_cycle_fall && !ff_bus_m1_n ) begin
 			ff_rfsh_n <= 1'b0;
 		end
@@ -420,6 +450,9 @@ module cz80_inst (
 		if( !reset_n ) begin
 			ff_refresh_address <= 16'd0;
 		end
+		else if( !ff_run ) begin
+			// hold
+		end
 		else if( !w_rfsh_n && w_t_state == c_refresh_address_tstate && state_count == c_refresh_address_cycle ) begin
 			ff_refresh_address <= w_bus_address;
 		end
@@ -428,6 +461,9 @@ module cz80_inst (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_bus_address <= 16'd0;
+		end
+		else if( !ff_run ) begin
+			// hold
 		end
 		else if( w_t_state == c_bus_address_tstate && state_count == c_bus_address_cycle ) begin
 			ff_bus_address <= w_bus_address;
@@ -466,6 +502,9 @@ module cz80_inst (
 			ff_bus_rdata			<= 8'hFF;
 			ff_di					<= 8'hFF;
 			ff_wait_bus_rdata_en	<= 1'b0;
+		end
+		else if( !ff_run ) begin
+			// hold
 		end
 		else begin
 			if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin

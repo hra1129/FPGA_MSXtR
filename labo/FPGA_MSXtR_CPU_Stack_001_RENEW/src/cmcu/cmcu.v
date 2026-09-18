@@ -132,9 +132,11 @@ module cmcu_inst (
 	wire				w_finish;
 	reg		[11:0]		ff_refresh_counter;
 	wire				w_refresh_start;
+	wire				w_refresh_accept;
 	wire				w_mcu_ready;
 
-	assign w_mcu_ready	= ( state_count == 4'd0 ) && ~ff_running && ff_run;
+	assign w_refresh_accept = ( state_count == 4'd0 ) && !ff_running && ff_run && w_refresh_start && !mcu_valid;
+	assign w_mcu_ready	= ( state_count == 4'd0 ) && !ff_running && ff_run && ( !w_refresh_start || mcu_valid );
 	assign mcu_ready	= w_mcu_ready;
 	assign bus_address	= ff_mcu_address;
 	assign bus_wdata	= ff_mcu_wdata;
@@ -162,16 +164,6 @@ module cmcu_inst (
 			ff_running		<= 1'b0;
 			ff_mcu_refresh	<= 1'b0;
 		end
-		else if( w_refresh_start && w_mcu_ready ) begin
-			//	Auto refresh start
-			ff_running		<= 1'b1;
-			ff_mcu_io		<= 1'b0;
-			ff_mcu_write	<= 1'b0;
-			ff_mcu_wdata	<= 8'd0;
-			ff_mcu_address	<= 20'd0;
-			ff_mcu_flash_en	<= 1'b0;
-			ff_mcu_refresh	<= 1'b1;
-		end
 		else if( mcu_valid && w_mcu_ready ) begin
 			//	MCU transaction start
 			ff_running		<= 1'b1;
@@ -181,6 +173,16 @@ module cmcu_inst (
 			ff_mcu_address	<= mcu_address;
 			ff_mcu_flash_en	<= mcu_flash_en;
 			ff_mcu_refresh	<= 1'b0;
+		end
+		else if( w_refresh_accept ) begin
+			//	Auto refresh start
+			ff_running		<= 1'b1;
+			ff_mcu_io		<= 1'b0;
+			ff_mcu_write	<= 1'b0;
+			ff_mcu_wdata	<= 8'd0;
+			ff_mcu_address	<= 20'd0;
+			ff_mcu_flash_en	<= 1'b0;
+			ff_mcu_refresh	<= 1'b1;
 		end
 	end
 
@@ -193,7 +195,7 @@ module cmcu_inst (
 		end
 		else if( !ff_running ) begin
 			ff_tw_done <= 1'b0;
-			if( ( ( mcu_valid ) || w_refresh_start ) && state_count == 4'd0 ) begin
+			if( ( mcu_valid && w_mcu_ready ) || w_refresh_accept ) begin
 				ff_t_state <= 3'd1;
 			end
 			else begin
@@ -232,7 +234,7 @@ module cmcu_inst (
 		if( !reset_n ) begin
 			ff_refresh_counter <= 12'd0;
 		end
-		else if( w_refresh_start && !ff_running && state_count == 4'd0 ) begin
+		else if( w_refresh_accept ) begin
 			ff_refresh_counter <= 12'd0;
 		end
 		else if( state_count == 4'd11 ) begin

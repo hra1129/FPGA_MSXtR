@@ -445,3 +445,104 @@ I/Oアクセスとして検出する。次回はPicoからポート`98h`/`99h`�
 - labo/FPGA_MSXtR_VDP_Stack_001/src/msx_slot/msx_slot.v — 次回のVDP側I/O受信確認対象
 - controller/FPGA_MSXtR_Stack_Controller_001/fpga_io.h, fpga_io.c — 21byteデバッグ形式へ追随
 - controller/FPGA_MSXtR_Stack_Controller_001/fpga_msxtr_controller.c — デバッグ表示更新、VDP初期化シーケンス確認対象
+
+---
+
+## 2026-09-18 夜 作業履歴 (S2026 polarity / stop freeze / refresh priority / VDP write-drop 連鎖調査)
+
+### 1. processor_mode の極性ミスマッチを修正
+
+症状として、CPU 切替の対象指定は見かけ上正しく見えても、実際の `ff_cpu_sel[0]` と
+`processor_mode` の極性が逆になっており、R800/Z80 の選択判定が反転していた。
+
+原因は、S2026 側の外部仕様では `processor_mode=0` が R800、`1` が Z80 である一方、
+内部の `ff_cpu_sel[0]` がそのまま使われていたため、境界で反転されていた点だった。
+
+修正方針:
+- S2026 外部仕様と内部選択状態を明確に分離
+- 切替要求の境界で `cpu_change_target` の極性を正しく変換して受け取り
+- `s2026_cpu_select.v` / `s2026_register.v` の扱いを整合させる
+
+これにより、Pico -> Z80 / Z80 -> Pico のシーケンスが仕様どおりに見えるようになった。
+
+### 2. 停止時に出力がマスクされるだけでなく内部状態も固定するよう修正
+
+不具合調査の途中で、CPU が止まっているときに `ff_run` が 0 でも各コアの内部信号が
+まだ変化し続けているケースがあることが分かった。
+
+これは単に `out` の極性を隠すだけでは不十分で、停止中に内部制御FFが変化してしまうと
+再開時の符号・FSM 状態が破綻しうるため、`cz80_inst.v` および `cr800_inst.v` で
+`!ff_run` 時に内部生成信号を保持する方式へ変更した。
+
+修正内容:
+- `ff_run == 0` のときは `bus_valid`, `m1_n`, `rd_n`, `wr_n` 等の生成を維持
+- 停止中に `ff_bus_valid` や内部制御が勝手に更新されないよう凍結
+- 再開と同時に不正な立ち上がりや空のバス要求が発生しないように整理
+
+これで「止まっている間の内部状態が動いてしまう」問題を潰した。
+
+### 3. auto refresh と Pico の外部 I/O write の競合を修正
+
+次に、Pico から VDP へ I/O 書込みを行うタイミングで、
+自動 refresh が同時に立ち上がると要求が取りこぼされる不具合を再現した。
+
+根本原因:
+- `cmcu.v` 側で refresh の開始タイミングが T1 境界と一致しない場合に、
+  その瞬間に Pico の `mcu_valid` が潰されるケースがあった
+- refresh と `mcu_valid` が同時に発生したときに、優先順が不明瞭だった
+
+修正内容:
+- refresh は T1 境界でのみ発火するように制限
+- refresh の開始時刻がずれている場合は待ってから開始
+- `mcu_valid` と refresh が同時に来たら、Pico の I/O write を優先
+- refresh 中は `mcu_ready` を 0 にして、要求が一時的に吸収されないように整理
+
+これにより `cmcu/test_001` と `src/test_002` の再現テストで落ちなくなった。
+
+### 4. 再現テスト追加
+
+`src/test_002/tb.sv` に、Pico による VDP I/O write と refresh の同時発生を再現する
+回帰テストを追加した。
+
+テストの意図:
+- CPU を Pico 所有に移す
+- refresh が発火するタイミングを狙う
+- 一方で VDP の `98h`/`9Ch` 系 I/O 書込みが発生する
+- write が取りこぼされないことを確認する
+
+結果:
+- 修正前に再現していた症状が再現テストで観測される
+- 修正後は `PASS = 1, FAIL = 0` で回帰が収まる
+
+### 5. まだ残る可能性: SPI CS / accept レース
+
+上記の refresh 修正で再現テスト自体は解消したが、実機ではまだ一部の VDP I/O write が
+取りこぼされているように見える。ここからは、refresh だけではなく、
+Pico の SPI コマンド到達と `cmcu` / `ip_spi` の受理タイミングの競合が残っている可能性が高い。
+
+特に懸念される箇所:
+- `ip_spi.v` で `ff_bus_valid` を落とすタイミング
+- SPI CS の解除が `cmcu` の受理ウィンドウより早い場合の request drop
+- `98h`/`9Ch` 系の外部 slot write で、要求受理前に CS が切れる問題
+- `cmcu.v` の `mcu_ready` / `run_req` / `run_ack` の成立条件の境界
+
+つまり、"refresh による消失" を潰した後も、"要求の受理が完了する前にリセット/CS解除されたことによる消失" が
+実機で残っている可能性がある。次回はここを重点的に確認する。
+
+### 6. 現時点の整理
+
+- CPU 切替の極性ミスは修正済み
+- 停止中の内部制御FFが動き続ける問題は修正済み
+- refresh と Pico write の競合は修正済み
+- 実機での VDP write 取りこぼしは、refresh 以外の受理レースがまだ残っている可能性が高い
+- 次回は `ip_spi.v` / `cmcu.v` / slot write の受理境界を中心に確認予定
+
+ここで本日の調査は一区切りとし、続きは明日以降に再開する。
+
+---
+
+### 最終メモ
+
+今日は、CPU切替の極性整理、停止時の内部信号凍結、refresh と Pico I/O write の競合修正までを
+一通りまとめた。実機の VDP 書込み取りこぼしは残っているが、その原因は refresh ではなく
+SPI/CS受理タイミングのレースに近いと判断している。次回はこの境界を実測と再現で確認する。

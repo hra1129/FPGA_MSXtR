@@ -392,6 +392,89 @@ module tb;
 
 		repeat( 50 ) @( posedge clk );
 
+		test_no = 4'd7;
+		$display( "=== TEST 7: Auto-refresh starts at the beginning of T1 ===" );
+		while( u_cmcu_inst.ff_running ) begin
+			@( posedge clk );
+		end
+		while( state_count != 4'd5 ) begin
+			@( negedge clk );
+		end
+		u_cmcu_inst.ff_refresh_counter = 12'd3579;
+		while( state_count != 4'd0 ) begin
+			@( negedge clk );
+			if( u_cmcu_inst.ff_mcu_refresh ) begin
+				$display( "[FAIL] Auto-refresh started before the beginning of T1" );
+				error_count = error_count + 1;
+			end
+		end
+		if( mcu_ready !== 1'b0 ) begin
+			$display( "[FAIL] mcu_ready asserted while auto-refresh was pending at T1" );
+			error_count = error_count + 1;
+		end
+		@( posedge clk );
+		#1;
+		if( !u_cmcu_inst.ff_mcu_refresh ) begin
+			$display( "[FAIL] Auto-refresh did not start at the beginning of T1" );
+			error_count = error_count + 1;
+		end
+		else begin
+			$display( "[PASS] Auto-refresh waited for and started at the beginning of T1" );
+		end
+		while( u_cmcu_inst.ff_running ) begin
+			@( posedge clk );
+		end
+
+		test_no = 4'd8;
+		$display( "=== TEST 8: MCU request has priority over pending auto-refresh ===" );
+		while( u_cmcu_inst.ff_running ) begin
+			@( posedge clk );
+		end
+		while( state_count != 4'd0 ) begin
+			@( negedge clk );
+		end
+		u_cmcu_inst.ff_refresh_counter = 12'd3579;
+		mcu_address	= 20'h00098;
+		mcu_wdata	= 8'hA5;
+		mcu_write	= 1'b1;
+		mcu_io		= 1'b1;
+		mcu_valid	= 1'b1;
+		@( posedge clk );
+		#1;
+		if( !u_cmcu_inst.ff_running || u_cmcu_inst.ff_mcu_refresh ||
+			u_cmcu_inst.ff_mcu_address != 20'h00098 || u_cmcu_inst.ff_mcu_wdata != 8'hA5 ) begin
+			$display( "[FAIL] MCU request was not accepted ahead of pending auto-refresh" );
+			error_count = error_count + 1;
+		end
+		else begin
+			$display( "[PASS] MCU request accepted ahead of pending auto-refresh" );
+		end
+		mcu_valid	= 1'b0;
+		mcu_write	= 1'b0;
+
+		while( u_cmcu_inst.ff_running ) begin
+			@( posedge clk );
+		end
+		i = 0;
+		while( !u_cmcu_inst.ff_mcu_refresh && i < 100 ) begin
+			@( posedge clk );
+			i = i + 1;
+		end
+		if( i >= 100 ) begin
+			$display( "[FAIL] Pending auto-refresh did not start after MCU transaction" );
+			error_count = error_count + 1;
+		end
+		else begin
+			$display( "[PASS] Pending auto-refresh started after MCU transaction" );
+		end
+		if( mcu_ready !== 1'b0 ) begin
+			$display( "[FAIL] mcu_ready asserted during auto-refresh" );
+			error_count = error_count + 1;
+		end
+		else begin
+			$display( "[PASS] mcu_ready stays inactive during auto-refresh" );
+		end
+
 
 		if( error_count == 0 ) begin
 			$display( "ALL TESTS PASSED!" );

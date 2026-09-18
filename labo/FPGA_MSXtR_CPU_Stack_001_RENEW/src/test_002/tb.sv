@@ -83,6 +83,8 @@ module tb ();
 	int keyboard_a9_bad_data_count;
 	int keyboard_z80_bad_data_count;
 	int onboard_rom_isolation_violation_count;
+	int pico_vdp_write_count;
+	reg ff_slot_wr_n;
 
 	initial begin
 		clk_28m = 1'b0;
@@ -180,6 +182,14 @@ module tb ();
 				{ slot_sltsl0_n, slot_sltsl1_n, slot_sltsl2_n, slot_sltsl3_n } != 4'b1111 ) begin
 				onboard_rom_isolation_violation_count = onboard_rom_isolation_violation_count + 1;
 			end
+		end
+	end
+
+	always @( posedge u_dut.clk42m ) begin
+		ff_slot_wr_n <= slot_wr_n;
+		if( ff_slot_wr_n && !slot_wr_n && !slot_iorq_n &&
+			slot_a[7:0] == 8'h98 && slot_d == 8'hA5 ) begin
+			pico_vdp_write_count = pico_vdp_write_count + 1;
 		end
 	end
 
@@ -582,6 +592,8 @@ module tb ();
 		keyboard_a9_bad_data_count = 0;
 		keyboard_z80_bad_data_count = 0;
 		onboard_rom_isolation_violation_count = 0;
+		pico_vdp_write_count = 0;
+		ff_slot_wr_n = 1'b1;
 		for( int row = 0; row < 12; row = row + 1 ) begin
 			keyboard_expected[row] = 8'hFF;
 		end
@@ -714,6 +726,27 @@ module tb ();
 //		check( running_pc_1 != paused_pc || running_pc_2 != paused_pc, "Z80 PC should advance after pause release" );
 //		check( cpu_wait_count > 0, "MSX slot should assert CPU wait during TW" );
 //		check( cpu_wait_active_violation_count == 0, "Z80 active should remain low during TW" );
+
+		$display( "[REPRO] Transfer bus ownership to Pico" );
+		spi_set_bus_owner( 1'b0 );
+		pico_vdp_write_count = 0;
+		fork
+			begin
+				spi_outport( 8'h98, 8'hA5 );
+			end
+			begin
+				wait( u_dut.w_mcu_valid && u_dut.u_cmcu_inst.ff_run && !u_dut.u_cmcu_inst.ff_running );
+				force u_dut.u_cmcu_inst.w_refresh_start = 1'b1;
+				do begin
+					@( posedge u_dut.clk42m );
+				end while( u_dut.ff_3_579m != 4'd0 );
+				#1;
+				release u_dut.u_cmcu_inst.w_refresh_start;
+			end
+		join
+		#( 5000 );
+		check( pico_vdp_write_count == 1,
+			"Pico VDP write must not be lost when auto refresh starts on the acceptance cycle" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );

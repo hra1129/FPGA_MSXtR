@@ -337,7 +337,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_z80_slot_wr_n;
 	wire			w_z80_slot_rfsh_n;
 	wire	[19:0]	w_z80_slot_address;
-	wire	[7:0]	w_z80_slot_wdata;
 	wire	[7:0]	w_z80_slot_rdata;
 	wire			w_z80_slot_flash_en;
 
@@ -350,7 +349,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_r800_slot_wr_n;
 	wire			w_r800_slot_rfsh_n;
 	wire	[19:0]	w_r800_slot_address;
-	wire	[7:0]	w_r800_slot_wdata;
 	wire	[7:0]	w_r800_slot_rdata;
 	wire			w_r800_slot_flash_en;
 
@@ -363,7 +361,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_pico_slot_wr_n;
 	wire			w_pico_slot_rfsh_n;
 	wire	[19:0]	w_pico_slot_address;
-	wire	[7:0]	w_pico_slot_wdata;
 	wire	[7:0]	w_pico_slot_rdata;
 	wire			w_pico_slot_flash_en;
 
@@ -677,8 +674,8 @@ module fpga_msxtr_cpu_stack (
 		.rd_n							( w_z80_slot_rd_n					),
 		.wr_n							( w_z80_slot_wr_n					),
 		.rfsh_n							( w_z80_slot_rfsh_n					),
-		.run_req						( w_z80_run_req					),
-		.run_ack						( w_z80_run_ack					),
+		.run_req						( w_z80_run_req						),
+		.run_ack						( w_z80_run_ack						),
 		.slot_d							( slot_d							),
 		.bus_io							( w_z80_bus_io						),
 		.bus_write						( w_z80_bus_write					),
@@ -729,8 +726,8 @@ module fpga_msxtr_cpu_stack (
 		.msx_reset_n					( ff_s2026_reset_n					),
 		.clk							( clk42m							),
 		.cpu_pause						( w_msx_pause						),
-		.z80_run_req					( w_z80_run_req					),
-		.z80_run_ack					( w_z80_run_ack					),
+		.z80_run_req					( w_z80_run_req						),
+		.z80_run_ack					( w_z80_run_ack						),
 		.r800_run_req					( w_r800_run_req					),
 		.r800_run_ack					( w_r800_run_ack					),
 		.pico_run_req					( w_pico_run_req					),
@@ -807,7 +804,7 @@ module fpga_msxtr_cpu_stack (
 		.z80_wr_n						( w_z80_slot_wr_n					),
 		.z80_rfsh_n						( w_z80_slot_rfsh_n					),
 		.z80_address					( w_z80_bus_address					),
-		.z80_wdata						( w_z80_slot_wdata					),
+		.z80_wdata						( w_z80_bus_wdata					),
 		.z80_rdata						( w_z80_slot_rdata					),
 		.z80_flash_en					( w_z80_slot_flash_en				),
 		.z80_bus_io						( w_z80_bus_io						),
@@ -821,7 +818,7 @@ module fpga_msxtr_cpu_stack (
 		.r800_wr_n						( w_r800_slot_wr_n					),
 		.r800_rfsh_n					( w_r800_slot_rfsh_n				),
 		.r800_address					( w_r800_bus_address				),
-		.r800_wdata						( w_r800_slot_wdata					),
+		.r800_wdata						( w_r800_bus_wdata					),
 		.r800_rdata						( w_r800_slot_rdata					),
 		.r800_flash_en					( w_r800_slot_flash_en				),
 		.r800_bus_io					( w_r800_bus_io						),
@@ -835,7 +832,7 @@ module fpga_msxtr_cpu_stack (
 		.pico_wr_n						( w_pico_slot_wr_n					),
 		.pico_rfsh_n					( w_pico_slot_rfsh_n				),
 		.pico_address					( w_pico_bus_address				),
-		.pico_wdata						( w_pico_slot_wdata					),
+		.pico_wdata						( w_pico_bus_wdata					),
 		.pico_rdata						( w_pico_slot_rdata					),
 		.pico_flash_en					( w_pico_slot_flash_en				),
 		.pico_bus_io					( w_pico_bus_io						),
