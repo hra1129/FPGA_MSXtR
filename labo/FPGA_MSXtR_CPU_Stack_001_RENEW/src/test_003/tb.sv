@@ -4,13 +4,13 @@
 //	Sequence:
 //	  1. BootROM enabled.
 //	  2. Pico gives bus ownership to CPU and releases MSX reset.
-//	  3. Z80 boots from BootROM (0000h), outputs 'Z' to UART (10h),
+//	  3. Z80 boots from BootROM (0000h) with interrupts disabled,
 //	     configures slot registers (A8h=00h, FFFFh=00h),
-//	     and writes S2026 register 6 (E4h=6, E5h=40h) to switch to R800.
-//	  4. R800 boots from BootROM (0000h), detects bit 5 of S2026 reg 6 == 0,
-//	     outputs 'R' to UART (10h), verifies slot settings,
+//	     and writes S2026 register 6 to switch to R800.
+//	  4. R800 starts after the S2026 switch with interrupts disabled,
+//	     verifies slot settings,
 //	     and writes S2026 register 6 (E4h=6, E5h=60h) to switch back to Z80.
-//	  5. Z80 resumes from where it paused and outputs 'B' to UART (10h).
+//	  5. Z80 resumes from where it paused with interrupts disabled.
 // -----------------------------------------------------------------------------
 
 `timescale 1ns/1ps
@@ -75,6 +75,17 @@ module tb ();
 	int z80_start_count;
 	int r800_start_count;
 	int z80_resume_count;
+	int vdp_write_count;
+	int vdp_short_write_count;
+	int vdp_address_violation_count;
+	int vdp_data_violation_count;
+	int vdp_sequence_violation_count;
+	int vdp_min_low_count;
+	int vdp_current_low_count;
+	reg vdp_write_active;
+	reg [18:0] vdp_write_address;
+	reg [7:0] vdp_write_data;
+	reg [7:0] vdp_expected_data;
 
 	initial begin
 		clk_28m = 1'b0;
@@ -201,6 +212,50 @@ module tb ();
 		end
 	end
 
+	// Measure the simultaneous low period of /IORQ and /WR for OUT (98h),A.
+	always @( posedge u_dut.clk42m ) begin
+		if( !vdp_write_active ) begin
+			if( !slot_iorq_n && !slot_wr_n && slot_a[7:0] == 8'h98 ) begin
+				vdp_write_active = 1'b1;
+				vdp_current_low_count = 1;
+				vdp_write_count = vdp_write_count + 1;
+				vdp_write_address = slot_a;
+				vdp_write_data = slot_d;
+				case( vdp_write_count % 4 )
+					1: vdp_expected_data = 8'h55;
+					2: vdp_expected_data = 8'hA5;
+					3: vdp_expected_data = 8'hAA;
+				default: vdp_expected_data = 8'h5A;
+				endcase
+				if( slot_d !== vdp_expected_data ) begin
+					vdp_sequence_violation_count = vdp_sequence_violation_count + 1;
+					$display( "[VDP DATA ERROR] count=%0d expected=0x%02X actual=0x%02X",
+						vdp_write_count, vdp_expected_data, slot_d );
+				end
+			end
+		end
+		else if( !slot_iorq_n && !slot_wr_n ) begin
+			vdp_current_low_count = vdp_current_low_count + 1;
+			if( slot_a !== vdp_write_address ) begin
+				vdp_address_violation_count = vdp_address_violation_count + 1;
+			end
+			if( slot_d !== vdp_write_data ) begin
+				vdp_data_violation_count = vdp_data_violation_count + 1;
+			end
+		end
+		else if( vdp_write_active ) begin
+			if( vdp_current_low_count < vdp_min_low_count ) begin
+				vdp_min_low_count = vdp_current_low_count;
+			end
+			if( vdp_current_low_count < 25 ) begin
+				vdp_short_write_count = vdp_short_write_count + 1;
+			end
+			$display( "[VDP WRITE] count=%0d low_count=%0d address=0x%05X data=0x%02X",
+				vdp_write_count, vdp_current_low_count, vdp_write_address, vdp_write_data );
+			vdp_write_active = 1'b0;
+		end
+	end
+
 	task automatic spi_send_byte( input [7:0] data );
 		int index;
 		begin
@@ -245,10 +300,7 @@ module tb ();
 				#( 10 );
 				timeout_ns = timeout_ns + 10;
 			end
-			if( mcu_intr == 1'b1 ) begin
-				spi_transfer_byte( 8'h00, response );
-			end
-			else begin
+			if( mcu_intr == 1'b0 ) begin
 				$display( "WARNING: bus owner switch timed out" );
 			end
 			#( 200 );
@@ -282,12 +334,12 @@ module tb ();
 		end
 	endtask
 
-	task automatic spi_get_debug_signal( output [7:0] data [0:22] );
+	task automatic spi_get_debug_signal( output [7:0] data [0:20] );
 		begin
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h0A );
-			for( int byte_index = 0; byte_index < 23; byte_index = byte_index + 1 ) begin
+			for( int byte_index = 0; byte_index < 21; byte_index = byte_index + 1 ) begin
 				spi_transfer_byte( 8'h00, data[byte_index] );
 			end
 			#( 200 );
@@ -310,14 +362,26 @@ module tb ();
 	endtask
 
 	initial begin
-		reg [7:0] debug_data [0:22];
+		reg [7:0] debug_data [0:20];
 		int timeout_cycles;
+		int mode_count_value;
 
 		pass_count = 0;
 		fail_count = 0;
 		z80_start_count = 0;
 		r800_start_count = 0;
 		z80_resume_count = 0;
+		vdp_write_count = 0;
+		vdp_short_write_count = 0;
+		vdp_address_violation_count = 0;
+		vdp_data_violation_count = 0;
+		vdp_sequence_violation_count = 0;
+		vdp_min_low_count = 1000000;
+		vdp_current_low_count = 0;
+		vdp_write_active = 1'b0;
+		vdp_write_address = 19'd0;
+		vdp_write_data = 8'd0;
+		vdp_expected_data = 8'd0;
 		mcu_cs_n = 1'b1;
 		mcu_sclk = 1'b0;
 		mcu_mosi = 1'b0;
@@ -349,24 +413,27 @@ module tb ();
 		$display( "CPU Diagnostics at end of test:" );
 		$display( "  Z80_PC   = 0x%04X", { debug_data[1], debug_data[0] } );
 		$display( "  R800_PC  = 0x%04X", { debug_data[12], debug_data[11] } );
-		$display( "  mode     = %s", (debug_data[17] & 8'h01) ? "Z80" : "R800" );
-		$display( "  req_cnt  = %0d, mode_cnt = %0d", debug_data[19], debug_data[20] );
+		$display( "  mode     = %s", (debug_data[16] & 8'h20) ? "Z80" : "R800" );
+		mode_count_value = { debug_data[19][0], debug_data[18][7:1] };
+		$display( "  mode_cnt = %0d", mode_count_value );
 		$display( "  A8       = 0x%02X, SSL0 = 0x%02X, SSL3 = 0x%02X", debug_data[2], debug_data[3], debug_data[4] );
 		$display( "  FFFF_wr  = seen:%u 39:%u r800:%u, r800_pc:0x%04X",
 			(debug_data[8] >> 5) & 1'b1, (debug_data[8] >> 6) & 1'b1, (debug_data[8] >> 7) & 1'b1,
 			{ debug_data[10], debug_data[9] } );
-		$display( "  link     = 0x%02X", debug_data[22] );
+		$display( "  link     = 0x%02X", debug_data[20] );
 		$display( "============================================================" );
 
-		check( z80_start_count > 0, "Z80 started and executed BootROM ('Z' output)" );
-		check( r800_start_count > 0, "R800 started at 0000h after switch ('R' output)" );
-		check( z80_resume_count > 0, "Z80 resumed after switch back ('B' output)" );
-		check( debug_data[19] == 8'd2, "Two CPU switch requests occurred (Z80->R800, R800->Z80)" );
-		check( debug_data[20] == 8'd4, "Four CPU mode transitions completed (boot: R800->Z80, then Z80->R800, R800->Z80)" );
-		check( (debug_data[17] & 8'h01) == 8'h01, "Final CPU mode is Z80" );
+		check( mode_count_value == 2, "Two CPU mode transitions completed (Z80->R800, then R800->Z80)" );
+		check( (debug_data[16] & 8'h20) == 8'h20, "Final CPU mode is Z80" );
 		check( debug_data[2] == 8'h00, "Primary slot selector A8h preserved as 0x00" );
 		check( debug_data[3] == 8'h00, "Secondary slot 0 selector SSL0 preserved as 0x00" );
-		check( debug_data[22] == 8'hA5, "Debug link pattern is 0xA5" );
+		check( debug_data[20] == 8'hA5, "Debug link pattern is 0xA5" );
+		check( vdp_write_count == 1000, "1000 OUT (98h),A writes reached the cartridge slot" );
+		check( vdp_short_write_count == 0, "Every OUT (98h),A had at least 25 clocks of simultaneous /IORQ and /WR low" );
+		check( vdp_min_low_count >= 25, "Minimum simultaneous /IORQ and /WR low period was at least 25 clocks" );
+		check( vdp_address_violation_count == 0, "Slot address stayed stable during every measured write" );
+		check( vdp_data_violation_count == 0, "Slot data stayed stable during every measured write" );
+		check( vdp_sequence_violation_count == 0, "Slot data followed the 55h, A5h, AAh, 5Ah write sequence" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );

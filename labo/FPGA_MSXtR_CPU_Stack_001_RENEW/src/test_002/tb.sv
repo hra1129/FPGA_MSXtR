@@ -84,6 +84,15 @@ module tb ();
 	int keyboard_z80_bad_data_count;
 	int onboard_rom_isolation_violation_count;
 	int pico_vdp_write_count;
+	int pico_mcu_accept_count;
+	int pico_bus_valid_count;
+	int pico_vdp_short_write_count;
+	int pico_vdp_data_violation_count;
+	int pico_vdp_sequence_violation_count;
+	int pico_vdp_min_low_count;
+	int pico_vdp_current_low_count;
+	reg pico_vdp_write_active;
+	reg [7:0] pico_vdp_write_data;
 	reg ff_slot_wr_n;
 
 	initial begin
@@ -186,10 +195,49 @@ module tb ();
 	end
 
 	always @( posedge u_dut.clk42m ) begin
+		if( u_dut.w_mcu_valid && u_dut.w_mcu_ready ) begin
+			pico_mcu_accept_count = pico_mcu_accept_count + 1;
+		end
+		if( u_dut.w_pico_bus_valid ) begin
+			pico_bus_valid_count = pico_bus_valid_count + 1;
+		end
 		ff_slot_wr_n <= slot_wr_n;
-		if( ff_slot_wr_n && !slot_wr_n && !slot_iorq_n &&
-			slot_a[7:0] == 8'h98 && slot_d == 8'hA5 ) begin
-			pico_vdp_write_count = pico_vdp_write_count + 1;
+		if( !pico_vdp_write_active ) begin
+			if( !slot_iorq_n && !slot_wr_n && slot_a[7:0] == 8'h98 ) begin
+				pico_vdp_write_active = 1'b1;
+				pico_vdp_current_low_count = 1;
+				pico_vdp_write_count = pico_vdp_write_count + 1;
+				pico_vdp_write_data = slot_d;
+				case( pico_vdp_write_count % 4 )
+					1: begin
+						if( slot_d !== 8'h55 ) pico_vdp_sequence_violation_count = pico_vdp_sequence_violation_count + 1;
+					end
+					2: begin
+						if( slot_d !== 8'hA5 ) pico_vdp_sequence_violation_count = pico_vdp_sequence_violation_count + 1;
+					end
+					3: begin
+						if( slot_d !== 8'hAA ) pico_vdp_sequence_violation_count = pico_vdp_sequence_violation_count + 1;
+					end
+					default: begin
+						if( slot_d !== 8'h5A ) pico_vdp_sequence_violation_count = pico_vdp_sequence_violation_count + 1;
+					end
+				endcase
+			end
+		end
+		else if( !slot_iorq_n && !slot_wr_n ) begin
+			pico_vdp_current_low_count = pico_vdp_current_low_count + 1;
+			if( slot_d !== pico_vdp_write_data ) begin
+				pico_vdp_data_violation_count = pico_vdp_data_violation_count + 1;
+			end
+		end
+		else begin
+			if( pico_vdp_current_low_count < pico_vdp_min_low_count ) begin
+				pico_vdp_min_low_count = pico_vdp_current_low_count;
+			end
+			if( pico_vdp_current_low_count < 25 ) begin
+				pico_vdp_short_write_count = pico_vdp_short_write_count + 1;
+			end
+			pico_vdp_write_active = 1'b0;
 		end
 	end
 
@@ -253,7 +301,6 @@ module tb ();
 
 	task automatic spi_set_bus_owner( input owner );
 		int timeout_ns;
-		reg [7:0] response;
 		begin
 			timeout_ns = 0;
 			mcu_cs_n = 1'b0;
@@ -264,10 +311,7 @@ module tb ();
 				#( 10 );
 				timeout_ns = timeout_ns + 10;
 			end
-			if( mcu_intr == 1'b1 ) begin
-				spi_transfer_byte( 8'h00, response );
-			end
-			else begin
+			if( mcu_intr == 1'b0 ) begin
 				$display( "WARNING: bus owner switch timed out" );
 			end
 			#( 200 );
@@ -419,7 +463,7 @@ module tb ();
 			spi_send_byte( 8'h01 );
 			spi_send_byte( port );
 			spi_send_byte( data );
-			#( 200 );
+			spi_wait_intr();
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;
 			#( 200 );
@@ -451,7 +495,7 @@ module tb ();
 			spi_send_byte( address[7:0] );
 			spi_send_byte( address[15:8] );
 			spi_send_byte( data );
-			#( 200 );
+			spi_wait_intr();
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;
 			#( 200 );
@@ -508,6 +552,7 @@ module tb ();
 			spi_transfer_byte( 8'h00, led_status );
 			for( int row = 0; row < 12; row = row + 1 ) begin
 				spi_send_byte( matrix[row] );
+			#( 300 );
 			end
 			#( 200 );
 			mcu_cs_n = 1'b1;
@@ -593,6 +638,15 @@ module tb ();
 		keyboard_z80_bad_data_count = 0;
 		onboard_rom_isolation_violation_count = 0;
 		pico_vdp_write_count = 0;
+		pico_mcu_accept_count = 0;
+		pico_bus_valid_count = 0;
+		 pico_vdp_short_write_count = 0;
+		 pico_vdp_data_violation_count = 0;
+		 pico_vdp_sequence_violation_count = 0;
+		 pico_vdp_min_low_count = 1000000;
+		 pico_vdp_current_low_count = 0;
+		 pico_vdp_write_active = 1'b0;
+		 pico_vdp_write_data = 8'h00;
 		ff_slot_wr_n = 1'b1;
 		for( int row = 0; row < 12; row = row + 1 ) begin
 			keyboard_expected[row] = 8'hFF;
@@ -747,6 +801,38 @@ module tb ();
 		#( 5000 );
 		check( pico_vdp_write_count == 1,
 			"Pico VDP write must not be lost when auto refresh starts on the acceptance cycle" );
+
+		$display( "[TEST] Pico performs 1000 VDP writes with cycling data" );
+		pico_vdp_write_count = 0;
+		pico_vdp_short_write_count = 0;
+		pico_vdp_data_violation_count = 0;
+		pico_vdp_sequence_violation_count = 0;
+		pico_vdp_min_low_count = 1000000;
+		pico_vdp_current_low_count = 0;
+		pico_vdp_write_active = 1'b0;
+		for( int write_index = 0; write_index < 1000; write_index = write_index + 1 ) begin
+			case( write_index % 4 )
+				0: spi_outport( 8'h98, 8'h55 );
+				1: spi_outport( 8'h98, 8'hA5 );
+				2: spi_outport( 8'h98, 8'hAA );
+				default: spi_outport( 8'h98, 8'h5A );
+			endcase
+		end
+		#( 5000 );
+		$display( "[RESULT] Pico VDP write count=%0d mcu_accept=%0d bus_valid_cycles=%0d short=%0d min_low=%0d data_hold=%0d sequence=%0d",
+			pico_vdp_write_count, pico_mcu_accept_count, pico_bus_valid_count,
+			pico_vdp_short_write_count, pico_vdp_min_low_count,
+			pico_vdp_data_violation_count, pico_vdp_sequence_violation_count );
+		check( pico_vdp_write_count == 1000,
+			"1000 Pico VDP writes reached the cartridge slot" );
+		check( pico_vdp_short_write_count == 0,
+			"Every Pico VDP write held /IORQ and /WR low for at least 25 clocks" );
+		check( pico_vdp_min_low_count >= 25,
+			"Minimum Pico VDP write low period was at least 25 clocks" );
+		check( pico_vdp_data_violation_count == 0,
+			"Pico VDP write data stayed stable while /IORQ and /WR were low" );
+		check( pico_vdp_sequence_violation_count == 0,
+			"Pico VDP write data followed the 55h, A5h, AAh, 5Ah sequence" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );

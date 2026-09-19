@@ -44,6 +44,19 @@ static bool s_msx_pause_timeout = false;
 static bool s_msx_reset_timeout = false;
 static bool s_bus_owner_wait_ready_timeout = false;
 
+// SPI write completion is reported by FPGA after bus_ready is received.
+static bool fpga_wait_intr( uint32_t timeout_ms ) {
+	absolute_time_t timeout_time;
+
+	timeout_time = make_timeout_time_ms( timeout_ms );
+	while( !time_reached( timeout_time ) ) {
+		if( gpio_get( SPI0_INTR_PIN ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
 // ---------------------------------------------------------
 void fpga_access_begin( void ) {
 	gpio_put( SPI0_CSN_PIN, 0 );
@@ -143,6 +156,10 @@ void fpga_outport( uint8_t io_address, uint8_t data ) {
 	spi_write_blocking( SPI0_PORT, &buf, 1 );
 	buf = data;
 	spi_write_blocking( SPI0_PORT, &buf, 1 );
+	if( !fpga_wait_intr( 50 ) ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		return;
+	}
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 }
@@ -208,6 +225,10 @@ void fpga_poke( uint16_t io_address, uint8_t data ) {
 	spi_write_blocking( SPI0_PORT, &buf, 1 );
 	buf = data;
 	spi_write_blocking( SPI0_PORT, &buf, 1 );
+	if( !fpga_wait_intr( 50 ) ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		return;
+	}
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 }
@@ -424,10 +445,6 @@ void fpga_set_bus_owner( uint8_t owner ) {
 		s_bus_owner_timeout = true;
 		return;
 	}
-
-	dummy = 0x00;
-	spi_write_read_blocking( SPI0_PORT, &dummy, &data, 1 );
-
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 }

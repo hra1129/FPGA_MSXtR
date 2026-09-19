@@ -97,7 +97,7 @@ module ip_spi (
 	reg				ff_spi_write;
 	reg				ff_spi_valid;
 	reg				ff_spi_intr;
-	reg			ff_spi_tx_load_en_d1;
+	reg				ff_spi_tx_load_en_d1;
 	wire			spi_ready;
 	wire	[7:0]	spi_rdata;
 	wire			spi_rdata_en;
@@ -122,11 +122,10 @@ module ip_spi (
 	reg		[7:0]	ff_keyboard_update_count;
 	reg		[159:0]	ff_debug_signal;
 	reg		[4:0]	ff_debug_byte_index;
-	reg				ff_suppress_intr;
-	reg				ff_suppress_intr_d1;
 	reg		[19:0]	ff_flashrom_address;
 	reg				ff_flashrom_access;
 	reg				ff_slot_wait_n;
+	reg				ff_spi_intr_req;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -153,80 +152,81 @@ module ip_spi (
 	// ---------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_state		<= ST_IDLE;
-			ff_bus_address	<= 16'd0;
-			ff_bus_wdata	<= 8'd0;
-			ff_bus_io		<= 1'b0;
-			ff_bus_write	<= 1'b0;
-			ff_bus_valid	<= 1'b0;
-			ff_spi_wdata	<= SPI_RX_WDATA;
-			ff_spi_write	<= 1'b0;
-			ff_spi_valid	<= 1'b0;
-			ff_msx_reset_n	<= 1'b0;
-			ff_msx_pause	<= 1'b0;
-			ff_bootrom_en	<= 1'b1;
-			ff_pico_change_target	<= 1'b1;
-			ff_pico_change_req	<= 1'b0;
-			ff_keyboard_matrix_row	<= 4'd0;
-			ff_keyboard_matrix	<= 8'hFF;
-			ff_keyboard_output_row	<= 4'd0;
-			ff_keyboard_output_data	<= 8'hFF;
+			ff_state					<= ST_IDLE;
+			ff_bus_address				<= 16'd0;
+			ff_bus_wdata				<= 8'd0;
+			ff_bus_io					<= 1'b0;
+			ff_bus_write				<= 1'b0;
+			ff_bus_valid				<= 1'b0;
+			ff_spi_wdata				<= SPI_RX_WDATA;
+			ff_spi_write				<= 1'b0;
+			ff_spi_valid				<= 1'b0;
+			ff_msx_reset_n				<= 1'b0;
+			ff_msx_pause				<= 1'b0;
+			ff_spi_intr_req				<= 1'b0;
+			ff_bootrom_en				<= 1'b1;
+			ff_pico_change_target		<= 1'b1;
+			ff_pico_change_req			<= 1'b0;
+			ff_keyboard_matrix_row		<= 4'd0;
+			ff_keyboard_matrix			<= 8'hFF;
+			ff_keyboard_output_row		<= 4'd0;
+			ff_keyboard_output_data		<= 8'hFF;
 			ff_keyboard_update_toggle	<= 1'b0;
 			ff_keyboard_update_count	<= 8'd0;
-			ff_debug_signal <= 160'd0;
-			ff_suppress_intr <= 1'b0;
-			ff_flashrom_address <= 20'd0;
-			ff_flashrom_access <= 1'b0;
-			ff_debug_byte_index <= 5'd0;
+			ff_debug_signal				<= 160'd0;
+			ff_flashrom_address			<= 20'd0;
+			ff_flashrom_access			<= 1'b0;
+			ff_debug_byte_index			<= 5'd0;
 		end
 		//	spi_cs_n解除は異常時のリカバリを兼ねるため、どのステートより優先して ST_IDLE へ戻す
 		else if( ff_spi_cs_n ) begin
-			ff_state		<= ST_IDLE;
-			ff_spi_valid	<= 1'b0;
-			ff_bus_valid	<= 1'b0;
-			ff_suppress_intr <= 1'b0;
-			ff_flashrom_access <= 1'b0;
+			ff_state					<= ST_IDLE;
+			ff_spi_valid				<= 1'b0;
+			ff_bus_valid				<= 1'b0;
+			ff_flashrom_access			<= 1'b0;
+			ff_spi_intr_req				<= 1'b0;
 		end
 		else if( ff_state == ST_SEND ) begin
 			if( ff_spi_valid && spi_ready ) begin
-				ff_spi_valid	<= 1'b0;
-				ff_spi_write	<= 1'b0;
-				ff_state		<= ST_COMMAND;
-				ff_spi_wdata	<= SPI_RX_WDATA;
-				ff_spi_valid	<= 1'b1;
-				ff_spi_write	<= 1'b0;
+				ff_spi_valid			<= 1'b0;
+				ff_spi_write			<= 1'b0;
+				ff_state				<= ST_COMMAND;
+				ff_spi_wdata			<= SPI_RX_WDATA;
+				ff_spi_valid			<= 1'b1;
+				ff_spi_write			<= 1'b0;
 			end
 		end
 		else if( ff_state == ST_DO ) begin
 			if( bus_ready ) begin
 				ff_bus_valid	<= 1'b0;
 				if( ff_bus_write ) begin
-					ff_state		<= ST_COMMAND;
-					ff_spi_wdata	<= SPI_RX_WDATA;
-					ff_spi_valid	<= 1'b1;
-					ff_spi_write	<= 1'b0;
+					ff_state			<= ST_COMMAND;
+					ff_spi_wdata		<= SPI_RX_WDATA;
+					ff_spi_valid		<= 1'b1;
+					ff_spi_write		<= 1'b0;
 				end
 				else begin
-					ff_state		<= ST_WAIT_RDATA;
+					ff_state			<= ST_WAIT_RDATA;
 				end
 			end
 		end
 		else if( ff_state == ST_WAIT_RDATA ) begin
 			if( bus_rdata_en ) begin
-				ff_state		<= ST_SEND;
-				ff_spi_wdata	<= bus_rdata;
-				ff_spi_valid	<= 1'b1;
-				ff_spi_write	<= 1'b1;
+				ff_state			<= ST_SEND;
+				ff_spi_wdata		<= bus_rdata;
+				ff_spi_valid		<= 1'b1;
+				ff_spi_write		<= 1'b1;
 			end
 		end
 		else if( ff_state == ST_BUS_OWNER_WAIT ) begin
 			//	実際に s2026 側の cpu_sel[1] が切り替わるまで待ってから intr を上げる
 			if( cpu_sel[1] == ff_pico_change_target ) begin
+				ff_spi_intr_req		<= 1'b1;
 				ff_pico_change_req	<= 1'b0;
-				ff_state			<= ST_SEND;
-				ff_spi_wdata		<= SPI_RX_WDATA;
-				ff_spi_valid		<= 1'b1;
-				ff_spi_write		<= 1'b1;
+				ff_state			<= ST_IDLE;
+//				ff_spi_wdata		<= SPI_RX_WDATA;
+//				ff_spi_valid		<= 1'b1;
+//				ff_spi_write		<= 1'b1;
 			end
 		end
 		else if( ff_spi_valid && !(ff_state == ST_KEYBOARD && spi_rdata_en) ) begin
@@ -241,6 +241,7 @@ module ip_spi (
 				ff_spi_wdata	<= SPI_RX_WDATA;
 				ff_spi_valid	<= 1'b1;
 				ff_spi_write	<= 1'b0;
+				ff_spi_intr_req	<= 1'b0;
 			end
 			// -------------------------------------------------
 			// COMMAND:
@@ -265,130 +266,141 @@ module ip_spi (
 				if( spi_rdata_en ) begin
 					case( spi_rdata )
 					8'h01: begin
-						ff_state		<= ST_ADDRESS;
-						ff_bus_io		<= 1'b1;
-						ff_bus_write	<= 1'b1;
-						ff_flashrom_access <= 1'b0;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_state			<= ST_ADDRESS;
+						ff_bus_io			<= 1'b1;
+						ff_bus_write		<= 1'b1;
+						ff_flashrom_access	<= 1'b0;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h02: begin
-						ff_state		<= ST_ADDRESS;
-						ff_bus_io		<= 1'b1;
-						ff_bus_write	<= 1'b0;
-						ff_flashrom_access <= 1'b0;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_state			<= ST_ADDRESS;
+						ff_bus_io			<= 1'b1;
+						ff_bus_write		<= 1'b0;
+						ff_flashrom_access	<= 1'b0;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h03: begin
-						ff_state		<= ST_MEM_ADDR_L;
-						ff_bus_io		<= 1'b0;
-						ff_bus_write	<= 1'b1;
-						ff_flashrom_access <= 1'b0;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_state			<= ST_MEM_ADDR_L;
+						ff_bus_io			<= 1'b0;
+						ff_bus_write		<= 1'b1;
+						ff_flashrom_access	<= 1'b0;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h04: begin
-						ff_state		<= ST_MEM_ADDR_L;
-						ff_bus_io		<= 1'b0;
-						ff_bus_write	<= 1'b0;
-						ff_flashrom_access <= 1'b0;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_state			<= ST_MEM_ADDR_L;
+						ff_bus_io			<= 1'b0;
+						ff_bus_write		<= 1'b0;
+						ff_flashrom_access	<= 1'b0;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h05: begin
 						//	busy check --> respond immediately, no bus access involved
-						ff_state		<= ST_SEND;
-						ff_spi_wdata	<= { 5'd0, ssram_startup_busy, ~ff_slot_wait_n, ff_bus_valid };
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b1;
+						ff_state			<= ST_SEND;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_spi_wdata		<= { 5'd0, ssram_startup_busy, ~ff_slot_wait_n, ff_bus_valid };
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b1;
 					end
 					8'h06: begin
-						ff_msx_reset_n	<= 1'b0;
-						ff_state		<= ST_COMMAND;
-						ff_spi_wdata	<= SPI_RX_WDATA;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_msx_reset_n		<= 1'b0;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_state			<= ST_COMMAND;
+						ff_spi_wdata		<= SPI_RX_WDATA;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h07: begin
-						ff_msx_reset_n	<= 1'b1;
-						ff_state		<= ST_COMMAND;
-						ff_spi_wdata	<= SPI_RX_WDATA;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_msx_reset_n		<= 1'b1;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_state			<= ST_COMMAND;
+						ff_spi_wdata		<= SPI_RX_WDATA;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
+						ff_bus_write		<= 1'b1;
 					end
 					8'h08: begin
-						ff_msx_pause	<= 1'b1;
-						ff_state		<= ST_COMMAND;
-						ff_spi_wdata	<= SPI_RX_WDATA;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_msx_pause		<= 1'b1;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_state			<= ST_COMMAND;
+						ff_spi_wdata		<= SPI_RX_WDATA;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h09: begin
-						ff_msx_pause	<= 1'b0;
-						ff_state		<= ST_COMMAND;
-						ff_spi_wdata	<= SPI_RX_WDATA;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_msx_pause		<= 1'b0;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_state			<= ST_COMMAND;
+						ff_spi_wdata		<= SPI_RX_WDATA;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
+						ff_bus_write		<= 1'b1;
 					end
 					8'h0a: begin
-						ff_state		<= ST_DEBUG_H;
-						ff_debug_signal <= { 2'd0, debug_signal };
-						ff_spi_wdata	<= debug_signal[7:0];
+						ff_state			<= ST_DEBUG_H;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_debug_signal		<= { 2'd0, debug_signal };
+						ff_spi_wdata		<= debug_signal[7:0];
 						ff_debug_byte_index <= 5'd1;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b1;
-						ff_suppress_intr <= 1'b1;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b1;
 					end
 					8'h0b: begin
-						ff_bootrom_en	<= 1'b1;
-						ff_state		<= ST_COMMAND;
-						ff_spi_wdata	<= SPI_RX_WDATA;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_bootrom_en		<= 1'b1;
+						ff_state			<= ST_COMMAND;
+						ff_spi_wdata		<= SPI_RX_WDATA;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h0c: begin
-						ff_bootrom_en	<= 1'b0;
-						ff_state		<= ST_COMMAND;
-						ff_spi_wdata	<= SPI_RX_WDATA;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_bootrom_en		<= 1'b0;
+						ff_state			<= ST_COMMAND;
+						ff_spi_wdata		<= SPI_RX_WDATA;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h0d: begin
-						ff_state		<= ST_FLASH_ADDR_L;
-						ff_bus_io		<= 1'b0;
-						ff_bus_write	<= 1'b1;
-						ff_flashrom_access <= 1'b1;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_state			<= ST_FLASH_ADDR_L;
+						ff_bus_io			<= 1'b0;
+						ff_flashrom_access	<= 1'b1;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h0e: begin
-						ff_state		<= ST_FLASH_ADDR_L;
-						ff_bus_io		<= 1'b0;
-						ff_bus_write	<= 1'b0;
-						ff_flashrom_access <= 1'b1;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_bus_write		<= 1'b0;		//	spi_intr は 送信準備完了
+						ff_state			<= ST_FLASH_ADDR_L;
+						ff_bus_io			<= 1'b0;
+						ff_flashrom_access	<= 1'b1;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h10: begin
-						ff_state		<= ST_BUS_OWNER;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_state			<= ST_BUS_OWNER;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					8'h11: begin
+						ff_bus_write			<= 1'b0;		//	spi_intr は 送信準備完了
 						ff_state				<= ST_KEYBOARD_SEND;
 						ff_spi_wdata			<= { 4'd0, r800_led, kana_led, caps_led, pause_led };
 						ff_spi_valid			<= 1'b1;
 						ff_spi_write			<= 1'b1;
-						ff_suppress_intr		<= 1'b1;
 						ff_keyboard_matrix_row	<= 4'd0;
 					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command
-						ff_state		<= ST_COMMAND;
-						ff_spi_wdata	<= SPI_RX_WDATA;
-						ff_spi_valid	<= 1'b1;
-						ff_spi_write	<= 1'b0;
+						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
+						ff_state			<= ST_COMMAND;
+						ff_spi_wdata		<= SPI_RX_WDATA;
+						ff_spi_valid		<= 1'b1;
+						ff_spi_write		<= 1'b0;
 					end
 					default: begin
 						// unknown command --> ignore
@@ -497,7 +509,6 @@ module ip_spi (
 					ff_spi_wdata	<= SPI_RX_WDATA;
 					ff_spi_valid	<= 1'b1;
 					ff_spi_write	<= 1'b0;
-					ff_suppress_intr <= 1'b0;
 				end
 			end
 			ST_KEYBOARD: begin
@@ -551,26 +562,39 @@ module ip_spi (
 	// ---------------------------------------------------------
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_spi_intr				<= 1'b0;
 			ff_spi_tx_load_en_d1	<= 1'b0;
-			ff_suppress_intr_d1	<= 1'b0;
 		end
 		else if( ff_spi_cs_n ) begin
-			ff_spi_intr				<= 1'b0;
 			ff_spi_tx_load_en_d1	<= 1'b0;
-			ff_suppress_intr_d1	<= 1'b0;
 		end
 		else begin
 			ff_spi_tx_load_en_d1	<= spi_tx_load_en;
-			ff_suppress_intr_d1	<= ff_suppress_intr;
-			if( ff_suppress_intr || ff_suppress_intr_d1 ) begin
-				ff_spi_intr	<= 1'b0;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_spi_intr				<= 1'b0;
+		end
+		else if( ff_spi_cs_n ) begin
+			ff_spi_intr				<= 1'b0;
+		end
+		else if( ff_spi_intr_req ) begin
+			//	内部処理が完了したことを通知
+			ff_spi_intr				<= 1'b1;
+		end
+		else if( ff_bus_write ) begin
+			//	内部BUSへの書き込みの場合
+			if( ff_bus_valid && bus_ready ) begin
+				//	内部BUS への書き込みが受理されたところで Picoへ通知
+				ff_spi_intr				<= 1'b1;
 			end
-			else if( ff_spi_tx_load_en_d1 ) begin
-			ff_spi_intr	<= 1'b1;
-			end
-			else if( ff_spi_intr && spi_clk ) begin
-				ff_spi_intr	<= 1'b0;
+		end
+		else begin
+			//	それ以外の場合
+			if( ff_spi_tx_load_en_d1 ) begin
+				//	送信準備完了（Pico にいつでも 1byte受信していいよ、と通知）
+				ff_spi_intr				<= 1'b1;
 			end
 		end
 	end

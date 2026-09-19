@@ -197,3 +197,24 @@ FPGAが存在するかどうかを確認する要求です。
 | `bus_flash_en` | output | 1 | FlashROMアクセス有効フラグ (1: FlashROMアクセス / 0: 通常アクセス) |
 | `bus_rdata` | input | 8 | バス読み出しデータ |
 | `bus_rdata_en` | input | 1 | バス読み出しデータ有効パルス |
+
+### `spi_intr` のコマンド別仕様
+
+`spi_intr` はコマンドによって意味が異なる。CSnをHにすると、FPGA側は現在のSPI処理を
+中断して初期状態へ戻り、`spi_intr`もLへ戻る。
+
+| コマンド | `spi_intr`をHにする条件 | Pico側の動作 |
+|---|---|---|
+| `01h` I/O write | `bus_valid=1` に対して `bus_ready=1` が成立した後。ACK中はCSn解除までHを保持する | コマンド・アドレス・データ送信後、`spi_intr=H`を待ってCSnをHにする |
+| `03h` Memory write | `bus_valid=1` に対して `bus_ready=1` が成立した後。ACK中はCSn解除までHを保持する | コマンド・アドレス・データ送信後、`spi_intr=H`を待ってCSnをHにする |
+| `02h` I/O read | バス読み出しデータをSPI送信シフタへロードした後 | `spi_intr=H`を待ち、dummy byteを送信してデータを受信する |
+| `04h` Memory read | バス読み出しデータをSPI送信シフタへロードした後 | `spi_intr=H`を待ち、dummy byteを送信してデータを受信する |
+| `0Eh` FlashROM read | FlashROM読み出しデータをSPI送信シフタへロードした後 | `spi_intr=H`を待ち、dummy byteを送信してデータを受信する |
+| `10h` Bus owner | CPUバス所有権が要求値へ切り替わり、応答byteを送信可能になった後 | `spi_intr=H`を待ち、応答byteを受信してCSnをHにする |
+| `05h` Busy check | status byteをSPI送信シフタへロードした後 | status byteを受信してCSnをHにする。BUSY解除ACKではない |
+| `0Ah` Debug | 応答byteの連続送信制御に使用。通常の完了ACKではない | 規定byte数を送受信してCSnをHにする |
+| `11h` Keyboard | LED応答・キーマトリクス転送のSPI制御に使用。通常の完了ACKではない | 規定byte数を送受信してCSnをHにする |
+| `06h`-`09h`, `0Bh`, `0Ch`, `0Dh`, `0Fh`, `FFh` | SPI応答byteの送信準備時点。書込み完了ACKではない | 規定byteを送信後、CSnをHにする |
+
+書込みコマンドのACKは、SPIシフタの送信準備ではなく、内部バスの`bus_ready`を根拠にする。
+これにより、`cmcu`が受理可能なタイミングまで`bus_valid`を保持できる。

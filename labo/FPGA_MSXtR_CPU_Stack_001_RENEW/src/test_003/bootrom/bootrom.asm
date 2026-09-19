@@ -36,6 +36,19 @@ z80_entry:
 				out		[0xA8], a
 				ld		[0xFFFF], a
 
+				; 1000 VDP data-port writes for slot data timing measurement
+				ld		 b, 250
+z80_vdp_write_loop_0:
+				ld		 a, 0x55
+				out		[0x98], a
+				ld		 a, 0xA5
+				out		[0x98], a
+				ld		 a, 0xAA
+				out		[0x98], a
+				ld		 a, 0x5A
+				out		[0x98], a
+				djnz	 z80_vdp_write_loop_0
+
 				; 3. Perform CPU switch to R800 (ROM mode: 40h, bit 5 = 0)
 				ld		a, 6
 				out		[S2026_REG_IDX], a
