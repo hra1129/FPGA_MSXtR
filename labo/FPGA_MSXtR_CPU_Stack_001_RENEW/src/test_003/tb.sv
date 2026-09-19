@@ -363,8 +363,10 @@ module tb ();
 
 	initial begin
 		reg [7:0] debug_data [0:20];
+		reg [15:0] z80_pc_before_pico;
 		int timeout_cycles;
 		int mode_count_value;
+		int pause_timeout;
 
 		pass_count = 0;
 		fail_count = 0;
@@ -406,8 +408,49 @@ module tb ();
 			timeout_cycles = timeout_cycles + 1;
 		end
 
-		#( 10000 );
+		#( 100 );
 		spi_get_debug_signal( debug_data );
+
+		// Verify that CPU execution can be paused by transferring the bus to Pico,
+		// then resumed by transferring it back to the CPU.
+		repeat( 10 ) begin
+			$display( "[BUS] Transfer bus ownership to Pico while CPU is running" );
+			spi_set_bus_owner( 1'b0 );
+			pause_timeout = 0;
+			while( u_dut.w_cpu_sel != 2'd2 && pause_timeout < 500 ) begin
+				#( 100 );
+				pause_timeout = pause_timeout + 1;
+			end
+			check( u_dut.w_cpu_sel == 2'd2, "Pico owns the bus after the ownership request" );
+			check( u_dut.w_z80_run_ack == 1'b0 && u_dut.w_r800_run_ack == 1'b0,
+				"Both Z80 and R800 are stopped while Pico owns the bus" );
+			check( u_dut.w_z80_active == 1'b0 && u_dut.w_r800_active == 1'b0,
+				"Both CPU active signals are inactive while Pico owns the bus" );
+
+			z80_pc_before_pico = u_dut.w_z80_pc;
+			#( 5000 );
+			check( u_dut.w_z80_pc == z80_pc_before_pico,
+				"Z80 PC remains stopped while Pico owns the bus" );
+			$display( "[BUS] Transfer bus ownership back to CPU" );
+			spi_set_bus_owner( 1'b1 );
+			pause_timeout = 0;
+			while( u_dut.w_cpu_sel != 2'd0 && pause_timeout < 500 ) begin
+				#( 100 );
+				pause_timeout = pause_timeout + 1;
+			end
+			check( u_dut.w_cpu_sel == 2'd0, "Z80 owns the bus after returning ownership to CPU" );
+			check( u_dut.w_z80_run_ack == 1'b1 && u_dut.w_pico_run_ack == 1'b0,
+				"Z80 resumes and Pico stops after returning CPU ownership" );
+			check( u_dut.w_z80_active == 1'b1, "Z80 becomes active after returning CPU ownership" );
+			pause_timeout = 0;
+			while( u_dut.w_z80_pc == z80_pc_before_pico && pause_timeout < 500 ) begin
+				#( 100 );
+				pause_timeout = pause_timeout + 1;
+			end
+			check( u_dut.w_z80_pc != z80_pc_before_pico,
+				"Z80 resumes execution from the position held before Pico ownership" );
+			#( 5000 );
+		end
 
 		$display( "============================================================" );
 		$display( "CPU Diagnostics at end of test:" );

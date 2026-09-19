@@ -962,12 +962,12 @@ int main(void) {
 	// 他のボードが起動しているかわからないので、念のため 100ms 待機する
 	sleep_ms(100);
 
-#if 0
+#if 1
 	// Z80 にバス権がある状態で起動する場合 =======================================
 	// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
 	// を実行し、その間 slot_wait_n = L にしてくる。それが解除されるまで待つ。
 	fpga_bootrom_enable( false );
-	fpga_msx_pause( true );
+	//fpga_msx_pause( true );
 	fpga_set_bus_owner( 1 );
 	fpga_msx_reset( false );
 
@@ -977,7 +977,7 @@ int main(void) {
 	//	sleep_us( 10 );
 	//}
 	sleep_ms( 500 );		//	★代用
-	fpga_msx_pause( false );
+	//fpga_msx_pause( false );
 #else
 	// Pico にバス権がある状態で起動する場合 =======================================
 	// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
