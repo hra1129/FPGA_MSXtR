@@ -77,6 +77,7 @@ void fpga_msx_reset( bool reset_on );
 void fpga_msx_pause( bool pause_on );
 void fpga_bootrom_enable( bool enable );
 void fpga_set_bus_owner( uint8_t owner );
+uint8_t fpga_get_bus_owner( void );
 bool fpga_get_bus_owner_timeout( void );
 bool fpga_get_bus_owner_wait_ready_timeout( void );
 bool fpga_get_bootrom_enable_timeout( void );

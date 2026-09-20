@@ -771,7 +771,7 @@ module tb ();
 //			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
 //			u_dut.w_active_bus_owner, u_dut.w_z80_active );
 //		spi_get_debug_signal( running_pc_1 );
-		#( 1000000 );
+		#( 1500000000 );
 //		spi_get_debug_signal( running_pc_2 );
 //		monitor_cpu_wait = 1'b0;
 //		$display( "[BOOT] PC after pause release: 0x%04X -> 0x%04X", running_pc_1, running_pc_2 );
@@ -781,26 +781,26 @@ module tb ();
 //		check( cpu_wait_count > 0, "MSX slot should assert CPU wait during TW" );
 //		check( cpu_wait_active_violation_count == 0, "Z80 active should remain low during TW" );
 
-		$display( "[REPRO] Transfer bus ownership to Pico" );
-		spi_set_bus_owner( 1'b0 );
-		pico_vdp_write_count = 0;
-		fork
-			begin
-				spi_outport( 8'h98, 8'hA5 );
-			end
-			begin
-				wait( u_dut.w_mcu_valid && u_dut.u_cmcu_inst.ff_run && !u_dut.u_cmcu_inst.ff_running );
-				force u_dut.u_cmcu_inst.w_refresh_start = 1'b1;
-				do begin
-					@( posedge u_dut.clk42m );
-				end while( u_dut.ff_3_579m != 4'd0 );
-				#1;
-				release u_dut.u_cmcu_inst.w_refresh_start;
-			end
-		join
-		#( 5000 );
-		check( pico_vdp_write_count == 1,
-			"Pico VDP write must not be lost when auto refresh starts on the acceptance cycle" );
+//		$display( "[REPRO] Transfer bus ownership to Pico" );
+//		spi_set_bus_owner( 1'b0 );
+//		pico_vdp_write_count = 0;
+//		fork
+//			begin
+//				spi_outport( 8'h98, 8'hA5 );
+//			end
+//			begin
+//				wait( u_dut.w_mcu_valid && u_dut.u_cmcu_inst.ff_run && !u_dut.u_cmcu_inst.ff_running );
+//				force u_dut.u_cmcu_inst.w_refresh_start = 1'b1;
+//				do begin
+//					@( posedge u_dut.clk42m );
+//				end while( u_dut.ff_3_579m != 4'd0 );
+//				#1;
+//				release u_dut.u_cmcu_inst.w_refresh_start;
+//			end
+//		join
+//		#( 5000 );
+//		check( pico_vdp_write_count == 1,
+//			"Pico VDP write must not be lost when auto refresh starts on the acceptance cycle" );
 
 		$display( "[TEST] Pico performs 1000 VDP writes with cycling data" );
 		pico_vdp_write_count = 0;

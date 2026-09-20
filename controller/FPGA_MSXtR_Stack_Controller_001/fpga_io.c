@@ -43,6 +43,8 @@ static bool s_bootrom_enable_timeout = false;
 static bool s_msx_pause_timeout = false;
 static bool s_msx_reset_timeout = false;
 static bool s_bus_owner_wait_ready_timeout = false;
+// 0: Pico owns the bus, 1: MSX CPU owns the bus.
+static uint8_t s_bus_owner = 0;
 
 // SPI write completion is reported by FPGA after bus_ready is received.
 static bool fpga_wait_intr( uint32_t timeout_ms ) {
@@ -71,6 +73,7 @@ void fpga_access_end( void ) {
 void fpga_io_init( void ) {
 	uint8_t cmd;
 	uint8_t data;
+	s_bus_owner = 0;
 
 	spi_init( SPI0_PORT, SPI0_BAUDRATE );
 	spi_set_format( SPI0_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST );
@@ -145,6 +148,9 @@ bool fpga_get_wait_status( void ) {
 void fpga_outport( uint8_t io_address, uint8_t data ) {
 	uint8_t buf;
 
+	if( s_bus_owner != 0 ) {
+		return;
+	}
 	if( !fpga_wait_ready() ) {
 		return;
 	}
@@ -172,6 +178,9 @@ uint8_t fpga_inport( uint8_t io_address ) {
 	absolute_time_t timeout_time;
 	bool intr_ready;
 
+	if( s_bus_owner != 0 ) {
+		return 0xAA;
+	}
 	if( !fpga_wait_ready() ) {
 		return 0xBB;
 	}
@@ -212,6 +221,9 @@ uint8_t fpga_inport( uint8_t io_address ) {
 void fpga_poke( uint16_t io_address, uint8_t data ) {
 	uint8_t buf;
 
+	if( s_bus_owner != 0 ) {
+		return;
+	}
 	if( !fpga_wait_ready() ) {
 		return;
 	}
@@ -241,6 +253,9 @@ uint8_t fpga_peek( uint16_t io_address ) {
 	absolute_time_t timeout_time;
 	bool intr_ready;
 
+	if( s_bus_owner != 0 ) {
+		return 0xAA;
+	}
 	if( !fpga_wait_ready() ) {
 		return 0xBB;
 	}
@@ -409,8 +424,6 @@ void fpga_bootrom_enable( bool enable ) {
 //	FPGA が INTR をアサートする。1byte 読み出すことで INTR をクリアする。
 void fpga_set_bus_owner( uint8_t owner ) {
 	uint8_t cmd;
-	uint8_t dummy;
-	uint8_t data;
 	absolute_time_t timeout_time;
 	bool intr_ready;
 
@@ -446,7 +459,13 @@ void fpga_set_bus_owner( uint8_t owner ) {
 		return;
 	}
 	gpio_put( SPI0_CSN_PIN, 1 );
+	s_bus_owner = owner & 0x01;
 	sleep_us( 10 );
+}
+
+// ---------------------------------------------------------
+uint8_t fpga_get_bus_owner( void ) {
+	return s_bus_owner;
 }
 
 // ---------------------------------------------------------

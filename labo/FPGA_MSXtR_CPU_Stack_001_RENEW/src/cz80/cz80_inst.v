@@ -489,16 +489,17 @@ module cz80_inst (
 	localparam			c_bus_valid_cycle_rise = 4'd2;
 	localparam			c_bus_valid_tstate_fall = 3'd2;
 	localparam			c_bus_valid_cycle_fall = 4'd11;
-	localparam			c_bus_valid_mem_tstate_rise = 3'd1;
-	localparam			c_bus_valid_mem_cycle_rise = 4'd2;
-	localparam			c_bus_valid_mem_tstate_fall = 3'd2;
-	localparam			c_bus_valid_mem_cycle_fall = 4'd0;
+	localparam			c_bus_valid_rd_tstate_rise = 3'd1;
+	localparam			c_bus_valid_rd_cycle_rise = 4'd2;
+	localparam			c_bus_valid_rd_tstate_fall = 3'd2;
+	localparam			c_bus_valid_rd_cycle_fall = 4'd0;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_bus_valid			<= 1'b0;
 			ff_bus_io				<= 1'b0;
 			ff_bus_write			<= 1'b0;
+			ff_bus_wdata			<= 8'hFF;
 			ff_bus_rdata			<= 8'hFF;
 			ff_di					<= 8'hFF;
 			ff_wait_bus_rdata_en	<= 1'b0;
@@ -527,7 +528,7 @@ module cz80_inst (
 						ff_bus_rdata			<= slot_d;
 					end
 				end
-				else if( w_t_state == c_bus_valid_mem_tstate_fall && state_count == c_bus_valid_mem_cycle_fall ) begin
+				else if( w_t_state == c_bus_valid_rd_tstate_fall && state_count == c_bus_valid_rd_cycle_fall ) begin
 					//	タイムアウト処理（メモリサイクル）
 					//	こちらは、/MERQ, /RD のうち /MERQ の方が早く立ち上がるため、そのタイミングでラッチ。
 					ff_bus_valid			<= 1'b0;
@@ -549,7 +550,15 @@ module cz80_inst (
 				ff_bus_io					<= 1'b0;
 				ff_bus_write				<= 1'b0;
 			end
-			else if( w_write && w_t_state == c_bus_valid_mem_tstate_rise && state_count == c_bus_valid_mem_cycle_rise && ff_new_tstate ) begin
+			else if( !w_iorq && w_write && w_t_state == c_wr_mem_tstate_fall && state_count == c_wr_mem_cycle_fall && ff_new_tstate ) begin
+				//	リクエスト開始
+				ff_wait_bus_rdata_en		<= 1'b0;
+				ff_bus_valid				<= 1'b1;
+				ff_bus_io					<= w_iorq;
+				ff_bus_write				<= 1'b1;
+				ff_bus_wdata				<= w_bus_wdata;
+			end
+			else if( w_iorq && w_write && w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall && ff_new_tstate ) begin
 				//	リクエスト開始
 				ff_wait_bus_rdata_en		<= 1'b0;
 				ff_bus_valid				<= 1'b1;
@@ -575,28 +584,28 @@ module cz80_inst (
 	assign w_cz80_di		= (w_t_state == 3'd1) ? ff_di : ff_bus_rdata;
 
 	cz80 u_cz80 (
-		.reset_n		( reset_n			),
-		.clk_n			( clk				),
+		.reset_n		( reset_n				),
+		.clk_n			( clk					),
 		.cen			( ff_enable & ff_run	),
-		.wait_n			( w_wait_n			),
-		.int_n			( int_n				),
-		.nmi_n			( nmi_n				),
-		.busrq_n		( 1'b1				),	//	CPU切替はcenマスクで行うため、コア内蔵のBUSREQは使用しない
-		.m1_n			( w_m1_n			),
-		.iorq			( w_iorq			),
-		.noread			( w_noread			),
-		.write			( w_write			),
-		.rfsh_n			( w_rfsh_n			),
-		.halt_n			( 					),
-		.busak_n		( 					),
-		.a				( w_bus_address		),
-		.dinst			( ff_bus_rdata		),
-		.di				( w_cz80_di			),
-		.do				( w_bus_wdata		),
-		.ts				( w_t_state			),
-		.intcycle_n		( w_intcycle_n		),
-		.inte			( 					),
-		.stop			( 					),
-		.p_pc			( pc				)		//	debug
+		.wait_n			( w_wait_n				),
+		.int_n			( int_n					),
+		.nmi_n			( nmi_n					),
+		.busrq_n		( 1'b1					),	//	CPU切替はcenマスクで行うため、コア内蔵のBUSREQは使用しない
+		.m1_n			( w_m1_n				),
+		.iorq			( w_iorq				),
+		.noread			( w_noread				),
+		.write			( w_write				),
+		.rfsh_n			( w_rfsh_n				),
+		.halt_n			( 						),
+		.busak_n		( 						),
+		.a				( w_bus_address			),
+		.dinst			( ff_bus_rdata			),
+		.di				( w_cz80_di				),
+		.do				( w_bus_wdata			),
+		.ts				( w_t_state				),
+		.intcycle_n		( w_intcycle_n			),
+		.inte			( 						),
+		.stop			( 						),
+		.p_pc			( pc					)		//	debug
 	);
 endmodule

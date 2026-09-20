@@ -406,9 +406,9 @@ module msx_slot #(
 					ff_slot_sltsl1_n		<= 1'b1;
 					ff_slot_sltsl2_n		<= 1'b1;
 					ff_slot_sltsl3_n		<= 1'b1;
-					ff_slot_cs1_n			<= (w_page == 2'd1) ? 1'b0 : 1'b1;
-					ff_slot_cs2_n			<= (w_page == 2'd2) ? 1'b0 : 1'b1;
-					ff_slot_cs12_n			<= (w_page == 2'd1 || w_page == 2'd2) ? 1'b0 : 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
 				end
 				endcase
 			end

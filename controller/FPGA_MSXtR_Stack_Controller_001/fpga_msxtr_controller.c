@@ -946,7 +946,6 @@ int main(void) {
 	uint8_t prev_mat11 = 0xFF;
 	uint8_t prev_mat00 = 0xFF;
 	uint8_t prev_mat01 = 0xFF;
-	bool pico_bus_owner = true;
 	bool reset_pressed;
 	bool prev_reset_pressed;
 
@@ -962,13 +961,16 @@ int main(void) {
 	// 他のボードが起動しているかわからないので、念のため 100ms 待機する
 	sleep_ms(100);
 
-#if 1
+#if 0
 	// Z80 にバス権がある状態で起動する場合 =======================================
 	// MSXのリセット解除: VDP Board はリセット解除してから SDRAM の初期化シーケンス
 	// を実行し、その間 slot_wait_n = L にしてくる。それが解除されるまで待つ。
+	printf( "fpga_bootrom_enable( false );\n" );
 	fpga_bootrom_enable( false );
 	//fpga_msx_pause( true );
+	printf( "fpga_set_bus_owner( 1 );\n" );
 	fpga_set_bus_owner( 1 );
+	printf( "fpga_msx_reset( false );\n" );
 	fpga_msx_reset( false );
 
 	// ★ToDo: 現状 /WAIT のあたりがおかしいので下記コードで無限ループに入る、要調査
@@ -976,6 +978,7 @@ int main(void) {
 	//	printf( "Waiting for FPGA to be ready...\n" );
 	//	sleep_us( 10 );
 	//}
+	printf( "sleep_ms( 500 );\n" );
 	sleep_ms( 500 );		//	★代用
 	//fpga_msx_pause( false );
 #else
@@ -998,8 +1001,10 @@ int main(void) {
 	vdp_set_screen1_message();
 #endif
 
+	printf( "mode_switch_is_reset_pressed();\n" );
 	prev_reset_pressed = mode_switch_is_reset_pressed();
 
+	printf( "main loop start\n" );
 	while (true) {
 		reset_pressed = mode_switch_is_reset_pressed();
 		if( reset_pressed != prev_reset_pressed ) {
@@ -1072,13 +1077,11 @@ int main(void) {
 			//	0キーが押されたタイミングなら、Picoへバス所有権を戻す
 			printf( "Returning bus ownership to Pico\n" );
 			fpga_set_bus_owner( 0 );
-			pico_bus_owner = true;
 		}
 		if( (prev_mat01 & 0x08) && !(keymatrix[1] & 0x08) ) {
 			//	-キーが押されたタイミングなら、MSX CPUへバス所有権を渡す
 			printf( "Passing bus ownership to MSX CPU\n" );
 			fpga_set_bus_owner( 1 );
-			pico_bus_owner = false;
 		}
 		if( (prev_mat01 & 0x10) && !(keymatrix[1] & 0x10) ) {
 			//	^キーが押されたタイミングなら、RTC に時刻を設定して5秒間読み出す

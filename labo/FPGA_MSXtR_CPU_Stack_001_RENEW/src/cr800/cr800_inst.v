@@ -489,16 +489,17 @@ module cr800_inst (
 	localparam			c_bus_valid_cycle_rise = 4'd2;
 	localparam			c_bus_valid_tstate_fall = 3'd2;
 	localparam			c_bus_valid_cycle_fall = 4'd11;
-	localparam			c_bus_valid_mem_tstate_rise = 3'd1;
-	localparam			c_bus_valid_mem_cycle_rise = 4'd2;
-	localparam			c_bus_valid_mem_tstate_fall = 3'd2;
-	localparam			c_bus_valid_mem_cycle_fall = 4'd0;
+	localparam			c_bus_valid_rd_tstate_rise = 3'd1;
+	localparam			c_bus_valid_rd_cycle_rise = 4'd2;
+	localparam			c_bus_valid_rd_tstate_fall = 3'd2;
+	localparam			c_bus_valid_rd_cycle_fall = 4'd0;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_bus_valid			<= 1'b0;
 			ff_bus_io				<= 1'b0;
 			ff_bus_write			<= 1'b0;
+			ff_bus_wdata			<= 8'hFF;
 			ff_bus_rdata			<= 8'hFF;
 			ff_di					<= 8'hFF;
 			ff_wait_bus_rdata_en	<= 1'b0;
@@ -527,7 +528,7 @@ module cr800_inst (
 						ff_bus_rdata			<= slot_d;
 					end
 				end
-				else if( w_t_state == c_bus_valid_mem_tstate_fall && state_count == c_bus_valid_mem_cycle_fall ) begin
+				else if( w_t_state == c_bus_valid_rd_tstate_fall && state_count == c_bus_valid_rd_cycle_fall ) begin
 					//	タイムアウト処理（メモリサイクル）
 					//	こちらは、/MERQ, /RD のうち /MERQ の方が早く立ち上がるため、そのタイミングでラッチ。
 					ff_bus_valid			<= 1'b0;
@@ -549,7 +550,15 @@ module cr800_inst (
 				ff_bus_io					<= 1'b0;
 				ff_bus_write				<= 1'b0;
 			end
-			else if( w_write && w_t_state == c_bus_valid_mem_tstate_rise && state_count == c_bus_valid_mem_cycle_rise && ff_new_tstate ) begin
+			else if( !w_iorq && w_write && w_t_state == c_wr_mem_tstate_fall && state_count == c_wr_mem_cycle_fall && ff_new_tstate ) begin
+				//	リクエスト開始
+				ff_wait_bus_rdata_en		<= 1'b0;
+				ff_bus_valid				<= 1'b1;
+				ff_bus_io					<= w_iorq;
+				ff_bus_write				<= 1'b1;
+				ff_bus_wdata				<= w_bus_wdata;
+			end
+			else if( w_iorq && w_write && w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall && ff_new_tstate ) begin
 				//	リクエスト開始
 				ff_wait_bus_rdata_en		<= 1'b0;
 				ff_bus_valid				<= 1'b1;
