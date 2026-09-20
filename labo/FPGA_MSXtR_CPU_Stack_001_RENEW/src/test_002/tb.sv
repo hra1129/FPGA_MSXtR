@@ -771,7 +771,7 @@ module tb ();
 //			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
 //			u_dut.w_active_bus_owner, u_dut.w_z80_active );
 //		spi_get_debug_signal( running_pc_1 );
-		#( 1500000000 );
+		#( 50000000 );
 //		spi_get_debug_signal( running_pc_2 );
 //		monitor_cpu_wait = 1'b0;
 //		$display( "[BOOT] PC after pause release: 0x%04X -> 0x%04X", running_pc_1, running_pc_2 );

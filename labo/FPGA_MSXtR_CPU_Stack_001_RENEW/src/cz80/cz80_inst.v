@@ -334,8 +334,8 @@ module cz80_inst (
 	// ---------------------------------------------------------
 	localparam			c_rd_m1_tstate_fall = 3'd1;
 	localparam			c_rd_m1_cycle_fall = 4'd7;
-	localparam			c_rd_m1_tstate_rise = 3'd3;
-	localparam			c_rd_m1_cycle_rise = 4'd1;
+	localparam			c_rd_m1_tstate_rise = 3'd2;
+	localparam			c_rd_m1_cycle_rise = 4'd11;
 	localparam			c_rd_mem_tstate_fall = 3'd1;
 	localparam			c_rd_mem_cycle_fall = 4'd2;
 	localparam			c_rd_mem_tstate_rise = 3'd3;
@@ -356,7 +356,7 @@ module cz80_inst (
 			if(      w_t_state == c_rd_m1_tstate_fall && state_count == c_rd_m1_cycle_fall ) begin
 				ff_rd_n <= 1'b0;
 			end
-			else if( w_t_state == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise ) begin
+			else if( w_t_state == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && !ff_new_tstate ) begin
 				ff_rd_n <= 1'b1;
 			end
 		end
@@ -518,9 +518,9 @@ module cz80_inst (
 					ff_wait_bus_rdata_en	<= 1'b0;
 					ff_bus_rdata			<= bus_rdata;
 				end
-				else if( !ff_m1_n || ff_bus_io ) begin
-					if( w_t_state == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall && !ff_new_tstate ) begin
-						//	タイムアウト処理 (M1サイクル・I/Oサイクル)
+				else if( !ff_m1_n ) begin
+					if( w_t_state == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && !ff_new_tstate ) begin
+						//	タイムアウト処理 (M1サイクル)
 						//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
 						//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
 						ff_bus_valid			<= 1'b0;
@@ -528,7 +528,17 @@ module cz80_inst (
 						ff_bus_rdata			<= slot_d;
 					end
 				end
-				else if( w_t_state == c_bus_valid_rd_tstate_fall && state_count == c_bus_valid_rd_cycle_fall ) begin
+				else if( ff_bus_io ) begin
+					if( w_t_state == c_rd_io_tstate_rise && state_count == c_rd_io_cycle_rise ) begin
+						//	タイムアウト処理 (I/Oサイクル)
+						//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
+						//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
+						ff_bus_valid			<= 1'b0;
+						ff_wait_bus_rdata_en	<= 1'b0;
+						ff_bus_rdata			<= slot_d;
+					end
+				end
+				else if( w_t_state == c_rd_mem_tstate_rise && state_count == c_rd_mem_cycle_rise ) begin
 					//	タイムアウト処理（メモリサイクル）
 					//	こちらは、/MERQ, /RD のうち /MERQ の方が早く立ち上がるため、そのタイミングでラッチ。
 					ff_bus_valid			<= 1'b0;

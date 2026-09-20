@@ -139,7 +139,8 @@ module msx_slot #(
 	assign w_slot_address	= sel[1] ? pico_address		: (sel[0] ? { 4'd0, r800_address }	: { 4'd0, z80_address });
 	assign slot_wr_n		= w_slot_wr_n;
 	assign slot_rd_n		= w_slot_rd_n;
-	assign slot_data_dir	= ~w_slot_wr_n;
+//	assign slot_data_dir	= ~w_slot_wr_n;					//	1: write, 0: read
+	assign slot_data_dir	= w_slot_rd_n | w_bus_io;		//	1: write, 0: read
 	assign slot_d			= w_slot_wr_n ? 8'bz	: w_slot_d;
 	assign z80_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
 	assign r800_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
