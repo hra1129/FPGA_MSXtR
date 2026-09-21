@@ -51,13 +51,15 @@ MSX カートリッジスロットのタイミングを生成するコントロ�
 - ROM の下位14bit(`slot_a[13:0]`)は常に `bus_address[13:0]` の下位14bitがそのまま出力される。
 - ROM の上位ビット(バンク番号)は、`bus_upper`/`bus_upper_address` のような外部入力ではなく、
   `w_selected_slot`/`w_selected_secondary_slot`/`w_page` から本モジュール内部で決定する(`w_rom0_bank`)。
-- SLOT#0(任意の拡張スロット)、および SLOT#3 の拡張スロット1・2 にアクセスした場合のみ `slot_rom0_ce_n` が
-  Low になる(`w_rom0_sel`)。それ以外(SLOT#1, SLOT#2, SLOT#3 の拡張スロット0・3)は通常どおり外部スロットの
-  `slot_sltsl*_n` のみが有効になり、ROM0 は選択されない。
+- SLOT#0 の各拡張スロットの page0/page1、および SLOT#3 の拡張スロット1・2 のROMマップ対象ページに
+  アクセスした場合のみ `slot_rom0_ce_n` が Low になる。それ以外(SLOT#1, SLOT#2, SLOT#0 の page2/page3,
+  SLOT#3 の拡張スロット0・3など)はROM0を選択しない。
   - SLOT#0-0〜0-3: 各拡張スロットにつき32KB(ページ0・1のみ)を bank 0〜7 に割り当てる
-    (`{2'd0, w_selected_secondary_slot, w_page[0]}`)。ページ2・3はページ0・1と同じ内容がミラーされる。
+    (`{2'd0, w_selected_secondary_slot, w_page[0]}`)。page2・page3は未接続であり、ミラーしない。
   - SLOT#3-1: 64KB全ページを bank 8〜11 に割り当てる(`5'd8 + w_page`)。
   - SLOT#3-2 ページ1(DiskROM): bank 12 固定。バンク切替レジスタは未実装のため常に BANK#0 を指す(TODO)。
+- SLOT#3-0 は FlashROM ではなく Memory Mapper / SerialSRAM にマップされる。下位14bitはCPUアドレス
+  `A[13:0]`、上位はページに対応するメモリマッパセグメントレジスタの値を使用する。
 - 漢字ROM(ROM1)は未対応。`slot_rom1_ce_n` は常に非アサート(Hi)。
 - 詳細な ROM マップは本ファイル末尾の「ROMマップ」章を参照。
 
@@ -95,8 +97,8 @@ MSX カートリッジスロットのタイミングを生成するコントロ�
 
 - `slot_oe_n` は常時 0 固定(常にバッファ出力イネーブル)。
 - `slot_reset_n` は `reset_n` をそのまま出力。
-- `slot_data_dir` は write アクセス中のみ 1(モジュール側からスロットへ駆動)、それ以外は `slot_busdir` をそのまま
-  スルーする。
+- 試作Cartridge Slot StackではI/Oカートリッジを暫定的に非対応とし、`slot_data_dir` は writeアクセス中および
+  I/Oアクセス中に 1(CPU Stack→Cartridge Slot Stack)となる。メモリread時のみカートリッジ側からCPU Stackへ返す。
 - `slot_d` は write アクセス中のみ `ff_req_wdata_215m` を駆動し、それ以外は `8'hzz`(ハイインピーダンス)。
 - `int_n` は `slot_int_n` を、そのまま出力する。
 
@@ -110,7 +112,8 @@ SLOT#{基本スロット番号}-{拡張スロット番号} で SLOT#0 には SLO
 このそれぞれに 64KB の空間があり、各ページ単位でどの拡張スロットが出現するかを指定できる。
 拡張スロットの英語表記は、secondary_slot である。
 FFFFh の拡張スロット選択レジスタは、拡張スロット選択レジスタに影響を受けず、すべての拡張スロットで同じレジスタが出現する。
-SLOT#0-0, 0-1, 0-2, 0-3, 3-1, 3-2 にアクセスする際は、slot_rom0_ce_n = L になる。
+SLOT#0-0, 0-1, 0-2, 0-3 の page0/page1、SLOT#3-1 の全page、SLOT#3-2 のDiskROM page にアクセスする際は、slot_rom0_ce_n = L になる。
+SLOT#0 の page2/page3 は未接続であり、SLOT#3-0 は Memory Mapper / SerialSRAM にマップされる。
 漢字ROM にアクセスする際は 、slot_rom1_ce_n = L になる。
 
 # 漢字ROM

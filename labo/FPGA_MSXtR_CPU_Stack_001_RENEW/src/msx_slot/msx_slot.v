@@ -123,6 +123,7 @@ module msx_slot #(
 	wire			w_bus_io;
 	wire			w_bus_write;
 	wire			w_flash_en;
+	wire			w_external_memory_read;
 
 	assign slot_clock_n		= msx_clock;
 	assign slot_oe_n		= 1'b0;
@@ -140,7 +141,7 @@ module msx_slot #(
 	assign slot_wr_n		= w_slot_wr_n;
 	assign slot_rd_n		= w_slot_rd_n;
 //	assign slot_data_dir	= ~w_slot_wr_n;					//	1: write, 0: read
-	assign slot_data_dir	= w_slot_rd_n | w_bus_io;		//	1: write, 0: read; block cartridge-to-CPU data during I/O access
+	assign slot_data_dir	= ~w_external_memory_read;		//	1: CPU Stack -> Cartridge Slot Stack, 0: Cartridge Slot Stack -> CPU Stack
 	assign slot_d			= w_slot_wr_n ? 8'bz	: w_slot_d;
 	assign z80_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
 	assign r800_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
@@ -190,6 +191,7 @@ module msx_slot #(
 							  ( w_page == 2'd1 ) ? slot_secondary3[3:2] :
 							  ( w_page == 2'd2 ) ? slot_secondary3[5:4] : slot_secondary3[7:6];
 	assign w_secondary_slot	= ( w_primary_slot == 2'd0 ) ? w_secondary_slot0 : w_secondary_slot3;
+	assign w_external_memory_read = ~w_slot_rd_n & ~w_bus_io & ~w_flash_en & ((w_primary_slot == 2'd1) | (w_primary_slot == 2'd2));
 
 	assign w_jis1_kanji_cs	= jis1_kanji_en & w_bus_io & ({w_slot_address[7:1], 1'b0} == 8'hD8);
 	assign w_jis2_kanji_cs	= jis2_kanji_en & w_bus_io & ({w_slot_address[7:1], 1'b0} == 8'hDA) ;
@@ -219,7 +221,7 @@ module msx_slot #(
 					ff_jis1_increment	<= 1'b1;
 				end
 			end
-			else if( w_jis2_kanji_cs & w_bus_write ) begin
+			else if( w_jis2_kanji_cs ) begin
 				if( w_bus_write ) begin
 					if( w_slot_address[0] == 1'b0 ) begin
 						ff_jis2_kanji_address[10:0]		<= w_slot_d[5:0];

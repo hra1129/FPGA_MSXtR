@@ -423,6 +423,7 @@ module tb;
 		slot_primary = 8'h00;	// All pages in Slot 0
 		z80_bus_io = 1'b0;
 		z80_bus_write = 1'b0;
+		z80_rd_n = 1'b0;
 
 		// 5.1: SLOT#0-0 page#0 (MAIN-ROM Lower, 0x0000 - 0x3FFF)
 		slot_secondary0 = 8'h00; // Sec Slot 0-0
@@ -431,6 +432,7 @@ module tb;
 		check( slot_rom0_ce_n == 1'b0 && slot_rom1_ce_n == 1'b1, "SLOT#0-0 page#0 selects ROM0" );
 		check( slot_a == 19'h01234, "SLOT#0-0 page#0 address is 0x01234" );
 		check( slot_sltsl0_n == 1'b1, "SLOT#0-0 internal ROM does not assert slot_sltsl0_n" );
+		check( slot_data_dir == 1'b1, "SLOT#0-0 internal ROM read blocks cartridge-to-CPU data" );
 
 		// 5.2: SLOT#0-0 page#1 (MAIN-ROM Upper, 0x4000 - 0x7FFF)
 		z80_address = 20'h05678;
@@ -471,11 +473,12 @@ module tb;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h1F000, "SLOT#0-3 page#1 address is 0x1F000 ({3'd1, 2'b11, 14'h3000})" );
 
-		// 5.9: SLOT#0-0 page#2 is internal-only on this stack
+		// 5.9: SLOT#0-0 page#2 is unmapped on this stack
 		slot_secondary0 = 8'h00;
 		z80_address = 16'h8000;
 		@( posedge clk ); #1;
 		check( slot_sltsl0_n == 1'b1, "SLOT#0-0 page#2 does not assert slot_sltsl0_n" );
+		check( slot_rom0_ce_n == 1'b1 && slot_rom1_ce_n == 1'b1, "SLOT#0-0 page#2 does not select internal ROM" );
 		check( slot_cs1_n == 1'b1 && slot_cs2_n == 1'b1 && slot_cs12_n == 1'b1, "SLOT#0-0 page#2 keeps external CS inactive" );
 
 		// ================================================================
@@ -490,6 +493,7 @@ module tb;
 		@( posedge clk ); #1;
 		check( slot_sltsl1_n == 1'b0 && slot_sltsl0_n == 1'b1, "Slot 1 page#1 asserts slot_sltsl1_n" );
 		check( slot_cs1_n == 1'b0 && slot_cs12_n == 1'b0 && slot_cs2_n == 1'b1, "Slot 1 page#1 asserts cs1_n and cs12_n" );
+		check( slot_data_dir == 1'b0, "Slot 1 memory read allows cartridge-to-CPU data" );
 
 		// Slot 1 page 2 (0x8000)
 		z80_address = 20'h08000;
@@ -522,6 +526,7 @@ module tb;
 		z80_address = 20'h00100;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h20100, "SLOT#3-1 page#0 address is 0x20100 ({3'd2, 2'b00, 14'h0100})" );
+		check( slot_data_dir == 1'b1, "SLOT#3-1 internal ROM read blocks cartridge-to-CPU data" );
 
 		// 7.2: SLOT#3-1 page#1 (KanjiDriver Lower)
 		z80_address = 20'h04200;
@@ -554,12 +559,14 @@ module tb;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h3C500, "MSX-DOS2 bank 3 address is 0x3C500 ({3'd3, 2'b11, 14'h0500})" );
 
-		// 7.7: SLOT#3-0 page#2 is internal-only on this stack
+		// 7.7: SLOT#3-0 page#2 is handled by Memory Mapper / Serial SRAM outside msx_slot
 		slot_secondary3 = 8'h00; // Sec Slot 3-0
 		z80_address = 16'h8000;
 		@( posedge clk ); #1;
 		check( slot_sltsl3_n == 1'b1 && slot_rom0_ce_n == 1'b1, "SLOT#3-0 page#2 does not assert slot_sltsl3_n" );
+		check( slot_rom0_ce_n == 1'b1 && slot_rom1_ce_n == 1'b1, "SLOT#3-0 page#2 does not select internal ROM" );
 		check( slot_cs1_n == 1'b1 && slot_cs2_n == 1'b1 && slot_cs12_n == 1'b1, "SLOT#3-0 page#2 keeps external CS inactive" );
+		check( slot_data_dir == 1'b1, "SLOT#3-0 SRAM read blocks cartridge-to-CPU data" );
 
 		// ================================================================
 		//	Test 8: FlashROM Direct Access (flash_en = 1)
@@ -569,11 +576,14 @@ module tb;
 
 		// ROM0 access by Pico (address[19] = 0)
 		sel = 2'b10;
+		slot_primary = 8'h55;	// All Slot 1: direct access must ignore normal slot selection
+		pico_rd_n = 1'b0;
 		pico_flash_en = 1'b1;
 		pico_address = 20'h12345;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b0 && slot_rom1_ce_n == 1'b1, "FlashROM ROM0 selected (addr[19]=0)" );
 		check( slot_a == 19'h12345, "slot_a reflects pico_address[18:0]" );
+		check( slot_data_dir == 1'b1, "FlashROM direct read blocks cartridge-to-CPU data" );
 
 		// ROM1 access by Pico (address[19] = 1)
 		pico_address = 20'h9ABCD;
@@ -581,6 +591,7 @@ module tb;
 		check( slot_rom0_ce_n == 1'b1 && slot_rom1_ce_n == 1'b0, "FlashROM ROM1 selected (addr[19]=1)" );
 		check( slot_a == 19'h1ABCD, "slot_a reflects pico_address[18:0]" );
 		pico_flash_en = 1'b0;
+		pico_rd_n = 1'b1;
 		pico_address = 20'd0;
 		sel = 2'b00;
 

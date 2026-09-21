@@ -819,3 +819,118 @@ CPU Stack側cmcuの/RDラッチタイミングは原因ではなかった。
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cmcu/cmcu.v — /RD延長診断パッチを一時適用後、撤回済み
 
 ここで一度GitHubへpush済み。作業は一区切りとする。
+
+---
+
+## 2026-09-21 作業履歴 (Cartridge Slot Stack試作基板向けバス競合対策とスロットマップ整理)
+
+VDP VRAM read/write不具合解決後、Cartridge Slot Stack試作基板接続時のデータバス競合対策を再開した。
+
+### 1. 試作Cartridge Slot Stackの制約と方針
+
+Cartridge Slot Stack上のSN74LVC8T245は、D[7:0]をHigh/Lowで能動駆動する。
+このD[7:0]はVDP Stack側D[7:0]とも共有されるため、I/O read時にCartridge Slot Stack側がCPU Stackへ返す方向になると、
+VDP等のI/O応答とバス競合を起こす。
+
+試作基板ではI/Oカートリッジを搭載しない運用ルールとし、I/Oカートリッジ対応は将来の基板修正で行う方針にした。
+
+このため、現行試作基板向けには次のルールを採用する。
+
+- I/O accessではread/writeを問わず、`slot_data_dir`をCPU Stack→Cartridge Slot Stack方向へ固定する。
+- 外部カートリッジからCPU Stackへ返してよいのは、Slot1/Slot2のメモリreadのみ。
+- Slot0/Slot3の内蔵FlashROM、Slot3-0のSSRAM、DirectFlash、I/O accessでは、Cartridge Slot Stack側からCPU Stackへ返させない。
+
+### 2. 通常スロットアクセスとDirectAccessの理解を整理
+
+Pico / Z80 / R800の通常スロット空間アクセスは、すべて同じMSX 64KB空間として扱う。
+
+- 通常アクセスでは `A[15:0]` と `primary_slot` / `secondary_slot0` / `secondary_slot3` に従ってデコードする。
+- `A[19:16]` を含む20bit FlashROM物理アドレスは、`flash_en` によるDirectAccess時だけ使用する。
+- `dump_slot0()` はFlashROM direct readの確認ではなく、PicoがZ80のフリをして通常スロット経由でROMマップを読むテストである。
+
+スロットマップの理解を以下に整理した。
+
+- Slot0 page0/page1のROMマップ対象領域はFlashROM0へマップする。
+- Slot0 page2/page3は未接続であり、page0/page1のミラーではない。
+- Slot3-1はFlashROM0へマップする。
+- Slot3-2のDiskROM pageはFlashROM0へマップする。
+- Slot3-0はFlashROMではなくMemoryMapper / SerialSRAMへマップする。
+- Slot1/Slot2は外部Cartridge Slot Stackのメモリアクセス対象とする。
+
+### 3. msx_slot.v の修正
+
+`slot_data_dir`の生成を見直し、外部Slot1/Slot2のメモリread時だけCartridge Slot Stack→CPU Stack方向を許可するようにした。
+
+```verilog
+assign w_external_memory_read = ~w_slot_rd_n & ~w_bus_io & ~w_flash_en & ((w_primary_slot == 2'd1) | (w_primary_slot == 2'd2));
+assign slot_data_dir = ~w_external_memory_read;
+```
+
+これにより、次のアクセスではCartridge Slot Stack側からCPU Stackへ返さない。
+
+- I/O read/write
+- Slot0/Slot3の内蔵FlashROM read
+- Slot3-0のSSRAM read
+- FlashROM DirectAccess
+- 漢字ROM read
+
+また、JIS2漢字ROM read時のアドレス自動インクリメント条件がJIS1と異なっていたため、JIS2 readでもインクリメントされるよう修正した。
+
+### 4. address_decode.v の確認
+
+`address_decode.v` は、Slot3-0をMemoryMapper / SerialSRAM対象として扱う構造になっていることを確認した。
+
+- `access_primary_slot == 3` かつ `access_secondary_slot3 == 0` で `slot3_0_selected` が成立
+- `ssram_cs = slot3_0_selected & ~device_io & (device_address != 16'hFFFF)`
+- `w_ssram_address = { w_mapper_segment, w_device_address[13:0] }`
+
+このため、Slot3-0のSSRAMマップ理解と実装は一致していた。
+
+### 5. テストとドキュメント更新
+
+`src/msx_slot/test_001/tb.sv` を更新した。
+
+- I/O read時に `slot_data_dir == 1'b1` となることを確認
+- Slot1/Slot2のメモリreadだけ `slot_data_dir == 1'b0` となることを確認
+- Slot0内蔵ROM、Slot3-1内蔵ROM、Slot3-0 SRAM、DirectFlash readでは `slot_data_dir == 1'b1` となることを確認
+- Slot0 page2は未接続として、ROMも外部CSも出さない期待値へ整理
+- Slot3-0 page2はMemoryMapper / SerialSRAM側で扱うため、`msx_slot`単体ではROMも外部CSも出さない期待値へ整理
+
+`src/msx_slot/readme.md` も更新した。
+
+- Slot0 page2/page3は未接続でありミラーではないことを明記
+- Slot3-0はMemoryMapper / SerialSRAMにマップされることを明記
+- 試作Cartridge Slot StackではI/Oカートリッジを暫定非対応とし、I/O access中はCPU Stack→Cartridge Slot Stack方向に固定することを明記
+
+### 6. 検証結果
+
+ModelSimで以下を確認した。
+
+- `src/msx_slot/test_001`: PASS = 69, FAIL = 0
+- `src/test_003`: PASS = 91, FAIL = 0
+- いずれも Errors = 0, Warnings = 0
+
+### 7. 現時点の注意点
+
+実機のMENUキーによる`dump_slot0()`で、Slot0-0がすべて`FF`になる現象が残っている。
+
+今回の整理では、`dump_slot0()`はPicoのDirectFlash readではなく、Picoが通常スロットアクセスでSlot0 ROMマップを読む正しいテストであると確認した。
+したがって、次回は以下を優先して調べる。
+
+- 通常スロットアクセスでSlot0-0 page0/page1を読んだとき、`slot_rom0_ce_n`がLowになるか
+- `slot_a`がROM0物理アドレス `00000h` / `04000h` 系へ正しく変換されているか
+- BootROM overlay (`bootrom_en`) や内部device応答がPico通常peekのSlot0 readを先に完了させていないか
+- FlashROM0が `slot_rom0_ce_n`, `slot_rd_n`, `slot_a`, `slot_d` 経由で正しくデータを返しているか
+
+### 8. 実機での最終確認
+
+その後、最新の状態を実機へ書き込み、以下を確認した。
+
+- MENUキーによる `dump_slot0()` が期待通り動作するようになった。
+- Cartridge Slot Stack試作基板を取り付けた状態でも起動する。
+- Cartridge Slot Stackに取り付けたROMカートリッジも動作する。
+
+これにより、試作基板向けのI/Oカートリッジ暫定非対応方針、Slot1/Slot2メモリreadのみ外部カートリッジからCPUへ返す方向制御、
+Slot0/Slot3の内蔵ROM/SSRAMマップ整理は、現時点の実機構成で有効であることを確認した。
+
+ここで本件は一区切りとする。

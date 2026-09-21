@@ -12,27 +12,27 @@
   <Part Number>: GW5A-LV25MG121NC1/I0
   <Device>: GW5A-25
   <Device Version>: A
-  <Created Time>:Mon Sep 21 14:31:51 2026
+  <Created Time>:Mon Sep 21 15:18:48 2026
 
 
 2. PnR Details
 
   Running placement:
-    Placement Phase 0: CPU time = 0h 0m 1s, Elapsed time = 0h 0m 1s
-    Placement Phase 1: CPU time = 0h 0m 0.352s, Elapsed time = 0h 0m 0.353s
-    Placement Phase 2: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
+    Placement Phase 0: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
+    Placement Phase 1: CPU time = 0h 0m 0.375s, Elapsed time = 0h 0m 0.375s
+    Placement Phase 2: CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
     Placement Phase 3: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
-    Total Placement: CPU time = 0h 0m 5s, Elapsed time = 0h 0m 5s
+    Total Placement: CPU time = 0h 0m 6s, Elapsed time = 0h 0m 6s
  Running routing:
-    Routing Phase 0: CPU time = 0h 0m 0.006s, Elapsed time = 0h 0m 0.006s
-    Routing Phase 1: CPU time = 0h 0m 5s, Elapsed time = 0h 0m 5s
-    Routing Phase 2: CPU time = 0h 0m 0.099s, Elapsed time = 0h 0m 0.099s
+    Routing Phase 0: CPU time = 0h 0m 0.004s, Elapsed time = 0h 0m 0.004s
+    Routing Phase 1: CPU time = 0h 0m 7s, Elapsed time = 0h 0m 7s
+    Routing Phase 2: CPU time = 0h 0m 0.137s, Elapsed time = 0h 0m 0.137s
     Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
-    Total Routing: CPU time = 0h 0m 5s, Elapsed time = 0h 0m 5s
+    Total Routing: CPU time = 0h 0m 7s, Elapsed time = 0h 0m 7s
  Generate output files:
     CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
 
- Total Time and Memory Usage: CPU time = 0h 0m 13s, Elapsed time = 0h 0m 13s, Peak memory usage = 723MB
+ Total Time and Memory Usage: CPU time = 0h 0m 16s, Elapsed time = 0h 0m 16s, Peak memory usage = 723MB
 
 
 3. Resource Usage Summary
@@ -40,15 +40,15 @@
   --------------------------------------------------------------------------------
   Resources                   | Usage                               | Utilization
   --------------------------------------------------------------------------------
-  Logic                       | 5824/23040                          |  26%
-    --LUT,ALU,ROM16           | 5824(5569 LUT, 255 ALU, 0 ROM16)    | -
+  Logic                       | 5735/23040                          |  25%
+    --LUT,ALU,ROM16           | 5735(5480 LUT, 255 ALU, 0 ROM16)    | -
     --SSRAM(RAM16)            | 0                                   | -
   Register                    | 2114/23280                          |  10%
     --Logic Register as Latch | 0/23040                             |  0%
     --Logic Register as FF    | 2089/23040                          |  10%
     --I/O Register as Latch   | 0/240                               |  0%
     --I/O Register as FF      | 25/240                              |  11%
-  CLS                         | 3872/11520                          |  34%
+  CLS                         | 3813/11520                          |  34%
   I/O Port                    | 77/86                               |  90%
   I/O Buf                     | 71                                  | -
     --Input Buf               | 8                                   | -
@@ -83,8 +83,8 @@
   ------------------------------------------
   Clock Resource| Usage         | Utilization 
   ------------------------------------------
-  PRIMARY       | 5/8           | 63%
-  LW            | 7/8           | 88%
+  PRIMARY       | 4/8           | 50%
+  LW            | 8/8           | 100%
   GCLK_PIN      | 30/30         | 100%
   PLLA          | 1/6           | 17%
   ==========================================
@@ -98,15 +98,15 @@
   clk_50m_d      | PRIMARY        |  TR TL
   clk215m        | PRIMARY        |  TR TL BR
   clk42m         | PRIMARY        |  TR TL BR BL
-  u_r800/u_cr800/clken_Z| PRIMARY        |  TR BR
-  u_rtc/ff_memory_rdata_3_8| PRIMARY        |  TL BL
+  u_r800/u_cr800/clken_Z| PRIMARY        |  TL BL
   ff_spi_reset_n | LW             |  -
   slot_reset_n_d | LW             |  -
   ff_ppi_reset_n | LW             |  -
   ff_ssram_reset_n| LW             |  -
   ff_z80_reset_n | LW             |  -
   ff_r800_reset_n| LW             |  -
-  u_controller_spi/n6751_9| LW             |  -
+  u_controller_spi/n6751_13| LW             |  -
+  u_z80/u_cz80/clken_Z| LW             |  -
   ===========================================
 
 
