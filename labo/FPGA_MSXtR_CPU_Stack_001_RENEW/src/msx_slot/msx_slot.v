@@ -140,7 +140,7 @@ module msx_slot #(
 	assign slot_wr_n		= w_slot_wr_n;
 	assign slot_rd_n		= w_slot_rd_n;
 //	assign slot_data_dir	= ~w_slot_wr_n;					//	1: write, 0: read
-	assign slot_data_dir	= w_slot_rd_n | w_bus_io;		//	1: write, 0: read
+	assign slot_data_dir	= w_slot_rd_n | w_bus_io;		//	1: write, 0: read; block cartridge-to-CPU data during I/O access
 	assign slot_d			= w_slot_wr_n ? 8'bz	: w_slot_d;
 	assign z80_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
 	assign r800_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
@@ -403,7 +403,7 @@ module msx_slot #(
 					ff_slot_a				<= w_slot_address[18:0];
 					ff_slot_rom0_ce_n		<= 1'b1;
 					ff_slot_rom1_ce_n		<= 1'b1;
-					ff_slot_sltsl0_n		<= 1'b0;
+					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
 					ff_slot_sltsl2_n		<= 1'b1;
 					ff_slot_sltsl3_n		<= 1'b1;
@@ -511,10 +511,10 @@ module msx_slot #(
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
 					ff_slot_sltsl2_n		<= 1'b1;
-					ff_slot_sltsl3_n		<= 1'b0;
-					ff_slot_cs1_n			<= (w_page == 2'd1) ? 1'b0 : 1'b1;
-					ff_slot_cs2_n			<= (w_page == 2'd2) ? 1'b0 : 1'b1;
-					ff_slot_cs12_n			<= (w_page == 2'd1 || w_page == 2'd2) ? 1'b0 : 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
 				end
 				endcase
 			end

@@ -26,7 +26,7 @@ module tb;
 	reg				z80_rfsh_n;
 	wire			z80_busreq_n;
 	reg				z80_busack_n;
-	reg		[19:0]	z80_address;
+	reg		[15:0]	z80_address;
 	reg		[7:0]	z80_wdata;
 	wire	[7:0]	z80_rdata;
 	reg				z80_flash_en;
@@ -45,7 +45,7 @@ module tb;
 	reg				r800_rfsh_n;
 	wire			r800_busreq_n;
 	reg				r800_busack_n;
-	reg		[19:0]	r800_address;
+	reg		[15:0]	r800_address;
 	reg		[7:0]	r800_wdata;
 	wire	[7:0]	r800_rdata;
 	reg				r800_flash_en;
@@ -123,7 +123,6 @@ module tb;
 		.sel				( sel				),
 		.msx_clock			( msx_clock			),
 		.z80_int_n			( z80_int_n			),
-		.z80_nmi_n			( z80_nmi_n			),
 		.z80_wait_n			( z80_wait_n		),
 		.z80_m1_n			( z80_m1_n			),
 		.z80_merq_n			( z80_merq_n		),
@@ -131,8 +130,6 @@ module tb;
 		.z80_rd_n			( z80_rd_n			),
 		.z80_wr_n			( z80_wr_n			),
 		.z80_rfsh_n			( z80_rfsh_n		),
-		.z80_busreq_n		( z80_busreq_n		),
-		.z80_busack_n		( z80_busack_n		),
 		.z80_address		( z80_address		),
 		.z80_wdata			( z80_wdata			),
 		.z80_rdata			( z80_rdata			),
@@ -140,7 +137,6 @@ module tb;
 		.z80_bus_io			( z80_bus_io		),
 		.z80_bus_write		( z80_bus_write		),
 		.r800_int_n			( r800_int_n		),
-		.r800_nmi_n			( r800_nmi_n		),
 		.r800_wait_n		( r800_wait_n		),
 		.r800_m1_n			( r800_m1_n			),
 		.r800_merq_n		( r800_merq_n		),
@@ -148,8 +144,6 @@ module tb;
 		.r800_rd_n			( r800_rd_n			),
 		.r800_wr_n			( r800_wr_n			),
 		.r800_rfsh_n		( r800_rfsh_n		),
-		.r800_busreq_n		( r800_busreq_n		),
-		.r800_busack_n		( r800_busack_n		),
 		.r800_address		( r800_address		),
 		.r800_wdata			( r800_wdata		),
 		.r800_rdata			( r800_rdata		),
@@ -157,7 +151,6 @@ module tb;
 		.r800_bus_io		( r800_bus_io		),
 		.r800_bus_write		( r800_bus_write	),
 		.pico_int_n			( pico_int_n		),
-		.pico_nmi_n			( pico_nmi_n		),
 		.pico_wait_n		( pico_wait_n		),
 		.pico_m1_n			( pico_m1_n			),
 		.pico_merq_n		( pico_merq_n		),
@@ -165,8 +158,6 @@ module tb;
 		.pico_rd_n			( pico_rd_n			),
 		.pico_wr_n			( pico_wr_n			),
 		.pico_rfsh_n		( pico_rfsh_n		),
-		.pico_busreq_n		( pico_busreq_n		),
-		.pico_busack_n		( pico_busack_n		),
 		.pico_address		( pico_address		),
 		.pico_wdata			( pico_wdata		),
 		.pico_rdata			( pico_rdata		),
@@ -338,6 +329,7 @@ module tb;
 		z80_wr_n = 1'b1;
 		z80_rfsh_n = 1'b1;
 		z80_address = 20'h01234;
+		z80_bus_io = 1'b0;
 		z80_bus_write = 1'b0;
 		slot_d_driver = 8'hA5;
 		slot_d_oe = 1'b1;
@@ -349,6 +341,11 @@ module tb;
 		check( slot_wr_n == 1'b1, "slot_wr_n is 1 on read" );
 		check( slot_data_dir == 1'b0, "slot_data_dir is 0 on read" );
 		check( z80_rdata == 8'hA5, "z80_rdata received slot_d (0xA5)" );
+
+		z80_bus_io = 1'b1;
+		#1;
+		check( slot_data_dir == 1'b1, "slot_data_dir is 1 on I/O read" );
+		z80_bus_io = 1'b0;
 
 		// Test write direction
 		z80_rd_n = 1'b1;
@@ -474,12 +471,12 @@ module tb;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h1F000, "SLOT#0-3 page#1 address is 0x1F000 ({3'd1, 2'b11, 14'h3000})" );
 
-		// 5.9: SLOT#0-0 page#2 (External Slot 0 RAM)
+		// 5.9: SLOT#0-0 page#2 is internal-only on this stack
 		slot_secondary0 = 8'h00;
-		z80_address = 20'h08000;
+		z80_address = 16'h8000;
 		@( posedge clk ); #1;
-		check( slot_sltsl0_n == 1'b0, "SLOT#0-0 page#2 asserts slot_sltsl0_n" );
-		check( slot_cs2_n == 1'b0 && slot_cs12_n == 1'b0 && slot_cs1_n == 1'b1, "page#2 asserts cs2_n and cs12_n" );
+		check( slot_sltsl0_n == 1'b1, "SLOT#0-0 page#2 does not assert slot_sltsl0_n" );
+		check( slot_cs1_n == 1'b1 && slot_cs2_n == 1'b1 && slot_cs12_n == 1'b1, "SLOT#0-0 page#2 keeps external CS inactive" );
 
 		// ================================================================
 		//	Test 6: External Cartridge Slots (Slot 1 & Slot 2)
@@ -557,11 +554,12 @@ module tb;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h3C500, "MSX-DOS2 bank 3 address is 0x3C500 ({3'd3, 2'b11, 14'h0500})" );
 
-		// 7.7: SLOT#3-0 page#2 (Slot 3 External / RAM)
+		// 7.7: SLOT#3-0 page#2 is internal-only on this stack
 		slot_secondary3 = 8'h00; // Sec Slot 3-0
-		z80_address = 20'h08000;
+		z80_address = 16'h8000;
 		@( posedge clk ); #1;
-		check( slot_sltsl3_n == 1'b0 && slot_rom0_ce_n == 1'b1, "Slot 3 page#2 asserts slot_sltsl3_n" );
+		check( slot_sltsl3_n == 1'b1 && slot_rom0_ce_n == 1'b1, "SLOT#3-0 page#2 does not assert slot_sltsl3_n" );
+		check( slot_cs1_n == 1'b1 && slot_cs2_n == 1'b1 && slot_cs12_n == 1'b1, "SLOT#3-0 page#2 keeps external CS inactive" );
 
 		// ================================================================
 		//	Test 8: FlashROM Direct Access (flash_en = 1)
@@ -569,19 +567,22 @@ module tb;
 		test_no = 8;
 		$display( "=== TEST %0d: FlashROM Direct Access (flash_en = 1) ===", test_no );
 
-		// ROM0 access (address[19] = 0)
-		z80_flash_en = 1'b1;
-		z80_address = 20'h12345;
+		// ROM0 access by Pico (address[19] = 0)
+		sel = 2'b10;
+		pico_flash_en = 1'b1;
+		pico_address = 20'h12345;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b0 && slot_rom1_ce_n == 1'b1, "FlashROM ROM0 selected (addr[19]=0)" );
-		check( slot_a == 19'h12345, "slot_a reflects z80_address[18:0]" );
+		check( slot_a == 19'h12345, "slot_a reflects pico_address[18:0]" );
 
-		// ROM1 access (address[19] = 1)
-		z80_address = 20'h9ABCD;
+		// ROM1 access by Pico (address[19] = 1)
+		pico_address = 20'h9ABCD;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b1 && slot_rom1_ce_n == 1'b0, "FlashROM ROM1 selected (addr[19]=1)" );
-		check( slot_a == 19'h1ABCD, "slot_a reflects z80_address[18:0]" );
-		z80_flash_en = 1'b0;
+		check( slot_a == 19'h1ABCD, "slot_a reflects pico_address[18:0]" );
+		pico_flash_en = 1'b0;
+		pico_address = 20'd0;
+		sel = 2'b00;
 
 		// ================================================================
 		//	Test 9: Kanji ROM I/O Access (JIS1 & JIS2)
