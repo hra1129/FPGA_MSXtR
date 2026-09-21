@@ -704,3 +704,118 @@ VDP write 1000回、外部VDPアクセス中のSLTSL/CS非アサートが通っ�
 - 内部`bus_ready` / `bus_rdata_en`との競合
 
 本日の作業はここまでとし、続きは次回に再開する。
+
+---
+
+## 2026-09-21 作業履歴 (Z80/Pico VRAM read不具合の原因特定と解決)
+
+前回からの継続課題であった、Pico経由のVDP VRAM read/write比較テスト失敗について調査し、
+実機で `VRAM read/write test OK (2048 bytes)` が連続して得られる状態まで解決した。
+
+### 1. Pico側VRAM read/write比較テストの追加と初期症状
+
+Picoファームウェア側で、不要になったFlashROMアドレスreadテストを撤去し、8キー押下時に
+VDP VRAM read/write比較テストを実行するよう変更した。
+
+テスト内容は、SCREEN1用フォントデータをVRAM 0000hから2048バイト書き込み、同じ範囲を
+読み戻して期待値と比較するもの。
+
+実機では当初、次のように大量のミスマッチが発生した。
+
+- `VRAM read/write test NG (1357 mismatches / 2048 bytes)`
+- 後続の診断パッチ入りでは `1358 mismatches / 2048 bytes`
+- `actual` は主に `0x00`, `0x01`, `0x10`, `0x11`
+- `expected` と比較すると bit4 / bit0 だけが一致し、それ以外のbitは0に落ちる傾向が強かった
+
+例:
+
+- `expected 0x1F, actual 0x11`
+- `expected 0xF0, actual 0x10`
+- `expected 0x81, actual 0x01`
+- `expected 0x42, actual 0x00`
+
+このパターンから、VDPコア内部のランダムなread不良ではなく、データバスのHigh側駆動に
+bit依存の問題がある可能性が高いと判断した。
+
+### 2. VDP Stack全体のModelSimテストベンチ作成
+
+`labo/FPGA_MSXtR_VDP_Stack_001/src/test_001/` に、VDP Stack全体を動かすModelSim用
+テストベンチを作成した。
+
+主な内容:
+
+- `FPGA_MSXtR_VDP_Stack` トップをDUTとしてインスタンス
+- Gowin IP (`Gowin_rPLL`, `Gowin_rPLL2`, `Gowin_CLKDIV`) のシミュレーション用ダミーを作成
+- 暗号化DVI IP (`DVI_TX_Top`) の最小スタブを作成
+- SDRAMモデル `MT48LC2M32B2.v` を `sdram/test001/` からコピーして使用
+- SCREEN1相当のVDPレジスタ初期化後、VRAMへ10バイトwrite/readを10回繰り返す
+- CPU Stack側のI/Oサイクルに近い `/IORQ`, `/RD`, `/WR` タイミングでslot信号を駆動
+
+シミュレーション結果:
+
+- `VRAM write/read test OK (100 bytes)`
+- `bus_rdata_en` からCPUサンプル相当点までの余裕は最小約291ns、最大約430.7ns
+
+この結果から、少なくともシミュレーション上はVDPコア・SDRAM・VDP Stack側msx_slotの
+VRAM read/writeデータパスは成立しており、単純な内部論理不具合ではなさそうだと判断した。
+
+### 3. CPU Stack側cmcuの/RD延長診断
+
+CPU Stack側 `cmcu.v` のI/O readで、`slot_d` のラッチが早すぎる可能性を切り分けるため、
+診断用にI/O readのみ次の変更を一時適用した。
+
+- `/RD` と `/IORQ` の立上りを `T3 state_count=11` から `T4 state_count=11` へ延長
+- `bus_rdata_en` が来ない場合の `slot_d` フォールバックラッチを `T3 state_count=10` から
+  `T4 state_count=10` へ遅延
+- `bus_rdata_en` 経路はマスクせず、そのまま残した
+
+実機結果はほぼ変わらず、むしろミスマッチが1件増えた。
+このため「CPU Stack側cmcuがslot_dを早く取り込みすぎている」仮説は棄却した。
+
+OpenDrain問題解決後、この診断パッチは不要な変更として完全に撤回した。
+撤回後、`cmcu.v` 単体のModelSim `vlog` はエラー/警告なしで通過した。
+
+### 4. VDP Stack側slot_dのOpenDrain設定が根本原因
+
+VDP Stack側制約ファイル `FPGA_MSXtR_VDP_Stack.cst` を確認したところ、`slot_d[7:0]` が
+全bit `OPEN_DRAIN=ON` になっていた。
+
+OpenDrainではFPGAが0を強く駆動できる一方、1は能動駆動されずHi-Zとなる。
+そのためDrive strengthを8から24へ上げても、High側の駆動能力は改善しない。
+今回の `actual = expected & 8'h11` に近い実機ログは、この設定とよく一致する。
+
+ユーザがVDP Stack側のOpenDrainをOFFに変更して実機確認したところ、結果は大幅に改善した。
+
+一時的には、CPU Stack側cmcuの/RD延長診断パッチが残った状態で、先頭1バイトのみ
+`expected 0x00, actual 0xAA` となった。
+
+その後、CPU Stack側cmcuの/RD延長診断パッチを元に戻し、VDP Stack側OpenDrain OFFのみの状態で
+再確認したところ、次のように完全一致した。
+
+```text
+VRAM read/write test start
+VRAM read/write test OK (2048 bytes)
+```
+
+このOKが9回連続で得られた。
+
+### 5. 最終結論
+
+今回のVRAM read大量ミスマッチの主因は、VDP Stack側 `slot_d[7:0]` のCST制約が
+`OPEN_DRAIN=ON` になっていたこと。
+
+これによりVDP Stack側がVRAM readデータを外部slot_dへ出す際、Highを能動駆動できず、
+CPU Stack側からはD4/D0以外のHighが0として読まれていた。
+
+CPU Stack側cmcuの/RDラッチタイミングは原因ではなかった。
+診断用に入れた/RD延長パッチは撤回済み。
+
+### 関連ファイル
+
+- controller/FPGA_MSXtR_Stack_Controller_001/vdp_control.c/.h — VRAM read/write比較テスト追加
+- controller/FPGA_MSXtR_Stack_Controller_001/fpga_msxtr_controller.c — 8キー処理をVRAM read/writeテストへ変更
+- labo/FPGA_MSXtR_VDP_Stack_001/src/test_001/ — VDP Stack全体ModelSimテストベンチ追加
+- labo/FPGA_MSXtR_VDP_Stack_001/src/FPGA_MSXtR_VDP_Stack.cst — `slot_d[7:0]` のOpenDrain設定が根本原因
+- labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cmcu/cmcu.v — /RD延長診断パッチを一時適用後、撤回済み
+
+ここで一度GitHubへpush済み。作業は一区切りとする。
