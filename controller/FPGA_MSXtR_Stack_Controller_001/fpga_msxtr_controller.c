@@ -670,31 +670,6 @@ static void flashrom_read_device_id( void ) {
 }
 
 // ---------------------------------------------------------
-static void flashrom_read_address_test( void ) {
-	absolute_time_t end_time;
-	uint32_t count;
-	uint8_t data_5555;
-	uint8_t data_1555;
-
-	printf( "FlashROM address read test start\r\n" );
-	end_time = make_timeout_time_ms( 5000 );
-	count = 0;
-	while( !time_reached( end_time ) ) {
-		data_5555 = flashrom_read( 0x05555u );
-		printf( "FlashROM read[%lu] address=0x05555 data=0x%02X\r\n",
-				(unsigned long)count,
-				data_5555 );
-		data_1555 = flashrom_read( 0x01555u );
-		printf( "FlashROM read[%lu] address=0x01555 data=0x%02X\r\n",
-				(unsigned long)count,
-				data_1555 );
-		count++;
-	}
-	printf( "FlashROM address read test end: %lu cycles\r\n",
-			(unsigned long)count );
-}
-
-// ---------------------------------------------------------
 static bool flashrom_check_image( const char *path ) {
 	FRESULT result;
 	FILINFO file_info;
@@ -1066,8 +1041,8 @@ int main(void) {
 			flashrom_read_device_id();
 		}
 		if( (prev_mat01 & 0x01) && !(keymatrix[1] & 0x01) ) {
-			//	8キーが押されたタイミングなら、FlashROMのアドレス読み出しを5秒間実行する
-			flashrom_read_address_test();
+			//	8キーが押されたタイミングなら、PicoからVRAMの書き込み/読み出しを照合して検証する
+			vdp_test_vram_readback();
 		}
 		if( (prev_mat01 & 0x02) && !(keymatrix[1] & 0x02) ) {
 			//	9キーが押されたタイミングなら、SerialSRAM の書き込み/読み出しテストを実行する

@@ -12,6 +12,10 @@ void vdp_fill_vram(uint16_t addr, uint8_t value, uint16_t size);
 void vdp_write_vram(uint8_t* data, uint16_t size);
 void vdp_set_vram_address(uint16_t addr);
 
+void vdp_set_vram_read_address(uint16_t addr);
+void vdp_read_vram(uint8_t* data, uint16_t size);
+void vdp_test_vram_readback(void);
+
 uint8_t vdp_get_status( void );
 
 #endif

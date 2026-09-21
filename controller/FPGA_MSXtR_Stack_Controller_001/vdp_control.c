@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "vdp_control.h"
@@ -213,6 +214,23 @@ void vdp_fill_vram(uint16_t addr, uint8_t value, uint16_t size) {
 }
 
 // ---------------------------------------------------------------
+//	VDPにVRAMアドレス設定(読み出し用。書き込み用と異なり上位バイトに0x40を立てない)
+void vdp_set_vram_read_address(uint16_t addr) {
+
+	fpga_outport( 0x99, addr & 0xFF );	//	アドレス下位 8bit
+	fpga_outport( 0x99, (addr >> 8) & 0x3F );	//	アドレス上位 8bit
+}
+
+// ---------------------------------------------------------------
+//	VRAMからまとめて読み出す
+void vdp_read_vram(uint8_t* data, uint16_t size) {
+
+	for (int i = 0; i < size; i++) {
+		data[i] = fpga_inport( 0x98 );
+	}
+}
+
+// ---------------------------------------------------------------
 void vdp_set_screen1_font(void) {
 	uint8_t buf;
 
@@ -230,6 +248,35 @@ void vdp_set_screen1_message(void) {
 
 	vdp_set_vram_address( 0x1800 );
 	vdp_write_vram( (uint8_t*) s_buffer, sizeof(s_buffer) );
+}
+
+// ---------------------------------------------------------------
+//	フォントデータを書き込んだ後、全域を読み出して書き込んだ値と照合する
+void vdp_test_vram_readback(void) {
+	uint8_t readback[sizeof(vdp_screen1_font)];
+	int fail_count = 0;
+
+	printf( "VRAM read/write test start\r\n" );
+	vdp_set_screen1_font();
+
+	vdp_set_vram_read_address( 0x0000 );
+	vdp_read_vram( readback, sizeof(vdp_screen1_font) );
+
+	for( int i = 0; i < (int)sizeof(vdp_screen1_font); i++ ) {
+		if( readback[i] != vdp_screen1_font[i] ) {
+			printf( "VRAM NG at 0x%04X: expected 0x%02X, actual 0x%02X\r\n",
+					i, vdp_screen1_font[i], readback[i] );
+			fail_count++;
+		}
+	}
+
+	if( fail_count == 0 ) {
+		printf( "VRAM read/write test OK (%u bytes)\r\n", (unsigned)sizeof(vdp_screen1_font) );
+	}
+	else {
+		printf( "VRAM read/write test NG (%d mismatches / %u bytes)\r\n",
+				fail_count, (unsigned)sizeof(vdp_screen1_font) );
+	}
 }
 
 // ---------------------------------------------------------
