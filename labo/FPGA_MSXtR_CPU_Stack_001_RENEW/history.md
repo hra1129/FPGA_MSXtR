@@ -1115,3 +1115,20 @@ Y8960 Sound Cartridge の RTL をコピーしてきて、FPGA_MSXtR_SND_Cart_000
 SSG と OPLL を搭載し、カートリッジスロットから I/O write だけ出すことによって、write only の SSG + OPLL を
 制御できるようにする。
 
+FPGA_MSXtR_SND_Cart_000 は、現時点で MSX実機において、音が出るのを確認した。
+I/O Write だけを受け付けるようになっていて、データバスも入力（CPU からみると write）のみ。
+
+FPGA MSXtR に装着すると、音が出ない。I/O access をカートリッジスロットに出さないようにしたのが効いているようだ。
+I/O write は、カートリッジスロットから出してもバス競合問題は起こらないので、I/O write だけスロットに出す修正を加える。
+
+### 1. カートリッジスロットへ I/O write 出力追加
+
+|スロット信号|状況|
+|---|---|
+|slot_iorq_n|CPU/SPIの iorq_n がそのままつながっているので修正の必要なし|
+|slot_wr_n|CPU/SPIの wr_n がそのままつながっているので修正の必要なし|
+|slot_data_dir|~w_external_memory_read が繋がっており、I/O write の場合は出力方向になるので修正の必要なし|
+|slot_d|w_slot_wr_n ? 8'bz	: w_slot_d となっており、I/O write の場合はスロットに出力される|
+
+Y8960 Sound Cartridge は、クロックは slot_clock_n を使っておらず、内蔵しているクロックで動作する。
+そのため、上記信号の接続があれば音が鳴るはずであるが、鳴らない。

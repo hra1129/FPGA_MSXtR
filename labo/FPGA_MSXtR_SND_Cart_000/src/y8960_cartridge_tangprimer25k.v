@@ -256,7 +256,7 @@ module y8960cartridge_tangprimer25k (
 	//	The raw sum only fills the lower ~19 bits of the 24bit field,
 	//	so a left shift is applied to raise the output volume.
 	// ---------------------------------------------------------
-	localparam			c_mix_gain_shift	= 4;						//	x16 (about +24dB)
+	localparam			c_mix_gain_shift	= 6;						//	x64 (about +36dB)
 	localparam			c_mix_ext_bits		= c_mix_gain_shift + 1;		//	guard bit for the overflow check
 	localparam			c_mix_ext_width		= 24 + c_mix_ext_bits;
 
