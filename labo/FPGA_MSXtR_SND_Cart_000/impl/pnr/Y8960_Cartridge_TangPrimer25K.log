@@ -1,7 +1,7 @@
-Reading netlist file: "C:\Users\hra\Documents\github\HRA_product\Y8960_Cartridge\fpga\Y8960_Cartridge_TangPrimer25K\impl\gwsynthesis\Y8960_Cartridge_TangPrimer25K.vg"
-Parsing netlist file "C:\Users\hra\Documents\github\HRA_product\Y8960_Cartridge\fpga\Y8960_Cartridge_TangPrimer25K\impl\gwsynthesis\Y8960_Cartridge_TangPrimer25K.vg" completed
+Reading netlist file: "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_SND_Cart_000\impl\gwsynthesis\Y8960_Cartridge_TangPrimer25K.vg"
+Parsing netlist file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_SND_Cart_000\impl\gwsynthesis\Y8960_Cartridge_TangPrimer25K.vg" completed
 Processing netlist completed
-Reading constraint file: "C:\Users\hra\Documents\github\HRA_product\Y8960_Cartridge\fpga\Y8960_Cartridge_TangPrimer25K\src\Y8960_Cartridge_TangPrimer25K.cst"
+Reading constraint file: "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_SND_Cart_000\src\Y8960_Cartridge_TangPrimer25K.cst"
 Physical Constraint parsed completed
 Running placement......
 [10%] Placement Phase 0 completed
@@ -20,10 +20,10 @@ Bitstream generation in progress......
 Bitstream generation completed
 Running power analysis......
 [100%] Power analysis completed
-Generate file "C:\Users\hra\Documents\github\HRA_product\Y8960_Cartridge\fpga\Y8960_Cartridge_TangPrimer25K\impl\pnr\Y8960_Cartridge_TangPrimer25K.power.html" completed
-Generate file "C:\Users\hra\Documents\github\HRA_product\Y8960_Cartridge\fpga\Y8960_Cartridge_TangPrimer25K\impl\pnr\Y8960_Cartridge_TangPrimer25K.pin.html" completed
-Generate file "C:\Users\hra\Documents\github\HRA_product\Y8960_Cartridge\fpga\Y8960_Cartridge_TangPrimer25K\impl\pnr\Y8960_Cartridge_TangPrimer25K.rpt.html" completed
-Generate file "C:\Users\hra\Documents\github\HRA_product\Y8960_Cartridge\fpga\Y8960_Cartridge_TangPrimer25K\impl\pnr\Y8960_Cartridge_TangPrimer25K.rpt.txt" completed
-Generate file "C:\Users\hra\Documents\github\HRA_product\Y8960_Cartridge\fpga\Y8960_Cartridge_TangPrimer25K\impl\pnr\Y8960_Cartridge_TangPrimer25K.tr.html" completed
-Fri Aug 21 07:50:40 2026
+Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_SND_Cart_000\impl\pnr\Y8960_Cartridge_TangPrimer25K.power.html" completed
+Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_SND_Cart_000\impl\pnr\Y8960_Cartridge_TangPrimer25K.pin.html" completed
+Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_SND_Cart_000\impl\pnr\Y8960_Cartridge_TangPrimer25K.rpt.html" completed
+Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_SND_Cart_000\impl\pnr\Y8960_Cartridge_TangPrimer25K.rpt.txt" completed
+Generate file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_SND_Cart_000\impl\pnr\Y8960_Cartridge_TangPrimer25K.tr.html" completed
+Thu Sep 24 06:30:58 2026
 

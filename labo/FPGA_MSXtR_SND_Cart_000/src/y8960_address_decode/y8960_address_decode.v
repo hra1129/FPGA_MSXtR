@@ -73,11 +73,9 @@ module y8960_address_decode(
 	//	Module chip select
 	output			bus_opll_cs,
 	output			bus_ssg_cs,
-	output			bus_sysctrl_cs,
 	//	Module ready
 	input			bus_opll_ready,
 	input			bus_ssg_ready,
-	input			bus_sysctrl_ready,
 	//	LED
 	output	[3:0]	led
 );
@@ -86,17 +84,10 @@ module y8960_address_decode(
 	localparam		c_ssg2_io				= 8'hA2;	//	SSG      : A2h-A3h
 	localparam		c_opll1_io				= 8'h7A;	//	MSX-MUSIC: 7Ah-7Bh
 	localparam		c_opll2_io				= 8'h7C;	//	MSX-MUSIC: 7Ch-7Dh
-	localparam		c_sysctrl_io			= 4'h4;		//	SYSCTRL  : 40h-4Fh
-	//	Memory interface is always connect.
-	localparam		c_ssg_mio				= 5'h0A;	//	SSG         : 7FEAh-7FEBh (Mirror 3FFAh-3FFBh)
-	localparam		c_opll1_mio				= 5'h12;	//	MSX-MUSIC   : 7FF2h-7FF3h (Mirror 3FF2h-3FF3h)
-	localparam		c_opll2_mio				= 5'h14;	//	MSX-MUSIC   : 7FF4h-7FF5h (Mirror 3FF4h-3FF5h)
-	localparam		c_io_en1				= 5'h16;	//	I/O Enabler1: 7FF6h (Mirror 3FF6h)
-	localparam		c_io_en2				= 5'h1E;	//	I/O Enabler2: 7FFFh (Mirror 3FFFh)
 
-	reg 			ff_opll1_io_en		= 1'b1;
-	reg 			ff_opll2_io_en		= 1'b0;
-	reg 			ff_ssg_io_en		= 1'b1;
+	reg 			ff_opll1_io_en	    	= 1'b1;
+	reg 			ff_opll2_io_en	    	= 1'b1;
+	reg 			ff_ssg_io_en	    	= 1'b1;
 
 	// --------------------------------------------------------------------
 	//	I/O port address decode (address match is independent of the enabler,
@@ -108,71 +99,26 @@ module y8960_address_decode(
 	wire			w_io_opll1_match	= (bus_address[7:1] == c_opll1_io[7:1]);
 	wire			w_io_opll2_match	= (bus_address[7:1] == c_opll2_io[7:1]);
 	wire			w_io_known_match	= w_io_ssg_match | w_io_opll1_match | w_io_opll2_match;
-	wire			w_io_sysctrl_match	= ~w_io_known_match & (bus_address[7:4] == c_sysctrl_io);
 
 	wire			w_bus_ssg_cs_io		= w_io_access & w_io_ssg_match & ff_ssg_io_en;
 	wire			w_bus_opll_cs_io	= w_io_access & ( (w_io_opll1_match & ff_opll1_io_en) | (w_io_opll2_match & ff_opll2_io_en) );
-	wire			w_bus_sysctrl_cs	= w_io_access & w_io_sysctrl_match;
 
 	// --------------------------------------------------------------------
 	//	Memory mapped I/O address decode (7FE0h-7FFFh window, mirrored at
 	//	3FE0h-3FFFh, write only)
 	// --------------------------------------------------------------------
-	wire			w_mem_access		= bus_valid & ~bus_io;
-	wire			w_mio_window		= memory_io_en & bus_write & (bus_address[15] == 1'b0) & (bus_address[13:5] == 9'b11_1111_111);
-	wire			w_mio_active		= w_mem_access & w_mio_window;
-
-	wire			w_mio_ssg_match		= (bus_address[4:1] == c_ssg_mio[4:1]);
-	wire			w_mio_opll_match	= (bus_address[4:1] == c_opll1_mio[4:1]) | (bus_address[4:1] == c_opll2_mio[4:1]);
-	wire			w_mio_io_en1_match	= (bus_address[4:1] == c_io_en1[4:1]);
-	wire			w_mio_io_en2_match	= (bus_address[4:1] == c_io_en2[4:1]);
-	wire			w_mio_known_match	= w_mio_ssg_match | w_mio_opll_match | w_mio_opl2_match
-										| w_mio_dcsg_match | w_mio_io_en1_match | w_mio_io_en2_match;
-
-	wire			w_bus_ssg_cs_mio	= w_mio_active & w_mio_ssg_match;
-	wire			w_bus_opll_cs_mio	= w_mio_active & w_mio_opll_match;
-	wire			w_mio_io_en1_cs		= w_mio_active & w_mio_io_en1_match & (bus_address[0] == 1'b0);
-	wire			w_mio_io_en2_cs		= w_mio_active & w_mio_io_en2_match & (bus_address[0] == 1'b1);
-	wire			w_mio_default_match	= w_mio_active & ~w_mio_known_match;
-	wire			w_bus_io_en_cs		= w_mio_io_en1_cs | w_mio_io_en2_cs;
-
-	//	Plain memory access (no mio window hit, or read, or io_en=0) always selects SCC
-	wire			w_mem_plain			= w_mem_access & ~w_mio_window;
-
-	wire			w_bus_ssg_cs		= w_bus_ssg_cs_io | w_bus_ssg_cs_mio;
-	wire			w_bus_opll_cs		= w_bus_opll_cs_io | w_bus_opll_cs_mio;
+	wire			w_bus_ssg_cs		= w_bus_ssg_cs_io;
+	wire			w_bus_opll_cs		= w_bus_opll_cs_io;
 
 	assign bus_opll_cs		= w_bus_opll_cs;
 	assign bus_ssg_cs		= w_bus_ssg_cs;
-	assign bus_sysctrl_cs	= w_bus_sysctrl_cs;
 
 	assign bus_ready	= (w_bus_opll_cs & bus_opll_ready)
-						| (w_bus_ssg_cs & bus_ssg_ready)
-						| (w_bus_sysctrl_cs & bus_sysctrl_ready)
-						| w_bus_io_en_cs;
+						| (w_bus_ssg_cs & bus_ssg_ready);
 
 	// --------------------------------------------------------------------
 	//	Bus I/O enable latch
 	// --------------------------------------------------------------------
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_opll1_io_en		<= 1'b1;
-			ff_opll2_io_en		<= 1'b0;
-			ff_ssg_io_en		<= 1'b1;
-		end
-		else if( w_bus_io_en_cs ) begin
-			if( bus_address[0] == 1'b0 ) begin
-				//	7FF6h (Mirror 3FF6h): I/O Enabler1
-				ff_opll1_io_en		<= bus_wdata[0];
-				ff_opll2_io_en		<= bus_wdata[1];
-			end
-			else begin
-				//	7FFFh (Mirror 3FFFh): I/O Enabler2
-				ff_ssg_io_en		<= bus_wdata[4];
-			end
-		end
-	end
-
 	reg		[15:0]	ff_led_counter	= 16'hFFFF;
 	reg		[3:0]	ff_led	= 4'b1111;
 	always @( posedge clk ) begin

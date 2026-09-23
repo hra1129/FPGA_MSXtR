@@ -203,10 +203,8 @@ module y8960cartridge_tangprimer25k (
 		.bus_wdata				( w_bus_wdata				),
 		.bus_opll_cs			( w_bus_opll_cs				),
 		.bus_ssg_cs				( w_bus_ssg_cs				),
-		.bus_sysctrl_cs			( w_bus_sysctrl_cs			),
 		.bus_opll_ready			( w_bus_opll_ready			),
 		.bus_ssg_ready			( w_bus_ssg_ready			),
-		.bus_sysctrl_ready		( w_bus_sysctrl_ready		),
 		.led					(							)
 	);
 
@@ -252,60 +250,6 @@ module y8960cartridge_tangprimer25k (
 	);
 
 	assign led		= w_led;
-
-	// ---------------------------------------------------------
-	//	System Controller
-	// ---------------------------------------------------------
-	system_controller #(
-		.device_id				( 8'h61						)
-	) u_system_controller (
-		.clk					( clk_42m					),
-		.reset_n				( w_reset_n					),
-		.bus_cs					( w_bus_sysctrl_cs			),
-		.bus_address			( w_bus_address[3:0]		),
-		.bus_valid				( w_bus_valid				),
-		.bus_ready				( w_bus_sysctrl_ready		),
-		.bus_write				( w_bus_write				),
-		.bus_wdata				( w_bus_wdata				),
-		.bus_rdata				( w_bus_sysctrl_rdata		),
-		.bus_rdata_en			( w_bus_sysctrl_rdata_en	),
-		.rom_bus_address		( w_rom_bus_address			),
-		.rom_bus_valid			( w_rom_bus_valid			),
-		.rom_bus_ready			( w_rom_bus_ready			),
-		.rom_bus_write			( w_rom_bus_write			),
-		.rom_bus_wdata			( w_rom_bus_wdata			),
-		.rom_bus_rdata			( w_rom_bus_rdata			),
-		.rom_bus_rdata_en		( w_rom_bus_rdata_en		),
-		.init_rom_bus_address	( w_init_rom_bus_address	),
-		.init_rom_bus_valid		( w_init_rom_bus_valid		),
-		.init_rom_bus_ready		( w_init_rom_bus_ready		),
-		.init_rom_bus_write		( w_init_rom_bus_write		),
-		.init_rom_bus_wdata		( w_init_rom_bus_wdata		),
-		.init_rom_bus_rdata		( w_init_rom_bus_rdata		),
-		.init_rom_bus_rdata_en	( w_init_rom_bus_rdata_en	),
-		.sram_ready				( w_sram_ready				),
-		.init_sram_bus_address	( w_init_sram_bus_address	),
-		.init_sram_bus_valid	( w_init_sram_bus_valid		),
-		.init_sram_bus_ready	( w_init_sram_bus_ready		),
-		.init_sram_bus_write	( w_init_sram_bus_write		),
-		.init_sram_bus_wdata	( w_init_sram_bus_wdata		),
-		.sram_initialize		( w_sram_initialize			),
-		.wait_n					( w_wait_n					)
-	);
-
-	assign w_rom_bus_address_sel = w_sram_initialize ? w_init_rom_bus_address : w_rom_bus_address;
-	assign w_rom_bus_valid_sel = w_sram_initialize ? w_init_rom_bus_valid : w_rom_bus_valid;
-	assign w_rom_bus_write_sel = w_sram_initialize ? w_init_rom_bus_write : w_rom_bus_write;
-	assign w_rom_bus_wdata_sel = w_sram_initialize ? w_init_rom_bus_wdata : w_rom_bus_wdata;
-	assign w_init_rom_bus_ready = w_rom_bus_ready;
-	assign w_init_rom_bus_rdata = w_rom_bus_rdata;
-	assign w_init_rom_bus_rdata_en = w_rom_bus_rdata_en;
-
-	assign w_sram_address_sel = w_sram_initialize ? w_init_sram_bus_address : w_sram_address;
-	assign w_sram_valid_sel = w_sram_initialize ? w_init_sram_bus_valid : w_sram_valid;
-	assign w_sram_write_sel = w_sram_initialize ? w_init_sram_bus_write : w_sram_write;
-	assign w_sram_wdata_sel = w_sram_initialize ? w_init_sram_bus_wdata : w_sram_wdata;
-	assign w_init_sram_bus_ready = w_sram_ready;
 
 	// ---------------------------------------------------------
 	//	Simple mixer with fixed gain + saturation.

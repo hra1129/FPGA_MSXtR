@@ -1108,3 +1108,10 @@ PPI のキーマトリクスも左キーに対応するビットを「解放」�
 → Dummy SSG に対するリセット信号がちゃんとつながっていないというバグが原因だった。
 　 修正したところ、キャッスルエクセレントと RabbitAdventure の両方で、主人公が左へ移動し続ける問題は解消した。
 
+## 2026-09-24 作業履歴 (Y8960 Cartridge 音対応)
+
+Y8960 Sound Cartridge の RTL をコピーしてきて、FPGA_MSXtR_SND_Cart_000 を追加した。
+基板も Y8960 Sound Cartridge をそのまま使い、そこから音声を出力できるようにする。
+SSG と OPLL を搭載し、カートリッジスロットから I/O write だけ出すことによって、write only の SSG + OPLL を
+制御できるようにする。
+

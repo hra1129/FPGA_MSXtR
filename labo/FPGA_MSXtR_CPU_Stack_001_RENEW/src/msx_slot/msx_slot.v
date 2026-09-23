@@ -518,6 +518,18 @@ module msx_slot #(
 				end
 				endcase
 			end
+			else if( w_bus_io && w_bus_write ) begin
+				ff_slot_a			<= w_slot_address[18:0];
+				ff_slot_rom0_ce_n	<= 1'b1;
+				ff_slot_rom1_ce_n	<= 1'b1;
+				ff_slot_sltsl0_n	<= 1'b1;
+				ff_slot_sltsl1_n	<= 1'b1;
+				ff_slot_sltsl2_n	<= 1'b1;
+				ff_slot_sltsl3_n	<= 1'b1;
+				ff_slot_cs1_n		<= 1'b1;
+				ff_slot_cs2_n		<= 1'b1;
+				ff_slot_cs12_n		<= 1'b1;
+			end
 			else begin
 				ff_slot_a			<= w_slot_address[18:0];
 				ff_slot_rom0_ce_n	<= 1'b1;
