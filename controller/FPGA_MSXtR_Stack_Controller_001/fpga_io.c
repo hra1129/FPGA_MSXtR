@@ -44,7 +44,7 @@ static bool s_msx_pause_timeout = false;
 static bool s_msx_reset_timeout = false;
 static bool s_bus_owner_wait_ready_timeout = false;
 // 0: Pico owns the bus, 1: MSX CPU owns the bus.
-static uint8_t s_bus_owner = 0;
+static BUS_OWNER_T s_bus_owner = BUS_OWNER_PICO;
 
 // SPI write completion is reported by FPGA after bus_ready is received.
 static bool fpga_wait_intr( uint32_t timeout_ms ) {
@@ -73,7 +73,7 @@ void fpga_access_end( void ) {
 void fpga_io_init( void ) {
 	uint8_t cmd;
 	uint8_t data;
-	s_bus_owner = 0;
+	s_bus_owner = BUS_OWNER_PICO;
 
 	spi_init( SPI0_PORT, SPI0_BAUDRATE );
 	spi_set_format( SPI0_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST );
@@ -148,7 +148,7 @@ bool fpga_get_wait_status( void ) {
 void fpga_outport( uint8_t io_address, uint8_t data ) {
 	uint8_t buf;
 
-	if( s_bus_owner != 0 ) {
+	if( s_bus_owner != BUS_OWNER_CPU ) {
 		return;
 	}
 	if( !fpga_wait_ready() ) {
@@ -178,7 +178,7 @@ uint8_t fpga_inport( uint8_t io_address ) {
 	absolute_time_t timeout_time;
 	bool intr_ready;
 
-	if( s_bus_owner != 0 ) {
+	if( s_bus_owner != BUS_OWNER_PICO ) {
 		return 0xAA;
 	}
 	if( !fpga_wait_ready() ) {
@@ -221,7 +221,7 @@ uint8_t fpga_inport( uint8_t io_address ) {
 void fpga_poke( uint16_t io_address, uint8_t data ) {
 	uint8_t buf;
 
-	if( s_bus_owner != 0 ) {
+	if( s_bus_owner != BUS_OWNER_PICO ) {
 		return;
 	}
 	if( !fpga_wait_ready() ) {
@@ -253,7 +253,7 @@ uint8_t fpga_peek( uint16_t io_address ) {
 	absolute_time_t timeout_time;
 	bool intr_ready;
 
-	if( s_bus_owner != 0 ) {
+	if( s_bus_owner != BUS_OWNER_PICO ) {
 		return 0xAA;
 	}
 	if( !fpga_wait_ready() ) {
@@ -313,6 +313,10 @@ void flashrom_write( uint32_t address, uint8_t data ) {
 	spi_write_blocking( SPI0_PORT, &buf, 1 );
 	buf = data;
 	spi_write_blocking( SPI0_PORT, &buf, 1 );
+	if( !fpga_wait_intr( 50 ) ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		return;
+	}
 	gpio_put( SPI0_CSN_PIN, 1 );
 	sleep_us( 10 );
 }
@@ -422,7 +426,7 @@ void fpga_bootrom_enable( bool enable ) {
 // ---------------------------------------------------------
 //	バス所有権の切り替えは msx_bus_mux 側の実際の切り替え完了を待ってから
 //	FPGA が INTR をアサートする。1byte 読み出すことで INTR をクリアする。
-void fpga_set_bus_owner( uint8_t owner ) {
+void fpga_set_bus_owner( BUS_OWNER_T owner ) {
 	uint8_t cmd;
 	absolute_time_t timeout_time;
 	bool intr_ready;
@@ -438,7 +442,7 @@ void fpga_set_bus_owner( uint8_t owner ) {
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = 0x10;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
-	cmd = ~owner & 0x01;
+	cmd = ((uint8_t)owner) & 0x01;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 
 	// INTR ピンが 1 になるまで待つ（バス所有権が実際に切り替わるまで、50ms タイムアウト）
@@ -459,12 +463,12 @@ void fpga_set_bus_owner( uint8_t owner ) {
 		return;
 	}
 	gpio_put( SPI0_CSN_PIN, 1 );
-	s_bus_owner = owner & 0x01;
+	s_bus_owner = (BUS_OWNER_T)(owner & 0x01);
 	sleep_us( 10 );
 }
 
 // ---------------------------------------------------------
-uint8_t fpga_get_bus_owner( void ) {
+BUS_OWNER_T fpga_get_bus_owner( void ) {
 	return s_bus_owner;
 }
 

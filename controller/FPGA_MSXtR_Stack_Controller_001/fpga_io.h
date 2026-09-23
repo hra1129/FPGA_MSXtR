@@ -65,6 +65,11 @@ typedef struct {
 #define FPGA_LED_CAPS				(1 << 2)
 #define FPGA_LED_KANA				(1 << 3)
 
+typedef enum {
+	BUS_OWNER_CPU = 0,
+	BUS_OWNER_PICO = 1,
+} BUS_OWNER_T;
+
 void fpga_io_init( void );
 bool fpga_get_wait_status( void );
 void fpga_outport( uint8_t io_address, uint8_t data );
@@ -76,8 +81,8 @@ uint8_t flashrom_read( uint32_t address );
 void fpga_msx_reset( bool reset_on );
 void fpga_msx_pause( bool pause_on );
 void fpga_bootrom_enable( bool enable );
-void fpga_set_bus_owner( uint8_t owner );
-uint8_t fpga_get_bus_owner( void );
+void fpga_set_bus_owner( BUS_OWNER_T owner );
+BUS_OWNER_T fpga_get_bus_owner( void );
 bool fpga_get_bus_owner_timeout( void );
 bool fpga_get_bus_owner_wait_ready_timeout( void );
 bool fpga_get_bootrom_enable_timeout( void );

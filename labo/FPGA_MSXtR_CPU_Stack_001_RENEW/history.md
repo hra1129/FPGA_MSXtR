@@ -934,3 +934,177 @@ ModelSimで以下を確認した。
 Slot0/Slot3の内蔵ROM/SSRAMマップ整理は、現時点の実機構成で有効であることを確認した。
 
 ここで本件は一区切りとする。
+
+---
+
+## 2026-09-22 作業履歴 (FlashROM Direct Access分離とMSX1 BIOS/ROMカートリッジ起動確認)
+
+### 1. FlashROM書き込み失敗の症状
+
+Picoから5キーで実行するFlashROM書き込みが不安定に失敗することが判明した。
+ROM0 eraseは成功するが、ROM0 program中に毎回異なるアドレスでverify timeoutとなり、
+該当byteが`0xFF`のまま残る症状だった。
+
+例:
+
+```text
+Erase ROM0... OK
+Write ROM0: /bios/msx2p.rom
+FlashROM timeout at 0x00006: expected 0x98, actual 0xFF
+```
+
+その後、`flashrom_write()`でもSPI送信後に`SPI_INTR`を待つよう修正したところ、
+書き込みは大きく進むようになったが、`0x0FFFF`付近で失敗するケースが残った。
+
+```text
+FlashROM timeout at 0x0FFFF: expected 0xFF, actual 0x00
+```
+
+このアドレスがMSX通常空間ではSecondary Slot Register (`FFFFh`) と重なるため、
+FlashROM Direct Accessが通常MSX peripheralへ漏れている可能性が高いと判断した。
+
+### 2. Direct Accessと通常MSXアクセスの整理
+
+`ip_spi`の`0Dh`/`0Eh`はFlashROM Direct Accessであり、次の仕様で扱うべきと整理した。
+
+- 20bit物理アドレスを直接FlashROMへ指定する
+- `0x0FFFF`はFlashROMの物理`0x0FFFF`であり、Secondary Slot Registerではない
+- `0x10000`など16bitを超えるアドレスも直接指定できる
+- 通常MSX accessでは`A[19:16]`を無視し、slot/mapper/secondary等の通常デコードを使う
+- Direct Access中は通常MSX peripheralへ副作用を出してはいけない
+- ただし物理信号としては`slot_a`, `slot_rd_n`, `slot_wr_n`, `slot_rom*_ce_n`, `slot_d`を共有するため、`msx_slot.v`へは現状通り通す
+
+### 3. `FPGA_MSXtR_CPU_Stack.v`のDirect Access分離
+
+`msx_bus_mux`から出た`device_*`系信号は、FlashROM Direct Access中でも通常MSX peripheralへ
+流れていた。これにより、`device_address == 16'hFFFF`のときに`secondary_slot`等が反応しうる構造だった。
+
+そこで、トップレベルで次の分離を追加した。
+
+- `w_device_flash_direct = w_cpu_sel[1] & w_pico_bus_flash_en`
+- `w_device_valid_peripheral = w_device_valid & ~w_device_flash_direct`
+
+通常MSX peripheral群には`w_device_valid_peripheral`を渡し、FlashROM Direct Access中は
+以下の通常peripheralが動かないようにした。
+
+- Secondary Slot Register
+- Memory Mapper
+- SSRAM
+- BootROM
+- PPI
+- S2026
+- RTC
+- System Flag
+- Pause LED
+
+一方、`msx_slot.v`にはDirect Accessを通し続け、FlashROM物理信号生成は従来通り行う。
+
+### 4. 検証
+
+`src/test_003`で統合回帰を実行し、以下を確認した。
+
+- Z80/R800切替
+- Pico所有中のZ80/R800停止
+- CPU復帰
+- VDP write 1000回
+- コンパイルエラー・警告なし
+
+結果:
+
+```text
+PASS = 91, FAIL = 0
+All tests PASSED.
+```
+
+### 5. 実機確認
+
+MSX1 BIOSを書き込み、実機で以下を確認した。
+
+- FlashROM書き込みが成功するようになった
+- MSX-BASIC 1.0 が起動する
+- Cartridge Slot Stackを取り付けた状態でも起動する
+- ROMカートリッジを装着して起動する
+
+これにより、FlashROM Direct Accessが通常MSX peripheralへ副作用を出す問題は解消し、
+MSX1構成でのFlashROM書き込み、MSX-BASIC起動、ROMカートリッジ起動まで確認できた。
+
+### 6. 残課題
+
+これまで動作確認に使っていたROMカートリッジとは別のカートリッジで、動作しないものが見つかった。
+また、MSX2+ BIOSでは起動ロゴまで到達せず暴走する。
+
+ただし、これらは今回のFlashROM Direct Access分離修正とは別課題と判断する。
+
+本日の作業はここで一区切りとする。
+
+---
+
+## 2026-09-23 作業履歴 (正常に起動しないROMカートリッジの調査)
+
+### 1. 起動しないROMカートリッジと起動するROMカートリッジ
+
+手元にあるいくつかのROMカートリッジの動作を確認したところ、大半が起動しないことが分かった。
+
+(1) キャッスルエクセレント
+　→ 起動するが、主人公は左へ移動し続ける。
+
+(2) ボコスカウォーズ
+　→ 起動する、普通に遊べる、特に異常なし
+
+(3) ロードランナーII
+　→ 起動早々にPCGがぐちゃぐちゃ。そのまま何かアニメーションしてるけどよくわからない。
+
+(4) RabbitAdventure
+　→ 画面に 1 が敷き詰められて暴走。上のやや右に 0 が居るのは先ほどと動作変わらず。
+　　 表示は崩れているが、Spaceキーを押すとゲームが始まる。背景の表示は崩れたままで、
+　　 スプライトキャラクターが表示されるが、主人公は左へ移動し続ける。
+
+(5) ドラクエ2 MSX1版
+　→ MSX System Version 1.0 の隣に「み」と表示してハング
+
+(6) スーパーコブラ
+　→ MSX System Version 1.0 の下にゴミが表示されてハング
+
+(7) ギャラクシアン
+　→ MSX System Version 1.0 の表示が終わったら、また MSX System Version 1.0 と表示され、その繰り返し
+
+一部の MSX1ソフトは、SLOT#0 が拡張スロットになっていると動作しないものがあり、
+ギャラクシアンは、そのタイプではないか？」という情報を得た。
+今の環境は、SLOT#0 が拡張スロットであるため、ひとまずキャラクシアンの調査は保留とする。
+
+### 2. 状況分析
+
+これまで、スロット経由のアクセスは「正常に読み出せない」「正常に書き込めない」ということが起因で、不具合発生しているケースが多かった。
+ROMカートリッジなので読み出せれば問題ない。
+Pico の MENUキーを押したときの BIOSダンプテストに、SLOT#1 のダンプも追加して様子を見てみる。
+
+### 3. Picoファームの修正と確認
+
+dump_slot0() を dump_slot() に改名し、SLOT#1 のダンプも追加する。
+ついでに、その後の起動に悪影響が無いように、スロットレジスタの内容は、元に戻すように修正した。
+
+スーパーコブラのカートリッジを装着した状態で SLOT#1 の 4000h～40FFh をダンプしたところ、
+期待通りに読み出せたので、「読み出し失敗による暴走」は考えにくい。
+
+スーパーコブラのコードを解析してみると、SSGレジスタを読んで処理している部分が冒頭に多数あるのを確認。
+
+### 4. 考察
+
+スーパーコブラの冒頭処理では、SSGレジスタの読み出しが多数行われていることから、
+SSGが存在していないことが、暴走の原因ではないか？
+
+### 5. Dummy SSG 追加
+
+SSG のレジスタを再現する Dummy SSG を追加した。
+これにより、スーパーコブラの挙動が変わるかどうかを確認してみたところ、正常に起動するようになった。
+しかし、その他のソフトに関しては、状況変わらず。
+
+### 6. 左へ移動し続ける問題
+
+キャッスルエクセレントと、RabbitAdventure で主人公が左へ移動し続ける問題が発生している。
+この問題の切り分けのために、SSG のジョイパッド状態取得で、左キーを強制的に「解放」で返すようにして、
+PPI のキーマトリクスも左キーに対応するビットを「解放」で返すようにした。
+キーボードもジョイパッドも左を押していない状態で起動したが、両ソフトともに左へ移動する現象は改善せず。
+→ Dummy SSG に対するリセット信号がちゃんとつながっていないというバグが原因だった。
+　 修正したところ、キャッスルエクセレントと RabbitAdventure の両方で、主人公が左へ移動し続ける問題は解消した。
+

@@ -1,0 +1,282 @@
+GowinSynthesis start
+Running parser ...
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v'
+Undeclared symbol 'clk_42m', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":269)
+Undeclared symbol 'w_reset_n', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":270)
+Undeclared symbol 'ff_enable', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":271)
+Undeclared symbol 'w_hdmicontrol', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":333)
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\debugger\ip_debugger.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\gowin_clkdiv\gowin_clkdiv.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\gowin_rpll\gowin_rpll.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\gowin_rpll2\gowin_rpll2.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_dac.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_eg.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_lfo.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_pg.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_timinggen.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\opll.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\msx_slot\msx_slot.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ram\ip_ram.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\sdram\ip_sdram_tangnano20k_c.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ssg\dual_ssg.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ssg\ssg_core.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp.v'
+Undeclared symbol 'w_vram_interleave', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp.v":343)
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_color_palette.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_color_palette_ram.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_command.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_command_cache.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_cpu_interface.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_sprite_divide_table.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_sprite_info_collect.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_sprite_makeup_pixel.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_sprite_select_visible_planes.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control_screen_mode.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control_sprite.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control_ssg.v'
+Undeclared symbol 'dot_phase', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control_ssg.v":432)
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_upscan.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_upscan_line_buffer.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_double_buffer.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out.v'
+Undeclared symbol 'w_display_en', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out.v":380)
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out_bilinear.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_ram_line_buffer.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_vram_interface.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ws2812_led\ip_ws2812_led.v'
+Analyzing VHDL file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd'
+Analyzing entity 'hdmi_tx_scfifo'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":126)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":147)
+Analyzing entity 'hdmi_tx_delay'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":235)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":250)
+Analyzing entity 'hdmi_tx_audiopacket_submodule'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":291)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":317)
+Analyzing entity 'hdmi_tx_infopacket_submodule'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":544)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":603)
+Analyzing entity 'hdmi_tx_dataisland_submodule'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":840)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":863)
+Analyzing entity 'hdmi_tx_tmds_encoder_submodule'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1037)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1058)
+Analyzing entity 'hdmi_tx_pdiff_submodule'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1249)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1269)
+Analyzing entity 'hdmi_tx'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1397)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1473)
+Analyzing VHDL file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\video_syncgen.vhd'
+Analyzing entity 'video_syncgen'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\video_syncgen.vhd":45)
+Analyzing architecture 'rtl'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\video_syncgen.vhd":140)
+Compiling module 'FPGA_MSXtR_VDP_Stack'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":24)
+Compiling module 'Gowin_rPLL'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\gowin_rpll\gowin_rpll.v":10)
+Compiling module 'Gowin_rPLL2'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\gowin_rpll2\gowin_rpll2.v":10)
+Compiling module 'Gowin_CLKDIV'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\gowin_clkdiv\gowin_clkdiv.v":10)
+Compiling module 'msx_slot'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\msx_slot\msx_slot.v":58)
+Compiling module 'vdp'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp.v":58)
+Compiling module 'vdp_cpu_interface'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_cpu_interface.v":58)
+Compiling module 'vdp_timing_control'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control.v":57)
+Compiling module 'vdp_timing_control_ssg'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control_ssg.v":58)
+Compiling module 'vdp_timing_control_screen_mode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control_screen_mode.v":58)
+Compiling module 'vdp_timing_control_sprite'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_timing_control_sprite.v":58)
+Compiling module 'vdp_sprite_select_visible_planes'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_sprite_select_visible_planes.v":58)
+Compiling module 'vdp_sprite_info_collect'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_sprite_info_collect.v":58)
+Compiling module 'vdp_sprite_makeup_pixel'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_sprite_makeup_pixel.v":58)
+Compiling module 'vdp_sprite_divide_table'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_sprite_divide_table.v":58)
+Compiling module 'vdp_command'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_command.v":57)
+Compiling module 'vdp_command_cache'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_command_cache.v":57)
+Compiling module 'vdp_vram_interface'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_vram_interface.v":58)
+Compiling module 'vdp_color_palette'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_color_palette.v":58)
+Compiling module 'vdp_color_palette_ram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_color_palette_ram.v":58)
+Extracting RAM for identifier 'ram_r'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_color_palette_ram.v":73)
+Extracting RAM for identifier 'ram_g'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_color_palette_ram.v":74)
+Extracting RAM for identifier 'ram_b'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_color_palette_ram.v":75)
+Compiling module 'vdp_upscan'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_upscan.v":60)
+Compiling module 'vdp_upscan_line_buffer'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_upscan_line_buffer.v":58)
+Extracting RAM for identifier 'ff_imem'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_upscan_line_buffer.v":66)
+Compiling module 'vdp_video_out'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out.v":60)
+Compiling module 'vdp_video_double_buffer'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_double_buffer.v":58)
+Compiling module 'vdp_video_ram_line_buffer'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_ram_line_buffer.v":58)
+Extracting RAM for identifier 'ff_imem'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_ram_line_buffer.v":66)
+Compiling module 'vdp_video_out_bilinear'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out_bilinear.v":60)
+Compiling module 'dual_ssg(BUILTIN=0)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ssg\dual_ssg.v":48)
+Compiling module 'ssg_core(builtin=0)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ssg\ssg_core.v":58)
+Compiling module 'ssg_core(core_number=1'b1)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ssg\ssg_core.v":58)
+Compiling module 'dual_opll'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\opll.v":7)
+Compiling module 'IKAOPLL(FAST_RESET=1,USE_PIPELINED_MULTIPLIER=1)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":1)
+Compiling module 'IKAOPLL_timinggen(FAST_RESET=1)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_timinggen.v":1)
+Compiling module 'IKAOPLL_reg'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":11)
+Compiling module 'IKAOPLL_rw_synchronizer'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":476)
+Compiling module 'IKAOPLL_d9reg(WIDTH=8)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":534)
+Compiling module 'IKAOPLL_sr(WIDTH=8,TAP0=2,TAP1=5,TAP2=8)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_d9reg'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":534)
+Compiling module 'IKAOPLL_sr(TAP0=2,TAP1=5,TAP2=8)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_d9reg(WIDTH=3)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":534)
+Compiling module 'IKAOPLL_sr(WIDTH=3,TAP0=2,TAP1=5,TAP2=8)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_d9reg(WIDTH=4)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":534)
+Compiling module 'IKAOPLL_sr(WIDTH=4,TAP0=2,TAP1=5,TAP2=8)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_d9reg(WIDTH=2)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":534)
+Compiling module 'IKAOPLL_sr(WIDTH=2,TAP0=2,TAP1=5,TAP2=8)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_instrom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":563)
+Compiling module 'IKAOPLL_lfo'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_lfo.v":1)
+Compiling module 'IKAOPLL_pg'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_pg.v":1)
+Compiling module 'IKAOPLL_sr(WIDTH=19,LENGTH=15)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_eg'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_eg.v":1)
+Compiling module 'IKAOPLL_sr(WIDTH=2,LENGTH=18,TAP0=16)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_sr(WIDTH=7,LENGTH=17,TAP0=15,TAP1=16)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_op'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":1)
+Compiling module 'IKAOPLL_logsinrom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":277)
+Compiling module 'IKAOPLL_exprom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":325)
+Compiling module 'IKAOPLL_sr(WIDTH=12,TAP0=6)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Compiling module 'IKAOPLL_dac'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_dac.v":1)
+Compiling module 'IKAOPLL_sr(WIDTH=9,LENGTH=5)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_primitives.v":31)
+Switching to VHDL mode to elaborate design unit 'hdmi_tx'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":347)
+Processing 'hdmi_tx(device_family="MAX 10",clock_frequency=42.95454,use_extcontrol="ON",audio_frequency=48.0)(1,6)(1,4)(1,2)(1,8)(1,4)(1,4)(1,4)(1,3)(1,3)(1,7)(1,8)(1,2)(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1397)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 4 is different from right argument length 3 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1559)
+Processing 'hdmi_tx_audiopacket_submodule(audio_frequency=48.0)(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":291)
+Processing 'hdmi_tx_scfifo(fifo_word_width=8,fifo_data_width=9)(1,4)(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":126)
+Extracting RAM for identifier 'ram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":154)
+Processing 'hdmi_tx_infopacket_submodule(clock_frequency=42.95454,audio_frequency=48.0)(1,4)(1,4)(1,4)(1,3)(1,3)(1,7)(1,8)(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":544)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 4 is different from right argument length 5 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":658)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 4 is different from right argument length 3 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":660)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 3 is different from right argument length 6 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":662)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 3 is different from right argument length 5 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":662)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 4 is different from right argument length 3 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":665)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 3 is different from right argument length 5 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":668)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 3 is different from right argument length 5 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":668)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 3 is different from right argument length 8 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":668)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 3 is different from right argument length 8 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":668)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 3 is different from right argument length 8 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":669)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 8 is different from right argument length 5 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":674)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 8 is different from right argument length 6 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":674)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 8 is different from right argument length 4 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":674)
+WARN  (EX1998) : Net 'infotable_sig[6][7]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":691)
+Processing 'hdmi_tx_dataisland_submodule(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":840)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 4 is different from right argument length 8 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1692)
+WARN  (EX4196) : Comparison between unequal length arrays always returns FALSE, left argument length 4 is different from right argument length 3 for 'string' array("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1738)
+Processing 'hdmi_tx_tmds_encoder_submodule(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1037)
+Processing 'hdmi_tx_tmds_encoder_submodule(tmds_channel=1)(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1037)
+Processing 'hdmi_tx_tmds_encoder_submodule(tmds_channel=2)(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1037)
+Processing 'hdmi_tx_pdiff_submodule(device_family="MAX 10")(1,6)(RTL)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\hdmi_tx\src\hdmi_tx_gw.vhd":1249)
+WARN  (EX3670) : Actual bit length 1 differs from formal bit length 4 for port 'control'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":333)
+Returning to Verilog mode to proceed with elaboration("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":347)
+Compiling module 'ip_sdram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\sdram\ip_sdram_tangnano20k_c.v":57)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 15("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\sdram\ip_sdram_tangnano20k_c.v":285)
+Compiling module 'ip_ws2812_led'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ws2812_led\ip_ws2812_led.v":57)
+Compiling module 'ip_debugger'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\debugger\ip_debugger.v":57)
+WARN  (EX1998) : Net 'w_bus_ioreq' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":76)
+WARN  (EX1998) : Net 'clk_42m' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":269)
+WARN  (EX1998) : Net 'w_reset_n' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":270)
+WARN  (EX1998) : Net 'ff_enable' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":271)
+WARN  (EX1998) : Net 'w_hdmicontrol' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":333)
+WARN  (EX2565) : Input 'cc_swap' on this instance is undriven. Assigning to 0, simulation mismatch possible. Please assign the input or remove the declaration("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":328)
+NOTE  (EX0101) : Current top module is "FPGA_MSXtR_VDP_Stack"
+WARN  (EX0211) : The output port "bus_ssg_cs" of module "msx_slot" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\msx_slot\msx_slot.v":74)
+WARN  (EX0211) : The output port "bus_opll_cs" of module "msx_slot" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\msx_slot\msx_slot.v":75)
+[5%] Running netlist conversion ...
+WARN  (CV0016) : Input clk is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":25)
+WARN  (CV0018) : Input button[1] is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":39)
+Running device independent optimization ...
+[10%] Optimizing Phase 0 completed
+[15%] Optimizing Phase 1 completed
+[25%] Optimizing Phase 2 completed
+Running inference ...
+[30%] Inferring Phase 0 completed
+[40%] Inferring Phase 1 completed
+[50%] Inferring Phase 2 completed
+[55%] Inferring Phase 3 completed
+Running technical mapping ...
+[60%] Tech-Mapping Phase 0 completed
+[65%] Tech-Mapping Phase 1 completed
+[75%] Tech-Mapping Phase 2 completed
+[80%] Tech-Mapping Phase 3 completed
+[90%] Tech-Mapping Phase 4 completed
+WARN  (NL0002) : The module "dual_opll" instantiated to "u_dual_opll" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":304)
+WARN  (NL0002) : The module "IKAOPLL" instantiated to "u_ikaopll0" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\opll.v":61)
+WARN  (NL0002) : The module "IKAOPLL_dac" instantiated to "u_DAC" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":384)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_percussion_sr" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_dac.v":82)
+WARN  (NL0002) : The module "IKAOPLL_eg" instantiated to "u_EG" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":323)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_cyc2r_cyc19r_envstatreg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_eg.v":124)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_cyc3r_cyc19r_attnlvreg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_eg.v":298)
+WARN  (NL0002) : The module "IKAOPLL_lfo" instantiated to "u_LFO" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":250)
+WARN  (NL0002) : The module "IKAOPLL_op" instantiated to "u_OP" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":354)
+WARN  (NL0002) : The module "IKAOPLL_logsinrom" instantiated to "u_cyc19c_logsinrom" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":65)
+WARN  (NL0002) : The module "IKAOPLL_exprom" instantiated to "u_cyc20c_exprom" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":110)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_op_z_reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":196)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_op_zz_reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":201)
+WARN  (NL0002) : The module "IKAOPLL_pg" instantiated to "u_PG" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":281)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_cyc4r_cyc18r_phase_sr" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_pg.v":271)
+WARN  (NL0002) : The module "IKAOPLL_reg" instantiated to "u_REG" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":225)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_bank" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":282)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_block" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":267)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_fnum_lsbs" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":261)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_fnum_msb" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":264)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_inst" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":279)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_instrom" instantiated to "u_instrom" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":326)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_kon" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":270)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_susen" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":273)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_rw_synchronizer" instantiated to "u_sync_addrreg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":84)
+WARN  (NL0002) : The module "IKAOPLL_rw_synchronizer" instantiated to "u_sync_datareg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":88)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_vol" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":276)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_timinggen" instantiated to "u_TIMINGGEN" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":162)
+WARN  (NL0002) : The module "IKAOPLL" instantiated to "u_ikaopll1" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\opll.v":90)
+WARN  (NL0002) : The module "IKAOPLL_dac" instantiated to "u_DAC" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":384)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_percussion_sr" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_dac.v":82)
+WARN  (NL0002) : The module "IKAOPLL_eg" instantiated to "u_EG" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":323)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_cyc2r_cyc19r_envstatreg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_eg.v":124)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_cyc3r_cyc19r_attnlvreg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_eg.v":298)
+WARN  (NL0002) : The module "IKAOPLL_lfo" instantiated to "u_LFO" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":250)
+WARN  (NL0002) : The module "IKAOPLL_op" instantiated to "u_OP" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":354)
+WARN  (NL0002) : The module "IKAOPLL_logsinrom" instantiated to "u_cyc19c_logsinrom" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":65)
+WARN  (NL0002) : The module "IKAOPLL_exprom" instantiated to "u_cyc20c_exprom" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":110)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_op_z_reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":196)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_op_zz_reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_op.v":201)
+WARN  (NL0002) : The module "IKAOPLL_pg" instantiated to "u_PG" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":281)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_cyc4r_cyc18r_phase_sr" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL_modules\IKAOPLL_pg.v":271)
+WARN  (NL0002) : The module "IKAOPLL_reg" instantiated to "u_REG" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":225)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_bank" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":282)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_block" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":267)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_fnum_lsbs" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":261)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_fnum_msb" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":264)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_inst" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":279)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_instrom" instantiated to "u_instrom" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":326)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_kon" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":270)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_susen" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":273)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_rw_synchronizer" instantiated to "u_sync_addrreg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":84)
+WARN  (NL0002) : The module "IKAOPLL_rw_synchronizer" instantiated to "u_sync_datareg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":88)
+WARN  (NL0002) : The module "IKAOPLL_d9reg" instantiated to "u_vol" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":276)
+WARN  (NL0002) : The module "IKAOPLL_sr" instantiated to "u_d9reg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll_patch\IKAOPLL_reg.v":548)
+WARN  (NL0002) : The module "IKAOPLL_timinggen" instantiated to "u_TIMINGGEN" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ikaopll\src\IKAOPLL.v":162)
+WARN  (NL0002) : The module "dual_ssg" instantiated to "u_dual_ssg" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\FPGA_MSXtR_VDP_Stack.v":287)
+WARN  (NL0002) : The module "ssg_core" instantiated to "ssg_core0" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ssg\dual_ssg.v":98)
+WARN  (NL0002) : The module "ssg_core" instantiated to "ssg_core1" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\ssg\dual_ssg.v":119)
+WARN  (NL0002) : The module "vdp_color_palette" instantiated to "u_color_palette" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp.v":506)
+WARN  (NL0002) : The module "vdp_color_palette_ram" instantiated to "u_color_palette_ram" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_color_palette.v":487)
+WARN  (NL0002) : The module "vdp_upscan" instantiated to "u_upscan" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp.v":527)
+WARN  (NL0002) : The module "vdp_upscan_line_buffer" instantiated to "u_even_line_buffer" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_upscan.v":107)
+WARN  (NL0002) : The module "vdp_upscan_line_buffer" instantiated to "u_odd_line_buffer" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_upscan.v":121)
+WARN  (NL0002) : The module "vdp_video_out_bilinear" instantiated to "u_bilinear_b" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out.v":346)
+WARN  (NL0002) : The module "vdp_video_out_bilinear" instantiated to "u_bilinear_g" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out.v":337)
+WARN  (NL0002) : The module "vdp_video_out_bilinear" instantiated to "u_bilinear_r" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out.v":328)
+WARN  (NL0002) : The module "vdp_video_double_buffer" instantiated to "u_double_buffer" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_out.v":299)
+WARN  (NL0002) : The module "vdp_video_ram_line_buffer" instantiated to "u_buf_even" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_double_buffer.v":91)
+WARN  (NL0002) : The module "vdp_video_ram_line_buffer" instantiated to "u_buf_odd" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\src\v9968\vdp_video_double_buffer.v":101)
+[95%] Generate netlist file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\impl\gwsynthesis\FPGA_MSXtR_VDP_Stack.vg" completed
+[100%] Generate report file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_002\impl\gwsynthesis\FPGA_MSXtR_VDP_Stack_syn.rpt.html" completed
+GowinSynthesis finish

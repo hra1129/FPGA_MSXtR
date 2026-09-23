@@ -43,7 +43,6 @@ module msx_bus_mux (
 	input	[7:0]	pico_bus_wdata,
 	output	[7:0]	pico_bus_rdata,
 	output			pico_bus_rdata_en,
-	input			pico_flashrom_en,
 	//	Z80 side
 	input	[15:0]	z80_bus_address,
 	input			z80_bus_io,
@@ -72,15 +71,15 @@ module msx_bus_mux (
 	input	[7:0]	device_rdata,
 	input			device_rdata_en
 );
-	assign device_address		= cpu_sel[1] ? pico_bus_address	: (cpu_sel[0] ? r800_bus_address : z80_bus_address);
-	assign device_io			= cpu_sel[1] ? pico_bus_io		: (cpu_sel[0] ? r800_bus_io		 : z80_bus_io);
-	assign device_write			= cpu_sel[1] ? pico_bus_write	: (cpu_sel[0] ? r800_bus_write	 : z80_bus_write);
-	assign device_valid			= cpu_sel[1] ? pico_bus_valid	: (cpu_sel[0] ? r800_bus_valid	 : z80_bus_valid);
-	assign device_wdata			= cpu_sel[1] ? pico_bus_wdata	: (cpu_sel[0] ? r800_bus_wdata	 : z80_bus_wdata);
+	assign device_address		= cpu_sel[1] ? pico_bus_address[15:0]	: (cpu_sel[0] ? r800_bus_address : z80_bus_address);
+	assign device_io			= cpu_sel[1] ? pico_bus_io				: (cpu_sel[0] ? r800_bus_io		 : z80_bus_io);
+	assign device_write			= cpu_sel[1] ? pico_bus_write			: (cpu_sel[0] ? r800_bus_write	 : z80_bus_write);
+	assign device_valid			= cpu_sel[1] ? pico_bus_valid			: (cpu_sel[0] ? r800_bus_valid	 : z80_bus_valid);
+	assign device_wdata			= cpu_sel[1] ? pico_bus_wdata			: (cpu_sel[0] ? r800_bus_wdata	 : z80_bus_wdata);
 
-	assign pico_bus_ready		= cpu_sel == 2'd2 ? device_ready : 1'b0;
+	assign pico_bus_ready		= cpu_sel[1] ? device_ready : 1'b0;
 	assign pico_bus_rdata		= device_rdata;
-	assign pico_bus_rdata_en	= cpu_sel == 2'd2 ? device_rdata_en : 1'b0;
+	assign pico_bus_rdata_en	= cpu_sel[1] ? device_rdata_en : 1'b0;
 
 	assign z80_bus_ready		= cpu_sel == 2'd0 ? device_ready : 1'b0;
 	assign z80_bus_rdata		= device_rdata;

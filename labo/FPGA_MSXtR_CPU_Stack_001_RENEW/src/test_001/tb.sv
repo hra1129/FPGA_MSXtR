@@ -304,14 +304,24 @@ module tb ();
 		end
 	endtask
 
-	task automatic spi_set_bus_owner(
-		input		owner
-	);
+	localparam	BUS_OWNER_CPU	= 0;
+	localparam	BUS_OWNER_PICO	= 1;
+	task automatic spi_set_bus_owner( input owner );
+		int timeout_ns;
+		reg [7:0] response;
 		begin
+			timeout_ns = 0;
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h10 );
-			spi_send_byte( { 7'd0, ~owner } );
+			spi_send_byte( { 7'd0, owner } );
+			while( mcu_intr == 1'b0 && timeout_ns < 5000 ) begin
+				#( 10 );
+				timeout_ns = timeout_ns + 10;
+			end
+			if( mcu_intr == 1'b0 ) begin
+				$display( "WARNING: bus owner switch timed out" );
+			end
 			#( 200 );
 			mcu_cs_n = 1'b1;
 			mcu_mosi = 1'b0;
@@ -1364,7 +1374,7 @@ module tb ();
 		begin
 			int wait_count;
 
-			spi_set_bus_owner( 1'b1 );
+			spi_set_bus_owner( BUS_OWNER_CPU );
 
 			wait_count = 0;
 			while( (u_dut.w_active_bus_owner == 1'b0) && (wait_count < 2000) ) begin

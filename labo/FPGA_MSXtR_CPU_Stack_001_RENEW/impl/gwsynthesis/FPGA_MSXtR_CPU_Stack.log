@@ -1,7 +1,6 @@
 GowinSynthesis start
 Running parser ...
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v'
-Undeclared symbol 'w_pico_bus_flash_en', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":651)
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\address_decode\address_decode.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\bootrom\bootrom.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\bootrom\ram.v'
@@ -40,6 +39,7 @@ Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\spi_rom\ip_spi_rom.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ssram\ssram.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\system_flag\system_flag.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\dummy_ssg\dummy_ssg.v'
 Compiling module 'fpga_msxtr_cpu_stack'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":24)
 Compiling module 'Gowin_PLL'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\gowin_pll\gowin_pll.v":1)
 Compiling module 'Gowin_PLL_MOD'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\gowin_pll\gowin_pll_mod.v":11)
@@ -75,7 +75,6 @@ Compiling module 's2026_cpu_select'("C:\Users\hra\Documents\github\HRA_product\F
 Compiling module 's2026_register'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\s2026\s2026_register.v":34)
 WARN  (EX1998) : Net 'ff_switch' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\s2026\s2026_register.v":51)
 Compiling module 'msx_bus_mux'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\msx_bus_mux\msx_bus_mux.v":33)
-WARN  (EX3791) : Expression size 20 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\msx_bus_mux\msx_bus_mux.v":75)
 Compiling module 'msx_slot'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\msx_slot\msx_slot.v":34)
 Compiling module 'address_decode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\address_decode\address_decode.v":34)
 Compiling module 'secondary_slot'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\secondary_slot\secondary_slot.v":34)
@@ -84,26 +83,24 @@ Compiling module 'rom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Compiling module 'ip_ram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\bootrom\ram.v":34)
 Compiling module 'ppi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ppi\ppi.v":34)
 Compiling module 'memory_mapper'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\memory_mapper\memory_mapper.v":50)
-Compiling module 'ssram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ssram\ssram.v":7)
+Compiling module 'ssram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ssram\ssram.v":34)
 Compiling module 'rtc'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\rtc\rtc.v":53)
 Extracting RAM for identifier 'ff_memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\rtc\rtc.v":93)
 Compiling module 'pause_led'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\pause_led\pause_led.v":38)
 Compiling module 'system_flag'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\system_flag\system_flag.v":44)
-WARN  (EX1998) : Net 'w_int_n' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":111)
-WARN  (EX1998) : Net 'w_bus_io' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":155)
-WARN  (EX1998) : Net 'w_bus_write' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":156)
-WARN  (EX1998) : Net 'w_bus_valid' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":157)
-WARN  (EX1998) : Net 'w_bus_ready' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":158)
-WARN  (EX1998) : Net 'w_bus_address[15]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":160)
-WARN  (EX1998) : Net 'w_mux_bus_io' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":210)
-WARN  (EX1998) : Net 'w_mux_bus_write' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":211)
-WARN  (EX1998) : Net 'w_mux_bus_valid' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":212)
-WARN  (EX1998) : Net 'w_mux_bus_ready' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":213)
-WARN  (EX1998) : Net 'w_mux_bus_wdata[7]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":214)
-WARN  (EX1998) : Net 'w_mux_bus_address[15]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":215)
-WARN  (EX1998) : Net 'w_z80_slot_flash_en' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":341)
-WARN  (EX1998) : Net 'w_r800_slot_flash_en' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":353)
-WARN  (EX1998) : Net 'w_pico_slot_flash_en' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":365)
+Compiling module 'dummy_ssg'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\dummy_ssg\dummy_ssg.v":34)
+WARN  (EX1998) : Net 'w_int_n' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":112)
+WARN  (EX1998) : Net 'w_bus_io' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":156)
+WARN  (EX1998) : Net 'w_bus_write' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":157)
+WARN  (EX1998) : Net 'w_bus_valid' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":158)
+WARN  (EX1998) : Net 'w_bus_ready' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":159)
+WARN  (EX1998) : Net 'w_bus_address[15]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":161)
+WARN  (EX1998) : Net 'w_mux_bus_io' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":212)
+WARN  (EX1998) : Net 'w_mux_bus_write' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":213)
+WARN  (EX1998) : Net 'w_mux_bus_valid' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":214)
+WARN  (EX1998) : Net 'w_mux_bus_ready' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":215)
+WARN  (EX1998) : Net 'w_mux_bus_wdata[7]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":216)
+WARN  (EX1998) : Net 'w_mux_bus_address[15]' does not have a driver("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":217)
 NOTE  (EX0101) : Current top module is "fpga_msxtr_cpu_stack"
 WARN  (EX0211) : The output port "srom_sclk" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":68)
 WARN  (EX0211) : The output port "srom_cs_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":69)

@@ -1,0 +1,309 @@
+{
+    "Device": "GW5A-25A",
+    "Files": [
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/adpcm/src/jt10_adpcm_div.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/adpcm/src/jt10_adpcm_drvB.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/adpcm/src/jt10_adpcmb.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/adpcm/src/jt10_adpcmb_cnt.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/adpcm/src/jt10_adpcmb_gain.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/adpcm/src/jt10_adpcmb_interpol.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/adpcm_patch/adpcm.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/gowin_clkdiv/gowin_clkdiv.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/gowin_pll/gowin_pll.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/gowin_pll/gowin_pll_mod.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/i2s_audio/i2s_audio.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll/src/IKAOPLL.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll/src/IKAOPLL_modules/IKAOPLL_dac.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll/src/IKAOPLL_modules/IKAOPLL_eg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll/src/IKAOPLL_modules/IKAOPLL_lfo.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll/src/IKAOPLL_modules/IKAOPLL_op.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll/src/IKAOPLL_modules/IKAOPLL_pg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll/src/IKAOPLL_modules/IKAOPLL_primitives.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll/src/IKAOPLL_modules/IKAOPLL_timinggen.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll_patch/IKAOPLL_reg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikaopll_patch/opll.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikascc/src/IKASCC.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikascc/src/IKASCC_modules/IKASCC_player_s.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikascc/src/IKASCC_modules/IKASCC_primitives.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikascc_patch/IKASCC_vrc_s.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikascc_patch/scc.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ikascc_patch/scc_bank.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/msx_slot/msx_slot.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl2.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_acc.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_csr.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_div.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_eg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_eg_cnt.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_eg_comb.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_eg_ctrl.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_eg_final.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_eg_pure.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_eg_step.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_exprom.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_lfo.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_logsin.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_mmr.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_noise.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_op.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_pg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_pg_comb.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_pg_inc.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_pg_rhy.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_pg_sum.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_pm.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_reg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_reg_ch.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_sh.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_sh_rst.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_single_acc.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_slot_cnt.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2/src/jtopl_timers.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/opl2_patch/opl2.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/pll_init.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/sfrom/sfrom.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/sn76489_audio_patch/sn76489.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/spi_rom/ip_spi_rom.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ssg/dual_ssg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ssg/ssg_core.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ssram/sram_arbiter.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/ssram/ssram.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/system_controller/system_controller.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/timer/msx_timer.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/timer/msx_timer_core.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/y8960_address_decode/y8960_address_decode.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/y8960_cartridge_tangprimer25k.v",
+            "Type": "verilog"
+        },
+        {
+            "Library": "work",
+            "Path": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/src/sn76489_audio/src/sn76489_audio.vhd",
+            "Type": "vhdl"
+        }
+    ],
+    "IncludePath": [
+    ],
+    "LoopLimit": 8000,
+    "ResultFile": "C:/Users/hra/Documents/github/HRA_product/Y8960_Cartridge/fpga/Y8960_Cartridge_TangPrimer25K/impl/temp/rtl_parser.result",
+    "Top": "y8960cartridge_tangprimer25k",
+    "VerilogStd": "verilog_2001",
+    "VhdlStd": "vhdl_93"
+}

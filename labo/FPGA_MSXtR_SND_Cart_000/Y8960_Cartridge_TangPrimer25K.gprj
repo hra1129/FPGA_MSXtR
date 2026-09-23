@@ -1,0 +1,32 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5A-25A" pn="GW5A-LV25MG121NC1/I0">gw5a25a-002</Device>
+    <FileList>
+        <File path="src/gowin_clkdiv/gowin_clkdiv.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/i2s_audio/i2s_audio.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll/src/IKAOPLL.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll/src/IKAOPLL_modules/IKAOPLL_dac.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll/src/IKAOPLL_modules/IKAOPLL_eg.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll/src/IKAOPLL_modules/IKAOPLL_lfo.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll/src/IKAOPLL_modules/IKAOPLL_op.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll/src/IKAOPLL_modules/IKAOPLL_pg.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll/src/IKAOPLL_modules/IKAOPLL_primitives.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll/src/IKAOPLL_modules/IKAOPLL_timinggen.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll_patch/IKAOPLL_reg.v" type="file.verilog" enable="1"/>
+        <File path="src/ikaopll_patch/opll.v" type="file.verilog" enable="1"/>
+        <File path="src/msx_slot/msx_slot.v" type="file.verilog" enable="1"/>
+        <File path="src/pll_init.v" type="file.verilog" enable="1"/>
+        <File path="src/ssg/dual_ssg.v" type="file.verilog" enable="1"/>
+        <File path="src/ssg/ssg_core.v" type="file.verilog" enable="1"/>
+        <File path="src/system_controller/system_controller.v" type="file.verilog" enable="1"/>
+        <File path="src/y8960_address_decode/y8960_address_decode.v" type="file.verilog" enable="1"/>
+        <File path="src/y8960_cartridge_tangprimer25k.v" type="file.verilog" enable="1"/>
+        <File path="src/Y8960_Cartridge_TangPrimer25K.cst" type="file.cst" enable="1"/>
+        <File path="src/Y8960_Cartridge_TangPrimer25K.sdc" type="file.sdc" enable="1"/>
+    </FileList>
+</Project>

@@ -299,6 +299,8 @@ module tb ();
 		end
 	endtask
 
+	localparam	BUS_OWNER_CPU	= 0;
+	localparam	BUS_OWNER_PICO	= 1;
 	task automatic spi_set_bus_owner( input owner );
 		int timeout_ns;
 		begin
@@ -306,7 +308,7 @@ module tb ();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h10 );
-			spi_send_byte( { 7'd0, ~owner } );
+			spi_send_byte( { 7'd0, owner } );
 			while( mcu_intr == 1'b0 && timeout_ns < 5000 ) begin
 				#( 10 );
 				timeout_ns = timeout_ns + 10;
@@ -656,14 +658,21 @@ module tb ();
 		spi_wait_fpga_ready();
 		spi_wait_ready();
 //		$display( "[SETUP] Transfer bus ownership to Pico" );
-//		spi_set_bus_owner( 1'b0 );
-		$display( "[SETUP] Transfer bus ownership to Z80" );
-		spi_set_bus_owner( 1'b1 );
+//		spi_set_bus_owner( BUS_OWNER_PICO );
+
 		$display( "[SETUP] BootROM disabled" );
 		spi_bootrom_en( 1'b0 );
 		$display( "[SETUP] Release MSX reset" );
 		spi_msx_reset( 1'b0 );
 		spi_wait_ssram_startup();
+
+		$display( "[SSG] R#14 read" );
+		spi_outport( 8'hA0, 8'd14 );
+		spi_inport( 8'hA2, rdata );
+		$display( "[SSG] -- R#14 read data: 0x%02X", rdata );
+
+		$display( "[SETUP] Transfer bus ownership to Z80" );
+		spi_set_bus_owner( BUS_OWNER_CPU );
 //		spi_set_keyboard_matrix( keyboard_expected );
 
 		//	Z80がバスを持ったまま(spi_poke/spi_peekはPico所有時のみ有効なため使えない)、
@@ -751,7 +760,7 @@ module tb ();
 //		$display( "[BOOT] Before CPU ownership: reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
 //			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
 //			u_dut.w_active_bus_owner, u_dut.w_z80_active );
-//		spi_set_bus_owner( 1'b1 );
+//		spi_set_bus_owner( BUS_OWNER_CPU );
 //		$display( "[BOOT] After CPU ownership:  reset_n=%b pause=%b owner=%b active_owner=%b z80_active=%b",
 //			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
 //			u_dut.w_active_bus_owner, u_dut.w_z80_active );
@@ -771,7 +780,7 @@ module tb ();
 //			u_dut.ff_z80_reset_n, u_dut.w_msx_pause, u_dut.w_bus_owner,
 //			u_dut.w_active_bus_owner, u_dut.w_z80_active );
 //		spi_get_debug_signal( running_pc_1 );
-		#( 50000000 );
+//		#( 50000000 );
 //		spi_get_debug_signal( running_pc_2 );
 //		monitor_cpu_wait = 1'b0;
 //		$display( "[BOOT] PC after pause release: 0x%04X -> 0x%04X", running_pc_1, running_pc_2 );
@@ -782,7 +791,7 @@ module tb ();
 //		check( cpu_wait_active_violation_count == 0, "Z80 active should remain low during TW" );
 
 //		$display( "[REPRO] Transfer bus ownership to Pico" );
-//		spi_set_bus_owner( 1'b0 );
+//		spi_set_bus_owner( BUS_OWNER_PICO );
 //		pico_vdp_write_count = 0;
 //		fork
 //			begin
@@ -812,9 +821,9 @@ module tb ();
 		pico_vdp_write_active = 1'b0;
 		for( int write_index = 0; write_index < 1000; write_index = write_index + 1 ) begin
 			case( write_index % 4 )
-				0: spi_outport( 8'h98, 8'h55 );
-				1: spi_outport( 8'h98, 8'hA5 );
-				2: spi_outport( 8'h98, 8'hAA );
+				0:		 spi_outport( 8'h98, 8'h55 );
+				1:		 spi_outport( 8'h98, 8'hA5 );
+				2:		 spi_outport( 8'h98, 8'hAA );
 				default: spi_outport( 8'h98, 8'h5A );
 			endcase
 		end

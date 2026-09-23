@@ -52,6 +52,9 @@ module address_decode (
 	input	[7:0]	device_rtc_rdata,
 	input			device_rtc_rdata_en,
 	input			device_rtc_ready,
+	input	[7:0]	device_ssg_rdata,
+	input			device_ssg_rdata_en,
+	input			device_ssg_ready,
 	input	[7:0]	device_system_flag_rdata,
 	input			device_system_flag_rdata_en,
 	input			device_system_flag_ready,
@@ -70,6 +73,7 @@ module address_decode (
 	output			memory_mapper_cs,
 	output			ssram_cs,
 	output			rtc_cs,
+	output			ssg_cs,
 	output			system_flag_cs,
 	output			pause_led_cs,
 	output			s2026_cs,
@@ -83,45 +87,56 @@ module address_decode (
 	output			device_rdata_en,
 	output			device_ready
 );
-	assign system_flag_offset	= device_address[7:0] - 8'hF3;
-	assign access_primary_slot	= (device_address[15:14] == 2'd0) ? primary_slot[1:0] :
-									  (device_address[15:14] == 2'd1) ? primary_slot[3:2] :
-									  (device_address[15:14] == 2'd2) ? primary_slot[5:4] : primary_slot[7:6];
+	assign system_flag_offset	=	device_address[7:0] - 8'hF3;
+	assign access_primary_slot	=	(device_address[15:14] == 2'd0) ? primary_slot[1:0] :
+									(device_address[15:14] == 2'd1) ? primary_slot[3:2] :
+									(device_address[15:14] == 2'd2) ? primary_slot[5:4] : primary_slot[7:6];
 	assign access_secondary_slot3 = (device_address[15:14] == 2'd0) ? secondary_slot3[1:0] :
-										(device_address[15:14] == 2'd1) ? secondary_slot3[3:2] :
-										(device_address[15:14] == 2'd2) ? secondary_slot3[5:4] : secondary_slot3[7:6];
+									(device_address[15:14] == 2'd1) ? secondary_slot3[3:2] :
+									(device_address[15:14] == 2'd2) ? secondary_slot3[5:4] : secondary_slot3[7:6];
+
 	assign slot3_0_selected		= (access_primary_slot == 2'd3) && (access_secondary_slot3 == 2'd0);
-	assign secondary_cs		= ~device_io && (device_address == 16'hFFFF) &&
+
+	assign secondary_cs			= ~device_io && (device_address == 16'hFFFF) &&
 								  ((primary_slot[7:6] == 2'd0) || (primary_slot[7:6] == 2'd3));
 	assign ssram_active		= ssram_cs & ~secondary_cs;
-	assign device_rdata		= device_ppi_rdata_en			? device_ppi_rdata			:
-							  device_mapper_rdata_en		? device_mapper_rdata			:
-							  device_secondary_rdata_en	? device_secondary_rdata	:
-							  device_ssram_rdata_en		? device_ssram_rdata		:
-							  device_rtc_rdata_en			? device_rtc_rdata			:
-							  device_system_flag_rdata_en	? device_system_flag_rdata	:
-							  device_pause_led_rdata_en	? device_pause_led_rdata	:
-							  device_bootrom_rdata_en	? device_bootrom_rdata		:
-							  device_s2026_rdata_en		? device_s2026_rdata		: 8'b0;
-	assign device_rdata_en		= device_ppi_rdata_en | device_mapper_rdata_en |
-							  device_ssram_rdata_en | device_secondary_rdata_en |
-							  device_rtc_rdata_en | device_system_flag_rdata_en |
-							  device_pause_led_rdata_en | device_bootrom_rdata_en |
-							  device_s2026_rdata_en;
-	assign device_ready		= ppi_cs				? device_ppi_ready		:
+	assign device_rdata		=	device_ppi_rdata_en				? device_ppi_rdata			:
+								device_mapper_rdata_en			? device_mapper_rdata		:
+								device_secondary_rdata_en		? device_secondary_rdata	:
+								device_ssram_rdata_en			? device_ssram_rdata		:
+								device_rtc_rdata_en				? device_rtc_rdata			:
+								device_ssg_rdata_en				? device_ssg_rdata			:
+								device_system_flag_rdata_en		? device_system_flag_rdata	:
+								device_pause_led_rdata_en		? device_pause_led_rdata	:
+								device_bootrom_rdata_en			? device_bootrom_rdata		:
+								device_s2026_rdata_en			? device_s2026_rdata		: 8'b0;
+	assign device_rdata_en	=	device_ppi_rdata_en	| 
+								device_mapper_rdata_en |
+								device_ssram_rdata_en |
+								device_secondary_rdata_en |
+								device_rtc_rdata_en	| 
+								device_ssg_rdata_en	| 
+								device_system_flag_rdata_en |
+								device_pause_led_rdata_en | 
+								device_bootrom_rdata_en |
+								device_s2026_rdata_en;
+	assign device_ready		= ppi_cs				? device_ppi_ready			:
 							  memory_mapper_cs		? device_mapper_ready		:
-							  secondary_cs				? device_secondary_ready	:
-							  ssram_active				? device_ssram_ready		:
-							  rtc_cs					? device_rtc_ready			:
-							  system_flag_cs			? device_system_flag_ready	:
-							  pause_led_cs				? device_pause_led_ready	:
-							  bootrom_cs				? device_bootrom_ready		:
+							  secondary_cs			? device_secondary_ready	:
+							  ssram_active			? device_ssram_ready		:
+							  rtc_cs				? device_rtc_ready			:
+							  ssg_cs				? device_ssg_ready			:
+							  system_flag_cs		? device_system_flag_ready	:
+							  pause_led_cs			? device_pause_led_ready	:
+							  bootrom_cs			? device_bootrom_ready		:
 							  s2026_cs				? device_s2026_ready		: 1'b0;
 
 	//	Memory access (page0: 0000h-3FFFh) -> BOOT ROM
 	assign bootrom_cs		= bootrom_en & ~device_io & ( device_address[15:14] == 2'd0 );
 	//	Memory access (page1-3: 4000h-FFFFh) -> Serial SRAM (via memory mapper)
 	assign ssram_cs			= slot3_0_selected & ~device_io & ( device_address != 16'hFFFF );
+	//	I/O A0h-A2h -> SSG
+	assign ssg_cs			= device_io & ( device_address[7:2] == 6'b101000 );
 	//	I/O A7h -> pause LED
 	assign pause_led_cs		= device_io & ( device_address[7:0] == 8'hA7 );
 	//	I/O A8h-ABh -> i8255 PPI (primary_slot / keyboard / cassette / command)

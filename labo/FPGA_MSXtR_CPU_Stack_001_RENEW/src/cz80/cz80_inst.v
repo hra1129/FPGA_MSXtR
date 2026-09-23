@@ -361,7 +361,7 @@ module cz80_inst (
 			end
 		end
 		else if( w_iorq && !w_write ) begin
-			if(      w_t_state == c_rd_io_tstate_fall && state_count == c_rd_io_cycle_fall && !ff_new_tstate ) begin
+			if(      w_t_state == c_rd_io_tstate_fall && state_count == c_rd_io_cycle_fall && ff_new_tstate ) begin
 				ff_rd_n <= 1'b0;
 			end
 			else if( w_t_state == c_rd_io_tstate_rise && state_count == c_rd_io_cycle_rise ) begin

@@ -287,6 +287,8 @@ module tb ();
 		end
 	endtask
 
+	localparam	BUS_OWNER_CPU	= 0;
+	localparam	BUS_OWNER_PICO	= 1;
 	task automatic spi_set_bus_owner( input owner );
 		int timeout_ns;
 		reg [7:0] response;
@@ -295,7 +297,7 @@ module tb ();
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h10 );
-			spi_send_byte( { 7'd0, ~owner } );
+			spi_send_byte( { 7'd0, owner } );
 			while( mcu_intr == 1'b0 && timeout_ns < 5000 ) begin
 				#( 10 );
 				timeout_ns = timeout_ns + 10;
@@ -397,7 +399,7 @@ module tb ();
 		$display( "[SETUP] Enable BootROM" );
 		spi_bootrom_en( 1'b1 );
 		$display( "[SETUP] Transfer bus ownership to CPU" );
-		spi_set_bus_owner( 1'b1 );
+		spi_set_bus_owner( BUS_OWNER_CPU );
 		$display( "[SETUP] Release MSX reset" );
 		spi_msx_reset( 1'b0 );
 
@@ -415,7 +417,7 @@ module tb ();
 		// then resumed by transferring it back to the CPU.
 		repeat( 10 ) begin
 			$display( "[BUS] Transfer bus ownership to Pico while CPU is running" );
-			spi_set_bus_owner( 1'b0 );
+			spi_set_bus_owner( BUS_OWNER_PICO );
 			pause_timeout = 0;
 			while( u_dut.w_cpu_sel != 2'd2 && pause_timeout < 500 ) begin
 				#( 100 );
@@ -432,7 +434,7 @@ module tb ();
 			check( u_dut.w_z80_pc == z80_pc_before_pico,
 				"Z80 PC remains stopped while Pico owns the bus" );
 			$display( "[BUS] Transfer bus ownership back to CPU" );
-			spi_set_bus_owner( 1'b1 );
+			spi_set_bus_owner( BUS_OWNER_CPU );
 			pause_timeout = 0;
 			while( u_dut.w_cpu_sel != 2'd0 && pause_timeout < 500 ) begin
 				#( 100 );

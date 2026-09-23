@@ -481,7 +481,7 @@ module ip_spi (
 			end
 			ST_BUS_OWNER: begin
 				if( spi_rdata_en ) begin
-					//	コマンドのowner bitは(0:SPI/Pico, 1:CPU)なので、pico_change_target(1:Pico)へは反転して格納する
+					//	コマンドのowner bitは(0:CPU, 1:SPI/Pico)なので、pico_change_target(1:Pico)へは反転して格納する
 					ff_pico_change_target	<= spi_rdata[0];
 					ff_pico_change_req		<= 1'b1;
 					ff_state				<= ST_BUS_OWNER_WAIT;

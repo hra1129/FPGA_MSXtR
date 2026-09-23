@@ -7,6 +7,7 @@ vlib work
 vlog gowin_pll.v
 vlog ..\spi\spi.v
 vlog ..\cmcu\cmcu.v
+vlog ..\dummy_ssg\dummy_ssg.v
 vlog ..\msx_bus_mux\msx_bus_mux.v
 vlog ..\pause_led\pause_led.v
 vlog ..\spi\ip_spi.v

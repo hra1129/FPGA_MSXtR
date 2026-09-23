@@ -51,7 +51,6 @@ module msx_slot #(
 	input	[15:0]	z80_address,
 	input	[7:0]	z80_wdata,
 	output	[7:0]	z80_rdata,
-	input			z80_flash_en,
 	input			z80_bus_io,
 	input			z80_bus_write,
 	//	R800 Interface
@@ -66,7 +65,6 @@ module msx_slot #(
 	input	[15:0]	r800_address,
 	input	[7:0]	r800_wdata,
 	output	[7:0]	r800_rdata,
-	input			r800_flash_en,
 	input			r800_bus_io,
 	input			r800_bus_write,
 	//	Pico Interface
@@ -136,7 +134,7 @@ module msx_slot #(
 	assign w_slot_d			= sel[1] ? pico_wdata		: (sel[0] ? r800_wdata		: z80_wdata);
 	assign w_bus_io			= sel[1] ? pico_bus_io		: (sel[0] ? r800_bus_io		: z80_bus_io);
 	assign w_bus_write		= sel[1] ? pico_bus_write	: (sel[0] ? r800_bus_write	: z80_bus_write);
-	assign w_flash_en		= sel[1] ? pico_flash_en	: (sel[0] ? r800_flash_en	: z80_flash_en);
+	assign w_flash_en		= sel[1] ? pico_flash_en	: 1'b0;
 	assign w_slot_address	= sel[1] ? pico_address		: (sel[0] ? { 4'd0, r800_address }	: { 4'd0, z80_address });
 	assign slot_wr_n		= w_slot_wr_n;
 	assign slot_rd_n		= w_slot_rd_n;

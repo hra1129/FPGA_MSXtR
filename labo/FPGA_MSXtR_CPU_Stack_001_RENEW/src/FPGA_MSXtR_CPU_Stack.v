@@ -99,6 +99,7 @@ module fpga_msxtr_cpu_stack (
 	reg				ff_system_flag_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
 	reg				ff_pause_led_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
 	reg				ff_uart_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_ssg_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
 
 	reg		[3:0]	ff_3_579m = 4'd0;
 	wire			w_3_579m;
@@ -174,6 +175,7 @@ module fpga_msxtr_cpu_stack (
 
 	wire			w_pico_bus_io;
 	wire			w_pico_bus_write;
+	wire			w_pico_bus_flash_en;
 	wire			w_pico_bus_valid;
 	wire			w_pico_bus_ready;
 	wire	[7:0]	w_pico_bus_wdata;
@@ -257,11 +259,16 @@ module fpga_msxtr_cpu_stack (
 	wire	[15:0]	w_device_address;
 	wire			w_device_io;
 	wire			w_device_write;
+	wire			w_device_flash_direct;
 	wire			w_device_valid;
+	wire			w_device_valid_peripheral;
 	wire			w_device_ready;
+	wire			w_peripheral_ready;
 	wire	[7:0]	w_device_wdata;
 	wire	[7:0]	w_device_rdata;
+	wire	[7:0]	w_peripheral_rdata;
 	wire			w_device_rdata_en;
+	wire			w_peripheral_rdata_en;
 
 	wire			w_device_bootrom_cs;
 	wire			w_device_bootrom_ready;
@@ -307,6 +314,11 @@ module fpga_msxtr_cpu_stack (
 	wire			w_kanji1_en;
 	wire			w_kanji2_en;
 
+	wire			w_device_ssg_cs;
+	wire			w_device_ssg_ready;
+	wire	[7:0]	w_device_ssg_rdata;
+	wire			w_device_ssg_rdata_en;
+
 	wire			w_device_ssram_cs;
 	wire			w_device_ssram_active;
 	wire			w_device_ssram_ready;
@@ -338,7 +350,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_z80_slot_rfsh_n;
 	wire	[19:0]	w_z80_slot_address;
 	wire	[7:0]	w_z80_slot_rdata;
-	wire			w_z80_slot_flash_en;
 
 	wire			w_r800_slot_int_n;
 	wire			w_r800_slot_wait_n;
@@ -362,7 +373,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_pico_slot_rfsh_n;
 	wire	[19:0]	w_pico_slot_address;
 	wire	[7:0]	w_pico_slot_rdata;
-	wire			w_pico_slot_flash_en;
 
 	always @( posedge clk42m ) begin
 		if( !ff_z80_reset_n ) begin
@@ -560,6 +570,7 @@ module fpga_msxtr_cpu_stack (
 //		ff_extio_reset_n		<= 1'b0;
 //		ff_config_rom_reset_n	<= 1'b0;
 //		ff_ext_rom_reset_n		<= 1'b0;
+		ff_ssg_reset_n			<= w_msx_reset_n;
 		ff_bootrom_reset_n		<= w_msx_reset_n;
 		ff_ppi_reset_n			<= w_msx_reset_n;
 		ff_mapper_reset_n		<= w_msx_reset_n;
@@ -736,7 +747,7 @@ module fpga_msxtr_cpu_stack (
 		.pico_change_target				( w_pico_change_target				),
 		.bus_cs							( w_device_s2026_cs					),
 		.bus_write						( w_device_write					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_ready						( w_device_s2026_ready				),
 		.bus_wdata						( w_device_wdata					),
 		.bus_address					( w_device_address[1:0]				),
@@ -763,7 +774,6 @@ module fpga_msxtr_cpu_stack (
 		.pico_bus_wdata					( w_pico_bus_wdata					),
 		.pico_bus_rdata					( w_pico_bus_rdata					),
 		.pico_bus_rdata_en				( w_pico_bus_rdata_en				),
-		.pico_flashrom_en				( w_pico_bus_flash_en				),
 		.z80_bus_address				( w_z80_bus_address					),
 		.z80_bus_io						( w_z80_bus_io						),
 		.z80_bus_write					( w_z80_bus_write					),
@@ -806,7 +816,6 @@ module fpga_msxtr_cpu_stack (
 		.z80_address					( w_z80_bus_address					),
 		.z80_wdata						( w_z80_bus_wdata					),
 		.z80_rdata						( w_z80_slot_rdata					),
-		.z80_flash_en					( w_z80_slot_flash_en				),
 		.z80_bus_io						( w_z80_bus_io						),
 		.z80_bus_write					( w_z80_bus_write					),
 		.r800_int_n						( w_r800_slot_int_n					),
@@ -820,7 +829,6 @@ module fpga_msxtr_cpu_stack (
 		.r800_address					( w_r800_bus_address				),
 		.r800_wdata						( w_r800_bus_wdata					),
 		.r800_rdata						( w_r800_slot_rdata					),
-		.r800_flash_en					( w_r800_slot_flash_en				),
 		.r800_bus_io					( w_r800_bus_io						),
 		.r800_bus_write					( w_r800_bus_write					),
 		.pico_int_n						( w_pico_slot_int_n					),
@@ -834,7 +842,7 @@ module fpga_msxtr_cpu_stack (
 		.pico_address					( w_pico_bus_address				),
 		.pico_wdata						( w_pico_bus_wdata					),
 		.pico_rdata						( w_pico_slot_rdata					),
-		.pico_flash_en					( w_pico_slot_flash_en				),
+		.pico_flash_en					( w_pico_bus_flash_en				),
 		.pico_bus_io					( w_pico_bus_io						),
 		.pico_bus_write					( w_pico_bus_write					),
 		.slot_m1_n						( slot_m1_n							),
@@ -868,7 +876,12 @@ module fpga_msxtr_cpu_stack (
 		.jis2_kanji_en					( w_kanji2_en						)
 	);
 
-	assign w_cpu_int_p			= ~w_int_n;
+	assign w_cpu_int_p					= ~w_int_n;
+	assign w_device_flash_direct		= w_cpu_sel[1] & w_pico_bus_flash_en;
+	assign w_device_valid_peripheral	= w_device_valid & ~w_device_flash_direct;
+	assign w_device_ready				= w_device_flash_direct ? 1'b1 : w_peripheral_ready;
+	assign w_device_rdata				= w_peripheral_rdata;
+	assign w_device_rdata_en			= w_device_flash_direct ? 1'b0 : w_peripheral_rdata_en;
 
 	// --------------------------------------------------------------------
 	//	device_* bus address decoder
@@ -894,6 +907,9 @@ module fpga_msxtr_cpu_stack (
 		.device_rtc_rdata				( w_device_rtc_rdata				),
 		.device_rtc_rdata_en			( w_device_rtc_rdata_en				),
 		.device_rtc_ready				( w_device_rtc_ready				),
+		.device_ssg_rdata				( w_device_ssg_rdata				),
+		.device_ssg_rdata_en			( w_device_ssg_rdata_en				),
+		.device_ssg_ready				( w_device_ssg_ready				),
 		.device_system_flag_rdata		( w_device_system_flag_rdata		),
 		.device_system_flag_rdata_en	( w_device_system_flag_rdata_en		),
 		.device_system_flag_ready		( w_device_system_flag_ready		),
@@ -911,6 +927,7 @@ module fpga_msxtr_cpu_stack (
 		.memory_mapper_cs				( w_device_mapper_cs				),
 		.ssram_cs						( w_device_ssram_cs					),
 		.rtc_cs							( w_device_rtc_cs					),
+		.ssg_cs							( w_device_ssg_cs					),
 		.system_flag_cs					( w_device_system_flag_cs			),
 		.pause_led_cs					( w_device_pause_led_cs				),
 		.s2026_cs						( w_device_s2026_cs					),
@@ -920,9 +937,9 @@ module fpga_msxtr_cpu_stack (
 		.slot3_0_selected				( w_slot3_0_selected				),
 		.secondary_cs					( w_device_secondary_cs				),
 		.ssram_active					( w_device_ssram_active				),
-		.device_rdata					( w_device_rdata					),
-		.device_rdata_en				( w_device_rdata_en					),
-		.device_ready					( w_device_ready					)
+		.device_rdata					( w_peripheral_rdata				),
+		.device_rdata_en				( w_peripheral_rdata_en				),
+		.device_ready					( w_peripheral_ready				)
 	);
 
 	// --------------------------------------------------------------------
@@ -934,7 +951,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_cs							( w_device_secondary_cs				),
 		.bus_write						( w_device_write					),
 		.bus_wdata						( w_device_wdata					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_ready						( w_device_secondary_ready			),
 		.bus_rdata						( w_device_secondary_rdata			),
 		.bus_rdata_en					( w_device_secondary_rdata_en		),
@@ -997,7 +1014,7 @@ module fpga_msxtr_cpu_stack (
 		.clk							( clk42m							),
 		.bootrom_cs						( w_device_bootrom_cs				),
 		.bus_write						( w_device_write					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_wdata						( w_device_wdata					),
 		.bus_address					( w_device_address					),
 		.bus_rdata						( w_device_bootrom_rdata			),
@@ -1015,7 +1032,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_address					( w_device_address[1:0]				),
 		.bus_write						( w_device_write					),
 		.bus_wdata						( w_device_wdata					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_ready						( w_device_ppi_ready				),
 		.bus_rdata						( w_device_ppi_rdata				),
 		.bus_rdata_en					( w_device_ppi_rdata_en				),
@@ -1041,7 +1058,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_address					( w_device_address[1:0]				),
 		.bus_write						( w_device_write					),
 		.bus_wdata						( w_device_wdata					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_ready						( w_device_mapper_ready				),
 		.bus_rdata						( w_device_mapper_rdata				),
 		.bus_rdata_en					( w_device_mapper_rdata_en			),
@@ -1061,7 +1078,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_cs							( w_device_ssram_active				),
 		.bus_address					( w_ssram_address					),
 		.bus_write						( w_device_write					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_wdata						( w_device_wdata					),
 		.bus_ready						( w_device_ssram_ready				),
 		.bus_rdata						( w_device_ssram_rdata				),
@@ -1084,7 +1101,7 @@ module fpga_msxtr_cpu_stack (
 		.enable							( w_3_579m							),
 		.bus_cs							( w_device_rtc_cs					),
 		.bus_write						( w_device_write					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_ready						( w_device_rtc_ready				),
 		.bus_address					( w_device_address[0]				),
 		.bus_wdata						( w_device_wdata					),
@@ -1101,7 +1118,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_cs							( w_device_pause_led_cs				),
 		.bus_write						( w_device_write					),
 		.bus_wdata						( w_device_wdata					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_ready						( w_device_pause_led_ready			),
 		.bus_rdata						( w_device_pause_led_rdata			),
 		.bus_rdata_en					( w_device_pause_led_rdata_en		),
@@ -1120,12 +1137,28 @@ module fpga_msxtr_cpu_stack (
 		.bus_address					( w_system_flag_offset[1:0]			),
 		.bus_write						( w_device_write					),
 		.bus_wdata						( w_device_wdata					),
-		.bus_valid						( w_device_valid					),
+		.bus_valid						( w_device_valid_peripheral			),
 		.bus_ready						( w_device_system_flag_ready		),
 		.bus_rdata						( w_device_system_flag_rdata		),
 		.bus_rdata_en					( w_device_system_flag_rdata_en 	),
 		.kanji1_en						( w_kanji1_en						),
 		.kanji2_en						( w_kanji2_en						)
+	);
+
+	// --------------------------------------------------------------------
+	//	SSG
+	// --------------------------------------------------------------------
+	dummy_ssg u_ssg (
+		.clk							( clk42m							),
+		.reset_n						( ff_ssg_reset_n					),
+		.bus_cs							( w_device_ssg_cs					),
+		.bus_address					( w_device_address[1:0]				),
+		.bus_write						( w_device_write					),
+		.bus_wdata						( w_device_wdata					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_ssg_ready				),
+		.bus_rdata						( w_device_ssg_rdata				),
+		.bus_rdata_en					( w_device_ssg_rdata_en				)
 	);
 
 //	// --------------------------------------------------------------------

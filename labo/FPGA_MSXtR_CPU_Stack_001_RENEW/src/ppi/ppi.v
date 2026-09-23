@@ -198,12 +198,12 @@ module ppi (
 		end
 	end
 
-	assign bus_ready			= 1'b1;
-	assign bus_rdata			= ff_bus_rdata;
-	assign bus_rdata_en			= ff_bus_rdata_en;
-	assign primary_slot			= ff_primary_slot;
-	assign keyboard_caps_led	= ff_keybard_caps_led;
-	assign one_bit_sound		= ff_one_bit_sound;
+	assign bus_ready					= 1'b1;
+	assign bus_rdata					= ff_bus_rdata;
+	assign bus_rdata_en					= ff_bus_rdata_en;
+	assign primary_slot					= ff_primary_slot;
+	assign keyboard_caps_led			= ff_keybard_caps_led;
+	assign one_bit_sound				= ff_one_bit_sound;
 	assign debug_keyboard_matrix_row	= ff_keyboard_matrix_row;
 	assign debug_keyboard_matrix_data	= ff_keyboard_matrix[ ff_keyboard_matrix_row ];
 	assign debug_keyboard_update_count	= ff_keyboard_update_count;

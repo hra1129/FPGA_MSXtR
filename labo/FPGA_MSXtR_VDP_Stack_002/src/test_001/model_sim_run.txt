@@ -1,0 +1,374 @@
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlib work 
+** Warning: (vlib-34) Library already exists at "work".
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog Gowin_rPLL.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog Gowin_rPLL.v 
+-- Compiling module Gowin_rPLL
+
+Top level modules:
+	Gowin_rPLL
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog Gowin_rPLL2.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog Gowin_rPLL2.v 
+-- Compiling module Gowin_rPLL2
+
+Top level modules:
+	Gowin_rPLL2
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog Gowin_CLKDIV.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog Gowin_CLKDIV.v 
+-- Compiling module Gowin_CLKDIV
+
+Top level modules:
+	Gowin_CLKDIV
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog DVI_TX_Top.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog DVI_TX_Top.v 
+-- Compiling module DVI_TX_Top
+
+Top level modules:
+	DVI_TX_Top
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\ws2812_led\ip_ws2812_led.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog ..\ws2812_led\ip_ws2812_led.v 
+-- Compiling module ip_ws2812_led
+
+Top level modules:
+	ip_ws2812_led
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\debugger\ip_debugger.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog ..\debugger\ip_debugger.v 
+-- Compiling module ip_debugger
+
+Top level modules:
+	ip_debugger
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\msx_slot\msx_slot.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog ..\msx_slot\msx_slot.v 
+-- Compiling module msx_slot
+
+Top level modules:
+	msx_slot
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_color_palette_ram.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog ..\v9968\vdp_color_palette_ram.v 
+-- Compiling module vdp_color_palette_ram
+
+Top level modules:
+	vdp_color_palette_ram
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_color_palette.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog ..\v9968\vdp_color_palette.v 
+-- Compiling module vdp_color_palette
+
+Top level modules:
+	vdp_color_palette
+End time: 08:14:35 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_command_cache.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:35 on Sep 21,2026
+vlog ..\v9968\vdp_command_cache.v 
+-- Compiling module vdp_command_cache
+
+Top level modules:
+	vdp_command_cache
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_command.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_command.v 
+-- Compiling module vdp_command
+
+Top level modules:
+	vdp_command
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_cpu_interface.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_cpu_interface.v 
+-- Compiling module vdp_cpu_interface
+
+Top level modules:
+	vdp_cpu_interface
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_sprite_divide_table.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_sprite_divide_table.v 
+-- Compiling module vdp_sprite_divide_table
+
+Top level modules:
+	vdp_sprite_divide_table
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_sprite_info_collect.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_sprite_info_collect.v 
+-- Compiling module vdp_sprite_info_collect
+
+Top level modules:
+	vdp_sprite_info_collect
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_sprite_makeup_pixel.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_sprite_makeup_pixel.v 
+-- Compiling module vdp_sprite_makeup_pixel
+
+Top level modules:
+	vdp_sprite_makeup_pixel
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_sprite_select_visible_planes.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_sprite_select_visible_planes.v 
+-- Compiling module vdp_sprite_select_visible_planes
+
+Top level modules:
+	vdp_sprite_select_visible_planes
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_timing_control_screen_mode.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_timing_control_screen_mode.v 
+-- Compiling module vdp_timing_control_screen_mode
+
+Top level modules:
+	vdp_timing_control_screen_mode
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_timing_control_sprite.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_timing_control_sprite.v 
+-- Compiling module vdp_timing_control_sprite
+
+Top level modules:
+	vdp_timing_control_sprite
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_timing_control_ssg.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_timing_control_ssg.v 
+-- Compiling module vdp_timing_control_ssg
+
+Top level modules:
+	vdp_timing_control_ssg
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_timing_control.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_timing_control.v 
+-- Compiling module vdp_timing_control
+
+Top level modules:
+	vdp_timing_control
+End time: 08:14:36 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_upscan_line_buffer.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:36 on Sep 21,2026
+vlog ..\v9968\vdp_upscan_line_buffer.v 
+-- Compiling module vdp_upscan_line_buffer
+
+Top level modules:
+	vdp_upscan_line_buffer
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_upscan.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\v9968\vdp_upscan.v 
+-- Compiling module vdp_upscan
+
+Top level modules:
+	vdp_upscan
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_video_double_buffer.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\v9968\vdp_video_double_buffer.v 
+-- Compiling module vdp_video_double_buffer
+
+Top level modules:
+	vdp_video_double_buffer
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_video_out_bilinear.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\v9968\vdp_video_out_bilinear.v 
+-- Compiling module vdp_video_out_bilinear
+
+Top level modules:
+	vdp_video_out_bilinear
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_video_out.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\v9968\vdp_video_out.v 
+-- Compiling module vdp_video_out
+
+Top level modules:
+	vdp_video_out
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_video_ram_line_buffer.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\v9968\vdp_video_ram_line_buffer.v 
+-- Compiling module vdp_video_ram_line_buffer
+
+Top level modules:
+	vdp_video_ram_line_buffer
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp_vram_interface.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\v9968\vdp_vram_interface.v 
+-- Compiling module vdp_vram_interface
+
+Top level modules:
+	vdp_vram_interface
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\v9968\vdp.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\v9968\vdp.v 
+-- Compiling module vdp
+
+Top level modules:
+	vdp
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\sdram\ip_sdram_tangnano20k_c.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\sdram\ip_sdram_tangnano20k_c.v 
+-- Compiling module ip_sdram
+
+Top level modules:
+	ip_sdram
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog MT48LC2M32B2.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog MT48LC2M32B2.v 
+-- Compiling module mt48lc2m32b2
+
+Top level modules:
+	mt48lc2m32b2
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog ..\FPGA_MSXtR_VDP_Stack.v 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog ..\FPGA_MSXtR_VDP_Stack.v 
+-- Compiling module FPGA_MSXtR_VDP_Stack
+
+Top level modules:
+	FPGA_MSXtR_VDP_Stack
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vlog tb.sv 
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 08:14:37 on Sep 21,2026
+vlog tb.sv 
+-- Compiling module tb
+** Error: (vlog-13069) tb.sv(365): near "'d": syntax error, unexpected BASE.
+End time: 08:14:37 on Sep 21,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>vsim -c -t 1ps -do run.do tb 
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps -do "run.do" tb 
+# Start time: 08:14:38 on Sep 21,2026
+# ** Error: (vsim-3170) Could not find 'tb'.
+#         Searched libraries:
+#             C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_VDP_Stack_001/src/test_001/work
+# Error loading design
+Error loading design
+# End time: 08:14:38 on Sep 21,2026, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 0
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>move transcript log.txt 
+        1 個のファイルを移動しました。
+
+C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_VDP_Stack_001\src\test_001>pause
+続行するには何かキーを押してください . . . 

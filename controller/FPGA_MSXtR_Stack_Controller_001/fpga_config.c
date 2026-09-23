@@ -1,7 +1,43 @@
+//
+// FPGA config
+// Revision 1.00
+//
+// Copyright (c) 2026 Takayuki Hara.
+// All rights reserved.
+//
+// Redistribution and use of this source code or any derivative works, are
+// permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice,
+//    this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Redistributions may not be sold, nor may they be used in a commercial
+//    product or activity without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+// TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// ----------------------------------------------------------------------------
+
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "vdp_control.h"
 #include "fpga_config.h"
+
+static uint8_t write_data[] = {
+#include "write_data.h"
+};
 
 // ---------------------------------------------------------
 uint8_t fpga_config_rom_read_status( void ) {
@@ -127,4 +163,88 @@ void fpga_config_rom_block_erase_vdp( uint32_t address, uint32_t size ) {
 			fpga_config_rom_activate_write_enable();
 		}
 	}
+}
+
+// ---------------------------------------------------------
+void detect_config_rom_controller( void ) {
+	uint8_t controller;
+
+	//	拡張I/O を ConfigROMコントローラーに切り替える
+	fpga_outport( 0x40, 64 );
+	controller = fpga_inport( 0x40 );
+	if( controller == 0xBF ) {
+		printf( "ConfigROM Controller: FOUND\r\n" );
+	}
+	else {
+		printf( "ConfigROM Controller: NOT FOUND (0x%02X)\r\n", controller );
+	}
+}
+
+// ---------------------------------------------------------
+static void write_and_verify_dummy_data( void ) {
+	const uint32_t rom_address = 0x400000;
+	const uint32_t data_size = (uint32_t)sizeof(write_data);
+	const uint32_t write_unit = 256;
+	uint32_t i;
+	uint32_t chunk_size;
+	uint8_t rom_data;
+
+	if( data_size == 0 ) {
+		printf( "write_data is empty\r\n" );
+		return;
+	}
+
+	printf( "Erase ConfigROM: 0x%06lX - 0x%06lX\r\n",
+			(unsigned long)rom_address,
+			(unsigned long)(rom_address + data_size - 1) );
+	fpga_config_rom_block_erase_vdp( rom_address, data_size );
+
+	printf( "Write ConfigROM: 0x%06lX - 0x%06lX\r\n",
+			(unsigned long)rom_address,
+			(unsigned long)(rom_address + data_size - 1) );
+	i = 0;
+	while( i < data_size ) {
+		chunk_size = data_size - i;
+		if( chunk_size > write_unit ) {
+			chunk_size = write_unit;
+		}
+
+		fpga_config_rom_write_start( rom_address + i );
+		for( uint32_t j = 0; j < chunk_size; j++ ) {
+			fpga_config_rom_write_vdp( write_data[i + j] );
+		}
+		fpga_config_rom_write_end();
+
+		// ACCESS END 後に BUSY=0 を確認してから次の 256byte へ進む
+		fpga_outport( FPGA_CONFIG_ROM_COMMAND_PORT, FPGA_CONFIG_ROM_READ_STATUS );
+		while( (fpga_inport( FPGA_CONFIG_ROM_DATA_PORT ) & 0x01) != 0 ) {
+		}
+		fpga_outport( FPGA_CONFIG_ROM_COMMAND_PORT, FPGA_CONFIG_ROM_ACCESS_END );
+
+		i += chunk_size;
+		printf( "  write %lu / %lu bytes\r\n",
+				(unsigned long)i,
+				(unsigned long)data_size );
+	}
+
+	printf( "Verify ConfigROM: 0x%06lX - 0x%06lX\r\n",
+			(unsigned long)rom_address,
+			(unsigned long)(rom_address + data_size - 1) );
+	fpga_config_rom_set_address_vdp( rom_address );
+	for( i = 0; i < data_size; i++ ) {
+		rom_data = fpga_config_rom_read_vdp();
+		if( rom_data != write_data[i] ) {
+			printf( "Verify NG at 0x%06lX: expected 0x%02X, actual 0x%02X\r\n",
+					(unsigned long)(rom_address + i),
+					write_data[i],
+					rom_data );
+		}
+		if( ((i + 1) % 1024) == 0 || (i + 1) == data_size ) {
+			printf( "  verify %lu / %lu bytes\r\n",
+					(unsigned long)(i + 1),
+					(unsigned long)data_size );
+		}
+	}
+
+	printf( "Verify OK\r\n" );
 }
