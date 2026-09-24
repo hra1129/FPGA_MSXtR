@@ -70,8 +70,97 @@ z80_vdp_read_loop_0:
 				in		a, [c]
 				djnz	 z80_vdp_read_loop_0
 
+				; 6. OUTPORT timing test
+				nop
+				nop
+				nop
+				nop
+				ld		c, 0x10
+				ld		a, 0x55
+				out		[c], a
+				out		[c], a
+
+				nop
+				nop
+				nop
+				nop
+				ld		a, 0xAA
+				out		[0x11], a
+				out		[0x12], a
+
+				nop
+				nop
+				nop
+				nop
+				ld		hl, out_data
+				ld		a, 0x5A
+				outi
+				outi
+
+				nop
+				nop
+				nop
+				nop
+				ld		a, 0xA5
+				ld		b, 2
+				otir
+
+				; 7. INPORT timing test
+				nop
+				nop
+				nop
+				nop
+				ld		c, 0x10
+				in		a, [c]
+				in		a, [c]
+
+				nop
+				nop
+				nop
+				nop
+				in		a, [0x11]
+				in		a, [0x12]
+
+				nop
+				nop
+				nop
+				nop
+				ld		hl, out_data
+				ini
+				ini
+
+				nop
+				nop
+				nop
+				nop
+				ld		b, 2
+				inir
+
+				nop
+				nop
+				nop
+				nop
+
+				; 8. memory write test
+				ld		a, 0x12
+				ld		[0x0000], a
+
+				nop
+				nop
+				nop
+				nop
+				ld		hl, 0x0001
+				ld		[hl], a
+
+				nop
+				nop
+				nop
+				nop
+
 z80_done_loop:
 				jp		z80_done_loop
+out_data:
+				db		0x12, 0x34, 0x56, 0x78
 
 ; ----------------------------------------------------------------------------
 ;	R800 Execution (starts at 0000h on first activation)

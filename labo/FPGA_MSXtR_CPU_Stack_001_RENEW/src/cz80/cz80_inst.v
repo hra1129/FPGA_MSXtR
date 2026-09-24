@@ -269,7 +269,7 @@ module cz80_inst (
 	//	/IORQ signal generation
 	// ---------------------------------------------------------
 	localparam			c_iorq_tstate_fall = 3'd1;
-	localparam			c_iorq_cycle_fall = 4'd0;
+	localparam			c_iorq_cycle_fall = 4'd1;
 	localparam			c_iorq_tstate_rise = 3'd3;
 	localparam			c_iorq_cycle_rise = 4'd6;
 
@@ -280,10 +280,10 @@ module cz80_inst (
 		else if( !ff_run ) begin
 			// hold
 		end
-		else if( w_t_state == c_iorq_tstate_fall && state_count == c_iorq_cycle_fall ) begin
+		else if( ff_t_state_d == c_iorq_tstate_fall && state_count == c_iorq_cycle_fall ) begin
 			ff_iorq_n <= ~w_iorq;
 		end
-		else if( w_t_state == c_iorq_tstate_rise && state_count == c_iorq_cycle_rise ) begin
+		else if( ff_t_state_d == c_iorq_tstate_rise && state_count == c_iorq_cycle_rise ) begin
 			ff_iorq_n <= 1'b1;
 		end
 	end
@@ -383,12 +383,12 @@ module cz80_inst (
 	// ---------------------------------------------------------
 	//	/WR signal generation
 	// ---------------------------------------------------------
-	localparam			c_wr_mem_tstate_fall = 3'd2;
-	localparam			c_wr_mem_cycle_fall = 4'd6;
-	localparam			c_wr_mem_tstate_rise = 3'd3;
-	localparam			c_wr_mem_cycle_rise = 4'd5;
+	localparam			c_wr_mem_tstate_fall = 3'd1;
+	localparam			c_wr_mem_cycle_fall = 4'd1;
+	localparam			c_wr_mem_tstate_rise = 3'd2;
+	localparam			c_wr_mem_cycle_rise = 4'd1;
 	localparam			c_wr_io_tstate_fall = 3'd1;
-	localparam			c_wr_io_cycle_fall = 4'd11;
+	localparam			c_wr_io_cycle_fall = 4'd1;
 	localparam			c_wr_io_tstate_rise = 3'd3;
 	localparam			c_wr_io_cycle_rise = 4'd5;
 
@@ -400,18 +400,18 @@ module cz80_inst (
 			// hold
 		end
 		else if( w_iorq && w_write ) begin
-			if(      w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall ) begin
+			if(      ff_t_state_d == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall ) begin
 				ff_wr_n <= 1'b0;
 			end
-			else if( w_t_state == c_wr_io_tstate_rise && state_count == c_wr_io_cycle_rise ) begin
+			else if( ff_t_state_d == c_wr_io_tstate_rise && state_count == c_wr_io_cycle_rise ) begin
 				ff_wr_n <= 1'b1;
 			end
 		end
 		else if( w_write ) begin
-			if(      w_t_state == c_wr_mem_tstate_fall && state_count == c_wr_mem_cycle_fall ) begin
+			if(      ff_t_state_d == c_wr_mem_tstate_fall && state_count == c_wr_mem_cycle_fall ) begin
 				ff_wr_n <= 1'b0;
 			end
-			else if( w_t_state == c_wr_mem_tstate_rise && state_count == c_wr_mem_cycle_rise ) begin
+			else if( ff_t_state_d == c_wr_mem_tstate_rise && state_count == c_wr_mem_cycle_rise ) begin
 				ff_wr_n <= 1'b1;
 			end
 		end
@@ -508,7 +508,7 @@ module cz80_inst (
 			// hold
 		end
 		else begin
-			if( w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
+			if( ff_t_state_d == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise ) begin
 				ff_di <= ff_bus_rdata;
 			end
 
@@ -519,7 +519,7 @@ module cz80_inst (
 					ff_bus_rdata			<= bus_rdata;
 				end
 				else if( !ff_m1_n ) begin
-					if( w_t_state == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && !ff_new_tstate ) begin
+					if( ff_t_state_d == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && !ff_new_tstate ) begin
 						//	タイムアウト処理 (M1サイクル)
 						//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
 						//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
@@ -529,7 +529,7 @@ module cz80_inst (
 					end
 				end
 				else if( ff_bus_io ) begin
-					if( w_t_state == c_rd_io_tstate_rise && state_count == c_rd_io_cycle_rise ) begin
+					if( ff_t_state_d == c_rd_io_tstate_rise && state_count == c_rd_io_cycle_rise ) begin
 						//	タイムアウト処理 (I/Oサイクル)
 						//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
 						//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
@@ -538,7 +538,7 @@ module cz80_inst (
 						ff_bus_rdata			<= slot_d;
 					end
 				end
-				else if( w_t_state == c_rd_mem_tstate_rise && state_count == c_rd_mem_cycle_rise ) begin
+				else if( ff_t_state_d == c_rd_mem_tstate_rise && state_count == c_rd_mem_cycle_rise ) begin
 					//	タイムアウト処理（メモリサイクル）
 					//	こちらは、/MERQ, /RD のうち /MERQ の方が早く立ち上がるため、そのタイミングでラッチ。
 					ff_bus_valid			<= 1'b0;
@@ -553,14 +553,14 @@ module cz80_inst (
 			else if( ff_bus_valid && bus_ready ) begin
 				ff_bus_valid			<= 1'b0;
 			end
-			else if( w_t_state == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall ) begin
+			else if( ff_t_state_d == c_bus_valid_tstate_fall && state_count == c_bus_valid_cycle_fall ) begin
 				//	撤収処理
 				ff_wait_bus_rdata_en		<= 1'b0;
 				ff_bus_valid				<= 1'b0;
 				ff_bus_io					<= 1'b0;
 				ff_bus_write				<= 1'b0;
 			end
-			else if( !w_iorq && w_write && w_t_state == c_wr_mem_tstate_fall && state_count == c_wr_mem_cycle_fall && ff_new_tstate ) begin
+			else if( !w_iorq && w_write && ff_t_state_d == c_wr_mem_tstate_fall && state_count == c_wr_mem_cycle_fall && ff_new_tstate ) begin
 				//	リクエスト開始
 				ff_wait_bus_rdata_en		<= 1'b0;
 				ff_bus_valid				<= 1'b1;
@@ -568,7 +568,7 @@ module cz80_inst (
 				ff_bus_write				<= 1'b1;
 				ff_bus_wdata				<= w_bus_wdata;
 			end
-			else if( w_iorq && w_write && w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall && ff_new_tstate ) begin
+			else if( w_iorq && w_write && ff_t_state_d == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall && ff_new_tstate ) begin
 				//	リクエスト開始
 				ff_wait_bus_rdata_en		<= 1'b0;
 				ff_bus_valid				<= 1'b1;
@@ -576,7 +576,7 @@ module cz80_inst (
 				ff_bus_write				<= 1'b1;
 				ff_bus_wdata				<= w_bus_wdata;
 			end
-			else if( !w_write && w_t_state == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise && ff_new_tstate ) begin
+			else if( !w_write && ff_t_state_d == c_bus_valid_tstate_rise && state_count == c_bus_valid_cycle_rise && ff_new_tstate ) begin
 				//	リクエスト開始
 				ff_wait_bus_rdata_en		<= !w_noread;
 				ff_bus_valid				<= !w_noread;
