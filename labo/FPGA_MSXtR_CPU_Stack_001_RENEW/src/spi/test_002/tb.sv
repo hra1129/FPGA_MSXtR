@@ -35,7 +35,7 @@
 //		0x04: Memory read   [cmd=0x04][addr_l][addr_h][dummy]       (4 bytes)
 //			  → bus_io=0, bus_write=0, bus_address=16bit(addr_l,addr_h), returns bus_rdata on dummy byte
 //		0x0A: Debug read    [cmd=0x0A][dummy]x23                    (24 bytes)
-//			  -> returns registered 176bit debug_signal LSB byte first, then a fixed 0xA5 link-check byte, without asserting spi_intr
+//			  -> returns registered 160bit debug_signal LSB byte first, then a fixed 0xA5 link-check byte, without asserting spi_intr
 //		0x0B: BootROM enable                                       (1 byte)
 //			  -> bootrom_en=1, no bus access
 //		0x0C: BootROM disable                                      (1 byte)
@@ -93,9 +93,11 @@ module tb ();
 	wire			spi_intr;
 	reg				slot_wait_n;
 	reg				ssram_startup_busy;
-	reg				active_bus_owner;
+	reg	[1:0]	cpu_sel;
 	wire			bootrom_en;
 	wire			bus_owner;
+	wire			pico_change_req;
+	wire			pico_change_target;
 	wire	[3:0]	keyboard_matrix_row;
 	wire	[7:0]	keyboard_matrix;
 	wire			keyboard_matrix_valid;
@@ -104,7 +106,7 @@ module tb ();
 	reg				pause_led;
 	reg				caps_led;
 	reg				kana_led;
-	reg		[175:0]	debug_signal;
+	reg		[159:0]	debug_signal;
 
 	//	--------------------------------------------------------------------
 	//	Monitor: count bus_valid pulses and capture last transaction values
@@ -157,6 +159,11 @@ module tb ();
 		if ( !reset_n ) bus_ready <= 1'b0;
 		else            bus_ready <= bus_valid;
 	end
+	always @( posedge clk ) begin
+		if( !reset_n ) cpu_sel <= 2'd0;
+		else if( pico_change_req ) cpu_sel <= pico_change_target ? 2'd2 : 2'd0;
+	end
+	assign bus_owner = cpu_sel[1];
 
 	// --------------------------------------------------------------------
 	//	Clock generators
@@ -192,7 +199,7 @@ module tb ();
 		.spi_intr				( spi_intr					),
 		.slot_wait_n			( slot_wait_n				),
 		.ssram_startup_busy		( ssram_startup_busy		),
-		.active_bus_owner		( active_bus_owner			),
+		.cpu_sel				( cpu_sel					),
 		.msx_reset_n			( 							),
 		.msx_pause				( 							),
 		.r800_led				( r800_led					),
@@ -200,7 +207,8 @@ module tb ();
 		.caps_led				( caps_led					),
 		.kana_led				( kana_led					),
 		.bootrom_en				( bootrom_en				),
-		.bus_owner				( bus_owner					),
+		.pico_change_req		( pico_change_req			),
+		.pico_change_target	( pico_change_target		),
 		.keyboard_matrix_row	( keyboard_matrix_row		),
 		.keyboard_matrix		( keyboard_matrix			),
 		.keyboard_matrix_valid	( keyboard_matrix_valid		),
@@ -275,12 +283,12 @@ module tb ();
 		spi_mosi	= 1'b0;
 		slot_wait_n = 1'b1;
 		ssram_startup_busy = 1'b0;
-		active_bus_owner = 1'b0;
+		cpu_sel = 2'd0;
 		r800_led	= 1'b0;
 		pause_led	= 1'b0;
 		caps_led	= 1'b0;
 		kana_led	= 1'b0;
-		debug_signal = 176'd0;
+		debug_signal = 160'd0;
 		test_no		= 0;
 		pass_count	= 0;
 		fail_count	= 0;
@@ -890,18 +898,18 @@ module tb ();
 		// ================================================================
 		test_no = 9;
 		$display( "------------------------------------------------------------" );
-		$display( "[TEST %0d] Debug signal read: cmd=0x0A, expect 176bit data (byte0 first)", test_no );
+		$display( "[TEST %0d] Debug signal read: cmd=0x0A, expect 160bit data (byte0 first)", test_no );
 
 		reset_n = 1'b0;
 		repeat( 3 ) @( posedge clk );
 		reset_n = 1'b1;
-		debug_signal = 176'h00112233445566778899AABBCCDDEEFF001122334455;
+		debug_signal = 160'h2233445566778899AABBCCDDEEFF001122334455;
 		repeat( 5 ) @( posedge clk );
 
 		begin
 			int cnt_before;
-			reg [7:0] read_data [0:22];
-			reg [175:0] read_value;
+			reg [7:0] read_data [0:20];
+			reg [159:0] read_value;
 			cnt_before = bus_valid_count;
 
 			spi_cs_n = 1'b0;
@@ -918,32 +926,32 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			for( int byte_index = 0; byte_index < 23; byte_index = byte_index + 1 ) begin
+			for( int byte_index = 0; byte_index < 21; byte_index = byte_index + 1 ) begin
 				spi_transfer_byte( 8'h00, read_data[byte_index] );
 			end
 			spi_cs_n = 1'b1;
 			spi_mosi = 1'b0;
 			repeat( 10 ) @( posedge clk );
 
-			read_value = { read_data[21], read_data[20], read_data[19], read_data[18], read_data[17], read_data[16],
+			read_value = { read_data[19], read_data[18], read_data[17], read_data[16],
 						 read_data[15], read_data[14], read_data[13], read_data[12], read_data[11], read_data[10],
 						 read_data[9], read_data[8], read_data[7], read_data[6], read_data[5], read_data[4],
 						 read_data[3], read_data[2], read_data[1], read_data[0] };
-			if( read_value === 176'h00112233445566778899AABBCCDDEEFF001122334455 ) begin
-				$display( "[TEST %0d] PASS: debug response = 0x%044X", test_no, read_value );
+			if( read_value === 160'h2233445566778899AABBCCDDEEFF001122334455 ) begin
+				$display( "[TEST %0d] PASS: debug response = 0x%040X", test_no, read_value );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: debug response = 0x%044X", test_no, read_value );
+				$display( "[TEST %0d] FAIL: debug response = 0x%040X", test_no, read_value );
 				fail_count = fail_count + 1;
 			end
 
-			if( read_data[22] === 8'hA5 ) begin
-				$display( "[TEST %0d] PASS: link pattern byte = 0x%02X", test_no, read_data[22] );
+			if( read_data[20] === 8'hA5 ) begin
+				$display( "[TEST %0d] PASS: link pattern byte = 0x%02X", test_no, read_data[20] );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: link pattern byte = 0x%02X (expected 0xA5)", test_no, read_data[22] );
+				$display( "[TEST %0d] FAIL: link pattern byte = 0x%02X (expected 0xA5)", test_no, read_data[20] );
 				fail_count = fail_count + 1;
 			end
 

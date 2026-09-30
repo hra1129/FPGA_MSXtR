@@ -82,6 +82,7 @@ module cmcu_inst (
 	output			iorq_n		,
 	output			rd_n		,
 	output			wr_n		,
+	output			slot_d_oe	,
 	output			rfsh_n		,
 	input			run_req		,	//	1: Picoがバスを所有, 0: アイドル地点で停止
 	output			run_ack		,	//	1: 実行中(未停止), 0: 停止済み
@@ -110,6 +111,7 @@ module cmcu_inst (
 	reg					ff_wait_n_i;		//	内部生成の /WAIT信号 for MSX
 	reg					ff_rd_n;
 	reg					ff_wr_n;
+	reg					ff_slot_d_oe;
 	reg					ff_rfsh_n;
 	reg		[7:0]		ff_bus_rdata;
 	reg					ff_bus_rdata_en;
@@ -424,6 +426,30 @@ module cmcu_inst (
 	end
 
 	assign wr_n = ff_wr_n;
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_slot_d_oe <= 1'b0;
+		end
+		else if( w_iorq && w_write ) begin
+			if( w_t_state == c_wr_io_tstate_fall && state_count == c_wr_io_cycle_fall ) begin
+				ff_slot_d_oe <= 1'b1;
+			end
+			else if( w_t_state == c_wr_io_tstate_rise && state_count == c_wr_io_cycle_rise ) begin
+				ff_slot_d_oe <= 1'b0;
+			end
+		end
+		else if( w_write ) begin
+			if( w_t_state == c_wr_mem_tstate_fall && state_count == c_wr_mem_cycle_fall ) begin
+				ff_slot_d_oe <= 1'b1;
+			end
+			else if( w_t_state == c_wr_mem_tstate_rise && state_count == c_wr_mem_cycle_rise ) begin
+				ff_slot_d_oe <= 1'b0;
+			end
+		end
+	end
+
+	assign slot_d_oe = ff_slot_d_oe;
 
 	// ---------------------------------------------------------
 	//	/RFSH signal generation

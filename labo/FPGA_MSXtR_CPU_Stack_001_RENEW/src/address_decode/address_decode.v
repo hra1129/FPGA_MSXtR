@@ -77,7 +77,6 @@ module address_decode (
 	output			system_flag_cs,
 	output			pause_led_cs,
 	output			s2026_cs,
-	output	[7:0]	system_flag_offset,
 	output	[1:0]	access_primary_slot,
 	output	[1:0]	access_secondary_slot3,
 	output			slot3_0_selected,
@@ -87,7 +86,6 @@ module address_decode (
 	output			device_rdata_en,
 	output			device_ready
 );
-	assign system_flag_offset	=	device_address[7:0] - 8'hF3;
 	assign access_primary_slot	=	(device_address[15:14] == 2'd0) ? primary_slot[1:0] :
 									(device_address[15:14] == 2'd1) ? primary_slot[3:2] :
 									(device_address[15:14] == 2'd2) ? primary_slot[5:4] : primary_slot[7:6];

@@ -47,6 +47,7 @@ module msx_slot #(
 	input			z80_iorq_n,
 	input			z80_rd_n,
 	input			z80_wr_n,
+	input			z80_slot_d_oe,
 	input			z80_rfsh_n,
 	input	[15:0]	z80_address,
 	input	[7:0]	z80_wdata,
@@ -61,6 +62,7 @@ module msx_slot #(
 	input			r800_iorq_n,
 	input			r800_rd_n,
 	input			r800_wr_n,
+	input			r800_slot_d_oe,
 	input			r800_rfsh_n,
 	input	[15:0]	r800_address,
 	input	[7:0]	r800_wdata,
@@ -75,6 +77,7 @@ module msx_slot #(
 	input			pico_iorq_n,
 	input			pico_rd_n,
 	input			pico_wr_n,
+	input			pico_slot_d_oe,
 	input			pico_rfsh_n,
 	input	[19:0]	pico_address,
 	input	[7:0]	pico_wdata,
@@ -112,10 +115,14 @@ module msx_slot #(
 	input	[7:0]	slot_secondary0,
 	input	[7:0]	slot_secondary3,
 	input			jis1_kanji_en,
-	input			jis2_kanji_en
+	input			jis2_kanji_en,
+	output			cpu_slot12_cs,		//	1: 選択中CPUのアドレスが SLOT#1/#2 (メモリアクセス判定用)
+	output			cpu_flash_cs		//	1: 選択中CPUのアドレスがオンボードFlashROM (1clk遅延のデコード結果)
 );
 	wire			w_slot_wr_n;
+	wire			w_slot_d_oe;
 	wire			w_slot_rd_n;
+	wire			w_slot_merq_n;
 	wire	[7:0]	w_slot_d;
 	wire	[19:0]	w_slot_address;
 	wire			w_bus_io;
@@ -127,20 +134,21 @@ module msx_slot #(
 	assign slot_oe_n		= 1'b0;
 	assign slot_m1_n		= sel[1] ? pico_m1_n		: (sel[0] ? r800_m1_n		: z80_m1_n);
 	assign slot_iorq_n		= sel[1] ? pico_iorq_n		: (sel[0] ? r800_iorq_n		: z80_iorq_n);
-	assign slot_merq_n		= sel[1] ? pico_merq_n		: (sel[0] ? r800_merq_n		: z80_merq_n);
 	assign slot_rfsh_n		= sel[1] ? pico_rfsh_n		: (sel[0] ? r800_rfsh_n		: z80_rfsh_n);
+	assign w_slot_merq_n	= sel[1] ? pico_merq_n		: (sel[0] ? r800_merq_n		: z80_merq_n);
 	assign w_slot_wr_n		= sel[1] ? pico_wr_n		: (sel[0] ? r800_wr_n		: z80_wr_n);
+	assign w_slot_d_oe		= sel[1] ? pico_slot_d_oe	: (sel[0] ? r800_slot_d_oe	: z80_slot_d_oe);
 	assign w_slot_rd_n		= sel[1] ? pico_rd_n		: (sel[0] ? r800_rd_n		: z80_rd_n);
 	assign w_slot_d			= sel[1] ? pico_wdata		: (sel[0] ? r800_wdata		: z80_wdata);
 	assign w_bus_io			= sel[1] ? pico_bus_io		: (sel[0] ? r800_bus_io		: z80_bus_io);
 	assign w_bus_write		= sel[1] ? pico_bus_write	: (sel[0] ? r800_bus_write	: z80_bus_write);
 	assign w_flash_en		= sel[1] ? pico_flash_en	: 1'b0;
 	assign w_slot_address	= sel[1] ? pico_address		: (sel[0] ? { 4'd0, r800_address }	: { 4'd0, z80_address });
+	assign slot_merq_n		= w_slot_merq_n;
 	assign slot_wr_n		= w_slot_wr_n;
 	assign slot_rd_n		= w_slot_rd_n;
-//	assign slot_data_dir	= ~w_slot_wr_n;					//	1: write, 0: read
 	assign slot_data_dir	= ~w_external_memory_read;		//	1: CPU Stack -> Cartridge Slot Stack, 0: Cartridge Slot Stack -> CPU Stack
-	assign slot_d			= w_slot_wr_n ? 8'bz	: w_slot_d;
+	assign slot_d			= w_slot_d_oe ? w_slot_d : 8'bz;
 	assign z80_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
 	assign r800_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
 	assign pico_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
@@ -190,6 +198,9 @@ module msx_slot #(
 							  ( w_page == 2'd2 ) ? slot_secondary3[5:4] : slot_secondary3[7:6];
 	assign w_secondary_slot	= ( w_primary_slot == 2'd0 ) ? w_secondary_slot0 : w_secondary_slot3;
 	assign w_external_memory_read = ~w_slot_rd_n & ~w_bus_io & ~w_flash_en & ((w_primary_slot == 2'd1) | (w_primary_slot == 2'd2));
+
+	assign cpu_slot12_cs	= ( w_primary_slot == 2'd1 ) || ( w_primary_slot == 2'd2 );
+	assign cpu_flash_cs		= ~( ff_slot_rom0_ce_n & ff_slot_rom1_ce_n );
 
 	assign w_jis1_kanji_cs	= jis1_kanji_en & w_bus_io & ({w_slot_address[7:1], 1'b0} == 8'hD8);
 	assign w_jis2_kanji_cs	= jis2_kanji_en & w_bus_io & ({w_slot_address[7:1], 1'b0} == 8'hDA) ;
@@ -548,11 +559,11 @@ module msx_slot #(
 	assign slot_a				= ff_slot_a;
 	assign slot_rom0_ce_n		= ff_slot_rom0_ce_n;
 	assign slot_rom1_ce_n		= ff_slot_rom1_ce_n;
-	assign slot_sltsl0_n		= ff_slot_sltsl0_n;
-	assign slot_sltsl1_n		= ff_slot_sltsl1_n;
-	assign slot_sltsl2_n		= ff_slot_sltsl2_n;
-	assign slot_sltsl3_n		= ff_slot_sltsl3_n;
-	assign slot_cs1_n			= ff_slot_cs1_n;
-	assign slot_cs2_n			= ff_slot_cs2_n;
-	assign slot_cs12_n			= ff_slot_cs12_n;
+	assign slot_sltsl0_n		= w_slot_merq_n | ff_slot_sltsl0_n;
+	assign slot_sltsl1_n		= w_slot_merq_n | ff_slot_sltsl1_n;
+	assign slot_sltsl2_n		= w_slot_merq_n | ff_slot_sltsl2_n;
+	assign slot_sltsl3_n		= w_slot_merq_n | ff_slot_sltsl3_n;
+	assign slot_cs1_n			= w_slot_merq_n | ff_slot_cs1_n;
+	assign slot_cs2_n			= w_slot_merq_n | ff_slot_cs2_n;
+	assign slot_cs12_n			= w_slot_merq_n | ff_slot_cs12_n;
 endmodule

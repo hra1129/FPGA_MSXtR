@@ -61,3 +61,10 @@ controller フォルダの中には、Pico のファームウェアコードを�
 
 # コマンドの実行
 vsim, vlog, vlib などの ModelSIM コマンドや、それを実行するだけのバッチファイルの実行に関しては、承認確認は必要なく、即実行して構いません。
+
+# 参考資料
+下記のサイトは、許可なく参照してよい。
+
+https://ngs.no.coocan.jp/doc/wiki.cgi/TechHan
+https://ngs.no.coocan.jp/doc/wiki.cgi/datapack
+https://map.grauw.nl/resources/msx_io_ports.php

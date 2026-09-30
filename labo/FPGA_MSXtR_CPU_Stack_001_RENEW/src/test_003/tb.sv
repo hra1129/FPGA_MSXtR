@@ -351,6 +351,110 @@ module tb ();
 		end
 	endtask
 
+	task automatic spi_wait_intr;
+		int timeout_ns;
+		begin
+			timeout_ns = 0;
+			while( mcu_intr == 1'b0 && timeout_ns < 5000 ) begin
+				#( 10 );
+				timeout_ns = timeout_ns + 10;
+			end
+			if( mcu_intr == 1'b0 ) begin
+				$display( "WARNING: mcu_intr timed out while waiting for read data" );
+			end
+		end
+	endtask
+
+	task automatic spi_busy_wait;
+		int timeout_ns;
+		reg [7:0] status;
+		begin
+			timeout_ns = 0;
+			status = 8'h01;
+			while( status[0] == 1'b1 && timeout_ns < 5000 ) begin
+				mcu_cs_n = 1'b0;
+				#( 200 );
+				spi_send_byte( 8'h05 );
+				spi_transfer_byte( 8'h00, status );
+				#( 200 );
+				mcu_cs_n = 1'b1;
+				mcu_mosi = 1'b0;
+				#( 200 );
+				if( status[0] == 1'b1 ) begin
+					#( 10 );
+					timeout_ns = timeout_ns + 10;
+				end
+			end
+			if( status[0] == 1'b1 ) begin
+				$display( "WARNING: FPGA busy check timed out, status=0x%02X", status );
+			end
+		end
+	endtask
+
+	task automatic spi_outport( input [7:0] port, input [7:0] data );
+		begin
+			spi_busy_wait();
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h01 );
+			spi_send_byte( port );
+			spi_send_byte( data );
+			spi_wait_intr();
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic spi_inport( input [7:0] port, output [7:0] data );
+		begin
+			spi_busy_wait();
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h02 );
+			spi_send_byte( port );
+			spi_wait_intr();
+			spi_transfer_byte( 8'h00, data );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic spi_poke( input [15:0] address, input [7:0] data );
+		begin
+			spi_busy_wait();
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h03 );
+			spi_send_byte( address[7:0] );
+			spi_send_byte( address[15:8] );
+			spi_send_byte( data );
+			spi_wait_intr();
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
+	task automatic spi_peek( input [15:0] address, output [7:0] data );
+		begin
+			spi_busy_wait();
+			mcu_cs_n = 1'b0;
+			#( 200 );
+			spi_send_byte( 8'h04 );
+			spi_send_byte( address[7:0] );
+			spi_send_byte( address[15:8] );
+			spi_wait_intr();
+			spi_transfer_byte( 8'h00, data );
+			#( 200 );
+			mcu_cs_n = 1'b1;
+			mcu_mosi = 1'b0;
+			#( 200 );
+		end
+	endtask
+
 	task automatic check( bit condition, string message );
 		begin
 			if( !condition ) begin
@@ -454,22 +558,26 @@ module tb ();
 			#( 5000 );
 		end
 
+		spi_outport( 8'hA8, 8'hAA );
+		spi_poke( 16'h6000, 8'h00 );
+		spi_poke( 16'h6000, 8'h01 );
+		spi_poke( 16'h6000, 8'h02 );
+		spi_poke( 16'h6000, 8'h03 );
+
 		$display( "============================================================" );
 		$display( "CPU Diagnostics at end of test:" );
 		$display( "  Z80_PC   = 0x%04X", { debug_data[1], debug_data[0] } );
-		$display( "  R800_PC  = 0x%04X", { debug_data[12], debug_data[11] } );
-		$display( "  mode     = %s", (debug_data[16] & 8'h20) ? "Z80" : "R800" );
-		mode_count_value = { debug_data[19][0], debug_data[18][7:1] };
+		$display( "  R800_PC  = 0x%04X", { debug_data[9], debug_data[8] } );
+		$display( "  mode     = %s", (debug_data[14] & 8'h01) ? "Z80" : "R800" );
+		mode_count_value = debug_data[15];
 		$display( "  mode_cnt = %0d", mode_count_value );
 		$display( "  A8       = 0x%02X, SSL0 = 0x%02X, SSL3 = 0x%02X", debug_data[2], debug_data[3], debug_data[4] );
-		$display( "  FFFF_wr  = seen:%u 39:%u r800:%u, r800_pc:0x%04X",
-			(debug_data[8] >> 5) & 1'b1, (debug_data[8] >> 6) & 1'b1, (debug_data[8] >> 7) & 1'b1,
-			{ debug_data[10], debug_data[9] } );
+		$display( "  F3=0x%02X F4=0x%02X F5=0x%02X", debug_data[5], debug_data[6], debug_data[7] );
 		$display( "  link     = 0x%02X", debug_data[20] );
 		$display( "============================================================" );
 
 		check( mode_count_value == 2, "Two CPU mode transitions completed (Z80->R800, then R800->Z80)" );
-		check( (debug_data[16] & 8'h20) == 8'h20, "Final CPU mode is Z80" );
+		check( (debug_data[14] & 8'h01) == 8'h01, "Final CPU mode is Z80" );
 		check( debug_data[2] == 8'h00, "Primary slot selector A8h preserved as 0x00" );
 		check( debug_data[3] == 8'h00, "Secondary slot 0 selector SSL0 preserved as 0x00" );
 		check( debug_data[20] == 8'hA5, "Debug link pattern is 0xA5" );
@@ -479,6 +587,16 @@ module tb ();
 		check( vdp_address_violation_count == 0, "Slot address stayed stable during every measured write" );
 		check( vdp_data_violation_count == 0, "Slot data stayed stable during every measured write" );
 		check( vdp_sequence_violation_count == 0, "Slot data followed the 55h, A5h, AAh, 5Ah write sequence" );
+
+		spi_set_bus_owner( BUS_OWNER_PICO );
+		spi_outport( 8'hF3, 8'h5A );
+		spi_outport( 8'hF4, 8'h81 );
+		spi_outport( 8'hF5, 8'h03 );
+		spi_get_debug_signal( debug_data );
+		check( debug_data[5] == 8'h5A, "F3 latch is visible in the debug packet" );
+		check( debug_data[6] == 8'h81, "F4 latch is visible in the debug packet" );
+		check( debug_data[7] == 8'h03, "F5 latch is visible in the debug packet" );
+		check( debug_data[20] == 8'hA5, "Debug link pattern remains 0xA5 after flag writes" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );

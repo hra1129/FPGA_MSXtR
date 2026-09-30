@@ -68,6 +68,7 @@ module vdp_timing_control_ssg (
 	output		[ 8:0]	pixel_pos_x,			//	unsigned (Coordinates affected by scroll register)
 	output		[ 7:0]	pixel_pos_y,			//	unsigned (Coordinates affected by scroll register)
 	output				screen_v_active,
+	output				sprite_overmap_v_active,
 
 	output				intr_line,				//	pulse
 	output				intr_frame,				//	pulse
@@ -128,6 +129,7 @@ module vdp_timing_control_ssg (
 	reg			[ 7:0]	ff_pixel_pos_y;
 	wire		[ 7:0]	w_intr_line_y;
 	reg					ff_v_active;
+	reg					ff_sprite_overmap_v_active;
 	wire				w_intr_line_timing;
 	wire				w_intr_frame_timing;
 	reg			[2:0]	ff_horizontal_offset_l;
@@ -156,7 +158,8 @@ module vdp_timing_control_ssg (
 			ff_horizontal_offset_l <= 3'd0;
 			ff_horizontal_offset_h <= 6'd0;
 		end
-		else if( ff_v_count[0] && w_h_count_end ) begin
+		else if( (w_screen_pos_x[13:4] - { 7'd0, reg_horizontal_offset_l }) == 10'h3FF &&
+				  w_screen_pos_x[3:0] == 4'hF ) begin
 			ff_horizontal_offset_l <= reg_horizontal_offset_l;
 			ff_horizontal_offset_h <= reg_horizontal_offset_h;
 		end
@@ -279,6 +282,20 @@ module vdp_timing_control_ssg (
 	end
 
 	assign w_v_count_end_line	= reg_212lines_mode ? 10'd211: 10'd191;
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_sprite_overmap_v_active <= 1'b0;
+		end
+		else if( w_h_count_end && ff_v_count[0] ) begin
+			if( w_screen_pos_y == 10'h3FE ) begin
+				ff_sprite_overmap_v_active <= 1'b1;
+			end
+			else if( w_screen_pos_y == (w_v_count_end_line - 10'd1) ) begin
+				ff_sprite_overmap_v_active <= 1'b0;
+			end
+		end
+	end
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -429,6 +446,7 @@ module vdp_timing_control_ssg (
 	assign intr_line			= ff_intr_line;
 	assign intr_frame			= w_intr_frame_timing;
 	assign screen_v_active		= ff_v_active;
+	assign sprite_overmap_v_active = ff_sprite_overmap_v_active;
 	assign dot_phase			= ff_half_count[0];
 	assign interleaving_page	= reg_interleaving_mode ? (ff_interleaving_page & ff_field): 1'b1;
 	assign blink				= ~ff_interleaving_page;

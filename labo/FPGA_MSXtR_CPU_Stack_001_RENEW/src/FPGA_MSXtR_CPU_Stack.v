@@ -123,10 +123,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_z80_bus_rdata_en;
 	wire	[2:0]	w_z80_t_state;
 	wire	[15:0]	w_z80_pc;			//	debug
-	wire			w_z80_int_ack;
-
-	//	debug_signal: スロット・割り込み・CPU切替経路
-	wire	[157:0]	w_debug_signal;
 
 	wire			w_r800_bus_m1;
 	wire			w_r800_bus_io;
@@ -139,8 +135,8 @@ module fpga_msxtr_cpu_stack (
 	wire			w_r800_bus_rdata_en;
 	wire	[2:0]	w_r800_t_state;
 	wire	[15:0]	w_r800_pc;
-
 	wire			w_processor_mode;
+	wire	[159:0]	w_debug_signal;
 	wire	[1:0]	w_cpu_sel;
 	wire			w_z80_run_req;
 	wire			w_z80_run_ack;
@@ -191,24 +187,9 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_ppi_debug_keyboard_matrix_data;
 	wire	[7:0]	w_ppi_debug_keyboard_update_count;
 	wire	[7:0]	w_ppi_debug_keyboard_read_count;
-	wire	[1:0]	w_debug_slot_page;
-	wire	[1:0]	w_debug_primary_slot;
-	wire	[1:0]	w_debug_secondary_slot0;
-	wire	[1:0]	w_debug_secondary_slot3;
-	wire	[1:0]	w_debug_secondary_slot;
-	wire	[7:0]	w_debug_slot_decode_status;
-	wire	[7:0]	w_debug_slot_select_status;
-	wire	[7:0]	w_debug_slot_bus_status;
-	reg				ff_slot_int_n_d0;
-	reg				ff_slot_int_n_d1;
-	reg				ff_slot_int_n_d2;
-	reg		[7:0]	ff_slot_int_count;
-	reg				ff_z80_int_ack_d;
-	reg		[7:0]	ff_z80_int_ack_count;
-	reg				ff_ffff_write_seen;
-	reg				ff_ffff_39_seen;
-	reg				ff_ffff_r800_write_seen;
-	reg		[15:0]	ff_ffff_39_r800_pc;
+	wire	[7:0]	w_debug_f3;
+	wire	[7:0]	w_debug_f4;
+	wire	[7:0]	w_debug_f5;
 	wire			w_mux_bus_io;
 	wire			w_mux_bus_write;
 	wire			w_mux_bus_valid;
@@ -310,7 +291,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_device_system_flag_ready;
 	wire	[7:0]	w_device_system_flag_rdata;
 	wire			w_device_system_flag_rdata_en;
-	wire	[7:0]	w_system_flag_offset;			//	device_address[7:0] - F3h (0,1,2)
 	wire			w_kanji1_en;
 	wire			w_kanji2_en;
 
@@ -341,8 +321,11 @@ module fpga_msxtr_cpu_stack (
 	wire			w_kana_led;
 
 	wire			w_z80_slot_int_n;
+	wire			w_z80_slot_d_oe;
 	wire			w_z80_slot_wait_n;
+	wire			w_r800_slot_d_oe;
 	wire			w_z80_slot_m1_n;
+	wire			w_pico_slot_d_oe;
 	wire			w_z80_slot_merq_n;
 	wire			w_z80_slot_iorq_n;
 	wire			w_z80_slot_rd_n;
@@ -375,60 +358,6 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_pico_slot_rdata;
 
 	always @( posedge clk42m ) begin
-		if( !ff_z80_reset_n ) begin
-			ff_slot_int_n_d0 <= 1'b1;
-			ff_slot_int_n_d1 <= 1'b1;
-			ff_slot_int_n_d2 <= 1'b1;
-			ff_slot_int_count <= 8'd0;
-		end
-		else begin
-			ff_slot_int_n_d0 <= slot_int_n;
-			ff_slot_int_n_d1 <= ff_slot_int_n_d0;
-			ff_slot_int_n_d2 <= ff_slot_int_n_d1;
-			if( ff_slot_int_n_d2 && !ff_slot_int_n_d1 ) begin
-				ff_slot_int_count <= ff_slot_int_count + 8'd1;
-			end
-		end
-	end
-
-	always @( posedge clk42m ) begin
-		if( !ff_z80_reset_n ) begin
-			ff_z80_int_ack_d <= 1'b0;
-			ff_z80_int_ack_count <= 8'd0;
-		end
-		else begin
-			ff_z80_int_ack_d <= w_z80_int_ack;
-			if( !ff_z80_int_ack_d && w_z80_int_ack ) begin
-				ff_z80_int_ack_count <= ff_z80_int_ack_count + 8'd1;
-			end
-		end
-	end
-
-	always @( posedge clk42m ) begin
-		if( !w_msx_reset_n ) begin
-			ff_ffff_write_seen		<= 1'b0;
-			ff_ffff_39_seen			<= 1'b0;
-			ff_ffff_r800_write_seen	<= 1'b0;
-			ff_ffff_39_r800_pc		<= 16'h0000;
-		end
-		else if( w_mux_bus_valid && w_mux_bus_ready && w_mux_bus_write && !w_mux_bus_io && (w_mux_bus_address == 16'hFFFF) ) begin
-			ff_ffff_write_seen		<= 1'b1;
-			if( w_mux_bus_wdata == 8'h39 ) begin
-				ff_ffff_39_seen		<= 1'b1;
-				if( !ff_ffff_39_seen ) begin
-					ff_ffff_39_r800_pc <= w_r800_pc;
-				end
-			end
-			if( !w_processor_mode ) begin
-				ff_ffff_r800_write_seen <= 1'b1;
-				if( !ff_ffff_r800_write_seen && !ff_ffff_39_seen ) begin
-					ff_ffff_39_r800_pc <= w_r800_pc;
-				end
-			end
-		end
-	end
-
-	always @( posedge clk42m ) begin
 		if( !ff_s2026_reset_n ) begin
 			ff_processor_mode_d <= 1'b1;
 			ff_processor_mode_change_count <= 8'd0;
@@ -441,45 +370,17 @@ module fpga_msxtr_cpu_stack (
 		end
 	end
 
-	assign w_debug_slot_page = w_bus_address[15:14];
-	assign w_debug_primary_slot =	(w_debug_slot_page == 2'd0) ? w_primary_slot[1:0] :
-									(w_debug_slot_page == 2'd1) ? w_primary_slot[3:2] :
-									(w_debug_slot_page == 2'd2) ? w_primary_slot[5:4] : w_primary_slot[7:6];
-	assign w_debug_secondary_slot0 =	(w_debug_slot_page == 2'd0) ? w_secondary_slot0[1:0] :
-									(w_debug_slot_page == 2'd1) ? w_secondary_slot0[3:2] :
-									(w_debug_slot_page == 2'd2) ? w_secondary_slot0[5:4] : w_secondary_slot0[7:6];
-	assign w_debug_secondary_slot3 =	(w_debug_slot_page == 2'd0) ? w_secondary_slot3[1:0] :
-									(w_debug_slot_page == 2'd1) ? w_secondary_slot3[3:2] :
-									(w_debug_slot_page == 2'd2) ? w_secondary_slot3[5:4] : w_secondary_slot3[7:6];
-	assign w_debug_secondary_slot =	(w_debug_primary_slot == 2'd0) ? w_debug_secondary_slot0 :
-									(w_debug_primary_slot == 2'd3) ? w_debug_secondary_slot3 : 2'd0;
-	assign w_debug_slot_decode_status = {
-			w_bus_write, w_bus_io, w_debug_slot_page, w_debug_secondary_slot, w_debug_primary_slot
-		};
-	assign w_debug_slot_select_status = {
-			slot_busdir, slot_cs12_n, slot_cs2_n, slot_cs1_n,
-			slot_sltsl3_n, slot_sltsl2_n, slot_sltsl1_n, slot_sltsl0_n
-		};
-	assign w_debug_slot_bus_status = {
-			slot_data_dir, slot_rom1_ce_n, slot_rom0_ce_n, slot_wr_n,
-			slot_rd_n, slot_iorq_n, slot_merq_n, slot_m1_n
-		};
-
+	//	SPI 0Ah: PC, slot registers, system flags, bus addresses, CPU state, mode count, reserved.
 	assign w_debug_signal = {
-			w_21m, w_3_579m,
+			32'd0,
 			ff_processor_mode_change_count,
-			ff_r800_reset_n, ff_z80_reset_n, w_msx_pause, w_r800_active,
-			w_z80_active, w_bus_ready, w_r800_bus_ready, w_z80_bus_ready,
-			w_bus_valid, w_r800_bus_valid, w_z80_bus_valid,
-			w_processor_mode,
+			4'd0, ff_r800_reset_n, ff_z80_reset_n, w_msx_pause, w_processor_mode,
 			w_r800_bus_address,
 			w_z80_bus_address,
 			w_r800_pc,
-			ff_ffff_39_r800_pc,
-			ff_ffff_r800_write_seen, ff_ffff_39_seen, ff_ffff_write_seen, w_z80_int_ack, ff_slot_int_n_d1,
-			w_debug_slot_bus_status,
-			w_debug_slot_select_status,
-			w_debug_slot_decode_status,
+			w_debug_f5,
+			w_debug_f4,
+			w_debug_f3,
 			w_secondary_slot3,
 			w_secondary_slot0,
 			w_primary_slot,
@@ -651,6 +552,7 @@ module fpga_msxtr_cpu_stack (
 		.iorq_n							( w_pico_slot_iorq_n				),
 		.rd_n							( w_pico_slot_rd_n					),
 		.wr_n							( w_pico_slot_wr_n					),
+		.slot_d_oe						( w_pico_slot_d_oe					),
 		.rfsh_n							( w_pico_slot_rfsh_n				),
 		.run_req						( w_pico_run_req					),
 		.run_ack						( w_pico_run_ack					),
@@ -684,6 +586,7 @@ module fpga_msxtr_cpu_stack (
 		.iorq_n							( w_z80_slot_iorq_n					),
 		.rd_n							( w_z80_slot_rd_n					),
 		.wr_n							( w_z80_slot_wr_n					),
+		.slot_d_oe						( w_z80_slot_d_oe					),
 		.rfsh_n							( w_z80_slot_rfsh_n					),
 		.run_req						( w_z80_run_req						),
 		.run_ack						( w_z80_run_ack						),
@@ -697,10 +600,13 @@ module fpga_msxtr_cpu_stack (
 		.bus_rdata						( w_z80_bus_rdata					),
 		.bus_rdata_en					( w_z80_bus_rdata_en				),
 		.pc								( w_z80_pc							),
-		.int_ack						( w_z80_int_ack						)		//	debug
+		.int_ack						( 									)
 	);
 
 	//	Highspeed CPU core
+	wire			w_cpu_slot12_cs;
+	wire			w_cpu_flash_cs;
+
 	cr800_inst u_r800 (
 		.reset_n						( ff_r800_reset_n					),
 		.clk							( clk42m							),
@@ -713,10 +619,13 @@ module fpga_msxtr_cpu_stack (
 		.iorq_n							( w_r800_slot_iorq_n				),
 		.rd_n							( w_r800_slot_rd_n					),
 		.wr_n							( w_r800_slot_wr_n					),
+		.slot_d_oe						( w_r800_slot_d_oe					),
 		.rfsh_n							( w_r800_slot_rfsh_n				),
 		.run_req						( w_r800_run_req					),
 		.run_ack						( w_r800_run_ack					),
 		.slot_d							( slot_d							),
+		.flash_cs						( w_cpu_flash_cs					),
+		.slot12_cs						( w_cpu_slot12_cs					),
 		.bus_io							( w_r800_bus_io						),
 		.bus_write						( w_r800_bus_write					),
 		.bus_valid						( w_r800_bus_valid					),
@@ -812,6 +721,7 @@ module fpga_msxtr_cpu_stack (
 		.z80_iorq_n						( w_z80_slot_iorq_n					),
 		.z80_rd_n						( w_z80_slot_rd_n					),
 		.z80_wr_n						( w_z80_slot_wr_n					),
+		.z80_slot_d_oe					( w_z80_slot_d_oe					),
 		.z80_rfsh_n						( w_z80_slot_rfsh_n					),
 		.z80_address					( w_z80_bus_address					),
 		.z80_wdata						( w_z80_bus_wdata					),
@@ -825,6 +735,7 @@ module fpga_msxtr_cpu_stack (
 		.r800_iorq_n					( w_r800_slot_iorq_n				),
 		.r800_rd_n						( w_r800_slot_rd_n					),
 		.r800_wr_n						( w_r800_slot_wr_n					),
+		.r800_slot_d_oe					( w_r800_slot_d_oe					),
 		.r800_rfsh_n					( w_r800_slot_rfsh_n				),
 		.r800_address					( w_r800_bus_address				),
 		.r800_wdata						( w_r800_bus_wdata					),
@@ -838,6 +749,7 @@ module fpga_msxtr_cpu_stack (
 		.pico_iorq_n					( w_pico_slot_iorq_n				),
 		.pico_rd_n						( w_pico_slot_rd_n					),
 		.pico_wr_n						( w_pico_slot_wr_n					),
+		.pico_slot_d_oe					( w_pico_slot_d_oe					),
 		.pico_rfsh_n					( w_pico_slot_rfsh_n				),
 		.pico_address					( w_pico_bus_address				),
 		.pico_wdata						( w_pico_bus_wdata					),
@@ -873,7 +785,9 @@ module fpga_msxtr_cpu_stack (
 		.slot_secondary0				( w_secondary_slot0					),
 		.slot_secondary3				( w_secondary_slot3					),
 		.jis1_kanji_en					( w_kanji1_en						),
-		.jis2_kanji_en					( w_kanji2_en						)
+		.jis2_kanji_en					( w_kanji2_en						),
+		.cpu_slot12_cs					( w_cpu_slot12_cs					),
+		.cpu_flash_cs					( w_cpu_flash_cs					)
 	);
 
 	assign w_cpu_int_p					= ~w_int_n;
@@ -931,7 +845,6 @@ module fpga_msxtr_cpu_stack (
 		.system_flag_cs					( w_device_system_flag_cs			),
 		.pause_led_cs					( w_device_pause_led_cs				),
 		.s2026_cs						( w_device_s2026_cs					),
-		.system_flag_offset				( w_system_flag_offset				),
 		.access_primary_slot			( w_access_primary_slot				),
 		.access_secondary_slot3			( w_access_secondary_slot3			),
 		.slot3_0_selected				( w_slot3_0_selected				),
@@ -1134,7 +1047,7 @@ module fpga_msxtr_cpu_stack (
 		.clk							( clk42m							),
 		.reset_n						( ff_system_flag_reset_n			),
 		.bus_cs							( w_device_system_flag_cs			),
-		.bus_address					( w_system_flag_offset[1:0]			),
+		.bus_address					( w_device_address[1:0]				),
 		.bus_write						( w_device_write					),
 		.bus_wdata						( w_device_wdata					),
 		.bus_valid						( w_device_valid_peripheral			),
@@ -1142,7 +1055,10 @@ module fpga_msxtr_cpu_stack (
 		.bus_rdata						( w_device_system_flag_rdata		),
 		.bus_rdata_en					( w_device_system_flag_rdata_en 	),
 		.kanji1_en						( w_kanji1_en						),
-		.kanji2_en						( w_kanji2_en						)
+		.kanji2_en						( w_kanji2_en						),
+		.debug_f3						( w_debug_f3						),
+		.debug_f4						( w_debug_f4						),
+		.debug_f5						( w_debug_f5						)
 	);
 
 	// --------------------------------------------------------------------

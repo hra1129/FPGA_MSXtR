@@ -68,7 +68,7 @@ module ip_spi (
 	output	[7:0]	keyboard_matrix,
 	output			keyboard_matrix_valid,
 	output	[7:0]	keyboard_update_count,
-	input	[157:0]	debug_signal
+	input	[159:0]	debug_signal
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -88,7 +88,7 @@ module ip_spi (
 	localparam	[4:0]	ST_DEBUG_H			 = 5'd15;
 	localparam	[4:0]	ST_KEYBOARD_SEND	 = 5'd16;
 	localparam			SPI_RX_WDATA		 = 8'h64;
-	localparam	[4:0]	DEBUG_SIGNAL_BYTES	 = 5'd21;	//	debug_signal 20byte(160bit,ゼロ拡張) + 通信確認用の固定パターン(0xA5) 1byte
+	localparam	[4:0]	DEBUG_SIGNAL_BYTES	 = 5'd21;	//	debug_signal 20byte + 通信確認用の固定パターン(0xA5) 1byte
 	localparam			DEBUG_SIGNAL_PATTERN = 8'hA5;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
@@ -342,7 +342,7 @@ module ip_spi (
 					8'h0a: begin
 						ff_state			<= ST_DEBUG_H;
 						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
-						ff_debug_signal		<= { 2'd0, debug_signal };
+						ff_debug_signal		<= debug_signal;
 						ff_spi_wdata		<= debug_signal[7:0];
 						ff_debug_byte_index <= 5'd1;
 						ff_spi_valid		<= 1'b1;

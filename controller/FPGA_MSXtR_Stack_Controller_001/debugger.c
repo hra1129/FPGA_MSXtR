@@ -17,6 +17,31 @@ static char hex_to_char(uint8_t value) {
 }
 
 // ---------------------------------------------------------
+static void dump_256bytes( uint16_t base_address ) {
+	char s_line[16 * 3 + 1];
+	char *p_dest;
+	uint16_t address;
+	int i, j;
+	uint8_t rom_data;
+
+	for( i = 0; i < 16; i++ ) {
+		address = (uint16_t)(base_address + i * 16);
+		printf( "%04X: ", address );
+		p_dest = s_line;
+		for( j = 0; j < 16; j++ ) {
+			rom_data = fpga_peek( address + j );
+			*p_dest++ = hex_to_char( rom_data >> 4 );
+			*p_dest++ = hex_to_char( rom_data & 0x0F );
+			if( j != 15 ) {
+				*p_dest++ = ' ';
+			}
+		}
+		*p_dest = '\0';
+		printf("%s\r\n", s_line);
+	}
+}
+
+// ---------------------------------------------------------
 void dump_slot(void) {
 	char s_line[16 * 3 + 1];
 	char *p_dest;
@@ -33,21 +58,7 @@ void dump_slot(void) {
 	fpga_poke( 0xFFFF, 0 );				// 全ページ SLOT#0-0 を選択
 	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
 	printf( "-- SLOT#0 Secondary Slot Selector: 0x%02X\r\n", fpga_peek( 0xFFFF ) );
-	for( i = 0; i < 16; i++ ) {
-		address = (uint16_t)(i * 16);
-		printf( "%04X: ", address );
-		p_dest = s_line;
-		for( j = 0; j < 16; j++ ) {
-			rom_data = fpga_peek( address + j );
-			*p_dest++ = hex_to_char( rom_data >> 4 );
-			*p_dest++ = hex_to_char( rom_data & 0x0F );
-			if( j != 15 ) {
-				*p_dest++ = ' ';
-			}
-		}
-		*p_dest = '\0';
-		printf("%s\r\n", s_line);
-	}
+	dump_256bytes( 0x0000 );
 	printf("----\r\n");
 
 	printf( "Dump SLOT#0-2\r\n" );
@@ -55,21 +66,7 @@ void dump_slot(void) {
 	fpga_poke( 0xFFFF, 0xAA );			// 全ページ SLOT#0-2 を選択
 	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
 	printf( "-- SLOT#0 Secondary Slot Selector: 0x%02X\r\n", fpga_peek( 0xFFFF ) );
-	for( i = 0; i < 16; i++ ) {
-		address = (uint16_t)(i * 16 + 0x4000);
-		printf( "%04X: ", address );
-		p_dest = s_line;
-		for( j = 0; j < 16; j++ ) {
-			rom_data = fpga_peek( address + j );
-			*p_dest++ = hex_to_char( rom_data >> 4 );
-			*p_dest++ = hex_to_char( rom_data & 0x0F );
-			if( j != 15 ) {
-				*p_dest++ = ' ';
-			}
-		}
-		*p_dest = '\0';
-		printf("%s\r\n", s_line);
-	}
+	dump_256bytes( 0x4000 );
 	printf("----\r\n");
 
 	printf( "Dump SLOT#3-1\r\n" );
@@ -79,21 +76,7 @@ void dump_slot(void) {
 	fpga_poke( 0xFFFF, 0x55 );			// 全ページ SLOT#3-1 を選択
 	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
 	printf( "-- SLOT#3 Secondary Slot Selector: 0x%02X\r\n", fpga_peek( 0xFFFF ) );
-	for( i = 0; i < 16; i++ ) {
-		address = (uint16_t)(i * 16 + 0x4000);
-		printf( "%04X: ", address );
-		p_dest = s_line;
-		for( j = 0; j < 16; j++ ) {
-			rom_data = fpga_peek( address + j );
-			*p_dest++ = hex_to_char( rom_data >> 4 );
-			*p_dest++ = hex_to_char( rom_data & 0x0F );
-			if( j != 15 ) {
-				*p_dest++ = ' ';
-			}
-		}
-		*p_dest = '\0';
-		printf("%s\r\n", s_line);
-	}
+	dump_256bytes( 0x4000 );
 	printf("----\r\n");
 
 	//	拡張スロットレジスタの内容を元に戻す
@@ -102,21 +85,20 @@ void dump_slot(void) {
 	printf( "Dump SLOT#1\r\n" );
 	fpga_outport( 0xA8, 0x55 );						// 全ページ SLOT#1 を選択
 	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
-	for( i = 0; i < 16; i++ ) {
-		address = (uint16_t)(i * 16 + 0x4000);
-		printf( "%04X: ", address );
-		p_dest = s_line;
-		for( j = 0; j < 16; j++ ) {
-			rom_data = fpga_peek( address + j );
-			*p_dest++ = hex_to_char( rom_data >> 4 );
-			*p_dest++ = hex_to_char( rom_data & 0x0F );
-			if( j != 15 ) {
-				*p_dest++ = ' ';
-			}
-		}
-		*p_dest = '\0';
-		printf("%s\r\n", s_line);
-	}
+	dump_256bytes( 0x4000 );
+	printf("----\r\n");
+
+	//	カートリッジスロット2 の内容を表示
+	printf( "Dump SLOT#2\r\n" );
+	fpga_outport( 0xA8, 0xAA );						// 全ページ SLOT#2 を選択
+	printf( "-- Primary Slot Selector: 0x%02X\r\n", fpga_inport( 0xA8 ) );
+	printf( "-- MegaROM Bank Selector: 0x%02X\r\n", 0 );
+	fpga_poke( 0x6000, 0 );							// MegaROM BANK0 = BANK#0 for ASCII16
+	dump_256bytes( 0x4000 );
+	printf("----\r\n");
+	printf( "-- MegaROM Bank Selector: 0x%02X\r\n", 1 );
+	fpga_poke( 0x6000, 1 );							// MegaROM BANK0 = BANK#1 for ASCII16
+	dump_256bytes( 0x4000 );
 	printf("----\r\n");
 
 	//	拡張スロットレジスタの内容を元に戻す
@@ -137,58 +119,19 @@ void dump_fpga_debug_signal( void ) {
 			debug_signal.r800_pc,
 			(debug_signal.cpu_status & 0x01) ? "Z80" : "R800" );
 	printf( "  CPU switch: mode_count=%u\r\n", debug_signal.cpu_mode_change_count );
-	printf( "  Z80 bus: addr=0x%04X valid=%u ready=%u active=%u reset_n=%u\r\n",
+	printf( "  Z80 bus: addr=0x%04X reset_n=%u\r\n",
 			debug_signal.z80_bus_address,
-			(debug_signal.cpu_status >> 5) & 0x01,
-			(debug_signal.bus_status >> 0) & 0x01,
-			(debug_signal.bus_status >> 3) & 0x01,
-			(debug_signal.bus_status >> 6) & 0x01 );
-	printf( "  R800 bus: addr=0x%04X valid=%u ready=%u active=%u reset_n=%u\r\n",
+			(debug_signal.cpu_status >> 2) & 0x01 );
+	printf( "  R800 bus: addr=0x%04X reset_n=%u\r\n",
 			debug_signal.r800_bus_address,
-			(debug_signal.cpu_status >> 6) & 0x01,
-			(debug_signal.bus_status >> 1) & 0x01,
-			(debug_signal.bus_status >> 4) & 0x01,
-			(debug_signal.bus_status >> 7) & 0x01 );
-	printf( "  Shared bus: valid=%u ready=%u pause=%u clock[3.579m=%u 21m=%u]\r\n",
-			(debug_signal.cpu_status >> 7) & 0x01,
-			(debug_signal.bus_status >> 2) & 0x01,
-			(debug_signal.bus_status >> 5) & 0x01,
-			(debug_signal.clock_status >> 0) & 0x01,
-			(debug_signal.clock_status >> 1) & 0x01 );
-	printf( "  Slot map: A8=0x%02X SSL0=0x%02X SSL3=0x%02X current=P%u-%u page=%u io=%u write=%u\r\n",
+			(debug_signal.cpu_status >> 3) & 0x01 );
+	printf( "  Shared bus: pause=%u\r\n", (debug_signal.cpu_status >> 1) & 0x01 );
+	printf( "  Slot map: A8=0x%02X SSL0=0x%02X SSL3=0x%02X\r\n",
 			debug_signal.primary_slot,
 			debug_signal.secondary_slot0,
-			debug_signal.secondary_slot3,
-			debug_signal.slot_decode_status & 0x03,
-			(debug_signal.slot_decode_status >> 2) & 0x03,
-			(debug_signal.slot_decode_status >> 4) & 0x03,
-			(debug_signal.slot_decode_status >> 6) & 0x01,
-			(debug_signal.slot_decode_status >> 7) & 0x01 );
-	printf( "  Slot select(n): SLTSL=%u%u%u%u CS1=%u CS2=%u CS12=%u BUSDIR=%u\r\n",
-			(debug_signal.slot_select_status >> 3) & 0x01,
-			(debug_signal.slot_select_status >> 2) & 0x01,
-			(debug_signal.slot_select_status >> 1) & 0x01,
-			(debug_signal.slot_select_status >> 0) & 0x01,
-			(debug_signal.slot_select_status >> 4) & 0x01,
-			(debug_signal.slot_select_status >> 5) & 0x01,
-			(debug_signal.slot_select_status >> 6) & 0x01,
-			(debug_signal.slot_select_status >> 7) & 0x01 );
-	printf( "  Slot bus(n): M1=%u MERQ=%u IORQ=%u RD=%u WR=%u ROM0=%u ROM1=%u DATA_DIR=%u\r\n",
-			(debug_signal.slot_bus_status >> 0) & 0x01,
-			(debug_signal.slot_bus_status >> 1) & 0x01,
-			(debug_signal.slot_bus_status >> 2) & 0x01,
-			(debug_signal.slot_bus_status >> 3) & 0x01,
-			(debug_signal.slot_bus_status >> 4) & 0x01,
-			(debug_signal.slot_bus_status >> 5) & 0x01,
-			(debug_signal.slot_bus_status >> 6) & 0x01,
-			(debug_signal.slot_bus_status >> 7) & 0x01 );
-	printf( "  INT/Trap: slot_n=%u z80_ack=%u | FFFF_wr[seen=%u is_39=%u by_r800=%u r800_pc=0x%04X]\r\n",
-			(debug_signal.interrupt_status >> 0) & 0x01,
-			(debug_signal.interrupt_status >> 1) & 0x01,
-			(debug_signal.interrupt_status >> 2) & 0x01,
-			(debug_signal.interrupt_status >> 3) & 0x01,
-			(debug_signal.interrupt_status >> 4) & 0x01,
-			debug_signal.ffff_write_r800_pc );
+			debug_signal.secondary_slot3 );
+	printf( "  System flag: F3=0x%02X F4=0x%02X F5=0x%02X\r\n",
+			debug_signal.f3, debug_signal.f4, debug_signal.f5 );
 	if( debug_signal.link_pattern == 0xA5 ) {
 		printf( "  link_pattern=0x%02X (OK)\r\n", debug_signal.link_pattern );
 	}

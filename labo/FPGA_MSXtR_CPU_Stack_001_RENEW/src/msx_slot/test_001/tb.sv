@@ -23,6 +23,7 @@ module tb;
 	reg				z80_iorq_n;
 	reg				z80_rd_n;
 	reg				z80_wr_n;
+	reg				z80_slot_d_oe;
 	reg				z80_rfsh_n;
 	wire			z80_busreq_n;
 	reg				z80_busack_n;
@@ -42,6 +43,7 @@ module tb;
 	reg				r800_iorq_n;
 	reg				r800_rd_n;
 	reg				r800_wr_n;
+	reg				r800_slot_d_oe;
 	reg				r800_rfsh_n;
 	wire			r800_busreq_n;
 	reg				r800_busack_n;
@@ -61,6 +63,7 @@ module tb;
 	reg				pico_iorq_n;
 	reg				pico_rd_n;
 	reg				pico_wr_n;
+	reg				pico_slot_d_oe;
 	reg				pico_rfsh_n;
 	wire			pico_busreq_n;
 	reg				pico_busack_n;
@@ -129,11 +132,11 @@ module tb;
 		.z80_iorq_n			( z80_iorq_n		),
 		.z80_rd_n			( z80_rd_n			),
 		.z80_wr_n			( z80_wr_n			),
+		.z80_slot_d_oe	( z80_slot_d_oe	),
 		.z80_rfsh_n			( z80_rfsh_n		),
 		.z80_address		( z80_address		),
 		.z80_wdata			( z80_wdata			),
 		.z80_rdata			( z80_rdata			),
-		.z80_flash_en		( z80_flash_en		),
 		.z80_bus_io			( z80_bus_io		),
 		.z80_bus_write		( z80_bus_write		),
 		.r800_int_n			( r800_int_n		),
@@ -143,11 +146,11 @@ module tb;
 		.r800_iorq_n		( r800_iorq_n		),
 		.r800_rd_n			( r800_rd_n			),
 		.r800_wr_n			( r800_wr_n			),
+		.r800_slot_d_oe	( r800_slot_d_oe	),
 		.r800_rfsh_n		( r800_rfsh_n		),
 		.r800_address		( r800_address		),
 		.r800_wdata			( r800_wdata		),
 		.r800_rdata			( r800_rdata		),
-		.r800_flash_en		( r800_flash_en		),
 		.r800_bus_io		( r800_bus_io		),
 		.r800_bus_write		( r800_bus_write	),
 		.pico_int_n			( pico_int_n		),
@@ -157,6 +160,7 @@ module tb;
 		.pico_iorq_n		( pico_iorq_n		),
 		.pico_rd_n			( pico_rd_n			),
 		.pico_wr_n			( pico_wr_n			),
+		.pico_slot_d_oe	( pico_slot_d_oe	),
 		.pico_rfsh_n		( pico_rfsh_n		),
 		.pico_address		( pico_address		),
 		.pico_wdata			( pico_wdata		),
@@ -262,6 +266,7 @@ module tb;
 		jis2_kanji_en	= 1'b0;
 
 		z80_m1_n		= 1'b1;
+		z80_slot_d_oe	= 1'b0;
 		z80_merq_n		= 1'b1;
 		z80_iorq_n		= 1'b1;
 		z80_rd_n		= 1'b1;
@@ -275,6 +280,7 @@ module tb;
 		z80_bus_write	= 1'b0;
 
 		r800_m1_n		= 1'b1;
+		r800_slot_d_oe	= 1'b0;
 		r800_merq_n		= 1'b1;
 		r800_iorq_n		= 1'b1;
 		r800_rd_n		= 1'b1;
@@ -288,6 +294,7 @@ module tb;
 		r800_bus_write	= 1'b0;
 
 		pico_m1_n		= 1'b1;
+		pico_slot_d_oe	= 1'b0;
 		pico_merq_n		= 1'b1;
 		pico_iorq_n		= 1'b1;
 		pico_rd_n		= 1'b1;
@@ -350,12 +357,16 @@ module tb;
 		// Test write direction
 		z80_rd_n = 1'b1;
 		z80_wr_n = 1'b0;
+		z80_slot_d_oe = 1'b0;
 		z80_wdata = 8'h3C;
 		z80_bus_write = 1'b1;
 		slot_d_oe = 1'b0;
 		#1;
 		check( slot_wr_n == 1'b0, "slot_wr_n is 0 on write" );
 		check( slot_data_dir == 1'b1, "slot_data_dir is 1 on write" );
+		check( slot_d === 8'hzz, "slot_d remains Hi-Z while data output is disabled" );
+		z80_slot_d_oe = 1'b1;
+		#1;
 		check( slot_d == 8'h3C, "slot_d driven with z80_wdata (0x3C)" );
 
 		// Test interrupt & wait propagation
@@ -369,6 +380,7 @@ module tb;
 		z80_m1_n = 1'b1;
 		z80_merq_n = 1'b1;
 		z80_wr_n = 1'b1;
+		z80_slot_d_oe = 1'b0;
 
 		// ================================================================
 		//	Test 3: Master Multiplexer - R800 (sel = 01)
@@ -378,6 +390,7 @@ module tb;
 		sel = 2'b01;
 		r800_iorq_n = 1'b0;
 		r800_wr_n = 1'b0;
+		r800_slot_d_oe = 1'b1;
 		r800_wdata = 8'h55;
 		r800_bus_io = 1'b1;
 		r800_bus_write = 1'b1;
@@ -390,6 +403,7 @@ module tb;
 
 		r800_iorq_n = 1'b1;
 		r800_wr_n = 1'b1;
+		r800_slot_d_oe = 1'b0;
 		r800_bus_io = 1'b0;
 		r800_bus_write = 1'b0;
 
@@ -413,6 +427,17 @@ module tb;
 		pico_merq_n = 1'b1;
 		pico_rd_n = 1'b1;
 		slot_d_oe = 1'b0;
+		pico_wr_n = 1'b0;
+		pico_wdata = 8'hA6;
+		pico_slot_d_oe = 1'b0;
+		#1;
+		check( slot_wr_n == 1'b0, "slot_wr_n passed from Pico write" );
+		check( slot_d === 8'hzz, "Pico slot_d remains Hi-Z while output is disabled" );
+		pico_slot_d_oe = 1'b1;
+		#1;
+		check( slot_d == 8'hA6, "slot_d driven with pico_wdata while output is enabled" );
+		pico_slot_d_oe = 1'b0;
+		pico_wr_n = 1'b1;
 
 		// ================================================================
 		//	Test 5: Primary Slot 0 - Internal ROMs Decode

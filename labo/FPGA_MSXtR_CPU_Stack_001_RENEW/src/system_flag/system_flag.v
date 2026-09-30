@@ -55,7 +55,10 @@ module system_flag (
 	output			bus_rdata_en,
 	//	Kanji ROM enable output (from F5h latch)
 	output			kanji1_en,
-	output			kanji2_en
+		output			kanji2_en,
+		output	[7:0]	debug_f3,
+		output	[7:0]	debug_f4,
+		output	[7:0]	debug_f5
 );
 	reg		[7:0]	ff_f3_latch;
 	reg		[7:0]	ff_f4_latch;
@@ -111,6 +114,9 @@ module system_flag (
 	// ---------------------------------------------------------
 	assign kanji1_en	= ff_f5_latch[0];
 	assign kanji2_en	= ff_f5_latch[1];
+	assign debug_f3	= ff_f3_latch;
+	assign debug_f4	= ff_f4_latch;
+	assign debug_f5	= ff_f5_latch;
 
 	// ---------------------------------------------------------
 	//	Output assignment

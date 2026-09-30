@@ -213,6 +213,10 @@ int main(void) {
 				fpga_set_bus_owner( BUS_OWNER_PICO );
 				printf( "Done.\r\n" );
 			}
+			else if( key_press( 0, 3 ) ) {
+				//	3キーが押されたら、デバッグ情報を表示する
+				dump_fpga_debug_signal();
+			}
 			s_fpga_led_state = fpga_set_keyboard_matrix( keymatrix );
 		}
 		memcpy( prev_keymatrix, keymatrix, KEYBOARD_KEY_MATRIX_SIZE );

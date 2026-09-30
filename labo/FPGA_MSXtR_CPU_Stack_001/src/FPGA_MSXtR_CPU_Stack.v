@@ -298,7 +298,6 @@ module fpga_msxtr_cpu_stack (
 	wire			w_device_system_flag_ready;
 	wire	[7:0]	w_device_system_flag_rdata;
 	wire			w_device_system_flag_rdata_en;
-	wire	[7:0]	w_system_flag_offset;			//	device_address[7:0] - F3h (0,1,2)
 	wire			w_kanji1_en;
 	wire			w_kanji2_en;
 
@@ -849,8 +848,6 @@ module fpga_msxtr_cpu_stack (
 		.s2026_cs				( w_device_s2026_cs			)
 	);
 
-	assign w_system_flag_offset	= w_device_address[7:0] - 8'hF3;
-
 	assign w_access_primary_slot	=	(w_device_address[15:14] == 2'd0) ? w_primary_slot[1:0] :
 										(w_device_address[15:14] == 2'd1) ? w_primary_slot[3:2] :
 										(w_device_address[15:14] == 2'd2) ? w_primary_slot[5:4] : w_primary_slot[7:6];
@@ -1003,18 +1000,18 @@ module fpga_msxtr_cpu_stack (
 	//	Pause LED (I/O A7h)
 	// --------------------------------------------------------------------
 	pause_led u_pause_led (
-		.clk					( clk42m					),
-		.reset_n				( ff_pause_led_reset_n		),
-		.bus_cs					( w_device_pause_led_cs		),
-		.bus_write				( w_device_write			),
-		.bus_wdata				( w_device_wdata			),
-		.bus_valid				( w_device_valid			),
-		.bus_ready				( w_device_pause_led_ready	),
-		.bus_rdata				( w_device_pause_led_rdata	),
-		.bus_rdata_en			( w_device_pause_led_rdata_en ),
-		.msx_pause				( w_msx_pause				),
-		.r800_led				( w_r800_led				),
-		.pause_led				( w_pause_led				)
+		.clk					( clk42m						),
+		.reset_n				( ff_pause_led_reset_n			),
+		.bus_cs					( w_device_pause_led_cs			),
+		.bus_write				( w_device_write				),
+		.bus_wdata				( w_device_wdata				),
+		.bus_valid				( w_device_valid				),
+		.bus_ready				( w_device_pause_led_ready		),
+		.bus_rdata				( w_device_pause_led_rdata		),
+		.bus_rdata_en			( w_device_pause_led_rdata_en	),
+		.msx_pause				( w_msx_pause					),
+		.r800_led				( w_r800_led					),
+		.pause_led				( w_pause_led					)
 	);
 
 	// --------------------------------------------------------------------
@@ -1024,7 +1021,7 @@ module fpga_msxtr_cpu_stack (
 		.clk					( clk42m						),
 		.reset_n				( ff_system_flag_reset_n		),
 		.bus_cs					( w_device_system_flag_cs		),
-		.bus_address			( w_system_flag_offset[1:0]		),
+		.bus_address			( w_device_address[1:0]			),
 		.bus_write				( w_device_write				),
 		.bus_wdata				( w_device_wdata				),
 		.bus_valid				( w_device_valid				),

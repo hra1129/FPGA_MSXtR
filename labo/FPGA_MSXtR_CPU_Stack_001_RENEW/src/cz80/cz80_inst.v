@@ -74,6 +74,7 @@ module cz80_inst (
 	output			iorq_n		,
 	output			rd_n		,
 	output			wr_n		,
+	output			slot_d_oe	,
 	output			rfsh_n		,
 	input			run_req		,	//	1: このコアを実行, 0: 次のM1境界で停止
 	output			run_ack		,	//	1: 実行中(未停止), 0: 停止済み(M1境界で凍結)
@@ -99,6 +100,7 @@ module cz80_inst (
 	reg					ff_wait_n_i;		//	内部生成の /WAIT信号 for MSX
 	reg					ff_rd_n;
 	reg					ff_wr_n;
+	reg					ff_slot_d_oe;
 	reg					ff_rfsh_n;
 	wire	[2:0]		w_t_state;
 	wire				w_m1_n;
@@ -229,12 +231,12 @@ module cz80_inst (
 	// ---------------------------------------------------------
 	localparam			c_merq_m1_tstate_fall = 3'd1;
 	localparam			c_merq_m1_cycle_fall = 4'd6;
-	localparam			c_merq_m1_tstate_rise = 3'd3;
+	localparam			c_merq_m1_tstate_rise = 3'd2;
 	localparam			c_merq_m1_cycle_rise = 4'd1;
 	localparam			c_merq_mem_tstate_fall = 3'd1;
-	localparam			c_merq_mem_cycle_fall = 4'd2;
+	localparam			c_merq_mem_cycle_fall = 4'd7;
 	localparam			c_merq_mem_tstate_rise = 3'd3;
-	localparam			c_merq_mem_cycle_rise = 4'd2;
+	localparam			c_merq_mem_cycle_rise = 4'd7;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -244,20 +246,20 @@ module cz80_inst (
 			// hold
 		end
 		else if( !ff_m1_n ) begin
-			if(      w_t_state == c_merq_m1_tstate_fall && state_count == c_merq_m1_cycle_fall ) begin
+			if(      ff_t_state_d == c_merq_m1_tstate_fall && state_count == c_merq_m1_cycle_fall ) begin
 				ff_merq_n <= 1'b0;
 			end
-			else if( w_t_state == c_merq_m1_tstate_rise && state_count == c_merq_m1_cycle_rise ) begin
+			else if( ff_t_state_d == c_merq_m1_tstate_rise && state_count == c_merq_m1_cycle_rise ) begin
 				ff_merq_n <= 1'b1;
 			end
 		end
 		else if( !w_iorq ) begin
-			if(      w_t_state == c_merq_mem_tstate_fall && state_count == c_merq_mem_cycle_fall ) begin
+			if(      ff_t_state_d == c_merq_mem_tstate_fall && state_count == c_merq_mem_cycle_fall ) begin
 				if( w_write || !w_noread ) begin
 					ff_merq_n <= 1'b0;
 				end
 			end
-			else if( w_t_state == c_merq_mem_tstate_rise && state_count == c_merq_mem_cycle_rise ) begin
+			else if( ff_t_state_d == c_merq_mem_tstate_rise && state_count == c_merq_mem_cycle_rise ) begin
 				ff_merq_n <= 1'b1;
 			end
 		end
@@ -383,10 +385,10 @@ module cz80_inst (
 	// ---------------------------------------------------------
 	//	/WR signal generation
 	// ---------------------------------------------------------
-	localparam			c_wr_mem_tstate_fall = 3'd1;
-	localparam			c_wr_mem_cycle_fall = 4'd1;
-	localparam			c_wr_mem_tstate_rise = 3'd2;
-	localparam			c_wr_mem_cycle_rise = 4'd1;
+	localparam			c_wr_mem_tstate_fall = 3'd2;
+	localparam			c_wr_mem_cycle_fall = 4'd5;
+	localparam			c_wr_mem_tstate_rise = 3'd3;
+	localparam			c_wr_mem_cycle_rise = 4'd6;
 	localparam			c_wr_io_tstate_fall = 3'd1;
 	localparam			c_wr_io_cycle_fall = 4'd1;
 	localparam			c_wr_io_tstate_rise = 3'd3;
@@ -418,6 +420,41 @@ module cz80_inst (
 	end
 
 	assign wr_n = ff_wr_n;
+
+	localparam			c_d_mem_tstate_fall = 3'd2;
+	localparam			c_d_mem_cycle_fall = 4'd5;
+	localparam			c_d_mem_tstate_rise = 3'd3;
+	localparam			c_d_mem_cycle_rise = 4'd6;
+	localparam			c_d_io_tstate_fall = 3'd1;
+	localparam			c_d_io_cycle_fall = 4'd1;
+	localparam			c_d_io_tstate_rise = 3'd3;
+	localparam			c_d_io_cycle_rise = 4'd5;
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_slot_d_oe <= 1'b0;
+		end
+		else if( !ff_run ) begin
+			// hold
+		end
+		else if( w_iorq && w_write ) begin
+			if( ff_t_state_d == c_d_io_tstate_fall && state_count == c_d_io_cycle_fall ) begin
+				ff_slot_d_oe <= 1'b1;
+			end
+			else if( ff_t_state_d == c_d_io_tstate_rise && state_count == c_d_io_cycle_rise ) begin
+				ff_slot_d_oe <= 1'b0;
+			end
+		end
+		else if( w_write ) begin
+			if(  ff_t_state_d == c_d_mem_tstate_fall && state_count == c_d_mem_cycle_fall ) begin
+				ff_slot_d_oe <= 1'b1;
+			end
+			else if( ff_t_state_d == c_d_mem_tstate_rise && state_count == c_d_mem_cycle_rise ) begin
+				ff_slot_d_oe <= 1'b0;
+			end
+		end
+	end
+
+	assign slot_d_oe = ff_slot_d_oe;
 
 	// ---------------------------------------------------------
 	//	/RFSH signal generation
