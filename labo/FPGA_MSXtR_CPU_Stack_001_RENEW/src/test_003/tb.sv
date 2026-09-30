@@ -336,12 +336,12 @@ module tb ();
 		end
 	endtask
 
-	task automatic spi_get_debug_signal( output [7:0] data [0:20] );
+	task automatic spi_get_debug_signal( output [7:0] data [0:32] );
 		begin
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h0A );
-			for( int byte_index = 0; byte_index < 21; byte_index = byte_index + 1 ) begin
+			for( int byte_index = 0; byte_index < 33; byte_index = byte_index + 1 ) begin
 				spi_transfer_byte( 8'h00, data[byte_index] );
 			end
 			#( 200 );
@@ -468,7 +468,7 @@ module tb ();
 	endtask
 
 	initial begin
-		reg [7:0] debug_data [0:20];
+		reg [7:0] debug_data [0:32];
 		reg [15:0] z80_pc_before_pico;
 		int timeout_cycles;
 		int mode_count_value;
@@ -573,14 +573,14 @@ module tb ();
 		$display( "  mode_cnt = %0d", mode_count_value );
 		$display( "  A8       = 0x%02X, SSL0 = 0x%02X, SSL3 = 0x%02X", debug_data[2], debug_data[3], debug_data[4] );
 		$display( "  F3=0x%02X F4=0x%02X F5=0x%02X", debug_data[5], debug_data[6], debug_data[7] );
-		$display( "  link     = 0x%02X", debug_data[20] );
+		$display( "  link     = 0x%02X", debug_data[32] );
 		$display( "============================================================" );
 
 		check( mode_count_value == 2, "Two CPU mode transitions completed (Z80->R800, then R800->Z80)" );
 		check( (debug_data[14] & 8'h01) == 8'h01, "Final CPU mode is Z80" );
 		check( debug_data[2] == 8'h00, "Primary slot selector A8h preserved as 0x00" );
 		check( debug_data[3] == 8'h00, "Secondary slot 0 selector SSL0 preserved as 0x00" );
-		check( debug_data[20] == 8'hA5, "Debug link pattern is 0xA5" );
+		check( debug_data[32] == 8'hA5, "Debug link pattern is 0xA5" );
 		check( vdp_write_count == 1000, "1000 OUT (98h),A writes reached the cartridge slot" );
 		check( vdp_short_write_count == 0, "Every OUT (98h),A had at least 25 clocks of simultaneous /IORQ and /WR low" );
 		check( vdp_min_low_count >= 25, "Minimum simultaneous /IORQ and /WR low period was at least 25 clocks" );
@@ -596,7 +596,7 @@ module tb ();
 		check( debug_data[5] == 8'h5A, "F3 latch is visible in the debug packet" );
 		check( debug_data[6] == 8'h81, "F4 latch is visible in the debug packet" );
 		check( debug_data[7] == 8'h03, "F5 latch is visible in the debug packet" );
-		check( debug_data[20] == 8'hA5, "Debug link pattern remains 0xA5 after flag writes" );
+		check( debug_data[32] == 8'hA5, "Debug link pattern remains 0xA5 after flag writes" );
 
 		$display( "============================================================" );
 		$display( "Results: PASS = %0d, FAIL = %0d", pass_count, fail_count );

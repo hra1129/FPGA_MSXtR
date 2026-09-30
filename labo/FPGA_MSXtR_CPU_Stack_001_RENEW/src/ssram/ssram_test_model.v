@@ -150,6 +150,10 @@ module ssram_test_model (
 					end
 				end
 				default: begin
+					if( cmd == 8'h0B && count >= 15 && count[0] ) begin
+						addr <= addr + 19'd1;
+						rd_data <= mem[addr + 19'd1];
+					end
 					if( cmd == 8'h02 && count > 8 ) begin
 						// Sequential write support
 						if( count[0] == 1'b0 ) begin
@@ -188,12 +192,12 @@ module ssram_test_model (
 	//
 	always @( negedge sclk ) begin
 		if( !cs_n && quad_mode && cmd == 8'h0B ) begin
-			if( count == 14 ) begin
+			if( count >= 14 && !count[0] ) begin
 				// Drive upper nibble of read data
 				sio_out		<= rd_data[7:4];
 				driving		<= 1'b1;
 			end
-			else if( count == 15 ) begin
+			else if( count >= 15 && count[0] ) begin
 				// Drive lower nibble of read data
 				sio_out		<= rd_data[3:0];
 			end

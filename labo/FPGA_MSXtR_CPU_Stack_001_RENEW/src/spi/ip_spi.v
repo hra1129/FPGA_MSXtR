@@ -68,7 +68,7 @@ module ip_spi (
 	output	[7:0]	keyboard_matrix,
 	output			keyboard_matrix_valid,
 	output	[7:0]	keyboard_update_count,
-	input	[159:0]	debug_signal
+	input	[255:0]	debug_signal
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -88,7 +88,7 @@ module ip_spi (
 	localparam	[4:0]	ST_DEBUG_H			 = 5'd15;
 	localparam	[4:0]	ST_KEYBOARD_SEND	 = 5'd16;
 	localparam			SPI_RX_WDATA		 = 8'h64;
-	localparam	[4:0]	DEBUG_SIGNAL_BYTES	 = 5'd21;	//	debug_signal 20byte + 通信確認用の固定パターン(0xA5) 1byte
+	localparam	[5:0]	DEBUG_SIGNAL_BYTES	 = 6'd33;	//	debug_signal 32byte + 通信確認用の固定パターン(0xA5) 1byte
 	localparam			DEBUG_SIGNAL_PATTERN = 8'hA5;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
@@ -120,8 +120,8 @@ module ip_spi (
 	reg				ff_keyboard_update_toggle;
 	reg				ff_keyboard_update_toggle_d;
 	reg		[7:0]	ff_keyboard_update_count;
-	reg		[159:0]	ff_debug_signal;
-	reg		[4:0]	ff_debug_byte_index;
+	reg		[255:0]	ff_debug_signal;
+	reg		[5:0]	ff_debug_byte_index;
 	reg		[19:0]	ff_flashrom_address;
 	reg				ff_flashrom_access;
 	reg				ff_slot_wait_n;
@@ -173,7 +173,7 @@ module ip_spi (
 			ff_keyboard_output_data		<= 8'hFF;
 			ff_keyboard_update_toggle	<= 1'b0;
 			ff_keyboard_update_count	<= 8'd0;
-			ff_debug_signal				<= 160'd0;
+			ff_debug_signal				<= 256'd0;
 			ff_flashrom_address			<= 20'd0;
 			ff_flashrom_access			<= 1'b0;
 			ff_debug_byte_index			<= 5'd0;
@@ -344,7 +344,7 @@ module ip_spi (
 						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
 						ff_debug_signal		<= debug_signal;
 						ff_spi_wdata		<= debug_signal[7:0];
-						ff_debug_byte_index <= 5'd1;
+						ff_debug_byte_index <= 6'd1;
 						ff_spi_valid		<= 1'b1;
 						ff_spi_write		<= 1'b1;
 					end
@@ -491,13 +491,13 @@ module ip_spi (
 				if( spi_ready ) begin
 					//	byte_index(1..DEBUG_SIGNAL_BYTES-1)を順番に送信し、最後のbyteでST_SENDへ抜ける
 					//	最終byteはff_debug_signal範囲外なので固定パターンを送る(通信経路そのものの確認用)
-					if( ff_debug_byte_index == (DEBUG_SIGNAL_BYTES - 5'd1) ) begin
+					if( ff_debug_byte_index == (DEBUG_SIGNAL_BYTES - 6'd1) ) begin
 						ff_spi_wdata	<= DEBUG_SIGNAL_PATTERN;
 						ff_state	<= ST_SEND;
 					end
 					else begin
 						ff_spi_wdata	<= ff_debug_signal[ ff_debug_byte_index * 8 +: 8 ];
-						ff_debug_byte_index <= ff_debug_byte_index + 5'd1;
+						ff_debug_byte_index <= ff_debug_byte_index + 6'd1;
 					end
 					ff_spi_valid	<= 1'b1;
 					ff_spi_write	<= 1'b1;

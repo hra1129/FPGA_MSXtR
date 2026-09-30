@@ -39,7 +39,7 @@
 #define IO_VDP_PORT3				0x9B
 #define IO_VDP_PORT4				0x9C
 
-//	SPIコマンド0Ahが返す診断20byteと通信確認パターン
+//	SPIコマンド0Ahが返す診断32byteと通信確認パターン
 typedef struct {
 	uint16_t	z80_pc;
 	uint8_t		primary_slot;
@@ -53,6 +53,9 @@ typedef struct {
 	uint16_t	r800_bus_address;
 	uint8_t		cpu_status;			//	bit0:mode bit1:pause bit2:z80_reset_n bit3:r800_reset_n
 	uint8_t		cpu_mode_change_count;
+	uint32_t	r800_cache_hits;
+	uint32_t	r800_cache_misses;
+	uint32_t	r800_cache_fill_wait_cycles;
 	uint8_t		link_pattern;		//	SPI通信経路確認用の固定パターン。0xA5でなければ通信自体が不成立
 } fpga_debug_signal_t;
 

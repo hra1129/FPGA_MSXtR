@@ -106,7 +106,7 @@ module tb ();
 	reg				pause_led;
 	reg				caps_led;
 	reg				kana_led;
-	reg		[159:0]	debug_signal;
+	reg		[255:0]	debug_signal;
 
 	//	--------------------------------------------------------------------
 	//	Monitor: count bus_valid pulses and capture last transaction values
@@ -288,7 +288,7 @@ module tb ();
 		pause_led	= 1'b0;
 		caps_led	= 1'b0;
 		kana_led	= 1'b0;
-		debug_signal = 160'd0;
+		debug_signal = 256'd0;
 		test_no		= 0;
 		pass_count	= 0;
 		fail_count	= 0;
@@ -898,18 +898,18 @@ module tb ();
 		// ================================================================
 		test_no = 9;
 		$display( "------------------------------------------------------------" );
-		$display( "[TEST %0d] Debug signal read: cmd=0x0A, expect 160bit data (byte0 first)", test_no );
+		$display( "[TEST %0d] Debug signal read: cmd=0x0A, expect 256bit data (byte0 first)", test_no );
 
 		reset_n = 1'b0;
 		repeat( 3 ) @( posedge clk );
 		reset_n = 1'b1;
-		debug_signal = 160'h2233445566778899AABBCCDDEEFF001122334455;
+		debug_signal = { 96'h89ABCDEF01234567FEDCBA98, 160'h2233445566778899AABBCCDDEEFF001122334455 };
 		repeat( 5 ) @( posedge clk );
 
 		begin
 			int cnt_before;
-			reg [7:0] read_data [0:20];
-			reg [159:0] read_value;
+			reg [7:0] read_data [0:32];
+			reg [255:0] read_value;
 			cnt_before = bus_valid_count;
 
 			spi_cs_n = 1'b0;
@@ -926,32 +926,31 @@ module tb ();
 				fail_count = fail_count + 1;
 			end
 
-			for( int byte_index = 0; byte_index < 21; byte_index = byte_index + 1 ) begin
+			for( int byte_index = 0; byte_index < 33; byte_index = byte_index + 1 ) begin
 				spi_transfer_byte( 8'h00, read_data[byte_index] );
 			end
 			spi_cs_n = 1'b1;
 			spi_mosi = 1'b0;
 			repeat( 10 ) @( posedge clk );
 
-			read_value = { read_data[19], read_data[18], read_data[17], read_data[16],
-						 read_data[15], read_data[14], read_data[13], read_data[12], read_data[11], read_data[10],
-						 read_data[9], read_data[8], read_data[7], read_data[6], read_data[5], read_data[4],
-						 read_data[3], read_data[2], read_data[1], read_data[0] };
-			if( read_value === 160'h2233445566778899AABBCCDDEEFF001122334455 ) begin
-				$display( "[TEST %0d] PASS: debug response = 0x%040X", test_no, read_value );
+			for( int byte_index = 0; byte_index < 32; byte_index = byte_index + 1 ) begin
+				read_value[byte_index * 8 +: 8] = read_data[byte_index];
+			end
+			if( read_value === debug_signal ) begin
+				$display( "[TEST %0d] PASS: debug response = 0x%064X", test_no, read_value );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: debug response = 0x%040X", test_no, read_value );
+				$display( "[TEST %0d] FAIL: debug response = 0x%064X", test_no, read_value );
 				fail_count = fail_count + 1;
 			end
 
-			if( read_data[20] === 8'hA5 ) begin
-				$display( "[TEST %0d] PASS: link pattern byte = 0x%02X", test_no, read_data[20] );
+			if( read_data[32] === 8'hA5 ) begin
+				$display( "[TEST %0d] PASS: link pattern byte = 0x%02X", test_no, read_data[32] );
 				pass_count = pass_count + 1;
 			end
 			else begin
-				$display( "[TEST %0d] FAIL: link pattern byte = 0x%02X (expected 0xA5)", test_no, read_data[20] );
+				$display( "[TEST %0d] FAIL: link pattern byte = 0x%02X (expected 0xA5)", test_no, read_data[32] );
 				fail_count = fail_count + 1;
 			end
 

@@ -83,6 +83,7 @@ module cr800_inst #(
 	input	[7:0]	slot_d		,
 	//	Slot decode hints from msx_slot (現在の bus_address に対するデコード結果)
 	input			flash_cs	,	//	1: オンボードFlashROM (rom0/rom1) が対象
+	input			main_rom_cs,	//	1: SLOT#0-0 MAIN-ROMが対象
 	input			slot12_cs	,	//	1: SLOT#1/#2 (外部カートリッジ) が対象
 	input			ssram_access,	//	1: 内部Serial SRAMへのアクセス
 	//	Internal bus interface (device transaction, replaces raw Z80 timing pins)
@@ -135,12 +136,21 @@ module cr800_inst #(
 	localparam	[3:0]	CY_FLASH		= 4'd7;
 	localparam	[3:0]	CY_ALIGN		= 4'd8;
 	localparam	[3:0]	CY_SLOW			= 4'd9;
+	localparam	[3:0]	CY_ROM_CHECK	= 4'd10;
+	localparam	[3:0]	CY_ROM_SETUP	= 4'd11;
+	localparam	[3:0]	CY_ROM_FILL		= 4'd12;
 	reg		[3:0]		ff_cyc_state;
 	reg					ff_cyc_m1;
 	reg					ff_cyc_io;
 	reg					ff_cyc_write;
 	reg		[2:0]		ff_eng_t;			//	Z80タイミングエンジンの T-state (1:T1, 2:T2, 3:TW, 4:T3, 5:T4)
 	reg		[3:0]		ff_flash_cnt;
+	reg		[2:0]		ff_rom_fill_index;
+	wire				w_rom_cache_lookup;
+	wire				w_rom_cache_hit;
+	wire	[7:0]		w_rom_cache_data;
+	wire	[7:0]		w_rom_fill_data;
+	wire				w_rom_fill_byte;
 	reg		[6:0]		ff_int_timeout;
 	reg		[2:0]		ff_t_state_d;
 	wire				w_cycle_start;
@@ -164,6 +174,24 @@ module cr800_inst #(
 
 	assign w_cycle_start	= ( w_t_state == 3'd1 ) && ( ff_t_state_d != 3'd1 );
 	assign w_has_access		= ~w_noread | w_write | w_iorq;
+	assign w_rom_cache_lookup = ff_run && ff_cyc_state == CY_CLASSIFY2 && !ff_cyc_io &&
+		!slot12_cs && flash_cs && main_rom_cs && !ff_cyc_write;
+	assign w_rom_fill_byte = ff_run && ff_cyc_state == CY_ROM_FILL && ff_flash_cnt == 4'd6;
+
+	r800_rom_cache u_rom_cache (
+		.clk(clk),
+		.reset_n(reset_n),
+		.invalidate(!run_req || !ff_run),
+		.lookup(w_rom_cache_lookup),
+		.miss_start(ff_run && ff_cyc_state == CY_ROM_CHECK),
+		.address(ff_bus_address[14:0]),
+		.hit(w_rom_cache_hit),
+		.hit_data(w_rom_cache_data),
+		.fill_byte(w_rom_fill_byte),
+		.fill_index(ff_rom_fill_index),
+		.fill_data(slot_d),
+		.fill_requested_data(w_rom_fill_data)
+	);
 
 	// ---------------------------------------------------------
 	//	CPU切替: M1サイクルで run_req を取り込んで停止。停止中は run_req=1 で再開。
@@ -245,6 +273,7 @@ module cr800_inst #(
 			ff_cyc_write	<= 1'b0;
 			ff_eng_t		<= 3'd1;
 			ff_flash_cnt	<= 4'd0;
+			ff_rom_fill_index <= 3'd0;
 			ff_int_timeout	<= 7'd0;
 			ff_wait_n_i		<= 1'b1;
 			ff_m1_n			<= 1'b1;
@@ -305,6 +334,9 @@ module cr800_inst #(
 					//	I/O(動的判定) と SLOT#1/#2 は Z80 と同じ速度で実行
 					ff_cyc_state	<= CY_ALIGN;
 				end
+				else if( w_rom_cache_lookup ) begin
+					ff_cyc_state <= CY_ROM_CHECK;
+				end
 				else if( flash_cs ) begin
 					ff_cyc_state	<= CY_FLASH;
 					ff_flash_cnt	<= 4'd0;
@@ -356,6 +388,39 @@ module cr800_inst #(
 					ff_slot_d_oe	<= 1'b0;
 					ff_wait_n_i		<= 1'b1;
 					ff_cyc_state	<= CY_IDLE;
+				end
+			end
+			CY_ROM_CHECK: begin
+				if( w_rom_cache_hit ) begin
+					ff_wait_n_i <= 1'b1;
+					ff_cyc_state <= CY_IDLE;
+				end
+				else begin
+					ff_rom_fill_index <= 3'd0;
+					ff_cyc_state <= CY_ROM_SETUP;
+				end
+			end
+			CY_ROM_SETUP: begin
+				ff_flash_cnt <= 4'd0;
+				ff_cyc_state <= CY_ROM_FILL;
+			end
+			CY_ROM_FILL: begin
+				ff_flash_cnt <= ff_flash_cnt + 4'd1;
+				if( ff_flash_cnt == 4'd0 ) begin
+					ff_merq_n <= 1'b0;
+					ff_rd_n <= 1'b0;
+				end
+				else if( ff_flash_cnt == 4'd6 ) begin
+					ff_merq_n <= 1'b1;
+					ff_rd_n <= 1'b1;
+					if( ff_rom_fill_index == 3'd7 ) begin
+						ff_wait_n_i <= 1'b1;
+						ff_cyc_state <= CY_IDLE;
+					end
+					else begin
+						ff_rom_fill_index <= ff_rom_fill_index + 3'd1;
+						ff_cyc_state <= CY_ROM_SETUP;
+					end
 				end
 			end
 			CY_ALIGN: begin
@@ -540,7 +605,9 @@ module cr800_inst #(
 		end
 	end
 
-	assign bus_address	= ff_rfsh_n ? ff_bus_address : ff_refresh_address;
+	assign bus_address	= !ff_rfsh_n ? ff_refresh_address :
+		(ff_cyc_state == CY_ROM_SETUP || ff_cyc_state == CY_ROM_FILL) ?
+		{ 1'b0, ff_bus_address[14:3], ff_rom_fill_index } : ff_bus_address;
 	assign rfsh_n		= ff_rfsh_n;
 
 	// ---------------------------------------------------------
@@ -548,6 +615,12 @@ module cr800_inst #(
 	//	内部デバイスは bus_rdata_en、外部(slot_d)は各サイクルのラッチ位置で取り込む
 	// ---------------------------------------------------------
 	wire				w_slot_latch;
+	wire				w_rom_read_done;
+	wire	[7:0]		w_rom_read_data;
+
+	assign w_rom_read_done = (ff_cyc_state == CY_ROM_CHECK && w_rom_cache_hit) ||
+		(w_rom_fill_byte && ff_rom_fill_index == 3'd7);
+	assign w_rom_read_data = (ff_cyc_state == CY_ROM_CHECK) ? w_rom_cache_data : w_rom_fill_data;
 
 	assign w_slot_latch =
 		( ff_cyc_state == CY_FLASH && ff_flash_cnt == 4'd6 ) ||
@@ -571,6 +644,10 @@ module cr800_inst #(
 			if( bus_rdata_en ) begin
 				ff_bus_rdata	<= bus_rdata;
 				ff_got_rdata	<= 1'b1;
+			end
+			else if( w_rom_read_done ) begin
+				ff_bus_rdata <= w_rom_read_data;
+				ff_got_rdata <= 1'b1;
 			end
 			else if( !ff_cyc_write && !ff_got_rdata ) begin
 				if( w_slot_latch ) begin

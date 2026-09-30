@@ -132,6 +132,10 @@ void dump_fpga_debug_signal( void ) {
 			debug_signal.secondary_slot3 );
 	printf( "  System flag: F3=0x%02X F4=0x%02X F5=0x%02X\r\n",
 			debug_signal.f3, debug_signal.f4, debug_signal.f5 );
+	printf( "  R800 cache: hit=%lu miss=%lu fill_wait=%lu cycles\r\n",
+			(unsigned long)debug_signal.r800_cache_hits,
+			(unsigned long)debug_signal.r800_cache_misses,
+			(unsigned long)debug_signal.r800_cache_fill_wait_cycles );
 	if( debug_signal.link_pattern == 0xA5 ) {
 		printf( "  link_pattern=0x%02X (OK)\r\n", debug_signal.link_pattern );
 	}

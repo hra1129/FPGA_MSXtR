@@ -17,9 +17,15 @@ module r800_cache #(
 	output sram_write,
 	output sram_valid,
 	output [7:0] sram_wdata,
+	output sram_burst,
 	input sram_ready,
 	input [7:0] sram_rdata,
-	input sram_rdata_en
+	input sram_rdata_en,
+	input [63:0] sram_burst_rdata,
+	input sram_burst_rdata_en,
+	output [31:0] debug_hit_count,
+	output [31:0] debug_miss_count,
+	output [31:0] debug_fill_wait_cycles
 );
 	localparam c_sets = 1 << c_set_bits;
 	localparam c_tag_bits = 18 - c_set_bits;
@@ -37,10 +43,11 @@ module r800_cache #(
 	reg [7:0] ff_wdata;
 	reg ff_write;
 	reg [1:0] ff_victim;
-	reg [2:0] ff_fill_count;
-	reg [63:0] ff_fill_line;
 	reg [7:0] ff_read_data;
 	reg ff_active_d;
+	reg [31:0] ff_hit_count;
+	reg [31:0] ff_miss_count;
+	reg [31:0] ff_fill_wait_cycles;
 	reg [3:0] ff_valid [0:c_sets-1];
 	reg [2:0] ff_plru [0:c_sets-1];
 	wire [63+c_tag_bits:0] w_lookup_line [0:3];
@@ -64,12 +71,12 @@ module r800_cache #(
 	integer set_index;
 	genvar way;
 
-	assign w_fill_last = ff_state == c_fill_data && sram_rdata_en && ff_fill_count == 3'd7;
+	assign w_fill_last = ff_state == c_fill_data && sram_burst_rdata_en;
 	assign w_update_hit = ff_state == c_write_wait && sram_ready && ff_lookup_valid[ff_victim] &&
 		w_lookup_line[ff_victim][63+c_tag_bits:64] == w_tag;
 	assign w_updated_line = (w_lookup_line[ff_victim][63:0] & ~(64'hFF << {ff_address[2:0], 3'b000})) |
 		({56'd0, ff_wdata} << {ff_address[2:0], 3'b000});
-	assign w_ram_write_data = w_fill_last ? {w_tag, sram_rdata, ff_fill_line[55:0]} :
+	assign w_ram_write_data = w_fill_last ? {w_tag, sram_burst_rdata} :
 		{w_tag, w_updated_line};
 	assign w_ram_write = w_fill_last || w_update_hit;
 	assign w_ram_enable = ff_state == c_lookup || w_ram_write;
@@ -107,6 +114,26 @@ module r800_cache #(
 		w_used_way == 2'd2 ? { 1'b1, ff_lookup_plru[1], 1'b0 } :
 		{ 1'b0, ff_lookup_plru[1], 1'b0 };
 	assign w_hit_line = w_lookup_line[w_hit_way][63:0];
+	assign debug_hit_count = ff_hit_count;
+	assign debug_miss_count = ff_miss_count;
+	assign debug_fill_wait_cycles = ff_fill_wait_cycles;
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_hit_count <= 32'd0;
+			ff_miss_count <= 32'd0;
+			ff_fill_wait_cycles <= 32'd0;
+		end
+		else if( r800_active ) begin
+			if( ff_state == c_check && !ff_write ) begin
+				if( w_hit_any ) ff_hit_count <= ff_hit_count + 32'd1;
+				else ff_miss_count <= ff_miss_count + 32'd1;
+			end
+			if( ff_state == c_fill_issue || ff_state == c_fill_data ) begin
+				ff_fill_wait_cycles <= ff_fill_wait_cycles + 32'd1;
+			end
+		end
+	end
 
 	assign bus_ready = !r800_active ? sram_ready : (ff_state == c_response);
 	assign bus_rdata = !r800_active ? sram_rdata : ff_read_data;
@@ -115,8 +142,9 @@ module r800_cache #(
 	assign sram_cs = !r800_active ? bus_cs :
 		(bus_cs && (ff_state == c_write_issue || ff_state == c_fill_issue));
 	assign sram_address = !r800_active ? bus_address :
-		ff_write ? ff_address : { ff_address[20:3], ff_fill_count };
+		ff_write ? ff_address : { ff_address[20:3], 3'd0 };
 	assign sram_write = !r800_active ? bus_write : ff_write;
+	assign sram_burst = r800_active && ff_state == c_fill_issue;
 	assign sram_valid = !r800_active ? bus_valid :
 		(ff_state == c_write_issue || ff_state == c_fill_issue);
 	assign sram_wdata = !r800_active ? bus_wdata : ff_wdata;
@@ -129,8 +157,6 @@ module r800_cache #(
 			ff_wdata <= 8'd0;
 			ff_write <= 1'b0;
 			ff_victim <= 2'd0;
-			ff_fill_count <= 3'd0;
-			ff_fill_line <= 64'd0;
 			ff_read_data <= 8'd0;
 			ff_lookup_valid <= 4'd0;
 			ff_lookup_plru <= 3'd0;
@@ -176,7 +202,6 @@ module r800_cache #(
 					end
 					else begin
 						ff_victim <= w_replace_way;
-						ff_fill_count <= 3'd0;
 						ff_state <= c_fill_issue;
 					end
 				end
@@ -196,20 +221,11 @@ module r800_cache #(
 					end
 				end
 				c_fill_data: begin
-					if( sram_rdata_en ) begin
-						ff_fill_line[ff_fill_count*8 +: 8] <= sram_rdata;
-						if( ff_fill_count == ff_address[2:0] ) begin
-							ff_read_data <= sram_rdata;
-						end
-						if( ff_fill_count == 3'd7 ) begin
+					if( sram_burst_rdata_en ) begin
+						ff_read_data <= sram_burst_rdata[ff_address[2:0]*8 +: 8];
 							ff_valid[w_set][ff_victim] <= 1'b1;
 							ff_plru[w_set] <= w_plru_update;
 							ff_state <= c_response;
-						end
-					else begin
-						ff_fill_count <= ff_fill_count + 3'd1;
-						ff_state <= c_fill_issue;
-						end
 					end
 				end
 				c_response: ff_state <= c_release;

@@ -525,8 +525,8 @@ uint8_t fpga_set_keyboard_matrix( const uint8_t *matrix ) {
 }
 
 // ---------------------------------------------------------
-static uint16_t fpga_debug_get_bits( const uint8_t *data, uint16_t bit_offset, uint8_t bit_width ) {
-	uint16_t value;
+static uint32_t fpga_debug_get_bits( const uint8_t *data, uint16_t bit_offset, uint8_t bit_width ) {
+	uint32_t value;
 
 	value = 0;
 	for( uint8_t bit_index = 0; bit_index < bit_width; bit_index++ ) {
@@ -542,14 +542,14 @@ static uint16_t fpga_debug_get_bits( const uint8_t *data, uint16_t bit_offset, u
 void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal ) {
 	uint8_t cmd;
 	uint8_t dummy;
-	uint8_t data[21];
+	uint8_t data[33];
 
 	gpio_put( SPI0_CSN_PIN, 0 );
 	cmd = 0x0A;
 	spi_write_blocking( SPI0_PORT, &cmd, 1 );
 	sleep_us( 1 );
 	dummy = 0x00;
-	for( int index = 0; index < 21; index++ ) {
+	for( int index = 0; index < 33; index++ ) {
 		spi_write_read_blocking( SPI0_PORT, &dummy, &data[index], 1 );
 		sleep_us( 1 );
 	}
@@ -568,5 +568,8 @@ void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal ) {
 	debug_signal->r800_bus_address		= fpga_debug_get_bits( data, 96, 16 );
 	debug_signal->cpu_status			= data[14];
 	debug_signal->cpu_mode_change_count	= data[15];
-	debug_signal->link_pattern			= data[20];
+	debug_signal->r800_cache_hits			= fpga_debug_get_bits( data, 160, 32 );
+	debug_signal->r800_cache_misses		= fpga_debug_get_bits( data, 192, 32 );
+	debug_signal->r800_cache_fill_wait_cycles = fpga_debug_get_bits( data, 224, 32 );
+	debug_signal->link_pattern			= data[32];
 }

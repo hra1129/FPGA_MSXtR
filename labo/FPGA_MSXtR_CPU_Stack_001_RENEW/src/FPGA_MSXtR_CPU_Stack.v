@@ -135,7 +135,10 @@ module fpga_msxtr_cpu_stack (
 	wire	[2:0]	w_r800_t_state;
 	wire	[15:0]	w_r800_pc;
 	wire			w_processor_mode;
-	wire	[159:0]	w_debug_signal;
+	wire	[255:0]	w_debug_signal;
+	wire	[31:0]	w_r800_cache_hits;
+	wire	[31:0]	w_r800_cache_misses;
+	wire	[31:0]	w_r800_cache_fill_wait;
 	wire	[1:0]	w_cpu_sel;
 	wire			w_z80_run_req;
 	wire			w_z80_run_ack;
@@ -313,6 +316,9 @@ module fpga_msxtr_cpu_stack (
 	wire			w_cache_ssram_ready;
 	wire	[7:0]	w_cache_ssram_rdata;
 	wire			w_cache_ssram_rdata_en;
+	wire			w_cache_ssram_burst;
+	wire	[63:0]	w_cache_ssram_burst_rdata;
+	wire			w_cache_ssram_burst_rdata_en;
 	wire			w_slot3_0_selected;
 	wire	[1:0]	w_access_primary_slot;
 	wire	[1:0]	w_access_secondary_slot3;
@@ -379,6 +385,9 @@ module fpga_msxtr_cpu_stack (
 
 	//	SPI 0Ah: PC, slot registers, system flags, bus addresses, CPU state, mode count, reserved.
 	assign w_debug_signal = {
+			w_r800_cache_fill_wait,
+			w_r800_cache_misses,
+			w_r800_cache_hits,
 			32'd0,
 			ff_processor_mode_change_count,
 			4'd0, ff_r800_reset_n, ff_z80_reset_n, w_msx_pause, w_processor_mode,
@@ -634,6 +643,7 @@ module fpga_msxtr_cpu_stack (
 		.run_ack						( w_r800_run_ack					),
 		.slot_d							( slot_d							),
 		.flash_cs						( w_cpu_flash_cs					),
+		.main_rom_cs					( !slot_rom0_ce_n && slot_a[18:15] == 4'd0 && !w_device_bootrom_cs ),
 		.slot12_cs						( w_cpu_slot12_cs					),
 		.ssram_access				( w_device_ssram_active			),
 		.bus_io							( w_r800_bus_io						),
@@ -1023,7 +1033,13 @@ module fpga_msxtr_cpu_stack (
 		.sram_wdata	( w_cache_ssram_wdata ),
 		.sram_ready	( w_cache_ssram_ready ),
 		.sram_rdata	( w_cache_ssram_rdata ),
-		.sram_rdata_en	( w_cache_ssram_rdata_en )
+		.sram_rdata_en	( w_cache_ssram_rdata_en ),
+		.sram_burst	( w_cache_ssram_burst ),
+		.sram_burst_rdata	( w_cache_ssram_burst_rdata ),
+		.sram_burst_rdata_en	( w_cache_ssram_burst_rdata_en ),
+		.debug_hit_count	( w_r800_cache_hits ),
+		.debug_miss_count	( w_r800_cache_misses ),
+		.debug_fill_wait_cycles	( w_r800_cache_fill_wait )
 	);
 
 	ssram u_ssram (
@@ -1038,6 +1054,9 @@ module fpga_msxtr_cpu_stack (
 		.bus_ready					( w_cache_ssram_ready				),
 		.bus_rdata					( w_cache_ssram_rdata				),
 		.bus_rdata_en					( w_cache_ssram_rdata_en		),
+		.bus_burst						( w_cache_ssram_burst				),
+		.bus_burst_rdata				( w_cache_ssram_burst_rdata		),
+		.bus_burst_rdata_en			( w_cache_ssram_burst_rdata_en	),
 		.startup_busy					( w_ssram_startup_busy				),
 		.sram_sclk						( sram_sclk							),
 		.sram_ce0_n						( sram_ce0_n						),

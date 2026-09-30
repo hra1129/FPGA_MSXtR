@@ -564,12 +564,12 @@ module tb ();
 	endtask
 
 	task automatic spi_get_debug_signal( output [15:0] debug_signal );
-		reg [7:0] data [0:20];
+			reg [7:0] data [0:32];
 		begin
 			mcu_cs_n = 1'b0;
 			#( 200 );
 			spi_send_byte( 8'h0A );
-			for( int byte_index = 0; byte_index < 21; byte_index = byte_index + 1 ) begin
+			for( int byte_index = 0; byte_index < 33; byte_index = byte_index + 1 ) begin
 				spi_transfer_byte( 8'h00, data[byte_index] );
 			end
 			#( 200 );

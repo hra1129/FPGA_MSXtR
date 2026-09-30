@@ -40,9 +40,12 @@ module ssram (
 	input			bus_write,
 	input			bus_valid,
 	input	[7:0]	bus_wdata,
+	input			bus_burst,
 	output			bus_ready,
 	output	[7:0]	bus_rdata,
 	output			bus_rdata_en,
+	output	[63:0]	bus_burst_rdata,
+	output			bus_burst_rdata_en,
 	output			startup_busy,
 	//	SPI SRAM I/F
 	output			sram_sclk,
@@ -98,12 +101,24 @@ module ssram (
 	reg		[20:0]	ff_req_address_clk;
 	reg				ff_req_write_clk;
 	reg		[7:0]	ff_req_wdata_clk;
+	reg				ff_req_burst_clk;
 	reg		[18:0]	ff_address;
 	reg		[1:0]	ff_sram_select;
 	reg		[7:0]	ff_wdata;
 	reg		[7:0]	ff_rdata;
 	reg				ff_rdata_en;
 	reg				ff_read_complete;		// Toggle signal for read complete
+	reg				ff_burst;
+	reg		[2:0]	ff_burst_index;
+	reg		[63:0]	ff_burst_serial;
+	reg				ff_burst_done_serial;
+	reg				ff_burst_done_clk_d0;
+	reg				ff_burst_done_clk_d1;
+	reg		[63:0]	ff_burst_clk;
+	reg				ff_burst_ack_clk;
+	reg				ff_burst_ack_serial_d0;
+	reg				ff_burst_ack_serial_d1;
+	reg				ff_burst_rdata_en;
 	reg				ff_startup_done_serial;
 	reg				ff_startup_done_clk_d0;
 	reg				ff_startup_done_clk_d1;
@@ -237,6 +252,14 @@ module ssram (
 				ff_sram_ce2_n <= 1'b1;
 				ff_sram_ce3_n <= 1'b1;
 			end
+			c_state_read1: begin
+				if( ff_burst && ff_burst_index == 3'd7 ) begin
+					ff_sram_ce0_n <= 1'b1;
+					ff_sram_ce1_n <= 1'b1;
+					ff_sram_ce2_n <= 1'b1;
+					ff_sram_ce3_n <= 1'b1;
+				end
+			end
 			endcase
 		end
 	end
@@ -318,12 +341,14 @@ module ssram (
 			ff_req_address_clk <= 21'd0;
 			ff_req_write_clk <= 1'b0;
 			ff_req_wdata_clk <= 8'd0;
+			ff_req_burst_clk <= 1'b0;
 		end
 		else begin
 			if( w_req && ff_ready ) begin
 				ff_req_address_clk <= bus_address;
 				ff_req_write_clk <= bus_write;
 				ff_req_wdata_clk <= bus_wdata;
+				ff_req_burst_clk <= bus_burst && !bus_write;
 				ff_req_toggle_clk <= ~ff_req_toggle_clk;
 			end
 		end
@@ -357,6 +382,10 @@ module ssram (
 			ff_sram_select	<= 2'd0;
 			ff_read		<= 1'b0;
 			ff_write	<= 1'b0;
+			ff_burst <= 1'b0;
+			ff_burst_index <= 3'd0;
+			ff_burst_serial <= 64'd0;
+			ff_burst_done_serial <= 1'b0;
 			ff_powerup_wait <= 15'd0;
 			ff_startup_done_serial <= 1'b0;
 		end
@@ -436,6 +465,8 @@ module ssram (
 					ff_address	<= ff_req_address_clk[18:0];
 					ff_sram_select	<= ff_req_address_clk[20:19];
 					ff_write	<= ff_req_write_clk;
+					ff_burst	<= ff_req_burst_clk;
+					ff_burst_index <= 3'd0;
 					ff_active	<= 1'b0;
 				end
 			end
@@ -540,16 +571,30 @@ module ssram (
 				ff_state		<= c_state_read1;
 			end
 			c_state_read1: begin
-				//	lower nibble read byte
-				ff_state		<= c_state_read2;
+				if( ff_burst ) begin
+					ff_burst_serial[ff_burst_index*8 +: 8] <= ff_rdata;
+					if( ff_burst_index == 3'd7 ) begin
+						ff_burst_done_serial <= ~ff_burst_done_serial;
+						ff_state <= c_state_read3;
+						ff_ce_n <= 1'b1;
+						ff_read <= 1'b0;
+					end
+					else begin
+						ff_burst_index <= ff_burst_index + 3'd1;
+						ff_state <= c_state_read0;
+					end
+				end
+				else begin
+					ff_state <= c_state_read2;
+				end
 			end
 			c_state_read2: begin
-				ff_state		<= c_state_read3;
-				ff_ce_n			<= 1'b1;
-				ff_read			<= 1'b0;
+				ff_state <= c_state_read3;
+				ff_ce_n <= 1'b1;
+				ff_read <= 1'b0;
 			end
 			c_state_read3: begin
-				if( ff_rdata_en ) begin
+				if( ff_burst ? ff_burst_ack_serial_d1 == ff_burst_done_serial : ff_rdata_en ) begin
 					ff_state		<= c_state_idle;
 					ff_active		<= 1'b1;
 				end
@@ -591,8 +636,39 @@ module ssram (
 		else if( ff_read_complete && ff_rdata_en ) begin
 			ff_read_complete <= 1'b0;
 		end
-		else if( ff_state == c_state_read2 ) begin
+		else if( ff_state == c_state_read2 && !ff_burst ) begin
 			ff_read_complete <= 1'b1;
+		end
+	end
+
+	always @( posedge clk_serial ) begin
+		if( !n_reset ) begin
+			ff_burst_ack_serial_d0 <= 1'b0;
+			ff_burst_ack_serial_d1 <= 1'b0;
+		end
+		else begin
+			ff_burst_ack_serial_d0 <= ff_burst_ack_clk;
+			ff_burst_ack_serial_d1 <= ff_burst_ack_serial_d0;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !n_reset ) begin
+			ff_burst_done_clk_d0 <= 1'b0;
+			ff_burst_done_clk_d1 <= 1'b0;
+			ff_burst_ack_clk <= 1'b0;
+			ff_burst_clk <= 64'd0;
+			ff_burst_rdata_en <= 1'b0;
+		end
+		else begin
+			ff_burst_done_clk_d0 <= ff_burst_done_serial;
+			ff_burst_done_clk_d1 <= ff_burst_done_clk_d0;
+			ff_burst_rdata_en <= 1'b0;
+			if( ff_burst_done_clk_d1 != ff_burst_ack_clk ) begin
+				ff_burst_clk <= ff_burst_serial;
+				ff_burst_ack_clk <= ff_burst_done_clk_d1;
+				ff_burst_rdata_en <= 1'b1;
+			end
 		end
 	end
 
@@ -617,5 +693,7 @@ module ssram (
 	assign bus_ready	= ff_ready;
 	assign bus_rdata	= ff_rdata;
 	assign bus_rdata_en = ff_rdata_en;
+	assign bus_burst_rdata = ff_burst_clk;
+	assign bus_burst_rdata_en = ff_burst_rdata_en;
 	assign startup_busy = ~ff_startup_done_clk_d1;
 endmodule
