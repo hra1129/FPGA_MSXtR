@@ -60,6 +60,47 @@ add wave -noupdate -radix hexadecimal /tb/u_dut/u_z80/ff_di
 add wave -noupdate -radix hexadecimal /tb/u_dut/u_z80/ff_bus_wdata
 add wave -noupdate -radix hexadecimal /tb/u_dut/u_z80/w_cz80_di
 add wave -noupdate -radix hexadecimal /tb/u_dut/u_z80/ff_wait_bus_rdata_en
+add wave -noupdate -divider R800
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/reset_n
+add wave -noupdate -radix unsigned /tb/u_dut/u_r800/state_count
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/run_req
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/run_ack
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/pc
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/w_t_state
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/w_m1_n
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/w_iorq
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/w_noread
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/w_write
+add wave -noupdate -radix unsigned /tb/u_dut/u_r800/ff_cyc_state
+add wave -noupdate -radix unsigned /tb/u_dut/u_r800/ff_eng_t
+add wave -noupdate -radix unsigned /tb/u_dut/u_r800/ff_flash_cnt
+add wave -noupdate -radix unsigned /tb/u_dut/u_r800/ff_int_timeout
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/ff_cyc_m1
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/ff_cyc_io
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/ff_cyc_write
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/flash_cs
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/slot12_cs
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/ff_wait_n_i
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/ff_wait_n
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/m1_n
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/merq_n
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/iorq_n
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/rd_n
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/wr_n
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/slot_d_oe
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/rfsh_n
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/slot_d
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/bus_io
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/bus_write
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/bus_valid
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/bus_ready
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/bus_address
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/bus_wdata
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/bus_rdata
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/bus_rdata_en
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/ff_got_rdata
+add wave -noupdate -radix unsigned /tb/u_dut/u_r800/ff_refresh_cnt
+add wave -noupdate -radix hexadecimal /tb/u_dut/u_r800/ff_refresh_pending
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {6433 ps} 0}
 quietly wave cursor active 1

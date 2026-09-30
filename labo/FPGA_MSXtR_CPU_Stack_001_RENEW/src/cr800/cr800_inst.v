@@ -84,6 +84,7 @@ module cr800_inst #(
 	//	Slot decode hints from msx_slot (現在の bus_address に対するデコード結果)
 	input			flash_cs	,	//	1: オンボードFlashROM (rom0/rom1) が対象
 	input			slot12_cs	,	//	1: SLOT#1/#2 (外部カートリッジ) が対象
+	input			ssram_access,	//	1: 内部Serial SRAMへのアクセス
 	//	Internal bus interface (device transaction, replaces raw Z80 timing pins)
 	output			bus_io		,
 	output			bus_write	,
@@ -317,12 +318,12 @@ module cr800_inst #(
 				//	内部デバイス: ハンドシェイク完了で即終了 (非実装アドレスはタイムアウト)
 				ff_int_timeout	<= ff_int_timeout + 7'd1;
 				if( ff_cyc_write ) begin
-					if( (ff_bus_valid && bus_ready) || ff_int_timeout == 7'd127 ) begin
+					if( (ff_bus_valid && bus_ready) || (ff_int_timeout == 7'd127 && !ssram_access) ) begin
 						ff_wait_n_i		<= 1'b1;
 						ff_cyc_state	<= CY_IDLE;
 					end
 				end
-				else if( bus_rdata_en || ff_int_timeout == 7'd127 ) begin
+				else if( bus_rdata_en || (ff_int_timeout == 7'd127 && !ssram_access) ) begin
 					ff_wait_n_i		<= 1'b1;
 					ff_cyc_state	<= CY_IDLE;
 				end
@@ -575,7 +576,7 @@ module cr800_inst #(
 				if( w_slot_latch ) begin
 					ff_bus_rdata	<= slot_d;
 				end
-				else if( ff_cyc_state == CY_INTERNAL && ff_int_timeout == 7'd127 ) begin
+				else if( ff_cyc_state == CY_INTERNAL && ff_int_timeout == 7'd127 && !ssram_access ) begin
 					ff_bus_rdata	<= 8'hFF;
 				end
 			end

@@ -33,6 +33,8 @@ vlog ..\cr800\cr800_mcode.v
 vlog ..\cr800\cr800_reg.v
 vlog ..\cr800\cr800.v
 vlog ..\cr800\cr800_inst.v
+vlog ..\cr800\r800_cache.v
+vlog ..\cr800\r800_cache_ram.v
 vlog ..\msx_bus_mux\msx_bus_mux.v
 vlog ..\s2026\s2026_register.v
 vlog ..\s2026\s2026_cpu_select.v

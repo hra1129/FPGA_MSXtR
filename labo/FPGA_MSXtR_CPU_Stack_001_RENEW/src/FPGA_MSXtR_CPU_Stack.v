@@ -91,7 +91,9 @@ module fpga_msxtr_cpu_stack (
 	reg				ff_extio_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
 	reg				ff_config_rom_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
 	reg				ff_ext_rom_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
-	reg				ff_bootrom_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	`ifdef TEST_BOOTROM
+	reg				ff_bootrom_reset_n = 1'b0;
+	`endif
 	reg				ff_ppi_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
 	reg				ff_mapper_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
 	reg				ff_ssram_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
@@ -108,9 +110,6 @@ module fpga_msxtr_cpu_stack (
 	reg		[21:0]	ff_counter;
 	reg		[1:0]	ff_button_d0;
 	reg		[1:0]	ff_button_d1;
-
-	wire			w_int_n;
-	wire			w_cpu_int_p;
 
 	wire			w_z80_bus_m1;
 	wire			w_z80_bus_io;
@@ -306,6 +305,14 @@ module fpga_msxtr_cpu_stack (
 	wire			w_device_ssram_rdata_en;
 	wire			w_ssram_startup_busy;
 	wire	[20:0]	w_ssram_address;				//	{ mapper_segment, device_address[13:0] }
+	wire			w_cache_ssram_cs;
+	wire			w_cache_ssram_write;
+	wire			w_cache_ssram_valid;
+	wire	[20:0]	w_cache_ssram_address;
+	wire	[7:0]	w_cache_ssram_wdata;
+	wire			w_cache_ssram_ready;
+	wire	[7:0]	w_cache_ssram_rdata;
+	wire			w_cache_ssram_rdata_en;
 	wire			w_slot3_0_selected;
 	wire	[1:0]	w_access_primary_slot;
 	wire	[1:0]	w_access_secondary_slot3;
@@ -472,7 +479,9 @@ module fpga_msxtr_cpu_stack (
 //		ff_config_rom_reset_n	<= 1'b0;
 //		ff_ext_rom_reset_n		<= 1'b0;
 		ff_ssg_reset_n			<= w_msx_reset_n;
+	`ifdef TEST_BOOTROM
 		ff_bootrom_reset_n		<= w_msx_reset_n;
+	`endif
 		ff_ppi_reset_n			<= w_msx_reset_n;
 		ff_mapper_reset_n		<= w_msx_reset_n;
 		ff_ssram_reset_n		<= w_msx_reset_n;
@@ -626,6 +635,7 @@ module fpga_msxtr_cpu_stack (
 		.slot_d							( slot_d							),
 		.flash_cs						( w_cpu_flash_cs					),
 		.slot12_cs						( w_cpu_slot12_cs					),
+		.ssram_access				( w_device_ssram_active			),
 		.bus_io							( w_r800_bus_io						),
 		.bus_write						( w_r800_bus_write					),
 		.bus_valid						( w_r800_bus_valid					),
@@ -790,7 +800,6 @@ module fpga_msxtr_cpu_stack (
 		.cpu_flash_cs					( w_cpu_flash_cs					)
 	);
 
-	assign w_cpu_int_p					= ~w_int_n;
 	assign w_device_flash_direct		= w_cpu_sel[1] & w_pico_bus_flash_en;
 	assign w_device_valid_peripheral	= w_device_valid & ~w_device_flash_direct;
 	assign w_device_ready				= w_device_flash_direct ? 1'b1 : w_peripheral_ready;
@@ -803,7 +812,11 @@ module fpga_msxtr_cpu_stack (
 	address_decode u_address_decode (
 		.device_address					( w_device_address					),
 		.device_io						( w_device_io						),
+	`ifdef TEST_BOOTROM
 		.bootrom_en						( w_bootrom_en						),
+	`else
+		.bootrom_en						( 1'b0								),
+	`endif
 		.primary_slot					( w_primary_slot					),
 		.secondary_slot3				( w_secondary_slot3					),
 		.device_ppi_rdata				( w_device_ppi_rdata				),
@@ -830,9 +843,15 @@ module fpga_msxtr_cpu_stack (
 		.device_pause_led_rdata			( w_device_pause_led_rdata			),
 		.device_pause_led_rdata_en		( w_device_pause_led_rdata_en		),
 		.device_pause_led_ready			( w_device_pause_led_ready			),
+	`ifdef TEST_BOOTROM
 		.device_bootrom_rdata			( w_device_bootrom_rdata			),
-		.device_bootrom_rdata_en		( w_device_bootrom_rdata_en			),
+		.device_bootrom_rdata_en		( w_device_bootrom_rdata_en		),
 		.device_bootrom_ready			( w_device_bootrom_ready			),
+	`else
+		.device_bootrom_rdata			( 8'h00							),
+		.device_bootrom_rdata_en		( 1'b0								),
+		.device_bootrom_ready			( 1'b0								),
+	`endif
 		.device_s2026_rdata				( w_device_s2026_rdata				),
 		.device_s2026_rdata_en			( w_device_s2026_rdata_en			),
 		.device_s2026_ready				( w_device_s2026_ready				),
@@ -922,6 +941,7 @@ module fpga_msxtr_cpu_stack (
 	// --------------------------------------------------------------------
 	//	BOOT ROM
 	// --------------------------------------------------------------------
+	`ifdef TEST_BOOTROM
 	bootrom u_bootrom (
 		.reset_n						( ff_bootrom_reset_n				),
 		.clk							( clk42m							),
@@ -931,10 +951,10 @@ module fpga_msxtr_cpu_stack (
 		.bus_wdata						( w_device_wdata					),
 		.bus_address					( w_device_address					),
 		.bus_rdata						( w_device_bootrom_rdata			),
-		.bus_rdata_en					( w_device_bootrom_rdata_en			),
+		.bus_rdata_en					( w_device_bootrom_rdata_en		),
 		.bus_ready						( w_device_bootrom_ready			)
 	);
-
+	`endif
 	// --------------------------------------------------------------------
 	//	PPI
 	// --------------------------------------------------------------------
@@ -984,18 +1004,40 @@ module fpga_msxtr_cpu_stack (
 	// --------------------------------------------------------------------
 	assign w_ssram_address	= { w_mapper_segment, w_device_address[13:0] };
 
+	r800_cache u_r800_cache (
+		.reset_n		( ff_ssram_reset_n ),
+		.clk			( clk42m ),
+		.r800_active	( w_cpu_sel == 2'b01 ),
+		.bus_cs		( w_device_ssram_active ),
+		.bus_address	( w_ssram_address ),
+		.bus_write	( w_device_write ),
+		.bus_valid	( w_device_valid_peripheral ),
+		.bus_wdata	( w_device_wdata ),
+		.bus_ready	( w_device_ssram_ready ),
+		.bus_rdata	( w_device_ssram_rdata ),
+		.bus_rdata_en	( w_device_ssram_rdata_en ),
+		.sram_cs		( w_cache_ssram_cs ),
+		.sram_address	( w_cache_ssram_address ),
+		.sram_write	( w_cache_ssram_write ),
+		.sram_valid	( w_cache_ssram_valid ),
+		.sram_wdata	( w_cache_ssram_wdata ),
+		.sram_ready	( w_cache_ssram_ready ),
+		.sram_rdata	( w_cache_ssram_rdata ),
+		.sram_rdata_en	( w_cache_ssram_rdata_en )
+	);
+
 	ssram u_ssram (
 		.n_reset						( ff_ssram_reset_n					),
 		.clk							( clk42m							),
 		.clk_serial						( clk215m							),
-		.bus_cs							( w_device_ssram_active				),
-		.bus_address					( w_ssram_address					),
-		.bus_write						( w_device_write					),
-		.bus_valid						( w_device_valid_peripheral			),
-		.bus_wdata						( w_device_wdata					),
-		.bus_ready						( w_device_ssram_ready				),
-		.bus_rdata						( w_device_ssram_rdata				),
-		.bus_rdata_en					( w_device_ssram_rdata_en			),
+		.bus_cs							( w_cache_ssram_cs					),
+		.bus_address					( w_cache_ssram_address				),
+		.bus_write					( w_cache_ssram_write				),
+		.bus_valid					( w_cache_ssram_valid				),
+		.bus_wdata					( w_cache_ssram_wdata				),
+		.bus_ready					( w_cache_ssram_ready				),
+		.bus_rdata					( w_cache_ssram_rdata				),
+		.bus_rdata_en					( w_cache_ssram_rdata_en		),
 		.startup_busy					( w_ssram_startup_busy				),
 		.sram_sclk						( sram_sclk							),
 		.sram_ce0_n						( sram_ce0_n						),

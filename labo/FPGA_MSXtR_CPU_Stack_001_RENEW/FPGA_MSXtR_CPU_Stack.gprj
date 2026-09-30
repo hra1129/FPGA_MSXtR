@@ -16,6 +16,8 @@
         <File path="src/cr800/cr800_inst.v" type="file.verilog" enable="1"/>
         <File path="src/cr800/cr800_mcode.v" type="file.verilog" enable="1"/>
         <File path="src/cr800/cr800_reg.v" type="file.verilog" enable="1"/>
+        <File path="src/cr800/r800_cache.v" type="file.verilog" enable="1"/>
+        <File path="src/cr800/r800_cache_ram.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_alu.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_inst.v" type="file.verilog" enable="1"/>
