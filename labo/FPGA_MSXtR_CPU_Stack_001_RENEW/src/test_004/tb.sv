@@ -152,7 +152,7 @@ module tb ();
 	ssram_test_model u_sram_chip3 ( .sclk( sram_sclk ), .cs_n( sram_ce3_n ), .sio( sram_sio ) );
 
 	flashrom_test_model #(
-		.IMAGE_FILE( "..\\..\\..\\..\\controller\\bios_image_tool\\msx1.rom" )
+		.IMAGE_FILE( "..\\..\\..\\..\\controller\\bios_image_tool\\msxtr.rom" )
 	) u_flashrom0 (
 		.ce_n( slot_rom0_ce_n ),
 		.oe_n( slot_rd_n ),
@@ -177,6 +177,17 @@ module tb ();
 		.address( { 6'd0, slot_a[12:0] } ),
 		.data( slot_d )
 	);
+
+	reg [1:0] ff_cpu_sel_d = 2'b10;
+	always @( posedge u_dut.clk42m ) begin
+		ff_cpu_sel_d <= u_dut.w_cpu_sel;
+		if( ff_cpu_sel_d[0] != u_dut.w_cpu_sel[0] && !u_dut.w_cpu_sel[1] ) begin
+			$display( "[CPU SWITCH] time=%0t %s -> %s Z80 PC=%04h SP=%04h run=%b R800 PC=%04h SP=%04h run=%b",
+				$time, ff_cpu_sel_d[0] ? "R800" : "Z80", u_dut.w_cpu_sel[0] ? "R800" : "Z80",
+				u_dut.w_z80_pc, u_dut.u_z80.u_cz80.sp, u_dut.w_z80_run_ack,
+				u_dut.w_r800_pc, u_dut.u_r800.u_cr800.sp, u_dut.w_r800_run_ack );
+		end
+	end
 
 	//	Monitor UART (port 10h) writes from CPU
 	always @( posedge u_dut.clk42m ) begin
@@ -412,10 +423,9 @@ module tb ();
 		$display( "[SETUP] Release MSX reset" );
 		spi_msx_reset( 1'b0 );
 
-		$display( "[BOOT] Running MSX1-BIOS..." );
+		$display( "[BOOT] Running MSXturboR BIOS..." );
 
-		#( 2000000000 );
-		#( 2000000000 );
+		#( 50000000 );
 		$finish;
 	end
 endmodule

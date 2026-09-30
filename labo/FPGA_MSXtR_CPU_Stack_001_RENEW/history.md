@@ -1261,3 +1261,48 @@ Z80→R800→Z80 が2往復している。turboR BIOS (msxtr.rom) は画面初�
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/msx_slot/msx_slot.v — cpu_slot12_cs / cpu_flash_cs 出力追加
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v — 分類信号の配線追加
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/cz80_inst.v — slot_d_oe用localparamの二重宣言を c_d_* に改名 (コンパイル修正のみ)
+
+---
+
+## 2026-09-30 夜 作業履歴 (R800キャッシュ高速化・実機目標達成・初回CHGCPU異常の調査)
+
+### 実機の現状
+
+朝の黒画面は電源を入れ直した後に解消し、その後はMSXturboR BIOSで繰り返し起動した。上の「黒画面はR800が原因」という推測は確定原因ではない。ユーザーが当時の構成をGitHubへcommit/push済み。
+
+R800へ切り替えてBASICの `FOR I=0 TO 10000:NEXT` を測ると、当初78カウント (Z80は297、本物のR800は57)。R800専用のSSRAMキャッシュを実装した。
+
+- 内部SSRAMの読み出しだけを対象とし、8KB、4-way set associative、8byteライン、pseudo-LRU、ライトスルー。Z80/Picoはキャッシュを通過する単発アクセスのまま。
+- CPU切替時はvalidを無効化。データとタグは独立したシングルポートBSRAM階層 (`r800_cache_ram.v`) に格納。直接配列へbyteとラインの両方を書いていた初期版は65,536 DFFとして合成されIF0008で失敗したが、階層化後はキャッシュの4wayに計12個のシングルポートBSRAMが推論され、合成成功。
+- 当初のライン補充は単発8回。SSRAM向けのR800専用8byte連続読み出しへ変更し、1回のCSで補充するようにした。215MHz側で8byteを保持し、完了トグルと64bitデータを42MHz側へ渡す。Z80/Picoの単発read/writeは維持。
+- R800の内部デバイス待ち127クロックの打ち切りが8byte補充中に発火し得たため、SSRAMアクセスは完了までT2を保持するよう修正。160クロック待ちの回帰を追加した。
+
+実機のデバッグ表示でR800動作中のキャッシュ統計は、hit=16,536,394→16,660,808 (+124,414)、miss=119→119、fill_wait=3451→3451クロックだった。ヒットは大量だがこの間はミス無し。BASICの78カウントはバースト後も変わらず、ミス待ちはこのベンチの主因ではないと判明した。
+
+そのためFPGA SPI 0Ahの診断データを従来の20byteから32byteへ拡張し、既存フィールドを維持して上位12byteにR800キャッシュの累積hit/miss/補充待ち(各32bit、little endian)を追加。最後のA5hを含め33byteをPicoが受信し、3キーのログに表示する。
+
+### R800専用MAIN-ROMキャッシュ
+
+ROMフェッチ高速化のため、SLOT#0-0のMAIN-ROM (ROM0先頭32KB) だけに8KB・4-way・8byteラインの読み出し専用キャッシュを追加。R800のみ対象で、SUB-ROM/漢字ROM/他のROM0領域とBootROMは除外。ヒット時は外部/RDを出さず、ミス時は元の6クロック (約140ns) のread窓で8byteを補充する。MAIN-ROMチップは70ns品。CPU切替時にキャッシュを無効化する。Z80/PicoのROM経路は変更していない。
+
+ROMキャッシュ後の実機BASICベンチは55カウントとなり、本物のR800の57を上回って目標性能に到達した。Gowinの合成・配置配線・書込みはユーザーがGUI側で実施する方針 (CLI合成ではGUIのプログラマーを起動できない)。
+
+### シミュレーションとビルド
+
+- ModelSim `src/cr800/test_001`: キャッシュの補充・ヒット・write-through・所有権切替時無効化、実Serial SRAMモデルの1-CS/8byteバーストと単発への復帰、160クロック待ち、ROMキャッシュ、70ns遅延ROMでの命令実行を検証。ROMミス時は8回外部read、同一ラインのヒット時は外部read無し。
+- `src/spi/test_002`: 33byte診断レスポンスと末尾A5hを含め61 PASS / 0 FAIL。PicoファームはWSL `make -j4` でビルド成功。
+- `src/test_003`: CPU切替など95 PASS / 0 FAIL。`src/test_002` は以前からPico VDP書込み件数の1項目が失敗 (4 PASS / 1 FAIL)。今回の修正で生じた新規失敗ではない。
+
+### 未解決: BASICからの最初のCHGCPU(0180h)
+
+BASIC起動後、C000hへ `3E 01 CD 80 01 C9` (`LD A,01h; CALL 0180h; RET`) をPOKEし、`DEFUSR=&HC000:A=USR(0)` を実行すると、初回だけSyntax ErrorまたはSCREEN 1→SCREEN 0への変化のどちらかがランダムに起こる。その後はR800へ切り替わって動作する。**この異常はROMキャッシュ追加より前、BASICから切替できるようになった時点から存在した**。キャッシュだけを原因扱いしないこと。
+
+CHGCPUのA=01hはR800 ROMモード、A=02hはR800 DRAMモード。後者のROM内容をMapperRAMへコピーしてSLOT#0-0へ配置する機能はこのFPGAには未実装なので、02hの挙動をROMモード01hの正常な比較対象にしない。
+
+ROM原本 `controller/bios_image_tool/bios/a1stbios.rom` (32KB) は結合版 `msxtr.rom` の先頭32KBと完全一致。SUB-ROM `a1stext.rom` は結合版の20000h、MSX-MUSIC `a1stmus.rom` は14000h。MAIN-ROMでは0180hが `JP 046Ah`、0484hの `ED 73 FD FF` は `LD (FFFDh),SP`、04BBhの `ED 7B FD FF` は `LD SP,(FFFDh)`。BIOSは共有メモリFFFDh/FFFEhにSPを保存してから、切替先CPUで復元する。RTLはZ80/R800のレジスタをコピーしないため、切替瞬間の両PC/SPが同値であること自体は合否条件にならない。
+
+`src/test_004/tb.sv` のROM0を `msxtr.rom` にし、最初の50msで切替時のPC/SPをログ化。起動時は Z80→R800: Z80 PC=1297h, SP=FFFFh / R800 PC=0000h, SP=FFFFh、その後 R800→Z80: Z80 PC=1297h, SP=FFFFh / R800 PC=04B9h, SP=FFFFh。後者は04BBhのSP復元より前の位置。**これはBIOS起動時の切替であり、BASIC起動後の初回0180h呼出しはまだ再現していない**。BASIC起動までのフルシミュレーションは時間がかかりすぎる。
+
+### 明日の調査候補
+
+フルBASIC起動シミュレーションを延ばすより、初回CHGCPU前後だけを狙う。Z80がFFFDh/FFFEhへ保存したSPと、R800が04BBhで実際に読み復元したSPを比較する。同時に双方のPC/SP、S2026切替要求・run_ack・バス所有権・復帰先、必要ならFFFDh付近への読み書きを記録し、Syntax ErrorとSCREEN 0のどちらになるかを実機の短いトレースまたは専用の短縮テストで切り分ける。原因はまだ未確定であり、BIOSが正しく保存・復元できているかを最初に検証する。
