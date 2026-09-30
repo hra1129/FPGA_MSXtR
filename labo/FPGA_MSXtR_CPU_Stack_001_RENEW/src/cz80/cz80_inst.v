@@ -299,6 +299,11 @@ module cz80_inst (
 	localparam			c_wait_cycle_fall = 4'd6;
 	localparam			c_wait_tstate_rise = 3'd2;
 	localparam			c_wait_cycle_rise = 4'd6;
+	//	切り分け実験: 1 で M1 以外のメモリリードにも 1 ウェイトを挿入する
+	localparam			c_mem_read_wait = 1'b0;
+	wire				w_wait_cycle;
+
+	assign w_wait_cycle	= !ff_m1_n || ( c_mem_read_wait && !w_iorq && !w_write && !w_noread );
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -307,7 +312,7 @@ module cz80_inst (
 		else if( !ff_run ) begin
 			// hold
 		end
-		else if( !ff_m1_n ) begin
+		else if( w_wait_cycle ) begin
 			if(      w_t_state == c_wait_tstate_fall && state_count == c_wait_cycle_fall && ff_new_tstate ) begin
 				ff_wait_n_i <= 1'b0;
 			end
@@ -341,7 +346,10 @@ module cz80_inst (
 	localparam			c_rd_mem_tstate_fall = 3'd1;
 	localparam			c_rd_mem_cycle_fall = 4'd2;
 	localparam			c_rd_mem_tstate_rise = 3'd3;
-	localparam			c_rd_mem_cycle_rise = 4'd2;
+	localparam			c_rd_mem_cycle_rise = 4'd7;
+	//	実機 Z80 同様 T3 中ほどで取り込む (/RD, /MERQ の立上りより1カウント前)
+	localparam			c_rd_mem_latch_tstate = 3'd3;
+	localparam			c_rd_mem_latch_cycle = 4'd6;
 	localparam			c_rd_io_tstate_fall = 3'd1;
 	localparam			c_rd_io_cycle_fall = 4'd0;
 	localparam			c_rd_io_tstate_rise = 3'd3;
@@ -421,14 +429,16 @@ module cz80_inst (
 
 	assign wr_n = ff_wr_n;
 
-	localparam			c_d_mem_tstate_fall = 3'd2;
-	localparam			c_d_mem_cycle_fall = 4'd5;
+	//	メモリ: データは /WR より7カウント(約163ns)先行させ、4カウント(約93ns)遅れて解放する
+	localparam			c_d_mem_tstate_fall = 3'd1;
+	localparam			c_d_mem_cycle_fall = 4'd10;
 	localparam			c_d_mem_tstate_rise = 3'd3;
-	localparam			c_d_mem_cycle_rise = 4'd6;
+	localparam			c_d_mem_cycle_rise = 4'd10;
+	//	I/O: データは /WR より3カウント(約70ns)先行させ、4カウント(約93ns)遅れて解放する
 	localparam			c_d_io_tstate_fall = 3'd1;
-	localparam			c_d_io_cycle_fall = 4'd1;
+	localparam			c_d_io_cycle_fall = 4'd10;
 	localparam			c_d_io_tstate_rise = 3'd3;
-	localparam			c_d_io_cycle_rise = 4'd5;
+	localparam			c_d_io_cycle_rise = 4'd9;
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_slot_d_oe <= 1'b0;
@@ -575,7 +585,7 @@ module cz80_inst (
 						ff_bus_rdata			<= slot_d;
 					end
 				end
-				else if( ff_t_state_d == c_rd_mem_tstate_rise && state_count == c_rd_mem_cycle_rise ) begin
+				else if( ff_t_state_d == c_rd_mem_latch_tstate && state_count == c_rd_mem_latch_cycle ) begin
 					//	タイムアウト処理（メモリサイクル）
 					//	こちらは、/MERQ, /RD のうち /MERQ の方が早く立ち上がるため、そのタイミングでラッチ。
 					ff_bus_valid			<= 1'b0;

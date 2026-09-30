@@ -510,19 +510,22 @@ module cr800_inst #(
 					if( ff_eng_t == 3'd1 && state_count == 4'd7 ) begin
 						ff_merq_n <= 1'b0;
 					end
-					if( ff_eng_t == 3'd2 && state_count == 4'd5 && ff_cyc_write ) begin
-						ff_wr_n			<= 1'b0;
+					//	データは /WR より7カウント(約163ns)先行させ、4カウント(約93ns)遅れて解放する
+					if( ff_eng_t == 3'd1 && state_count == 4'd10 && ff_cyc_write ) begin
 						ff_slot_d_oe	<= 1'b1;
 					end
-					if( ff_eng_t == 3'd4 && state_count == 4'd2 ) begin
-						ff_rd_n <= 1'b1;
+					if( ff_eng_t == 3'd2 && state_count == 4'd5 && ff_cyc_write ) begin
+						ff_wr_n			<= 1'b0;
 					end
 					if( ff_eng_t == 3'd4 && state_count == 4'd6 ) begin
 						ff_wr_n			<= 1'b1;
-						ff_slot_d_oe	<= 1'b0;
 					end
 					if( ff_eng_t == 3'd4 && state_count == 4'd7 ) begin
-						ff_merq_n <= 1'b1;
+						ff_rd_n		<= 1'b1;
+						ff_merq_n	<= 1'b1;
+					end
+					if( ff_eng_t == 3'd4 && state_count == 4'd10 ) begin
+						ff_slot_d_oe	<= 1'b0;
 					end
 					if( state_count == 4'd11 ) begin
 						if( ff_eng_t == 3'd2 && !ff_wait_n ) begin
@@ -545,20 +548,25 @@ module cr800_inst #(
 					if( ff_eng_t == 3'd1 && state_count == 4'd0 && !ff_cyc_write ) begin
 						ff_rd_n <= 1'b0;
 					end
+					//	データは /WR より3カウント(約70ns)先行させ、4カウント(約93ns)遅れて解放する
 					if( ff_eng_t == 3'd1 && state_count == 4'd1 ) begin
 						ff_iorq_n <= 1'b0;
 						if( ff_cyc_write ) begin
-							ff_wr_n			<= 1'b0;
 							ff_slot_d_oe	<= 1'b1;
 						end
 					end
+					if( ff_eng_t == 3'd1 && state_count == 4'd4 && ff_cyc_write ) begin
+						ff_wr_n			<= 1'b0;
+					end
 					if( ff_eng_t == 3'd4 && state_count == 4'd5 && ff_cyc_write ) begin
 						ff_wr_n			<= 1'b1;
-						ff_slot_d_oe	<= 1'b0;
 					end
 					if( ff_eng_t == 3'd4 && state_count == 4'd6 ) begin
 						ff_iorq_n	<= 1'b1;
 						ff_rd_n		<= 1'b1;
+					end
+					if( ff_eng_t == 3'd4 && state_count == 4'd9 ) begin
+						ff_slot_d_oe	<= 1'b0;
 					end
 					if( state_count == 4'd11 ) begin
 						if( ff_eng_t == 3'd3 && !ff_wait_n ) begin
@@ -626,7 +634,7 @@ module cr800_inst #(
 		( ff_cyc_state == CY_FLASH && ff_flash_cnt == 4'd6 ) ||
 		( ff_cyc_state == CY_SLOW && (
 			(  ff_cyc_m1                && ff_eng_t == 3'd3 && state_count == 4'd11 ) ||
-			( !ff_cyc_m1 && !ff_cyc_io  && ff_eng_t == 3'd4 && state_count == 4'd2  ) ||
+			( !ff_cyc_m1 && !ff_cyc_io  && ff_eng_t == 3'd4 && state_count == 4'd6  ) ||
 			( !ff_cyc_m1 &&  ff_cyc_io  && ff_eng_t == 3'd4 && state_count == 4'd6  ) ) );
 
 	always @( posedge clk ) begin
