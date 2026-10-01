@@ -304,7 +304,7 @@ module msx_slot #(
 				ff_slot_cs2_n		<= 1'b1;
 				ff_slot_cs12_n		<= 1'b1;
 			end
-			else if( w_primary_slot == 2'd0 ) begin
+			else if( !w_bus_io && w_primary_slot == 2'd0 ) begin
 				case( {w_secondary_slot, w_page} )
 				{ 2'd0, 2'd0 }: begin
 					//	SLOT#0-0 page#0: MAIN-ROM (lower)
@@ -424,7 +424,7 @@ module msx_slot #(
 				end
 				endcase
 			end
-			else if( w_primary_slot == 2'd1 ) begin
+			else if( !w_bus_io && w_primary_slot == 2'd1 ) begin
 				ff_slot_a				<= w_slot_address[18:0];
 				ff_slot_rom0_ce_n		<= 1'b1;
 				ff_slot_rom1_ce_n		<= 1'b1;
