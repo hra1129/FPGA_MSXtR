@@ -19,8 +19,8 @@ vlog ..\..\cr800\r800_rom_cache.v
 vlog ..\..\cr800\cr800_inst.v
 vlog tb.sv
 
-vsim -c -t 1ps tb -do "run -all; quit -f"
-vsim -c -t 1ps tb_cr800_slot_write -do "run -all; quit -f"
+vsim -c -t 1ps -wlf tb.wlf tb -do "add wave -r *; run -all; quit -f"
+vsim -c -t 1ps -wlf tb_cr800_slot_write.wlf tb_cr800_slot_write -do "add wave -r *; run -all; quit -f"
 
 if exist transcript move transcript log.txt
 endlocal

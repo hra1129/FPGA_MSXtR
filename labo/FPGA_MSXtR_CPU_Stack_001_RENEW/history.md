@@ -1371,3 +1371,20 @@ R800の最適化は、後で手戻りにならないよう一時中断した。�
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/test_002/ — 新規のバスタイミングテスト (tb.sv / run.bat)
 - labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/msx_slot/msx_slot.v — `slot_data_dir`、`z80_rdata` (今回は未変更、次の調査対象)
 - labo/FPGA_MSXtR_VDP_Stack_002/src/msx_slot/msx_slot.v — VDP側のスロットデータ取り込み (次の調査対象)
+
+---
+
+## 2026-10-02 作業履歴 (CZ80 M1 /MREQ タイミング確認)
+
+### 実機確認
+
+- カートリッジスタックなしでBASICまで起動: OK。
+- カートリッジスタックを取り付けてMegaROMカートリッジを起動: OK。
+- 問題のゲームは黄色文字、フォント崩れ、しばらく動かすとハング。今回のM1タイミング調整後も症状に変化なし。
+
+### CZ80 M1タイミング
+
+- `src/cz80/cz80_inst.v`: M1時の `/MERQ` 立上り条件をT2 `(2,1)` からT3 `(3,1)` へ変更し、`/RD` より先に解除されないようにした。
+- `src/cz80/test_002/tb.sv`: M1中に `/MERQ` が `/RD` より先に立ち上がると失敗するチェックを追加。
+- `src/cz80/test_002/run.bat`: 両テストベンチの全階層波形を追加し、それぞれ `tb.wlf` / `tb_cr800_slot_write.wlf` に保存。
+- ModelSim: `test_002` のCZ80/R800両テストがPASS。コンパイルエラー・警告なし。

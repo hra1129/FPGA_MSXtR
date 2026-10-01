@@ -231,7 +231,7 @@ module cz80_inst (
 	// ---------------------------------------------------------
 	localparam			c_merq_m1_tstate_fall = 3'd1;
 	localparam			c_merq_m1_cycle_fall = 4'd6;
-	localparam			c_merq_m1_tstate_rise = 3'd2;
+	localparam			c_merq_m1_tstate_rise = 3'd3;
 	localparam			c_merq_m1_cycle_rise = 4'd1;
 	localparam			c_merq_mem_tstate_fall = 3'd1;
 	localparam			c_merq_mem_cycle_fall = 4'd7;

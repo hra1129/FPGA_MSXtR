@@ -13,6 +13,7 @@ module tb;
 	reg		[3:0]	state_count = 4'd0;
 	wire			wr_n;
 	wire			iorq_n;
+	wire			rd_n;
 	wire			m1_n;
 	wire			merq_n;
 	wire			slot_d_oe;
@@ -64,7 +65,7 @@ module tb;
 		.m1_n			( m1_n			),
 		.merq_n			( merq_n		),
 		.iorq_n			( iorq_n		),
-		.rd_n			(				),
+		.rd_n			( rd_n			),
 		.wr_n			( wr_n			),
 		.slot_d_oe		( slot_d_oe		),
 		.rfsh_n			(				),
@@ -82,6 +83,13 @@ module tb;
 		.pc				(				),
 		.int_ack		(				)
 	);
+
+	always @( posedge merq_n ) begin
+		#1;
+		if( reset_n && !m1_n && !rd_n ) begin
+			$fatal( 1, "M1 /MERQ rises before /RD: count=%0d t_state=%0d t_state_d=%0d new_tstate=%b", state_count, u_cz80_inst.w_t_state, u_cz80_inst.ff_t_state_d, u_cz80_inst.ff_new_tstate );
+		end
+	end
 
 	//	命令フェッチに応答するだけの簡易ROMモデル (書き込みは受理のみ)
 	always @( posedge clk ) begin
