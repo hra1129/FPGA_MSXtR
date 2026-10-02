@@ -17,6 +17,8 @@ module tb;
 	wire			m1_n;
 	wire			merq_n;
 	wire			slot_d_oe;
+	tri	[7:0]	slot_d;
+	wire	[7:0]	bus_wdata;
 	wire	[15:0]	bus_address;
 	reg		[7:0]	rom [0:255];
 	reg		[7:0]	bus_rdata = 8'h00;
@@ -27,6 +29,8 @@ module tb;
 	wire			bus_io;
 	integer			data_lead_ps;
 	integer			data_hold_ps;
+	reg	[7:0]	bus_wdata_at_assert;
+	reg	[7:0]	slot_data_at_assert;
 	time			data_assert_time;
 	time			data_release_time;
 	time			wr_fall_time;
@@ -42,6 +46,8 @@ module tb;
 		slot_valid = !merq_n;
 	end
 	always @( posedge merq_n ) slot_valid = 1'b0;
+	assign slot_d = slot_d_oe ? bus_wdata : 8'bz;
+	assign slot_d = ( slot_valid && !rd_n && wr_n ) ? 8'hA5 : 8'bz;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -71,13 +77,13 @@ module tb;
 		.rfsh_n			(				),
 		.run_req		( 1'b1			),
 		.run_ack		(				),
-		.slot_d			( slot_valid ? 8'hA5 : 8'hFF	),
+		.slot_d			( slot_d		),
 		.bus_io			( bus_io		),
 		.bus_write		( bus_write		),
 		.bus_valid		( bus_valid		),
 		.bus_ready		( bus_ready		),
 		.bus_address	( bus_address	),
-		.bus_wdata		(				),
+		.bus_wdata		( bus_wdata		),
 		.bus_rdata		( bus_rdata		),
 		.bus_rdata_en	( bus_rdata_en	),
 		.pc				(				),
@@ -87,7 +93,21 @@ module tb;
 	always @( posedge merq_n ) begin
 		#1;
 		if( reset_n && !m1_n && !rd_n ) begin
-			$fatal( 1, "M1 /MERQ rises before /RD: count=%0d t_state=%0d t_state_d=%0d new_tstate=%b", state_count, u_cz80_inst.w_t_state, u_cz80_inst.ff_t_state_d, u_cz80_inst.ff_new_tstate );
+			$fatal( 1, "M1 /MERQ rises after /RD" );
+		end
+	end
+
+	always @( posedge rd_n ) begin
+		#1;
+		if( reset_n && !m1_n && !merq_n ) begin
+			$fatal( 1, "M1 /RD rises before /MERQ" );
+		end
+	end
+
+	always @( negedge rd_n ) begin
+		#1;
+		if( reset_n && m1_n && iorq_n && merq_n ) begin
+			$fatal( 1, "Memory /RD falls before /MERQ" );
 		end
 	end
 
@@ -112,7 +132,12 @@ module tb;
 		end
 	end
 
-	always @( posedge slot_d_oe ) data_assert_time = $time;
+	always @( posedge slot_d_oe ) begin
+		data_assert_time = $time;
+		#1;
+		bus_wdata_at_assert = bus_wdata;
+		slot_data_at_assert = slot_d;
+	end
 	always @( negedge slot_d_oe ) data_release_time = $time;
 	always @( negedge wr_n ) wr_fall_time = $time;
 	always @( posedge wr_n ) if( reset_n ) wr_rise_time = $time;
@@ -159,6 +184,9 @@ module tb;
 		data_lead_ps = wr_fall_time - data_assert_time;
 		data_hold_ps = data_release_time - wr_rise_time;
 		$display( "[%s] data lead = %0d ps, data hold = %0d ps", name, data_lead_ps, data_hold_ps );
+		if( bus_wdata_at_assert !== 8'h5A || slot_data_at_assert !== 8'h5A ) begin
+			$fatal( 1, "%s: expected 5Ah at slot_d_oe; bus_wdata=%02h slot_d=%02h", name, bus_wdata_at_assert, slot_data_at_assert );
+		end
 		if( data_lead_ps < min_lead_ps || data_hold_ps < 50000 ) begin
 			$fatal( 1, "%s: slot_d が /WR を包含していない", name );
 		end

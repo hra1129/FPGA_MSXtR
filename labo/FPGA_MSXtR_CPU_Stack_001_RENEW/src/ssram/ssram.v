@@ -137,15 +137,23 @@ module ssram (
 	reg	[14:0]	ff_powerup_wait;
 	wire			w_req;
 	wire			w_sclk_enable;
-	wire			w_sclk_fall;
+	reg			w_sclk_fall;
 	wire			w_state_tick;
 	wire			w_powerup_wait_done;
 
 	assign w_req = bus_cs && bus_valid;
 	assign w_sclk_enable = (ff_state != c_state_init_w0) && (ff_state != c_state_idle) && (ff_state != c_state_read3);
-	assign w_sclk_fall = w_sclk_enable && ff_sclk_div && (ff_sclk_div_count == 2'd3);
 	assign w_state_tick = (ff_state == c_state_init_w0) || (ff_state == c_state_idle) || (ff_state == c_state_read3) || w_sclk_fall;
 	assign w_powerup_wait_done = ff_powerup_wait[14];	// About 163us at 200.45452MHz clk_serial.
+
+	always @( posedge clk_serial ) begin
+		if( !n_reset ) begin
+			w_sclk_fall <= 1'b0;
+		end
+		else begin
+			w_sclk_fall <= w_sclk_enable && (ff_sclk_div_count == 2'd2);
+		end
+	end
 
 	// Internal SCLK divider: input clock is clk_serial, output SCLK becomes quarter-rate.
 	always @( posedge clk_serial ) begin

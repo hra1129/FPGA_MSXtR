@@ -231,8 +231,8 @@ module cz80_inst (
 	// ---------------------------------------------------------
 	localparam			c_merq_m1_tstate_fall = 3'd1;
 	localparam			c_merq_m1_cycle_fall = 4'd6;
-	localparam			c_merq_m1_tstate_rise = 3'd3;
-	localparam			c_merq_m1_cycle_rise = 4'd1;
+	localparam			c_merq_m1_tstate_rise = 3'd2;
+	localparam			c_merq_m1_cycle_rise = 4'd11;
 	localparam			c_merq_mem_tstate_fall = 3'd1;
 	localparam			c_merq_mem_cycle_fall = 4'd7;
 	localparam			c_merq_mem_tstate_rise = 3'd3;
@@ -249,7 +249,7 @@ module cz80_inst (
 			if(      ff_t_state_d == c_merq_m1_tstate_fall && state_count == c_merq_m1_cycle_fall ) begin
 				ff_merq_n <= 1'b0;
 			end
-			else if( ff_t_state_d == c_merq_m1_tstate_rise && state_count == c_merq_m1_cycle_rise ) begin
+			else if( w_t_state == c_merq_m1_tstate_rise && state_count == c_merq_m1_cycle_rise && !ff_new_tstate ) begin
 				ff_merq_n <= 1'b1;
 			end
 		end
@@ -344,7 +344,7 @@ module cz80_inst (
 	localparam			c_rd_m1_tstate_rise = 3'd2;
 	localparam			c_rd_m1_cycle_rise = 4'd11;
 	localparam			c_rd_mem_tstate_fall = 3'd1;
-	localparam			c_rd_mem_cycle_fall = 4'd2;
+	localparam			c_rd_mem_cycle_fall = 4'd7;
 	localparam			c_rd_mem_tstate_rise = 3'd3;
 	localparam			c_rd_mem_cycle_rise = 4'd7;
 	//	実機 Z80 同様 T3 中ほどで取り込む (/RD, /MERQ の立上りより1カウント前)
@@ -379,7 +379,7 @@ module cz80_inst (
 			end
 		end
 		else if( !w_noread && !w_write ) begin
-			if(      w_t_state == c_rd_mem_tstate_fall && state_count == c_rd_mem_cycle_fall ) begin
+			if(      ff_t_state_d == c_rd_mem_tstate_fall && state_count == c_rd_mem_cycle_fall ) begin
 				ff_rd_n <= 1'b0;
 			end
 			else if( w_t_state == c_rd_mem_tstate_rise && state_count == c_rd_mem_cycle_rise ) begin
@@ -395,6 +395,7 @@ module cz80_inst (
 	// ---------------------------------------------------------
 	localparam			c_wr_mem_tstate_fall = 3'd2;
 	localparam			c_wr_mem_cycle_fall = 4'd5;
+	localparam			c_wr_mem_strobe_cycle_fall = 4'd10;
 	localparam			c_wr_mem_tstate_rise = 3'd3;
 	localparam			c_wr_mem_cycle_rise = 4'd6;
 	localparam			c_wr_io_tstate_fall = 3'd1;
@@ -418,7 +419,7 @@ module cz80_inst (
 			end
 		end
 		else if( w_write ) begin
-			if(      ff_t_state_d == c_wr_mem_tstate_fall && state_count == c_wr_mem_cycle_fall ) begin
+			if(      ff_t_state_d == c_wr_mem_tstate_fall && state_count == c_wr_mem_strobe_cycle_fall ) begin
 				ff_wr_n <= 1'b0;
 			end
 			else if( ff_t_state_d == c_wr_mem_tstate_rise && state_count == c_wr_mem_cycle_rise ) begin
@@ -429,9 +430,9 @@ module cz80_inst (
 
 	assign wr_n = ff_wr_n;
 
-	//	メモリ: データは /WR より7カウント(約163ns)先行させ、4カウント(約93ns)遅れて解放する
-	localparam			c_d_mem_tstate_fall = 3'd1;
-	localparam			c_d_mem_cycle_fall = 4'd10;
+	//	メモリ: データは /WR より5カウント(約116ns)先行させ、4カウント(約93ns)遅れて解放する
+	localparam			c_d_mem_tstate_fall = 3'd2;
+	localparam			c_d_mem_cycle_fall = 4'd5;
 	localparam			c_d_mem_tstate_rise = 3'd3;
 	localparam			c_d_mem_cycle_rise = 4'd10;
 	//	I/O: データは /WR より3カウント(約70ns)先行させ、4カウント(約93ns)遅れて解放する

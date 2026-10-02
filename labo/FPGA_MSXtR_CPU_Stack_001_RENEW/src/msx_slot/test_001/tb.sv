@@ -515,10 +515,28 @@ module tb;
 		// Slot 1 page 1 (0x4000)
 		slot_primary = 8'h55; // All Slot 1
 		z80_address = 20'h04000;
+		z80_rd_n = 1'b1;
+		z80_merq_n = 1'b0;
+		z80_wr_n = 1'b1;
+		z80_slot_d_oe = 1'b0;
 		@( posedge clk ); #1;
 		check( slot_sltsl1_n == 1'b0 && slot_sltsl0_n == 1'b1, "Slot 1 page#1 asserts slot_sltsl1_n" );
 		check( slot_cs1_n == 1'b0 && slot_cs12_n == 1'b0 && slot_cs2_n == 1'b1, "Slot 1 page#1 asserts cs1_n and cs12_n" );
-		check( slot_data_dir == 1'b0, "Slot 1 memory read allows cartridge-to-CPU data" );
+		check( slot_data_dir == 1'b0, "Slot 1 read sets data direction before /RD" );
+		z80_bus_write = 1'b1;
+		z80_wr_n = 1'b0;
+		z80_slot_d_oe = 1'b1;
+		#1;
+		check( slot_data_dir == 1'b1, "Slot 1 memory write keeps CPU-to-cartridge direction" );
+		z80_bus_write = 1'b0;
+		#1;
+		check( slot_data_dir == 1'b1, "Slot 1 direction stays CPU-to-cartridge while /WR and slot_d_oe are active" );
+		z80_slot_d_oe = 1'b0;
+		z80_wr_n = 1'b1;
+		#1;
+		check( slot_data_dir == 1'b0, "Slot 1 direction returns to cartridge-to-CPU after write ends" );
+		z80_rd_n = 1'b0;
+		z80_merq_n = 1'b0;
 
 		// Slot 1 page 2 (0x8000)
 		z80_address = 20'h08000;

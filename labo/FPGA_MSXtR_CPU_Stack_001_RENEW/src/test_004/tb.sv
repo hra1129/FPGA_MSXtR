@@ -61,6 +61,7 @@ module tb ();
 	wire slot_iorq_n;
 	wire slot_merq_n;
 	tri [7:0] slot_d;
+	assign slot_d = slot_data_dir ? 8'hZZ : 8'hFF;
 
 	wire srom_sclk;
 	wire srom_cs_n;

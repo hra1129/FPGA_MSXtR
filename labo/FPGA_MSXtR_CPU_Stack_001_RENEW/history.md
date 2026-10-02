@@ -1388,3 +1388,28 @@ R800の最適化は、後で手戻りにならないよう一時中断した。�
 - `src/cz80/test_002/tb.sv`: M1中に `/MERQ` が `/RD` より先に立ち上がると失敗するチェックを追加。
 - `src/cz80/test_002/run.bat`: 両テストベンチの全階層波形を追加し、それぞれ `tb.wlf` / `tb_cr800_slot_write.wlf` に保存。
 - ModelSim: `test_002` のCZ80/R800両テストがPASS。コンパイルエラー・警告なし。
+
+---
+
+## 2026-10-02 夜 作業履歴 (スロットデータ方向の切り分け・SSRAM setup最適化)
+
+### 実機観測と slot_data_dir の仮説
+
+- Cartridge Slot Stackなしでは起動するが、空のSlot Stackを装着すると起動しない。slot_data_dirを0固定しても症状は変わらなかった。
+- **固定0の実験だけでは方向切替が原因かは判定できない**。`slot_data_dir` はSlot Stack側SN74LVC8T245のDIR制御であり、FlashROM0はそのトランシーバよりCPU FPGA側にあるため、ROM0読み出し経路を直接切り替える信号ではない。
+- test_004のROM0データモデルと空スロットFFhモデルを併用し、誤ってRead方向になったときROM出力との競合を観測する案を試した。強いFFhドライバを加えたtest_004はSRAMモデルの大量ログ中に手動停止し、全体PASS/FAILは未確認。test_004/tb.svの実験用ドライバは未コミットで保持。
+- `slot_data_dir` は `w_bus_write` に加え物理 `/WR` と `slot_d_oe` も見て、書き込みデータ駆動終了までCPU→Cartridge方向を維持するよう変更した。msx_slot test_001では76 PASS / 0 FAIL。方向固定実験で起動しなかった事実との因果は未確定。
+
+### SSRAMタイミング違反と対策
+
+- GUI PnRでsetup違反47 endpoint、TNS=-14.131ns、最悪slack=-0.777nsを確認。最悪パスは `clk215m` の `u_ssram/ff_state_2_s0/Q` → `u_ssram/ff_state_4_s0/CE`。SSRAM RTLに未変更の過去PnRでは同系統の最悪パスが+0.108nsだったため、配置変化で限界経路が悪化したものと判断。
+- SDC制約は変更禁止の方針を維持。`ssram.v` の `w_sclk_fall` を、divider count=2で事前登録するFFに変更し、count=3で消費するstate tickの位相は維持した。状態デコードをtickの高ファンアウト経路から外す狙い。
+- 回帰: test_002はPASS=4 / FAIL=1。唯一の失敗は従来からのPico VDP write count項目 (pico_vdp_write_count=0) で、今回追加のSSRAMタイミング変更との因果は未確認。SSRAMアクセス自体は継続して観測。
+- test_001はTBの階層参照 `u_dut.w_active_bus_owner` が解決できずelaboration時に停止し、今回のSSRAM変更に対する回帰結果は得られなかった。
+- Gowin GUI出力を保護するためプロジェクト一式をTEMPへ複製し、同じCST/SDCでGowin 1.9.12.03 Tcl合成・PnRを実行。setup/hold違反0件、clk215m Actual Fmax=216.511MHz (制約214.753MHz)、最悪setup slackは+0.038ns。最悪経路はSSRAMからSPI制御へ移動。元の `impl` は上書きしていない。
+
+### 明日の確認事項
+
+- slot_data_dir固定0はROM0を直接切り替えないため、この実験を根拠に方向仮説を否定・確定しない。空Slot Stack装着時の外部バス負荷や信号競合は未解決。
+- SSRAMの最適化後slackは正だが+0.038nsと小さい。実機投入前にGowin GUIで同じ制約のPnRを行い、結果を確認する。
+- 実機症状は未再確認。SSRAM最適化、方向制御の実験は未コミット。生成されたPnR成果物を含め、他の未コミット変更も保持する。

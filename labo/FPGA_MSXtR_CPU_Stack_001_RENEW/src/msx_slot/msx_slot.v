@@ -147,7 +147,7 @@ module msx_slot #(
 	assign slot_merq_n		= w_slot_merq_n;
 	assign slot_wr_n		= w_slot_wr_n;
 	assign slot_rd_n		= w_slot_rd_n;
-	assign slot_data_dir	= ~w_external_memory_read;		//	1: CPU Stack -> Cartridge Slot Stack, 0: Cartridge Slot Stack -> CPU Stack
+	assign slot_data_dir	= 1'b0;	//~w_external_memory_read;		//	1: CPU Stack -> Cartridge Slot Stack, 0: Cartridge Slot Stack -> CPU Stack
 	assign slot_d			= w_slot_d_oe ? w_slot_d : 8'bz;
 	assign z80_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
 	assign r800_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
@@ -197,7 +197,7 @@ module msx_slot #(
 							  ( w_page == 2'd1 ) ? slot_secondary3[3:2] :
 							  ( w_page == 2'd2 ) ? slot_secondary3[5:4] : slot_secondary3[7:6];
 	assign w_secondary_slot	= ( w_primary_slot == 2'd0 ) ? w_secondary_slot0 : w_secondary_slot3;
-	assign w_external_memory_read = ~w_slot_rd_n & ~w_bus_io & ~w_flash_en & ((w_primary_slot == 2'd1) | (w_primary_slot == 2'd2));
+	assign w_external_memory_read = ~w_bus_io & ~w_bus_write & w_slot_wr_n & ~w_slot_d_oe & ~w_flash_en & ((w_primary_slot == 2'd1) | (w_primary_slot == 2'd2));
 
 	assign cpu_slot12_cs	= ( w_primary_slot == 2'd1 ) || ( w_primary_slot == 2'd2 );
 	assign cpu_flash_cs		= ~( ff_slot_rom0_ce_n & ff_slot_rom1_ce_n );
