@@ -1,5 +1,5 @@
 //
-//	msx_slot.v
+//	msx_slot_slave.v
 //	 MSX Slot top entity
 //
 //	Copyright (C) 2025 Takayuki Hara
@@ -55,7 +55,7 @@
 //
 //-----------------------------------------------------------------------------
 
-module msx_slot(
+module msx_slot_slave(
 	input			clk,
 	input			initial_busy,
 	//	MSX Slot Signal

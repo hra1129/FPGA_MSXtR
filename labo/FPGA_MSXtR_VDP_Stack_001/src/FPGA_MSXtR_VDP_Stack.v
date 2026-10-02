@@ -174,7 +174,7 @@ module FPGA_MSXtR_VDP_Stack (
 	// --------------------------------------------------------------------
 	//	FullColor Intelligent LED
 	// --------------------------------------------------------------------
-	msx_slot u_msx_slot (
+	msx_slot_slave u_msx_slot (
 		.clk				( clk85m					),
 		.initial_busy		( w_sdram_init_busy			),
 		.p_slot_reset_n		( reset_n					),

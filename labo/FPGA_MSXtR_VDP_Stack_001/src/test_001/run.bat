@@ -5,7 +5,7 @@ vlog Gowin_CLKDIV.v
 vlog DVI_TX_Top.v
 vlog +timescale+1ps/1ps ..\ws2812_led\ip_ws2812_led.v
 vlog +timescale+1ps/1ps ..\debugger\ip_debugger.v
-vlog +timescale+1ps/1ps ..\msx_slot\msx_slot.v
+vlog +timescale+1ps/1ps ..\msx_slot\msx_slot_slave.v
 vlog +timescale+1ps/1ps ..\v9968\vdp_color_palette_ram.v
 vlog +timescale+1ps/1ps ..\v9968\vdp_color_palette.v
 vlog +timescale+1ps/1ps ..\v9968\vdp_command_cache.v
