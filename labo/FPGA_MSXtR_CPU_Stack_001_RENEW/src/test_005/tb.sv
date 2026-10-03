@@ -36,6 +36,7 @@ module tb;
 	reg phase_started [0:3];
 	reg previous_rd_n = 1'b1;
 	reg previous_wr_n = 1'b1;
+	reg previous_rfsh_n = 1'b1;
 	reg [15:0] write_address;
 	reg [7:0] write_data;
 	integer phase;
@@ -176,6 +177,12 @@ module tb;
 		end
 	end
 
+	always @(slot_rom0_ce_n or slot_merq_n) begin
+		#0.001;
+		if( slot_reset_n && u_dut.w_cpu_sel == 2'd0 && slot_merq_n && !slot_rom0_ce_n )
+			$fatal(1, "ROM0 chip select active outside /MREQ");
+	end
+
 	always @(posedge slot_merq_n) begin
 		if( slot_reset_n && u_dut.w_cpu_sel == 2'd0 && slot_data_dir === 1'b0 ) begin
 			merq_release_time = $realtime;
@@ -203,6 +210,10 @@ module tb;
 			if( cpu_drive && !slot_data_dir ) $fatal(1, "CPU data enabled in read direction");
 			if( !slot_iorq_n && !slot_data_dir ) $fatal(1, "I/O cycle direction violates board workaround: PC=%04h address=%05h bus_io=%b bus_write=%b cpu_oe=%b", u_dut.w_z80_pc, slot_a, u_dut.u_msx_slot.w_bus_io, u_dut.u_msx_slot.w_bus_write, cpu_drive);
 			if( !slot_rom1_ce_n ) $fatal(1, "Unexpected ROM1 selection");
+			if( !slot_rfsh_n && slot_a !== {3'd0, u_dut.u_z80.ff_refresh_address} )
+				$fatal(1, "Slot refresh address mismatch: expected %04h, got %05h", u_dut.u_z80.ff_refresh_address, slot_a);
+			if( !slot_rfsh_n && !previous_rfsh_n && {slot_rom0_ce_n, slot_rom1_ce_n} !== 2'b11 )
+				$fatal(1, "ROM chip select active during refresh");
 			if( u_dut.u_z80.ff_wait_bus_rdata_en && !u_dut.w_z80_bus_rdata_en &&
 				((!u_dut.u_z80.ff_m1_n && u_dut.u_z80.ff_t_state_d == 3'd2 && u_dut.ff_3_579m == 4'd11 && !u_dut.u_z80.ff_new_tstate) ||
 				(u_dut.u_z80.ff_m1_n && !u_dut.u_z80.ff_bus_io && u_dut.u_z80.ff_t_state_d == 3'd3 && u_dut.ff_3_579m == 4'd6)) ) begin
@@ -245,6 +256,7 @@ module tb;
 		end
 		previous_rd_n = slot_rd_n;
 		previous_wr_n = slot_wr_n;
+		previous_rfsh_n = slot_rfsh_n;
 	end
 
 	initial begin

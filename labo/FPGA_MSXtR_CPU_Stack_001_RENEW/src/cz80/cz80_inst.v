@@ -121,6 +121,7 @@ module cz80_inst (
 	wire				w_new_tstate;
 	reg					ff_new_tstate;
 	reg		[15:0]		ff_refresh_address;
+	reg					ff_refresh_active;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -471,11 +472,11 @@ module cz80_inst (
 	//	/RFSH signal generation
 	// ---------------------------------------------------------
 	localparam			c_rfsh_tstate_fall = 3'd3;
-	localparam			c_rfsh_cycle_fall = 4'd2;
+	localparam			c_rfsh_cycle_fall = 4'd4;
 	localparam			c_rfsh_tstate_rise = 3'd4;
 	localparam			c_rfsh_cycle_rise = 4'd11;
 	localparam			c_refresh_address_tstate = 3'd3;
-	localparam			c_refresh_address_cycle = 4'd7;
+	localparam			c_refresh_address_cycle = 4'd2;
 	localparam			c_bus_address_tstate = 3'd1;
 	localparam			c_bus_address_cycle = 4'd1;
 
@@ -497,12 +498,17 @@ module cz80_inst (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_refresh_address <= 16'd0;
+			ff_refresh_active <= 1'b0;
 		end
 		else if( !ff_run ) begin
 			// hold
 		end
-		else if( !w_rfsh_n && w_t_state == c_refresh_address_tstate && state_count == c_refresh_address_cycle ) begin
+		else if( !w_rfsh_n && !ff_bus_m1_n && w_t_state == c_refresh_address_tstate && state_count == c_refresh_address_cycle ) begin
 			ff_refresh_address <= w_bus_address;
+			ff_refresh_active <= 1'b1;
+		end
+		else if( w_t_state == c_rfsh_tstate_rise && state_count == c_rfsh_cycle_rise ) begin
+			ff_refresh_active <= 1'b0;
 		end
 	end
 
@@ -518,7 +524,7 @@ module cz80_inst (
 		end
 	end
 
-	assign bus_address	= ff_rfsh_n ? ff_bus_address : ff_refresh_address;
+	assign bus_address	= ff_refresh_active ? ff_refresh_address : ff_bus_address;
 	assign rfsh_n		= ff_rfsh_n;
 
 	// ---------------------------------------------------------

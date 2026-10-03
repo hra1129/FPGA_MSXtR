@@ -1,0 +1,180 @@
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\cz80_reg.v 
+-- Compiling module cz80_registers
+
+Top level modules:
+	cz80_registers
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\cz80_mcode.v 
+-- Compiling module cz80_mcode
+
+Top level modules:
+	cz80_mcode
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\cz80_alu.v 
+-- Compiling module cz80_alu
+
+Top level modules:
+	cz80_alu
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\cz80.v 
+-- Compiling module cz80
+
+Top level modules:
+	cz80
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\cz80_inst.v 
+-- Compiling module cz80_inst
+
+Top level modules:
+	cz80_inst
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\..\cr800\cr800_reg.v 
+-- Compiling module cr800_registers
+
+Top level modules:
+	cr800_registers
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\..\cr800\cr800_mcode.v 
+-- Compiling module cr800_mcode
+
+Top level modules:
+	cr800_mcode
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\..\cr800\cr800_alu.v 
+-- Compiling module cr800_alu
+
+Top level modules:
+	cr800_alu
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\..\cr800\cr800.v 
+-- Compiling module cr800
+
+Top level modules:
+	cr800
+End time: 12:27:53 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:53 on Oct 03,2026
+vlog ..\..\cr800\r800_cache_ram.v 
+-- Compiling module r800_cache_ram
+
+Top level modules:
+	r800_cache_ram
+End time: 12:27:54 on Oct 03,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:54 on Oct 03,2026
+vlog ..\..\cr800\r800_cache.v 
+-- Compiling module r800_cache
+
+Top level modules:
+	r800_cache
+End time: 12:27:54 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:54 on Oct 03,2026
+vlog ..\..\cr800\r800_rom_cache.v 
+-- Compiling module r800_rom_cache
+
+Top level modules:
+	r800_rom_cache
+End time: 12:27:54 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:54 on Oct 03,2026
+vlog ..\..\cr800\cr800_inst.v 
+-- Compiling module cr800_inst
+
+Top level modules:
+	cr800_inst
+End time: 12:27:54 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 12:27:54 on Oct 03,2026
+vlog tb.sv 
+-- Compiling module tb
+-- Compiling module tb_cr800_slot_write
+
+Top level modules:
+	tb
+	tb_cr800_slot_write
+End time: 12:27:54 on Oct 03,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps -wlf tb.wlf tb -do "add wave -r *; run -all; quit -f" 
+# Start time: 12:27:54 on Oct 03,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# add wave -r *
+#  run -all
+# [cz80 memory] data lead = 116400 ps, data hold = 93120 ps
+# PASS: cz80 memory write drives slot_d before /WR and releases it after /WR
+# [cz80 I/O] data lead = 69840 ps, data hold = 93120 ps
+# PASS: cz80 I/O write drives slot_d before /WR and releases it after /WR
+# [cz80 data read] /MERQ width = 558720 ps, A = a5
+# PASS: cz80 data read latches slot_d in the middle of T3
+# PASS: cz80 refresh address held throughout /RFSH Low (76 checks)
+# ** Note: $finish    : tb.sv(185)
+#    Time: 14235720 ps  Iteration: 0  Instance: /tb
+# End time: 12:27:55 on Oct 03,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps -wlf tb_cr800_slot_write.wlf tb_cr800_slot_write -do "add wave -r *; run -all; quit -f" 
+# Start time: 12:27:55 on Oct 03,2026
+# Loading sv_std.std
+# Loading work.tb_cr800_slot_write
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.r800_cache_ram
+# add wave -r *
+#  run -all
+# [cr800 cartridge memory] data lead = 162960 ps, data hold = 93120 ps
+# PASS: cr800 cartridge memory write drives slot_d before /WR and releases it after /WR
+# [cr800 external I/O] data lead = 69840 ps, data hold = 93120 ps
+# PASS: cr800 external I/O write drives slot_d before /WR and releases it after /WR
+# ** Note: $finish    : tb.sv(313)
+#    Time: 12140520 ps  Iteration: 0  Instance: /tb_cr800_slot_write
+# End time: 12:27:56 on Oct 03,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+        1 個のファイルを移動しました。

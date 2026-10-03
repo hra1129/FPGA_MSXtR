@@ -282,8 +282,8 @@ module msx_slot #(
 		else begin
 			if( w_flash_en ) begin
 				ff_slot_a			<= w_slot_address[18:0];
-				ff_slot_rom0_ce_n	<= w_slot_address[19];
-				ff_slot_rom1_ce_n	<= ~w_slot_address[19];
+				ff_slot_rom0_ce_n	<= ~slot_rfsh_n | w_slot_address[19];
+				ff_slot_rom1_ce_n	<= ~slot_rfsh_n | ~w_slot_address[19];
 				ff_slot_sltsl0_n	<= 1'b1;
 				ff_slot_sltsl1_n	<= 1'b1;
 				ff_slot_sltsl2_n	<= 1'b1;
@@ -295,7 +295,7 @@ module msx_slot #(
 			else if( w_jis1_kanji_cs ) begin
 				ff_slot_a			<= { 2'd0, ff_jis1_kanji_address };
 				ff_slot_rom0_ce_n	<= 1'b1;
-				ff_slot_rom1_ce_n	<= 1'b0;
+				ff_slot_rom1_ce_n	<= ~slot_rfsh_n;
 				ff_slot_sltsl0_n	<= 1'b1;
 				ff_slot_sltsl1_n	<= 1'b1;
 				ff_slot_sltsl2_n	<= 1'b1;
@@ -307,7 +307,7 @@ module msx_slot #(
 			else if( w_jis2_kanji_cs ) begin
 				ff_slot_a			<= { 2'd1, ff_jis2_kanji_address };
 				ff_slot_rom0_ce_n	<= 1'b1;
-				ff_slot_rom1_ce_n	<= 1'b0;
+				ff_slot_rom1_ce_n	<= ~slot_rfsh_n;
 				ff_slot_sltsl0_n	<= 1'b1;
 				ff_slot_sltsl1_n	<= 1'b1;
 				ff_slot_sltsl2_n	<= 1'b1;
@@ -321,7 +321,7 @@ module msx_slot #(
 				{ 2'd0, 2'd0 }: begin
 					//	SLOT#0-0 page#0: MAIN-ROM (lower)
 					ff_slot_a				<= { 3'd0, 2'b00, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -334,7 +334,7 @@ module msx_slot #(
 				{ 2'd0, 2'd1 }: begin
 					//	SLOT#0-0 page#1: MAIN-ROM (upper)
 					ff_slot_a				<= { 3'd0, 2'b01, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -347,7 +347,7 @@ module msx_slot #(
 				{ 2'd1, 2'd0 }: begin
 					//	SLOT#0-1 page#0: Option-ROM0
 					ff_slot_a				<= { 3'd0, 2'b10, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -360,7 +360,7 @@ module msx_slot #(
 				{ 2'd1, 2'd1 }: begin
 					//	SLOT#0-1 page#1: Option-ROM1
 					ff_slot_a				<= { 3'd0, 2'b11, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -373,7 +373,7 @@ module msx_slot #(
 				{ 2'd2, 2'd0 }: begin
 					//	SLOT#0-2 page#0: Option-ROM2
 					ff_slot_a				<= { 3'd1, 2'b00, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -386,7 +386,7 @@ module msx_slot #(
 				{ 2'd2, 2'd1 }: begin
 					//	SLOT#0-2 page#1: MSX-MUSIC
 					ff_slot_a				<= { 3'd1, 2'b01, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -399,7 +399,7 @@ module msx_slot #(
 				{ 2'd3, 2'd0 }: begin
 					//	SLOT#0-3 page#0: Option-ROM3
 					ff_slot_a				<= { 3'd1, 2'b10, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -412,7 +412,7 @@ module msx_slot #(
 				{ 2'd3, 2'd1 }: begin
 					//	SLOT#0-3 page#1: Boot Logo
 					ff_slot_a				<= { 3'd1, 2'b11, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -465,7 +465,7 @@ module msx_slot #(
 				{ 2'd1, 2'd0 }: begin
 					//	SLOT#3-1 page#0: EXT-ROM
 					ff_slot_a				<= { 3'd2, 2'b00, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -478,7 +478,7 @@ module msx_slot #(
 				{ 2'd1, 2'd1 }: begin
 					//	SLOT#3-1 page#1: KanjiDriver (Lower)
 					ff_slot_a				<= { 3'd2, 2'b01, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -491,7 +491,7 @@ module msx_slot #(
 				{ 2'd1, 2'd2 }: begin
 					//	SLOT#3-1 page#2: KanjiDriver (Upper)
 					ff_slot_a				<= { 3'd2, 2'b10, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -504,7 +504,7 @@ module msx_slot #(
 				{ 2'd1, 2'd3 }: begin
 					//	SLOT#3-1 page#3: Option-ROM4
 					ff_slot_a				<= { 3'd2, 2'b11, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -517,7 +517,7 @@ module msx_slot #(
 				{ 2'd2, 2'd1 }: begin
 					//	SLOT#3-2 page#1: MSX-DOS2
 					ff_slot_a				<= { 3'd3, ff_dos_bank, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= 1'b0;
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -569,8 +569,8 @@ module msx_slot #(
 	end
 
 	assign slot_a				= ff_slot_a;
-	assign slot_rom0_ce_n		= ff_slot_rom0_ce_n;
-	assign slot_rom1_ce_n		= ff_slot_rom1_ce_n;
+	assign slot_rom0_ce_n		= w_flash_en ? ff_slot_rom0_ce_n : (w_slot_merq_n | ff_slot_rom0_ce_n);
+	assign slot_rom1_ce_n		= (w_flash_en ? w_slot_merq_n : slot_iorq_n) | ff_slot_rom1_ce_n;
 	assign slot_sltsl0_n		= w_slot_merq_n | ff_slot_sltsl0_n;
 	assign slot_sltsl1_n		= w_slot_merq_n | ff_slot_sltsl1_n;
 	assign slot_sltsl2_n		= w_slot_merq_n | ff_slot_sltsl2_n;

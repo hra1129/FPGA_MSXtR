@@ -132,7 +132,7 @@ module tb;
 		.z80_iorq_n			( z80_iorq_n		),
 		.z80_rd_n			( z80_rd_n			),
 		.z80_wr_n			( z80_wr_n			),
-		.z80_slot_d_oe	( z80_slot_d_oe	),
+		.z80_slot_d_oe		( z80_slot_d_oe		),
 		.z80_rfsh_n			( z80_rfsh_n		),
 		.z80_address		( z80_address		),
 		.z80_wdata			( z80_wdata			),
@@ -146,7 +146,7 @@ module tb;
 		.r800_iorq_n		( r800_iorq_n		),
 		.r800_rd_n			( r800_rd_n			),
 		.r800_wr_n			( r800_wr_n			),
-		.r800_slot_d_oe	( r800_slot_d_oe	),
+		.r800_slot_d_oe		( r800_slot_d_oe	),
 		.r800_rfsh_n		( r800_rfsh_n		),
 		.r800_address		( r800_address		),
 		.r800_wdata			( r800_wdata		),
@@ -160,7 +160,7 @@ module tb;
 		.pico_iorq_n		( pico_iorq_n		),
 		.pico_rd_n			( pico_rd_n			),
 		.pico_wr_n			( pico_wr_n			),
-		.pico_slot_d_oe	( pico_slot_d_oe	),
+		.pico_slot_d_oe		( pico_slot_d_oe	),
 		.pico_rfsh_n		( pico_rfsh_n		),
 		.pico_address		( pico_address		),
 		.pico_wdata			( pico_wdata		),
@@ -454,10 +454,25 @@ module tb;
 		slot_secondary0 = 8'h00; // Sec Slot 0-0
 		z80_address = 20'h01234;
 		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == 1'b1 && u_msx_slot.cpu_flash_cs == 1'b1, "ROM0 stays inactive outside /MREQ while decode remains selected" );
+		z80_merq_n = 1'b0;
+		#1;
 		check( slot_rom0_ce_n == 1'b0 && slot_rom1_ce_n == 1'b1, "SLOT#0-0 page#0 selects ROM0" );
 		check( slot_a == 19'h01234, "SLOT#0-0 page#0 address is 0x01234" );
 		check( slot_sltsl0_n == 1'b1, "SLOT#0-0 internal ROM does not assert slot_sltsl0_n" );
 		check( slot_data_dir == 1'b1, "SLOT#0-0 internal ROM read blocks cartridge-to-CPU data" );
+		z80_merq_n = 1'b1;
+		#1;
+		check( slot_rom0_ce_n == 1'b1, "ROM0 releases with /MREQ without waiting for a clock" );
+		@( posedge clk ); #1;
+		z80_rfsh_n = 1'b0;
+		#1;
+		check( slot_rom0_ce_n == 1'b1, "ROM0 has no pulse before refresh with /MREQ inactive" );
+		@( posedge clk ); #1;
+		z80_rfsh_n = 1'b1;
+		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == 1'b1, "ROM0 has no pulse after refresh with /MREQ inactive" );
+		z80_merq_n = 1'b0;
 
 		// 5.2: SLOT#0-0 page#1 (MAIN-ROM Upper, 0x4000 - 0x7FFF)
 		z80_address = 20'h05678;
@@ -621,18 +636,48 @@ module tb;
 		sel = 2'b10;
 		slot_primary = 8'h55;	// All Slot 1: direct access must ignore normal slot selection
 		pico_rd_n = 1'b0;
+		pico_merq_n = 1'b1;
 		pico_flash_en = 1'b1;
 		pico_address = 20'h12345;
 		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == u_msx_slot.ff_slot_rom0_ce_n && slot_rom0_ce_n == 1'b0, "Direct Flash ROM0 follows selection FF with /MREQ inactive" );
 		check( slot_rom0_ce_n == 1'b0 && slot_rom1_ce_n == 1'b1, "FlashROM ROM0 selected (addr[19]=0)" );
 		check( slot_a == 19'h12345, "slot_a reflects pico_address[18:0]" );
 		check( slot_data_dir == 1'b1, "FlashROM direct read blocks cartridge-to-CPU data" );
+		@( posedge clk ); #1;
+		pico_rfsh_n = 1'b0;
+		#1;
+		check( slot_rom0_ce_n == 1'b0, "ROM0 CE remains registered between clocks" );
+		@( posedge clk ); #1;
+		check( {slot_rom0_ce_n, slot_rom1_ce_n} == 2'b11, "Refresh blocks ROM0 selection on next clock" );
+		check( u_msx_slot.cpu_flash_cs == 1'b0, "Refresh blocks internal Flash classification for ROM0" );
+		pico_rfsh_n = 1'b1;
+		#1;
+		check( {slot_rom0_ce_n, slot_rom1_ce_n} == 2'b11, "Refresh release does not expose stale ROM0 selection" );
+		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == 1'b0 && u_msx_slot.cpu_flash_cs == 1'b1, "ROM0 selection returns after refresh" );
 
 		// ROM1 access by Pico (address[19] = 1)
+		pico_merq_n = 1'b0;
 		pico_address = 20'h9ABCD;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b1 && slot_rom1_ce_n == 1'b0, "FlashROM ROM1 selected (addr[19]=1)" );
 		check( slot_a == 19'h1ABCD, "slot_a reflects pico_address[18:0]" );
+		@( posedge clk ); #1;
+		pico_rfsh_n = 1'b0;
+		#1;
+		check( slot_rom1_ce_n == 1'b0, "ROM1 CE remains registered between clocks" );
+		@( posedge clk ); #1;
+		check( {slot_rom0_ce_n, slot_rom1_ce_n} == 2'b11, "Refresh blocks ROM1 selection on next clock" );
+		check( u_msx_slot.cpu_flash_cs == 1'b0, "Refresh blocks internal Flash classification for ROM1" );
+		pico_rfsh_n = 1'b1;
+		#1;
+		check( {slot_rom0_ce_n, slot_rom1_ce_n} == 2'b11, "Refresh release does not expose stale ROM1 selection" );
+		@( posedge clk ); #1;
+		check( slot_rom1_ce_n == 1'b0 && u_msx_slot.cpu_flash_cs == 1'b1, "ROM1 selection returns after refresh" );
+		pico_merq_n = 1'b1;
+		#1;
+		check( slot_rom1_ce_n == 1'b1, "Direct Flash ROM1 releases with /MREQ" );
 		pico_flash_en = 1'b0;
 		pico_rd_n = 1'b1;
 		pico_address = 20'd0;
@@ -646,6 +691,7 @@ module tb;
 		jis1_kanji_en = 1'b1;
 		jis2_kanji_en = 1'b1;
 		z80_bus_io = 1'b1;
+		z80_merq_n = 1'b1;
 
 		// 9.1: JIS1 Kanji ROM set address (write 0x12 to 0xD8, write 0x34 to 0xD9)
 		// 0xD8: jis1_addr[10:0] = {wdata[5:0], 5'd0} = {6'b010010, 5'b00000} = 11'b01001000000 (11'h240)
@@ -662,8 +708,14 @@ module tb;
 
 		// 1st Read from 0xD9 -> ROM1 selected, slot_a = {2'b00, 17'h1A240} = 19'h1A240
 		@( posedge clk ); #1;
+		check( slot_rom1_ce_n == 1'b1, "Kanji ROM stays inactive outside /IORQ" );
+		z80_iorq_n = 1'b0;
+		#1;
 		check( slot_rom1_ce_n == 1'b0 && slot_rom0_ce_n == 1'b1, "JIS1 read selects ROM1" );
 		check( slot_a == 19'h1A240, "JIS1 address is 0x1A240" );
+		z80_iorq_n = 1'b1;
+		#1;
+		check( slot_rom1_ce_n == 1'b1, "Kanji ROM releases with /IORQ" );
 
 		// End of 1st read cycle (causes address increment)
 		z80_bus_io = 1'b0;
@@ -693,6 +745,8 @@ module tb;
 
 		// 1st Read from 0xDB -> ROM1 selected
 		@( posedge clk ); #1;
+		z80_iorq_n = 1'b0;
+		#1;
 		check( slot_rom1_ce_n == 1'b0, "JIS2 read selects ROM1" );
 		check( slot_a == 19'h35015, "JIS2 address is 0x35015 ({2'b01, 17'h15015})" );
 

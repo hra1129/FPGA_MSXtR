@@ -6,6 +6,11 @@
 `timescale 1ps/1ps
 
 module tb;
+	wire rfsh_n;
+	reg [15:0] refresh_address;
+	reg previous_rfsh_n = 1'b1;
+	integer refresh_checks = 0;
+	integer sampled_state_count;
 	localparam	clk_base = 1_000_000_000 / 42_955;	//	ps (42.954545MHz)
 
 	reg				clk = 1'b0;
@@ -74,7 +79,7 @@ module tb;
 		.rd_n			( rd_n			),
 		.wr_n			( wr_n			),
 		.slot_d_oe		( slot_d_oe		),
-		.rfsh_n			(				),
+		.rfsh_n			( rfsh_n		),
 		.run_req		( 1'b1			),
 		.run_ack		(				),
 		.slot_d			( slot_d		),
@@ -89,6 +94,24 @@ module tb;
 		.pc				(				),
 		.int_ack		(				)
 	);
+
+	always @( posedge clk ) begin
+		sampled_state_count = state_count;
+		if( reset_n && u_cz80_inst.ff_run && !u_cz80_inst.w_rfsh_n && !u_cz80_inst.ff_bus_m1_n && u_cz80_inst.w_t_state == 3'd3 && state_count == 4'd2 ) begin
+			refresh_address = u_cz80_inst.w_bus_address;
+		end
+		#1;
+		if( reset_n && !rfsh_n ) begin
+			if( previous_rfsh_n && sampled_state_count != 4 ) begin
+				$fatal( 1, "Refresh did not start at count 4" );
+			end
+			if( bus_address !== refresh_address ) begin
+				$fatal( 1, "Refresh address changed: expected %04h, got %04h", refresh_address, bus_address );
+			end
+			refresh_checks = refresh_checks + 1;
+		end
+		previous_rfsh_n = rfsh_n;
+	end
 
 	always @( posedge merq_n ) begin
 		#1;
@@ -155,6 +178,10 @@ module tb;
 		check_write( "cz80 memory", 1'b0, 100000 );
 		check_write( "cz80 I/O", 1'b1, 50000 );
 		check_data_read();
+		if( refresh_checks == 0 ) begin
+			$fatal( 1, "No refresh address checks" );
+		end
+		$display( "PASS: cz80 refresh address held throughout /RFSH Low (%0d checks)", refresh_checks );
 		$finish;
 	end
 

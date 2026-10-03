@@ -1,27 +1,27 @@
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 10:10:10 on Oct 03,2026
+Start time: 12:41:52 on Oct 03,2026
 vlog ..\msx_slot.v 
 -- Compiling module msx_slot
 
 Top level modules:
 	msx_slot
-End time: 10:10:10 on Oct 03,2026, Elapsed time: 0:00:00
+End time: 12:41:52 on Oct 03,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 10:10:10 on Oct 03,2026
+Start time: 12:41:52 on Oct 03,2026
 vlog tb.sv 
 -- Compiling module tb
 
 Top level modules:
 	tb
-End time: 10:10:10 on Oct 03,2026, Elapsed time: 0:00:00
+End time: 12:41:52 on Oct 03,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Reading pref.tcl
 
 # 2020.1
 
 # vsim -c -t 1ps tb -do "add wave -r *; run -all; quit -f" 
-# Start time: 10:10:11 on Oct 03,2026
+# Start time: 12:41:53 on Oct 03,2026
 # Loading sv_std.std
 # Loading work.tb
 # Loading work.msx_slot
@@ -64,10 +64,14 @@ Reading pref.tcl
 # [PASS] (Test 4) Pico slot_d remains Hi-Z while output is disabled
 # [PASS] (Test 4) slot_d driven with pico_wdata while output is enabled
 # === TEST 5: Primary Slot 0 - Internal ROMs Decode ===
+# [PASS] (Test 5) ROM0 stays inactive outside /MREQ while decode remains selected
 # [PASS] (Test 5) SLOT#0-0 page#0 selects ROM0
 # [PASS] (Test 5) SLOT#0-0 page#0 address is 0x01234
 # [PASS] (Test 5) SLOT#0-0 internal ROM does not assert slot_sltsl0_n
 # [PASS] (Test 5) SLOT#0-0 internal ROM read blocks cartridge-to-CPU data
+# [PASS] (Test 5) ROM0 releases with /MREQ without waiting for a clock
+# [PASS] (Test 5) ROM0 has no pulse before refresh with /MREQ inactive
+# [PASS] (Test 5) ROM0 has no pulse after refresh with /MREQ inactive
 # [PASS] (Test 5) SLOT#0-0 page#1 selects ROM0
 # [PASS] (Test 5) SLOT#0-0 page#1 address is 0x05678 ({3'd0, 2'b01, 14'h1678})
 # [PASS] (Test 5) SLOT#0-1 page#0 address is 0x0A000 ({3'd0, 2'b10, 14'h2000})
@@ -105,23 +109,37 @@ Reading pref.tcl
 # [PASS] (Test 7) SLOT#3-0 page#2 keeps external CS inactive
 # [PASS] (Test 7) SLOT#3-0 SRAM read blocks cartridge-to-CPU data
 # === TEST 8: FlashROM Direct Access (flash_en = 1) ===
+# [PASS] (Test 8) Direct Flash ROM0 follows selection FF with /MREQ inactive
 # [PASS] (Test 8) FlashROM ROM0 selected (addr[19]=0)
 # [PASS] (Test 8) slot_a reflects pico_address[18:0]
 # [PASS] (Test 8) FlashROM direct read blocks cartridge-to-CPU data
+# [PASS] (Test 8) ROM0 CE remains registered between clocks
+# [PASS] (Test 8) Refresh blocks ROM0 selection on next clock
+# [PASS] (Test 8) Refresh blocks internal Flash classification for ROM0
+# [PASS] (Test 8) Refresh release does not expose stale ROM0 selection
+# [PASS] (Test 8) ROM0 selection returns after refresh
 # [PASS] (Test 8) FlashROM ROM1 selected (addr[19]=1)
 # [PASS] (Test 8) slot_a reflects pico_address[18:0]
+# [PASS] (Test 8) ROM1 CE remains registered between clocks
+# [PASS] (Test 8) Refresh blocks ROM1 selection on next clock
+# [PASS] (Test 8) Refresh blocks internal Flash classification for ROM1
+# [PASS] (Test 8) Refresh release does not expose stale ROM1 selection
+# [PASS] (Test 8) ROM1 selection returns after refresh
+# [PASS] (Test 8) Direct Flash ROM1 releases with /MREQ
 # === TEST 9: Kanji ROM I/O Access (JIS1 & JIS2) ===
+# [PASS] (Test 9) Kanji ROM stays inactive outside /IORQ
 # [PASS] (Test 9) JIS1 read selects ROM1
 # [PASS] (Test 9) JIS1 address is 0x1A240
+# [PASS] (Test 9) Kanji ROM releases with /IORQ
 # [PASS] (Test 9) JIS1 address auto-incremented to 0x1A241
 # [PASS] (Test 9) JIS2 read selects ROM1
 # [PASS] (Test 9) JIS2 address is 0x35015 ({2'b01, 17'h15015})
 # ============================================================
-# Results: PASS = 76, FAIL = 0
+# Results: PASS = 94, FAIL = 0
 # ALL TESTS PASSED!
 # ============================================================
-# ** Note: $finish    : tb.sv(716)
-#    Time: 919561 ps  Iteration: 0  Instance: /tb
-# End time: 10:10:11 on Oct 03,2026, Elapsed time: 0:00:00
+# ** Note: $finish    : tb.sv(770)
+#    Time: 1129082 ps  Iteration: 0  Instance: /tb
+# End time: 12:41:53 on Oct 03,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 3
         1 個のファイルを移動しました。
