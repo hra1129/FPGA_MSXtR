@@ -148,7 +148,7 @@ bool fpga_get_wait_status( void ) {
 void fpga_outport( uint8_t io_address, uint8_t data ) {
 	uint8_t buf;
 
-	if( s_bus_owner != BUS_OWNER_CPU ) {
+	if( s_bus_owner != BUS_OWNER_PICO ) {
 		return;
 	}
 	if( !fpga_wait_ready() ) {

@@ -12,27 +12,27 @@
   <Part Number>: GW5A-LV25MG121NC1/I0
   <Device>: GW5A-25
   <Device Version>: A
-  <Created Time>:Fri Oct  2 23:40:57 2026
+  <Created Time>:Sat Oct  3 10:13:13 2026
 
 
 2. PnR Details
 
   Running placement:
     Placement Phase 0: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
-    Placement Phase 1: CPU time = 0h 0m 0.33s, Elapsed time = 0h 0m 0.329s
+    Placement Phase 1: CPU time = 0h 0m 0.328s, Elapsed time = 0h 0m 0.328s
     Placement Phase 2: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
     Placement Phase 3: CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
     Total Placement: CPU time = 0h 0m 9s, Elapsed time = 0h 0m 9s
  Running routing:
     Routing Phase 0: CPU time = 0h 0m 0.007s, Elapsed time = 0h 0m 0.007s
-    Routing Phase 1: CPU time = 0h 0m 9s, Elapsed time = 0h 0m 9s
-    Routing Phase 2: CPU time = 0h 0m 0.129s, Elapsed time = 0h 0m 0.129s
+    Routing Phase 1: CPU time = 0h 0m 8s, Elapsed time = 0h 0m 8s
+    Routing Phase 2: CPU time = 0h 0m 0.135s, Elapsed time = 0h 0m 0.135s
     Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
-    Total Routing: CPU time = 0h 0m 9s, Elapsed time = 0h 0m 9s
+    Total Routing: CPU time = 0h 0m 8s, Elapsed time = 0h 0m 8s
  Generate output files:
     CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
 
- Total Time and Memory Usage: CPU time = 0h 0m 20s, Elapsed time = 0h 0m 20s, Peak memory usage = 808MB
+ Total Time and Memory Usage: CPU time = 0h 0m 19s, Elapsed time = 0h 0m 19s, Peak memory usage = 807MB
 
 
 3. Resource Usage Summary
@@ -40,15 +40,15 @@
   --------------------------------------------------------------------------------
   Resources                   | Usage                               | Utilization
   --------------------------------------------------------------------------------
-  Logic                       | 8623/23040                          |  38%
-    --LUT,ALU,ROM16           | 8623(8205 LUT, 418 ALU, 0 ROM16)    | -
+  Logic                       | 8692/23040                          |  38%
+    --LUT,ALU,ROM16           | 8692(8274 LUT, 418 ALU, 0 ROM16)    | -
     --SSRAM(RAM16)            | 0                                   | -
-  Register                    | 4285/23280                          |  19%
+  Register                    | 4286/23280                          |  19%
     --Logic Register as Latch | 0/23040                             |  0%
-    --Logic Register as FF    | 4266/23040                          |  19%
+    --Logic Register as FF    | 4267/23040                          |  19%
     --I/O Register as Latch   | 0/240                               |  0%
     --I/O Register as FF      | 19/240                              |  8%
-  CLS                         | 6601/11520                          |  58%
+  CLS                         | 6665/11520                          |  58%
   I/O Port                    | 77/86                               |  90%
   I/O Buf                     | 70                                  | -
     --Input Buf               | 7                                   | -
@@ -98,9 +98,9 @@
   Signal         | Global Clock   | Location
   -------------------------------------------
   clk_50m_d      | PRIMARY        |  TR TL
-  clk215m        | PRIMARY        |  TR BR BL
+  clk215m        | PRIMARY        |  TR TL BR BL
   clk42m         | PRIMARY        |  TR TL BR BL
-  w_r800_run_ack | PRIMARY        |  TR TL BL
+  w_r800_run_ack | PRIMARY        |  TL BR BL
   u_z80/u_cz80/clken_Z| PRIMARY        |  TR BR
   ff_spi_reset_n | LW             |  -
   slot_reset_n_d | LW             |  -
@@ -109,7 +109,7 @@
   ff_ssram_reset_n| LW             |  -
   ff_z80_reset_n | LW             |  -
   ff_r800_reset_n| LW             |  -
-  n9075_11       | LW             |  -
+  u_controller_spi/n9075_4| LW             |  -
   ===========================================
 
 

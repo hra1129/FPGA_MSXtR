@@ -1,47 +1,127 @@
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 09:04:46 on Aug 30,2026
-vlog ..\msx_slot_decode.v 
--- Compiling module msx_slot_decode
-
-Top level modules:
-	msx_slot_decode
-End time: 09:04:46 on Aug 30,2026, Elapsed time: 0:00:00
-Errors: 0, Warnings: 0
-Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 09:04:46 on Aug 30,2026
+Start time: 10:10:10 on Oct 03,2026
 vlog ..\msx_slot.v 
 -- Compiling module msx_slot
 
 Top level modules:
 	msx_slot
-End time: 09:04:46 on Aug 30,2026, Elapsed time: 0:00:00
+End time: 10:10:10 on Oct 03,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 09:04:46 on Aug 30,2026
+Start time: 10:10:10 on Oct 03,2026
 vlog tb.sv 
 -- Compiling module tb
 
 Top level modules:
 	tb
-End time: 09:04:46 on Aug 30,2026, Elapsed time: 0:00:00
+End time: 10:10:10 on Oct 03,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Reading pref.tcl
 
 # 2020.1
 
 # vsim -c -t 1ps tb -do "add wave -r *; run -all; quit -f" 
-# Start time: 09:04:47 on Aug 30,2026
+# Start time: 10:10:11 on Oct 03,2026
 # Loading sv_std.std
 # Loading work.tb
 # Loading work.msx_slot
-# Loading work.msx_slot_decode
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_msx_slot'.  Expected 78, found 76.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_msx_slot File: tb.sv Line: 123
+# ** Warning: (vsim-3722) tb.sv(123): [TFMPC] - Missing connection for port 'cpu_slot12_cs'.
+# ** Warning: (vsim-3722) tb.sv(123): [TFMPC] - Missing connection for port 'cpu_flash_cs'.
 # add wave -r *
-# ** Warning: (vsim-WLF-5000) WLF file currently in use: vsim.wlf
-#           File in use by: hra  Hostname: DELL_14_PLUS  ProcessID: 43680
-#           Attempting to use alternate WLF file "./wlftnt0dxi".
-# ** Warning: (vsim-WLF-5001) Could not open WLF file: vsim.wlf
-#           Using alternate file: ./wlftnt0dxi
 #  run -all
-# PASS: device immediate read data = 0xc1
-# PASS: device delayed read data = 0xd2
-# PASS: slot fallback read data = 0xe3
+# === TEST 1: Reset & Idle state check ===
+# [PASS] (Test 1) slot_reset_n is 0 during reset
+# [PASS] (Test 1) slot_oe_n is 0
+# [PASS] (Test 1) ROM CE_n are inactive during reset
+# [PASS] (Test 1) All SLTSL_n are inactive during reset
+# [PASS] (Test 1) slot_reset_n is 1 after reset release
+# === TEST 2: Master MUX - Z80 (sel = 2'b00) ===
+# [PASS] (Test 2) slot_m1_n passed from Z80
+# [PASS] (Test 2) slot_merq_n passed from Z80
+# [PASS] (Test 2) slot_rd_n passed from Z80
+# [PASS] (Test 2) slot_wr_n is 1 on read
+# [PASS] (Test 2) slot_data_dir is 0 on read
+# [PASS] (Test 2) z80_rdata received slot_d (0xA5)
+# [PASS] (Test 2) slot_data_dir is 1 on I/O read
+# [PASS] (Test 2) slot_wr_n is 0 on write
+# [PASS] (Test 2) slot_data_dir is 1 on write
+# [PASS] (Test 2) slot_d remains Hi-Z while data output is disabled
+# [PASS] (Test 2) slot_d driven with z80_wdata (0x3C)
+# [PASS] (Test 2) z80_int_n reflects slot_int_n
+# [PASS] (Test 2) z80_wait_n reflects slot_wait_n
+# === TEST 3: Master MUX - R800 (sel = 2'b01) ===
+# [PASS] (Test 3) slot_iorq_n passed from R800
+# [PASS] (Test 3) slot_wr_n passed from R800
+# [PASS] (Test 3) slot_data_dir is 1 on R800 write
+# [PASS] (Test 3) slot_d driven with r800_wdata (0x55)
+# === TEST 4: Master MUX - Pico (sel = 2'b10) ===
+# [PASS] (Test 4) slot_merq_n passed from Pico
+# [PASS] (Test 4) slot_rd_n passed from Pico
+# [PASS] (Test 4) pico_rdata received slot_d (0xE7)
+# [PASS] (Test 4) slot_wr_n passed from Pico write
+# [PASS] (Test 4) Pico slot_d remains Hi-Z while output is disabled
+# [PASS] (Test 4) slot_d driven with pico_wdata while output is enabled
+# === TEST 5: Primary Slot 0 - Internal ROMs Decode ===
+# [PASS] (Test 5) SLOT#0-0 page#0 selects ROM0
+# [PASS] (Test 5) SLOT#0-0 page#0 address is 0x01234
+# [PASS] (Test 5) SLOT#0-0 internal ROM does not assert slot_sltsl0_n
+# [PASS] (Test 5) SLOT#0-0 internal ROM read blocks cartridge-to-CPU data
+# [PASS] (Test 5) SLOT#0-0 page#1 selects ROM0
+# [PASS] (Test 5) SLOT#0-0 page#1 address is 0x05678 ({3'd0, 2'b01, 14'h1678})
+# [PASS] (Test 5) SLOT#0-1 page#0 address is 0x0A000 ({3'd0, 2'b10, 14'h2000})
+# [PASS] (Test 5) SLOT#0-1 page#1 address is 0x0E000 ({3'd0, 2'b11, 14'h2000})
+# [PASS] (Test 5) SLOT#0-2 page#0 address is 0x11000 ({3'd1, 2'b00, 14'h1000})
+# [PASS] (Test 5) SLOT#0-2 page#1 address is 0x15000 ({3'd1, 2'b01, 14'h1000})
+# [PASS] (Test 5) SLOT#0-3 page#0 address is 0x1B000 ({3'd1, 2'b10, 14'h3000})
+# [PASS] (Test 5) SLOT#0-3 page#1 address is 0x1F000 ({3'd1, 2'b11, 14'h3000})
+# [PASS] (Test 5) SLOT#0-0 page#2 does not assert slot_sltsl0_n
+# [PASS] (Test 5) SLOT#0-0 page#2 does not select internal ROM
+# [PASS] (Test 5) SLOT#0-0 page#2 keeps external CS inactive
+# === TEST 6: External Cartridge Slots (Slot 1 & Slot 2) ===
+# [PASS] (Test 6) Slot 1 page#1 asserts slot_sltsl1_n
+# [PASS] (Test 6) Slot 1 page#1 asserts cs1_n and cs12_n
+# [PASS] (Test 6) Slot 1 read sets data direction before /RD
+# [PASS] (Test 6) Slot 1 memory write keeps CPU-to-cartridge direction
+# [PASS] (Test 6) Slot 1 direction stays CPU-to-cartridge while /WR and slot_d_oe are active
+# [PASS] (Test 6) Slot 1 direction returns to cartridge-to-CPU after write ends
+# [PASS] (Test 6) Slot 1 page#2 asserts slot_sltsl1_n
+# [PASS] (Test 6) Slot 1 page#2 asserts cs2_n and cs12_n
+# [PASS] (Test 6) Slot 2 page#1 asserts slot_sltsl2_n
+# [PASS] (Test 6) Slot 2 page#1 asserts cs1_n and cs12_n
+# [PASS] (Test 6) Slot 2 page#2 asserts slot_sltsl2_n
+# [PASS] (Test 6) Slot 2 page#2 asserts cs2_n and cs12_n
+# === TEST 7: Primary Slot 3 - Internal ROMs & DOS2 Bank Switch ===
+# [PASS] (Test 7) SLOT#3-1 page#0 address is 0x20100 ({3'd2, 2'b00, 14'h0100})
+# [PASS] (Test 7) SLOT#3-1 internal ROM read blocks cartridge-to-CPU data
+# [PASS] (Test 7) SLOT#3-1 page#1 address is 0x24200 ({3'd2, 2'b01, 14'h0200})
+# [PASS] (Test 7) SLOT#3-1 page#2 address is 0x28300 ({3'd2, 2'b10, 14'h0300})
+# [PASS] (Test 7) SLOT#3-1 page#3 address is 0x2C400 ({3'd2, 2'b11, 14'h0400})
+# [PASS] (Test 7) MSX-DOS2 bank 0 address is 0x30500 ({3'd3, 2'b00, 14'h0500})
+# [PASS] (Test 7) MSX-DOS2 bank 3 address is 0x3C500 ({3'd3, 2'b11, 14'h0500})
+# [PASS] (Test 7) SLOT#3-0 page#2 does not assert slot_sltsl3_n
+# [PASS] (Test 7) SLOT#3-0 page#2 does not select internal ROM
+# [PASS] (Test 7) SLOT#3-0 page#2 keeps external CS inactive
+# [PASS] (Test 7) SLOT#3-0 SRAM read blocks cartridge-to-CPU data
+# === TEST 8: FlashROM Direct Access (flash_en = 1) ===
+# [PASS] (Test 8) FlashROM ROM0 selected (addr[19]=0)
+# [PASS] (Test 8) slot_a reflects pico_address[18:0]
+# [PASS] (Test 8) FlashROM direct read blocks cartridge-to-CPU data
+# [PASS] (Test 8) FlashROM ROM1 selected (addr[19]=1)
+# [PASS] (Test 8) slot_a reflects pico_address[18:0]
+# === TEST 9: Kanji ROM I/O Access (JIS1 & JIS2) ===
+# [PASS] (Test 9) JIS1 read selects ROM1
+# [PASS] (Test 9) JIS1 address is 0x1A240
+# [PASS] (Test 9) JIS1 address auto-incremented to 0x1A241
+# [PASS] (Test 9) JIS2 read selects ROM1
+# [PASS] (Test 9) JIS2 address is 0x35015 ({2'b01, 17'h15015})
+# ============================================================
+# Results: PASS = 76, FAIL = 0
+# ALL TESTS PASSED!
+# ============================================================
+# ** Note: $finish    : tb.sv(716)
+#    Time: 919561 ps  Iteration: 0  Instance: /tb
+# End time: 10:10:11 on Oct 03,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 3
+        1 個のファイルを移動しました。

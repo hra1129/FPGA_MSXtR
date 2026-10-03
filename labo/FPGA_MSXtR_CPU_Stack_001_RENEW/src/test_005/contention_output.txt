@@ -1,0 +1,53 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps -l contention.log -wlf contention.wlf tb "+inject_contention" -do "run.do" 
+# Start time: 09:38:50 on Oct 03,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.fpga_msxtr_cpu_stack
+# Loading work.Gowin_PLL
+# Loading work.ip_spi
+# Loading work.spi
+# Loading work.cmcu_inst
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.s2026
+# Loading work.s2026_cpu_select
+# Loading work.s2026_register
+# Loading work.msx_bus_mux
+# Loading work.msx_slot
+# Loading work.address_decode
+# Loading work.secondary_slot
+# Loading work.ppi
+# Loading work.memory_mapper
+# Loading work.r800_cache
+# Loading work.ssram
+# Loading work.rtc
+# Loading work.pause_led
+# Loading work.system_flag
+# Loading work.dummy_ssg
+# Loading work.ssram_test_model
+# Loading work.r800_cache_ram
+# do run.do
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# ** Fatal: CPU-side bus contention at PC=0000
+#    Time: 430109641 ps  Scope: tb File: tb.sv Line: 164
+# ** Note: $finish    : tb.sv(164)
+#    Time: 430109641 ps  Iteration: 0  Instance: /tb
+# Break in Module tb at tb.sv line 164
+# End time: 09:38:54 on Oct 03,2026, Elapsed time: 0:00:04
+# Errors: 1, Warnings: 0
