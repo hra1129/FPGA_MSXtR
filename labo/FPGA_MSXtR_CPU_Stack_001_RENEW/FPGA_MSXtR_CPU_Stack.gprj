@@ -42,6 +42,7 @@
         <File path="src/secondary_slot/secondary_slot.v" type="file.verilog" enable="1"/>
         <File path="src/spi/ip_spi.v" type="file.verilog" enable="1"/>
         <File path="src/spi/spi.v" type="file.verilog" enable="1"/>
+        <File path="src/vdp_logger/vdp_logger.v" type="file.verilog" enable="1"/>
         <File path="src/spi_rom/ip_spi_rom.v" type="file.verilog" enable="1"/>
         <File path="src/ssram/ssram.v" type="file.verilog" enable="1"/>
         <File path="src/system_flag/system_flag.v" type="file.verilog" enable="1"/>

@@ -90,4 +90,8 @@ bool fpga_get_msx_reset_timeout( void );
 uint8_t fpga_set_keyboard_matrix( const uint8_t *matrix );
 void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal );
 
+#define FPGA_VDP_LOG_CAPACITY 2048
+#define FPGA_VDP_LOG_RECORD_SIZE 4
+uint16_t fpga_get_vdp_log( uint8_t records[FPGA_VDP_LOG_CAPACITY * FPGA_VDP_LOG_RECORD_SIZE] );
+
 #endif

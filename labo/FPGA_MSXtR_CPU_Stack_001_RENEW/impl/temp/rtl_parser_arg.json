@@ -150,6 +150,10 @@
             "Type": "verilog"
         },
         {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/vdp_logger/vdp_logger.v",
+            "Type": "verilog"
+        },
+        {
             "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/spi_rom/ip_spi_rom.v",
             "Type": "verilog"
         },

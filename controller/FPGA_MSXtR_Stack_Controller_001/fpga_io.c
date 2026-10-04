@@ -539,6 +539,46 @@ static uint32_t fpga_debug_get_bits( const uint8_t *data, uint16_t bit_offset, u
 }
 
 // ---------------------------------------------------------
+uint16_t fpga_get_vdp_log( uint8_t records[FPGA_VDP_LOG_CAPACITY * FPGA_VDP_LOG_RECORD_SIZE] ) {
+	uint8_t command = 0x12;
+	uint8_t count_data[2];
+	uint16_t count;
+	if( s_bus_owner == BUS_OWNER_PICO ) {
+		return 0;
+	}
+	gpio_put( SPI0_CSN_PIN, 0 );
+	spi_write_blocking( SPI0_PORT, &command, 1 );
+	sleep_us( 1 );
+	for( int index = 0; index < 2; index++ ) {
+		if( !fpga_wait_intr( 50 ) ) {
+			gpio_put( SPI0_CSN_PIN, 1 );
+			sleep_us( 10 );
+			return 0;
+		}
+		spi_read_blocking( SPI0_PORT, 0, &count_data[index], 1 );
+		sleep_us( 1 );
+	}
+	count = (uint16_t)count_data[0] | ((uint16_t)count_data[1] << 8);
+	if( count > FPGA_VDP_LOG_CAPACITY ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		sleep_us( 10 );
+		printf( "VDP log: invalid SPI count %u\r\n", count );
+		return 0;
+	}
+	for( uint16_t index = 0; index < count * FPGA_VDP_LOG_RECORD_SIZE; index++ ) {
+		if( !fpga_wait_intr( 50 ) ) {
+			gpio_put( SPI0_CSN_PIN, 1 );
+			sleep_us( 10 );
+			return index / FPGA_VDP_LOG_RECORD_SIZE;
+		}
+		spi_read_blocking( SPI0_PORT, 0, &records[index], 1 );
+		sleep_us( 1 );
+	}
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+	return count;
+}
+
 void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal ) {
 	uint8_t cmd;
 	uint8_t dummy;

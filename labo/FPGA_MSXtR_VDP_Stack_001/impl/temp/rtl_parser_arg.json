@@ -22,7 +22,7 @@
             "Type": "verilog"
         },
         {
-            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_VDP_Stack_001/src/msx_slot/msx_slot.v",
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_VDP_Stack_001/src/msx_slot/msx_slot_slave.v",
             "Type": "verilog"
         },
         {

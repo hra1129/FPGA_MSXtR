@@ -104,6 +104,7 @@ module cz80_inst (
 	reg					ff_rfsh_n;
 	wire	[2:0]		w_t_state;
 	wire				w_m1_n;
+	wire				w_indexed_opcode_fetch;
 	wire				w_iorq;
 	wire				w_noread;
 	wire				w_write;
@@ -572,9 +573,9 @@ module cz80_inst (
 					ff_wait_bus_rdata_en	<= 1'b0;
 					ff_bus_rdata			<= bus_rdata;
 				end
-				else if( !ff_m1_n ) begin
-					if( ff_t_state_d == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && !ff_new_tstate ) begin
-						//	タイムアウト処理 (M1サイクル)
+				else if( !ff_m1_n || w_indexed_opcode_fetch ) begin
+					if( ff_t_state_d == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && (!ff_new_tstate || w_indexed_opcode_fetch) && (!w_indexed_opcode_fetch || w_wait_n) ) begin
+						//	タイムアウト処理 (M1 / IX・IY+CBの末尾オペコード取得)
 						//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
 						//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
 						ff_bus_valid			<= 1'b0;
@@ -656,6 +657,7 @@ module cz80_inst (
 		.nmi_n			( nmi_n					),
 		.busrq_n		( 1'b1					),	//	CPU切替はcenマスクで行うため、コア内蔵のBUSREQは使用しない
 		.m1_n			( w_m1_n				),
+		.indexed_opcode_fetch( w_indexed_opcode_fetch ),
 		.iorq			( w_iorq				),
 		.noread			( w_noread				),
 		.write			( w_write				),

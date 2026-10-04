@@ -22,6 +22,7 @@ add_executable(fpga_msxtr_controller
     sdcard.c
 	flashrom.c
 	debugger.c
+    vdp_logger.c
     ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ff.c
     ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ffunicode.c
 )

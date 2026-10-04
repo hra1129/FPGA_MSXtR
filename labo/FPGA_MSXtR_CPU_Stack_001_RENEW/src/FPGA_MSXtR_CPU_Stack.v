@@ -514,6 +514,24 @@ module fpga_msxtr_cpu_stack (
 	// --------------------------------------------------------------------
 	//	Controller connection
 	// --------------------------------------------------------------------
+	wire [11:0] w_vdp_log_count;
+	wire w_vdp_log_read_request;
+	wire w_vdp_log_read_valid;
+	wire [7:0] w_vdp_log_read_a;
+	wire [7:0] w_vdp_log_read_d;
+	wire [15:0] w_vdp_log_read_pc;
+	wire w_vdp_log_consume;
+
+	vdp_logger u_vdp_logger (
+		.reset_n(w_msx_reset_n & ff_spi_reset_n), .clk(clk42m),
+		.cpu_active(~w_cpu_sel[1]), .io_n(slot_iorq_n), .m1_n(slot_m1_n),
+		.rd_n(slot_rd_n), .wr_n(slot_wr_n), .address(slot_a[7:0]), .data(slot_d),
+		.pc(w_cpu_sel[0] ? w_r800_pc : w_z80_pc),
+		.count(w_vdp_log_count), .read_request(w_vdp_log_read_request),
+		.read_valid(w_vdp_log_read_valid), .read_a(w_vdp_log_read_a),
+		.read_d(w_vdp_log_read_d), .read_pc(w_vdp_log_read_pc), .consume(w_vdp_log_consume)
+	);
+
 	ip_spi u_controller_spi (
 		.reset_n						( ff_spi_reset_n					),
 		.clk							( clk42m							),
@@ -548,7 +566,10 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_matrix				( w_keyboard_matrix					),
 		.keyboard_matrix_valid			( w_keyboard_matrix_valid			),
 		.keyboard_update_count			( w_keyboard_update_count			),
-		.debug_signal					( w_debug_signal					)
+		.debug_signal					( w_debug_signal					),
+		.vdp_log_count(w_vdp_log_count), .vdp_log_read_request(w_vdp_log_read_request),
+		.vdp_log_read_valid(w_vdp_log_read_valid), .vdp_log_read_a(w_vdp_log_read_a),
+		.vdp_log_read_d(w_vdp_log_read_d), .vdp_log_read_pc(w_vdp_log_read_pc), .vdp_log_consume(w_vdp_log_consume)
 	);
 
 	cmcu_inst u_cmcu_inst (
@@ -645,7 +666,7 @@ module fpga_msxtr_cpu_stack (
 		.flash_cs						( w_cpu_flash_cs					),
 		.main_rom_cs					( !slot_rom0_ce_n && slot_a[18:15] == 4'd0 && !w_device_bootrom_cs ),
 		.slot12_cs						( w_cpu_slot12_cs					),
-		.ssram_access				( w_device_ssram_active			),
+		.ssram_access					( w_device_ssram_active				),
 		.bus_io							( w_r800_bus_io						),
 		.bus_write						( w_r800_bus_write					),
 		.bus_valid						( w_r800_bus_valid					),
@@ -855,10 +876,10 @@ module fpga_msxtr_cpu_stack (
 		.device_pause_led_ready			( w_device_pause_led_ready			),
 	`ifdef TEST_BOOTROM
 		.device_bootrom_rdata			( w_device_bootrom_rdata			),
-		.device_bootrom_rdata_en		( w_device_bootrom_rdata_en		),
+		.device_bootrom_rdata_en		( w_device_bootrom_rdata_en			),
 		.device_bootrom_ready			( w_device_bootrom_ready			),
 	`else
-		.device_bootrom_rdata			( 8'h00							),
+		.device_bootrom_rdata			( 8'h00								),
 		.device_bootrom_rdata_en		( 1'b0								),
 		.device_bootrom_ready			( 1'b0								),
 	`endif
@@ -1015,31 +1036,31 @@ module fpga_msxtr_cpu_stack (
 	assign w_ssram_address	= { w_mapper_segment, w_device_address[13:0] };
 
 	r800_cache u_r800_cache (
-		.reset_n		( ff_ssram_reset_n ),
-		.clk			( clk42m ),
-		.r800_active	( w_cpu_sel == 2'b01 ),
-		.bus_cs		( w_device_ssram_active ),
-		.bus_address	( w_ssram_address ),
-		.bus_write	( w_device_write ),
-		.bus_valid	( w_device_valid_peripheral ),
-		.bus_wdata	( w_device_wdata ),
-		.bus_ready	( w_device_ssram_ready ),
-		.bus_rdata	( w_device_ssram_rdata ),
-		.bus_rdata_en	( w_device_ssram_rdata_en ),
-		.sram_cs		( w_cache_ssram_cs ),
-		.sram_address	( w_cache_ssram_address ),
-		.sram_write	( w_cache_ssram_write ),
-		.sram_valid	( w_cache_ssram_valid ),
-		.sram_wdata	( w_cache_ssram_wdata ),
-		.sram_ready	( w_cache_ssram_ready ),
-		.sram_rdata	( w_cache_ssram_rdata ),
-		.sram_rdata_en	( w_cache_ssram_rdata_en ),
-		.sram_burst	( w_cache_ssram_burst ),
-		.sram_burst_rdata	( w_cache_ssram_burst_rdata ),
-		.sram_burst_rdata_en	( w_cache_ssram_burst_rdata_en ),
-		.debug_hit_count	( w_r800_cache_hits ),
-		.debug_miss_count	( w_r800_cache_misses ),
-		.debug_fill_wait_cycles	( w_r800_cache_fill_wait )
+		.reset_n						( ff_ssram_reset_n					),
+		.clk							( clk42m							),
+		.r800_active					( w_cpu_sel == 2'b01				),
+		.bus_cs							( w_device_ssram_active				),
+		.bus_address					( w_ssram_address					),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_wdata						( w_device_wdata					),
+		.bus_ready						( w_device_ssram_ready				),
+		.bus_rdata						( w_device_ssram_rdata				),
+		.bus_rdata_en					( w_device_ssram_rdata_en			),
+		.sram_cs						( w_cache_ssram_cs					),
+		.sram_address					( w_cache_ssram_address				),
+		.sram_write						( w_cache_ssram_write				),
+		.sram_valid						( w_cache_ssram_valid				),
+		.sram_wdata						( w_cache_ssram_wdata				),
+		.sram_ready						( w_cache_ssram_ready				),
+		.sram_rdata						( w_cache_ssram_rdata				),
+		.sram_rdata_en					( w_cache_ssram_rdata_en			),
+		.sram_burst						( w_cache_ssram_burst				),
+		.sram_burst_rdata				( w_cache_ssram_burst_rdata			),
+		.sram_burst_rdata_en			( w_cache_ssram_burst_rdata_en		),
+		.debug_hit_count				( w_r800_cache_hits					),
+		.debug_miss_count				( w_r800_cache_misses				),
+		.debug_fill_wait_cycles			( w_r800_cache_fill_wait			)
 	);
 
 	ssram u_ssram (
@@ -1048,15 +1069,15 @@ module fpga_msxtr_cpu_stack (
 		.clk_serial						( clk215m							),
 		.bus_cs							( w_cache_ssram_cs					),
 		.bus_address					( w_cache_ssram_address				),
-		.bus_write					( w_cache_ssram_write				),
-		.bus_valid					( w_cache_ssram_valid				),
-		.bus_wdata					( w_cache_ssram_wdata				),
-		.bus_ready					( w_cache_ssram_ready				),
-		.bus_rdata					( w_cache_ssram_rdata				),
-		.bus_rdata_en					( w_cache_ssram_rdata_en		),
+		.bus_write						( w_cache_ssram_write				),
+		.bus_valid						( w_cache_ssram_valid				),
+		.bus_wdata						( w_cache_ssram_wdata				),
+		.bus_ready						( w_cache_ssram_ready				),
+		.bus_rdata						( w_cache_ssram_rdata				),
+		.bus_rdata_en					( w_cache_ssram_rdata_en			),
 		.bus_burst						( w_cache_ssram_burst				),
-		.bus_burst_rdata				( w_cache_ssram_burst_rdata		),
-		.bus_burst_rdata_en			( w_cache_ssram_burst_rdata_en	),
+		.bus_burst_rdata				( w_cache_ssram_burst_rdata			),
+		.bus_burst_rdata_en				( w_cache_ssram_burst_rdata_en		),
 		.startup_busy					( w_ssram_startup_busy				),
 		.sram_sclk						( sram_sclk							),
 		.sram_ce0_n						( sram_ce0_n						),

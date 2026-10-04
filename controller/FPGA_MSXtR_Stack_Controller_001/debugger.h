@@ -34,6 +34,7 @@
 #define __DEBUGGER_H__
 
 void dump_slot( void );
+void dump_cpu_ram( void );
 void dump_fpga_debug_signal( void );
 void dir_sd_root( void );
 void sdcard_access( void );

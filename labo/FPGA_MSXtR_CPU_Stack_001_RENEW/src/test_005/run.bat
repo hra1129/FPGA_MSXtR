@@ -8,6 +8,8 @@ vlog ..\test_004\gowin_pll.v
 if errorlevel 1 exit /b 1
 vlog ..\spi\spi.v ..\spi\ip_spi.v ..\cmcu\cmcu.v ..\msx_bus_mux\msx_bus_mux.v
 if errorlevel 1 exit /b 1
+vlog ..\vdp_logger\vdp_logger.v
+if errorlevel 1 exit /b 1
 vlog ..\dummy_ssg\dummy_ssg.v ..\pause_led\pause_led.v ..\msx_slot\msx_slot_decode.v ..\msx_slot\msx_slot.v
 if errorlevel 1 exit /b 1
 vlog ..\address_decode\address_decode.v ..\memory_mapper\memory_mapper.v ..\secondary_slot\secondary_slot.v

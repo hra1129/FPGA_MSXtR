@@ -83,6 +83,7 @@ module cz80 (
 	output			intcycle_n	,
 	output			inte		,
 	output			stop		,
+	output			indexed_opcode_fetch,
 	output	[15:0]	p_pc				//	debug
 );
 
@@ -318,6 +319,8 @@ module cz80 (
 	assign nextis_xy_fetch	= (xy_state != 2'b00 && !xy_ind && ((set_addr_to == axy) || 
 							  (mcycle == 3'd1 && ir == 8'hCB) || (mcycle == 3'd1 && ir == 8'h36)) );
 	assign save_mux			= exchangerp ? busb: (save_alu_r ? alu_q: di_reg);
+
+	assign indexed_opcode_fetch = (iset == 2'b01) && (mcycle == 3'b111);
 
 	always @( posedge clk_n ) begin
 		if( !reset_n ) begin

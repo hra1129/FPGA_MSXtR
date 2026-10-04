@@ -42,6 +42,22 @@ static void dump_256bytes( uint16_t base_address ) {
 }
 
 // ---------------------------------------------------------
+void dump_cpu_ram( void ) {
+	if( fpga_get_bus_owner() != BUS_OWNER_PICO ) {
+		return;
+	}
+
+	printf( "RAM dump C000-DFFF (8192 bytes)\r\n" );
+	dump_fpga_debug_signal();
+	for( uint16_t address = 0xC000; address < 0xE000; address += 0x0100 ) {
+		dump_256bytes( address );
+	}
+	printf( "Additional RAM dump E600-E6FF (256 bytes)\r\n" );
+	dump_256bytes( 0xE600 );
+	printf( "RAM dump finished.\r\n" );
+}
+
+// ---------------------------------------------------------
 void dump_slot(void) {
 	char s_line[16 * 3 + 1];
 	char *p_dest;

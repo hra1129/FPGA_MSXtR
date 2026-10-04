@@ -40,6 +40,7 @@ Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\secondary_slot\secondary_slot.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\spi\ip_spi.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\spi\spi.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\spi_rom\ip_spi_rom.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ssram\ssram.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\system_flag\system_flag.v'
@@ -47,6 +48,11 @@ Compiling module 'fpga_msxtr_cpu_stack'("C:\Users\hra\Documents\github\HRA_produ
 Compiling module 'Gowin_PLL'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\gowin_pll\gowin_pll.v":1)
 Compiling module 'Gowin_PLL_MOD'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\gowin_pll\gowin_pll_mod.v":11)
 Compiling module 'PLL_INIT(MULTI_FAC=30)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\pll_init.v":4)
+Compiling module 'vdp_logger'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":33)
+Compiling module 'vdp_logger_sram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":168)
+Extracting RAM for identifier 'memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":179)
+Compiling module 'vdp_logger_sram(c_data_width=16)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":168)
+Extracting RAM for identifier 'memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":179)
 Compiling module 'ip_spi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\spi\ip_spi.v":34)
 Compiling module 'spi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\spi\spi.v":38)
 Compiling module 'cmcu_inst'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cmcu\cmcu.v":63)
@@ -54,13 +60,13 @@ Compiling module 'cz80_inst'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSX
 Compiling module 'cz80'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":63)
 Compiling module 'cz80_mcode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80_mcode.v":63)
 Compiling module 'cz80_alu'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80_alu.v":63)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":385)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":531)
-WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":534)
-WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":547)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":550)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":388)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":534)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":537)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":550)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":553)
 Compiling module 'cz80_registers'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80_reg.v":55)
-WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":1013)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":1016)
 Compiling module 'cr800_inst'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800_inst.v":63)
 Compiling module 'r800_rom_cache'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_rom_cache.v":1)
 Extracting RAM for identifier 'ff_valid'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_rom_cache.v":19)
@@ -126,8 +132,9 @@ Running technical mapping ...
 [75%] Tech-Mapping Phase 2 completed
 [80%] Tech-Mapping Phase 3 completed
 [90%] Tech-Mapping Phase 4 completed
-WARN  (NL0002) : The module "address_decode" instantiated to "u_address_decode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":885)
-WARN  (NL0002) : The module "msx_bus_mux" instantiated to "u_msx_bus_mux" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":730)
+WARN  (NL0002) : The module "address_decode" instantiated to "u_address_decode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":906)
+WARN  (NL0002) : The module "msx_bus_mux" instantiated to "u_msx_bus_mux" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":751)
+WARN  (NL0002) : The module "vdp_logger_sram" instantiated to "SRAM_A" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":95)
 [95%] Generate netlist file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack.vg" completed
 [100%] Generate report file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack_syn.rpt.html" completed
 GowinSynthesis finish

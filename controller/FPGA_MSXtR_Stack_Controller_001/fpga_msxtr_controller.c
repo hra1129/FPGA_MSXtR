@@ -44,6 +44,7 @@
 #include "fpga_io.h"
 #include "flashrom.h"
 #include "debugger.h"
+#include "vdp_logger.h"
 
 // I2C (キーボードコントローラー)
 #define I2C_PORT	 i2c0
@@ -61,6 +62,21 @@ static uint8_t prev_keymatrix[ KEYBOARD_KEY_MATRIX_SIZE ];
 static bool prev_reset_pressed;
 
 static BUS_OWNER_T bus_owner = BUS_OWNER_PICO;
+
+static bool vdp_log_enabled = false;
+static uint32_t vdp_log_time;
+static uint8_t vdp_log_records[FPGA_VDP_LOG_CAPACITY * FPGA_VDP_LOG_RECORD_SIZE];
+
+static void poll_vdp_log( void ) {
+	uint16_t count = fpga_get_vdp_log( vdp_log_records );
+	uint32_t time = vdp_log_time++;
+	vdp_logger_begin_batch();
+	for( uint16_t index = 0; index < count; index++ ) {
+		uint16_t offset = index * FPGA_VDP_LOG_RECORD_SIZE;
+		uint16_t pc = (uint16_t)vdp_log_records[offset + 2] | ((uint16_t)vdp_log_records[offset + 3] << 8);
+		vdp_logger_decode( time, vdp_log_records[offset], vdp_log_records[offset + 1], pc );
+	}
+}
 
 // ---------------------------------------------------------
 static void dump_ssg_r14( void ) {
@@ -105,6 +121,7 @@ static void reset_button( void ) {
 		//	リセットボタン状態を FPGA のリセットに反映する
 		printf( "Reset button %s\r\n", reset_pressed ? "pressed" : "released" );
 		fpga_msx_reset( reset_pressed );
+		vdp_logger_reset();
 		prev_reset_pressed = reset_pressed;
 		sleep_ms( 500 );
 	}
@@ -204,6 +221,9 @@ int main(void) {
 				//	6キーが押されたら、SSG R#14 をダンプする
 				dump_ssg_r14();
 			}
+			else if( key_press( 1, 0 ) ) {
+				dump_cpu_ram();
+			}
 		}
 		else {
 			//	MSX CPUがバス所有権を持っている場合の処理
@@ -218,9 +238,17 @@ int main(void) {
 				dump_fpga_debug_signal();
 			}
 			s_fpga_led_state = fpga_set_keyboard_matrix( keymatrix );
+			if( key_press( 0, 7 ) ) {
+				vdp_log_enabled = !vdp_log_enabled;
+				vdp_logger_reset();
+				printf( "VDP log %s\r\n", vdp_log_enabled ? "ON" : "OFF" );
+			}
+			if( vdp_log_enabled && fpga_get_bus_owner() != BUS_OWNER_PICO ) {
+				poll_vdp_log();
+			}
 		}
 		memcpy( prev_keymatrix, keymatrix, KEYBOARD_KEY_MATRIX_SIZE );
-		sleep_ms(5);
+		sleep_ms(2);
 	}
 	return 0;
 }

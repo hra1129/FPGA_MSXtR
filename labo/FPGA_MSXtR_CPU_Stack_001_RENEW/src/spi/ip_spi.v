@@ -68,7 +68,14 @@ module ip_spi (
 	output	[7:0]	keyboard_matrix,
 	output			keyboard_matrix_valid,
 	output	[7:0]	keyboard_update_count,
-	input	[255:0]	debug_signal
+	input	[255:0]	debug_signal,
+	input	[11:0]	vdp_log_count,
+	output			vdp_log_read_request,
+	input			vdp_log_read_valid,
+	input	[7:0]	vdp_log_read_a,
+	input	[7:0]	vdp_log_read_d,
+	input	[15:0]	vdp_log_read_pc,
+	output			vdp_log_consume
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -87,6 +94,18 @@ module ip_spi (
 	localparam	[4:0]	ST_BUS_OWNER_WAIT	 = 5'd14;
 	localparam	[4:0]	ST_DEBUG_H			 = 5'd15;
 	localparam	[4:0]	ST_KEYBOARD_SEND	 = 5'd16;
+	localparam [4:0] ST_LOG_COUNT_H = 5'd17;
+	localparam [4:0] ST_LOG_START = 5'd18;
+	localparam [4:0] ST_LOG_REQUEST = 5'd19;
+	localparam [4:0] ST_LOG_WAIT = 5'd20;
+	localparam [4:0] ST_LOG_A = 5'd21;
+	localparam [4:0] ST_LOG_D = 5'd22;
+	localparam [4:0] ST_LOG_PC_L = 5'd23;
+	localparam [4:0] ST_LOG_PC_H = 5'd24;
+	reg [11:0] ff_log_remaining;
+	reg [7:0] ff_log_data;
+	reg [15:0] ff_log_pc;
+	reg ff_log_active;
 	localparam			SPI_RX_WDATA		 = 8'h64;
 	localparam	[5:0]	DEBUG_SIGNAL_BYTES	 = 6'd33;	//	debug_signal 32byte + 通信確認用の固定パターン(0xA5) 1byte
 	localparam			DEBUG_SIGNAL_PATTERN = 8'hA5;
@@ -126,6 +145,8 @@ module ip_spi (
 	reg				ff_flashrom_access;
 	reg				ff_slot_wait_n;
 	reg				ff_spi_intr_req;
+	assign vdp_log_read_request = reset_n & ~spi_cs_n & ~ff_spi_cs_n & (ff_state == ST_LOG_REQUEST);
+	assign vdp_log_consume = reset_n & ~spi_cs_n & ~ff_spi_cs_n & (ff_state == ST_LOG_PC_H) & ~ff_spi_valid & spi_ready;
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -177,9 +198,14 @@ module ip_spi (
 			ff_flashrom_address			<= 20'd0;
 			ff_flashrom_access			<= 1'b0;
 			ff_debug_byte_index			<= 5'd0;
+			ff_log_remaining <= 12'd0;
+			ff_log_data <= 8'd0;
+			ff_log_pc <= 16'd0;
+			ff_log_active <= 1'b0;
 		end
 		//	spi_cs_n解除は異常時のリカバリを兼ねるため、どのステートより優先して ST_IDLE へ戻す
 		else if( ff_spi_cs_n ) begin
+			ff_log_active <= 1'b0;
 			ff_state					<= ST_IDLE;
 			ff_spi_valid				<= 1'b0;
 			ff_bus_valid				<= 1'b0;
@@ -394,6 +420,15 @@ module ip_spi (
 						ff_spi_write			<= 1'b1;
 						ff_keyboard_matrix_row	<= 4'd0;
 					end
+					8'h12: begin
+						ff_log_active <= 1'b1;
+						ff_bus_write <= 1'b1;
+						ff_log_remaining <= vdp_log_count;
+						ff_spi_wdata <= vdp_log_count[7:0];
+						ff_state <= ST_LOG_COUNT_H;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b1;
+					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command
 						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
@@ -503,6 +538,78 @@ module ip_spi (
 					ff_spi_write	<= 1'b1;
 				end
 			end
+			ST_LOG_COUNT_H: begin
+				if( spi_ready ) begin
+					ff_spi_wdata <= {4'd0, ff_log_remaining[11:8]};
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_state <= ST_LOG_START;
+				end
+			end
+			ST_LOG_START: begin
+				if( spi_ready ) begin
+					if( ff_log_remaining == 12'd0 ) begin
+						ff_state <= ST_COMMAND;
+						ff_spi_wdata <= SPI_RX_WDATA;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
+					end
+					else begin
+						ff_state <= ST_LOG_REQUEST;
+					end
+				end
+			end
+			ST_LOG_REQUEST: begin
+				ff_state <= ST_LOG_WAIT;
+			end
+			ST_LOG_WAIT: begin
+				if( vdp_log_read_valid ) begin
+					ff_log_data <= vdp_log_read_d;
+					ff_log_pc <= vdp_log_read_pc;
+					ff_spi_wdata <= vdp_log_read_a;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_state <= ST_LOG_A;
+				end
+			end
+			ST_LOG_A: begin
+				if( spi_ready ) begin
+					ff_spi_wdata <= ff_log_data;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_state <= ST_LOG_D;
+				end
+			end
+			ST_LOG_D: begin
+				if( spi_ready ) begin
+					ff_spi_wdata <= ff_log_pc[7:0];
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_state <= ST_LOG_PC_L;
+				end
+			end
+			ST_LOG_PC_L: begin
+				if( spi_ready ) begin
+					ff_spi_wdata <= ff_log_pc[15:8];
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_state <= ST_LOG_PC_H;
+				end
+			end
+			ST_LOG_PC_H: begin
+				if( spi_ready ) begin
+					ff_log_remaining <= ff_log_remaining - 12'd1;
+					if( ff_log_remaining == 12'd1 ) begin
+						ff_state <= ST_COMMAND;
+						ff_spi_wdata <= SPI_RX_WDATA;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
+					end
+					else begin
+						ff_state <= ST_LOG_REQUEST;
+					end
+				end
+			end
 			ST_KEYBOARD_SEND: begin
 				if( spi_ready ) begin
 					ff_state		<= ST_KEYBOARD;
@@ -582,6 +689,14 @@ module ip_spi (
 		else if( ff_spi_intr_req ) begin
 			//	内部処理が完了したことを通知
 			ff_spi_intr				<= 1'b1;
+		end
+		else if( ff_log_active ) begin
+			if( ff_spi_tx_load_en_d1 ) begin
+				ff_spi_intr <= 1'b1;
+			end
+			else if( spi_ready && !ff_spi_valid ) begin
+				ff_spi_intr <= 1'b0;
+			end
 		end
 		else if( ff_bus_write ) begin
 			//	内部BUSへの書き込みの場合

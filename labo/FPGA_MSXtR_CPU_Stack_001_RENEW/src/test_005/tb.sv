@@ -25,6 +25,7 @@ module tb;
 	integer rom_cursor;
 	integer m1_count [0:3];
 	integer read_count [0:3];
+	integer bit_read_count [0:3];
 	integer write_count [0:3];
 	integer io_read_count [0:3];
 	integer io_write_count [0:3];
@@ -49,6 +50,8 @@ module tb;
 	wire [7:0] slot1_output_data;
 	wire [7:0] slot2_output_data;
 	reg inject_contention = 1'b0;
+	reg slot_wait_n = 1'b1;
+	reg inject_opcode_wait = 1'b0;
 	reg test_passed = 1'b0;
 	wire flash_drive = !slot_rom0_ce_n && !slot_rd_n;
 	wire slot1_drive = !slot_sltsl1_n && !slot_cs1_n && !slot_rd_n && slot_iorq_n;
@@ -63,7 +66,7 @@ module tb;
 	assign #(80, 20) slot1_output_en = slot1_drive;
 	assign #(80, 20) slot2_output_en = slot2_drive;
 	assign #80 slot1_output_data = slot1_rom[slot_a[13:0]];
-	assign #80 slot2_output_data = slot2_rom[slot_a[13:0]];
+	assign #80 slot2_output_data = (inject_opcode_wait && !slot_wait_n && slot_a[15:0] == 16'h8026) ? 8'h00 : slot2_rom[slot_a[13:0]];
 	assign cartridge_d = slot1_output_en ? slot1_output_data : 8'hzz;
 	assign cartridge_d = slot2_output_en ? slot2_output_data : 8'hzz;
 	assign cartridge_d = forward_drive ? slot_d : 8'hzz;
@@ -83,7 +86,7 @@ module tb;
 		.slot_sltsl0_n(slot_sltsl0_n), .slot_sltsl1_n(slot_sltsl1_n),
 		.slot_sltsl2_n(slot_sltsl2_n), .slot_sltsl3_n(slot_sltsl3_n),
 		.slot_cs1_n(slot_cs1_n), .slot_cs2_n(slot_cs2_n), .slot_cs12_n(slot_cs12_n),
-		.slot_a(slot_a), .slot_int_n(1'b1), .slot_wait_n(1'b1),
+		.slot_a(slot_a), .slot_int_n(1'b1), .slot_wait_n(slot_wait_n),
 		.slot_reset_n(slot_reset_n), .slot_busdir(1'b1),
 		.slot_data_dir(slot_data_dir), .slot_wr_n(slot_wr_n), .slot_rd_n(slot_rd_n),
 		.slot_rom0_ce_n(slot_rom0_ce_n), .slot_rom1_ce_n(slot_rom1_ce_n),
@@ -136,7 +139,16 @@ module tb;
 		emit_byte(rom_id, 8'h09);	// 101Ch / 401Ch / 801Ch / C11Ch: ADD HL,BC
 		emit_byte(rom_id, 8'he5);	// 101Dh / 401Dh / 801Dh / C11Dh: PUSH HL
 		emit_byte(rom_id, 8'hd1);	// 101Eh / 401Eh / 801Eh / C11Eh: POP DE
-		emit_byte(rom_id, 8'hc3);	// 101Fh / 401Fh / 801Fh / C11Fh: JP next_address
+		emit_byte(rom_id, 8'hfd);
+		emit_byte(rom_id, 8'h21);
+		emit_word(rom_id, base_address + 16'h0100);
+		emit_byte(rom_id, 8'hfd);
+		emit_byte(rom_id, 8'hcb);
+		emit_byte(rom_id, 8'h00);
+		emit_byte(rom_id, 8'h56);
+		emit_byte(rom_id, expected_data[2] ? 8'hca : 8'hc2);
+		emit_word(rom_id, 16'h0030);
+		emit_byte(rom_id, 8'hc3);
 		emit_word(rom_id, next_address);
 		if( rom_id == 0 ) flash_rom[base_address + 16'h0100] = expected_data;
 		else if( rom_id == 1 ) slot1_rom[256] = expected_data;
@@ -221,10 +233,10 @@ module tb;
 				if( !slot_sltsl1_n && (!reverse_drive || !slot1_output_en) ) $fatal(1, "SLOT#1 data not enabled at read sampling point");
 				if( !slot_sltsl2_n && (!reverse_drive || !slot2_output_en) ) $fatal(1, "SLOT#2 data not enabled at read sampling point");
 			end
-			phase = (u_dut.w_z80_pc >= 16'h1000 && u_dut.w_z80_pc < 16'h1022) ? 0 :
-				(u_dut.w_z80_pc >= 16'h4000 && u_dut.w_z80_pc < 16'h4022) ? 1 :
-				(u_dut.w_z80_pc >= 16'h8000 && u_dut.w_z80_pc < 16'h8022) ? 2 :
-				(u_dut.w_z80_pc >= 16'hc100 && u_dut.w_z80_pc < 16'hc122) ? 3 : -1;
+			phase = (u_dut.w_z80_pc >= 16'h1000 && u_dut.w_z80_pc < 16'h102d) ? 0 :
+				(u_dut.w_z80_pc >= 16'h4000 && u_dut.w_z80_pc < 16'h402d) ? 1 :
+				(u_dut.w_z80_pc >= 16'h8000 && u_dut.w_z80_pc < 16'h802d) ? 2 :
+				(u_dut.w_z80_pc >= 16'hc100 && u_dut.w_z80_pc < 16'hc12d) ? 3 : -1;
 			if( phase >= 0 ) begin
 				if( !phase_started[phase] ) begin
 					phase_started[phase] = 1'b1;
@@ -233,9 +245,17 @@ module tb;
 				if( !slot_iorq_n && !slot_rd_n ) io_read_count[phase] = io_read_count[phase] + 1;
 				if( previous_rd_n && !slot_rd_n ) begin
 					if( !slot_m1_n ) m1_count[phase] = m1_count[phase] + 1;
-					else if( slot_a[15:0] == code_base[phase] + 16'h0100 ) read_count[phase] = read_count[phase] + 1;
+					else if( slot_a[15:0] == code_base[phase] + 16'h0100 ) begin
+						read_count[phase] = read_count[phase] + 1;
+						if( u_dut.w_z80_pc == code_base[phase] + 16'h0027 ) begin
+							if( u_dut.u_z80.u_cz80.ir !== 8'h56 ) $fatal(1, "Indexed BIT decoded stale opcode in phase %0d: IR=%02h", phase, u_dut.u_z80.u_cz80.ir);
+							bit_read_count[phase] = bit_read_count[phase] + 1;
+							$display("[BIT_READ] %s instruction=%04h IY=%04h PC=%04h time=%0t", phase_name[phase], code_base[phase] + 16'h0023, slot_a[15:0], u_dut.w_z80_pc, $time);
+						end
+					end
 				end
 				if( previous_wr_n && !slot_wr_n ) begin
+					if( slot_iorq_n && slot_a[15:0] == code_base[phase] + 16'h0100 ) $fatal(1, "BIT operand was written in phase %0d", phase);
 					if( !slot_iorq_n ) io_write_count[phase] = io_write_count[phase] + 1;
 					else if( slot_a[15:0] == code_base[phase] + 16'h0200 ) begin
 						write_count[phase] = write_count[phase] + 1;
@@ -261,6 +281,7 @@ module tb;
 
 	initial begin
 		inject_contention = $test$plusargs("inject_contention");
+		inject_opcode_wait = $test$plusargs("indexed_wait");
 		for( index = 0; index < 524288; index = index + 1 ) flash_rom[index] = 8'hff;
 		for( index = 0; index < 16384; index = index + 1 ) begin
 			slot1_rom[index] = 8'h00;
@@ -269,6 +290,7 @@ module tb;
 		for( index = 0; index <= 3; index = index + 1 ) begin
 			phase_started[index] = 1'b0;
 			m1_count[index] = 0; read_count[index] = 0; write_count[index] = 0;
+			bit_read_count[index] = 0;
 			io_read_count[index] = 0; io_write_count[index] = 0;
 			internal_count[index] = 0; refresh_count[index] = 0;
 		end
@@ -325,13 +347,35 @@ module tb;
 		for( index = 0; index <= 3; index = index + 1 ) begin
 			$display("%s M1=%0d READ=%0d WRITE=%0d IO_READ=%0d IO_WRITE=%0d INTERNAL=%0d REFRESH=%0d", phase_name[index], m1_count[index], read_count[index], write_count[index], io_read_count[index], io_write_count[index], internal_count[index], refresh_count[index]);
 			if( m1_count[index] == 0 || read_count[index] == 0 || write_count[index] != 1 || io_read_count[index] == 0 || io_write_count[index] == 0 || internal_count[index] == 0 || refresh_count[index] == 0 ) $fatal(1, "Missing access coverage for SLOT#%0d", index);
+			if( bit_read_count[index] != 1 ) $fatal(1, "Missing BIT 2,(IY) operand read for phase %0d", index);
 		end
 		if( u_dut.u_z80.u_cz80.sp !== 16'hff00 || u_dut.w_primary_slot !== 8'he4 ) $fatal(1, "Stack or slot mapping check failed");
 		if( direction_hold_count == 0 ) $fatal(1, "Read direction release was not observed");
+		if( u_dut.w_vdp_log_count !== 12'd4 ) $fatal(1, "VDP logger missed or duplicated CPU writes");
+		for( index = 0; index < 4; index = index + 1 ) begin
+			if( u_dut.u_vdp_logger.SRAM_A.memory[index] !== 8'h80 || u_dut.u_vdp_logger.SRAM_D.memory[index] !== 8'he4 )
+				$fatal(1, "VDP logger captured incorrect port/data for CPU phase %0d", index);
+			if( u_dut.u_vdp_logger.SRAM_C.memory[index] !== code_base[index] + 16'h0016 )
+				$fatal(1, "VDP logger PC mismatch for phase %0d: expected %04h got %04h", index, code_base[index] + 16'h0016, u_dut.u_vdp_logger.SRAM_C.memory[index]);
+			$display("VDP logger phase %0d OUT at %04h captured PC=%04h", index, code_base[index] + 16'h0014, u_dut.u_vdp_logger.SRAM_C.memory[index]);
+		end
+		$display("VDP logger captured four CPU writes to port 98h with data E4h");
 		$display("Read direction one-clock release checks=%0d", direction_hold_count);
 		$display("PASS: test_005 slot access coverage and bus safety");
 		test_passed = 1'b1;
 		$finish;
+	end
+
+	initial begin
+		if( $test$plusargs("indexed_wait") ) begin
+			wait(slot_reset_n && u_dut.w_z80_pc == 16'h8026 && u_dut.u_z80.w_indexed_opcode_fetch);
+			@(posedge u_dut.clk42m); #0.001;
+			slot_wait_n = 1'b0;
+			repeat(40) @(posedge u_dut.clk42m);
+			#0.001;
+			slot_wait_n = 1'b1;
+			$display("[INDEXED_WAIT] released at time=%0t", $time);
+		end
 	end
 
 	initial begin

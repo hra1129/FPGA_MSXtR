@@ -1,0 +1,15 @@
+# vsim -c -t 1ps -l spi_log.txt tb_spi -do "run_spi.do" 
+# Start time: 09:44:43 on Oct 04,2026
+# Loading sv_std.std
+# Loading work.tb_spi
+# Loading work.vdp_logger
+# Loading work.vdp_logger_sram
+# Loading work.ip_spi
+# Loading work.spi
+# do run_spi.do
+# PASS: SPI empty, count L/H, A/D/PC L/H order, A/D/PC-low abort retention, concurrent append, full ring drain
+# ** Note: $finish    : tb.sv(213)
+#    Time: 3164253520 ps  Iteration: 0  Instance: /tb_spi
+# Break in Module tb_spi at tb.sv line 213
+# End time: 09:44:45 on Oct 04,2026, Elapsed time: 0:00:02
+# Errors: 0, Warnings: 0
