@@ -1,0 +1,108 @@
+# vsim -c -t 1ps -l cpu_switch_ram.log -wlf cpu_switch_ram.wlf tb "+cpu_switch_ram" -do "run.do" 
+# Start time: 22:33:59 on Oct 04,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.fpga_msxtr_cpu_stack
+# Loading work.Gowin_PLL
+# Loading work.r800_debugger
+# Loading work.vdp_logger
+# Loading work.vdp_logger_sram
+# Loading work.ip_spi
+# Loading work.spi
+# Loading work.cmcu_inst
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.s2026
+# Loading work.s2026_cpu_select
+# Loading work.s2026_register
+# Loading work.msx_bus_mux
+# Loading work.msx_slot
+# Loading work.address_decode
+# Loading work.secondary_slot
+# Loading work.ppi
+# Loading work.memory_mapper
+# Loading work.r800_cache
+# Loading work.ssram
+# Loading work.rtc
+# Loading work.pause_led
+# Loading work.system_flag
+# Loading work.dummy_ssg
+# Loading work.ssram_test_model
+# Loading work.r800_cache_ram
+# do run.do
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [EXEC] SLOT#0-0 FlashROM base=1000 time=451737000
+# [SRAM Model] Write: addr=0x00200 data=0x3a
+# [SRAM Model] Write: addr=0x00201 data=0x00
+# [SRAM Model] Write: addr=0x00202 data=0xc1
+# [SRAM Model] Write: addr=0x00203 data=0xfe
+# [SRAM Model] Write: addr=0x00204 data=0x11
+# [SRAM Model] Write: addr=0x00205 data=0xc2
+# [SRAM Model] Write: addr=0x00206 data=0x30
+# [SRAM Model] Write: addr=0x00207 data=0x00
+# [SRAM Model] Write: addr=0x00208 data=0x3e
+# [SRAM Model] Write: addr=0x00209 data=0x22
+# [SRAM Model] Write: addr=0x0020a data=0x32
+# [SRAM Model] Write: addr=0x0020b data=0x00
+# [SRAM Model] Write: addr=0x0020c data=0xc1
+# [SRAM Model] Write: addr=0x0020d data=0x3a
+# [SRAM Model] Write: addr=0x0020e data=0x00
+# [SRAM Model] Write: addr=0x0020f data=0xc1
+# [SRAM Model] Write: addr=0x00210 data=0xfe
+# [SRAM Model] Write: addr=0x00211 data=0x22
+# [SRAM Model] Write: addr=0x00212 data=0xc2
+# [SRAM Model] Write: addr=0x00213 data=0x30
+# [SRAM Model] Write: addr=0x00214 data=0x00
+# [SRAM Model] Write: addr=0x00215 data=0x3e
+# [SRAM Model] Write: addr=0x00216 data=0x06
+# [SRAM Model] Write: addr=0x00217 data=0xd3
+# [SRAM Model] Write: addr=0x00218 data=0xe4
+# [SRAM Model] Write: addr=0x00219 data=0x3e
+# [SRAM Model] Write: addr=0x0021a data=0x60
+# [SRAM Model] Write: addr=0x0021b data=0xd3
+# [SRAM Model] Write: addr=0x0021c data=0xe5
+# [SRAM Model] Write: addr=0x0021d data=0x3a
+# [SRAM Model] Write: addr=0x0021e data=0x00
+# [SRAM Model] Write: addr=0x0021f data=0xc1
+# [SRAM Model] Write: addr=0x00220 data=0xfe
+# [SRAM Model] Write: addr=0x00221 data=0x33
+# [SRAM Model] Write: addr=0x00222 data=0xc2
+# [SRAM Model] Write: addr=0x00223 data=0x30
+# [SRAM Model] Write: addr=0x00224 data=0x00
+# [SRAM Model] Write: addr=0x00225 data=0xc3
+# [SRAM Model] Write: addr=0x00226 data=0x40
+# [SRAM Model] Write: addr=0x00227 data=0x00
+# [SRAM Model] Write: addr=0x00100 data=0x11
+# [CPU_SWITCH] 0 -> 1 Z80_PC=101a R800_PC=0000 SRAM_CE=1111 at 737289000
+# [SRAM Model] Read complete: addr=0x00208 data=0x3e
+# [SRAM Model] Read complete: addr=0x00108 data=0x00
+# [SRAM Model] Read complete: addr=0x00210 data=0xfe
+# [SRAM Model] Write: addr=0x00100 data=0x22
+# [SRAM Model] Read complete: addr=0x00218 data=0xe4
+# [SRAM Model] Read complete: addr=0x00220 data=0xfe
+# [CPU_SWITCH] 1 -> 0 Z80_PC=101a R800_PC=c21d SRAM_CE=1111 at 752957000
+# [SRAM Model] Read complete: addr=0x00101 data=0x00
+# [SRAM Model] Write: addr=0x00100 data=0x33
+# [CPU_SWITCH] 0 -> 1 Z80_PC=102f R800_PC=c21d SRAM_CE=1111 at 779752000
+# [SRAM Model] Read complete: addr=0x00220 data=0xfe
+# [SRAM Model] Read complete: addr=0x00108 data=0x00
+# [SRAM Model] Read complete: addr=0x00228 data=0x00
+# [CACHE] hits=35 misses=8 fill_wait=232
+# PASS: real CPU switch, SRAM write completion and cache coherence
+# ** Note: $finish    : tb.sv(426)
+#    Time: 786200520 ps  Iteration: 1  Instance: /tb
+# Break in Module tb at tb.sv line 426
+# End time: 22:34:03 on Oct 04,2026, Elapsed time: 0:00:04
+# Errors: 0, Warnings: 0

@@ -64,11 +64,31 @@ module s2026_cpu_select (
 	reg				ff_state1 = ST_IDLE;
 	reg		[1:0]	ff_cpu_sel = 2'b00;
 	reg		[1:0]	ff_target_sel = 2'b00;
+	reg				ff_cpu_change_seen = 1'b0;
+	reg				ff_pico_change_seen = 1'b0;
 	wire			w_all_stopped;
 
 	//	切替中はz80/r800/picoすべてのrun_reqを落とし、3者ともM1境界/バスアイドル地点で
 	//	停止(run_ack=0)したことを確認してから切替先だけを再稼働させる。
 	assign w_all_stopped = ( !z80_run_ack || !msx_reset_n ) && ( !r800_run_ack || !msx_reset_n ) && !pico_run_ack;
+
+	always @( posedge clk ) begin
+		if( !msx_reset_n || !cpu_change_req ) begin
+			ff_cpu_change_seen <= 1'b0;
+		end
+		else if( ff_state0 == ST_IDLE ) begin
+			ff_cpu_change_seen <= 1'b1;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !sys_reset_n || !pico_change_req ) begin
+			ff_pico_change_seen <= 1'b0;
+		end
+		else if( ff_state1 == ST_IDLE ) begin
+			ff_pico_change_seen <= 1'b1;
+		end
+	end
 
 	// ---------------------------------------------------------
 	//	CPU/Pico change state machine
@@ -81,7 +101,7 @@ module s2026_cpu_select (
 			ff_target_sel[0]	<= 1'b0;
 		end
 		else if( ff_state0 == ST_IDLE ) begin
-			if( cpu_change_req ) begin
+			if( cpu_change_req && !ff_cpu_change_seen ) begin
 				ff_state0			<= ST_CHANGING;
 				ff_target_sel[0]	<= ~cpu_change_target;
 			end
@@ -103,7 +123,7 @@ module s2026_cpu_select (
 			ff_target_sel[1]	<= 1'b1;
 		end
 		else if( ff_state1 == ST_IDLE ) begin
-			if( pico_change_req ) begin
+			if( pico_change_req && !ff_pico_change_seen ) begin
 				ff_target_sel[1]	<= pico_change_target;
 				ff_state1			<= ST_CHANGING;
 			end

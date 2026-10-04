@@ -1,0 +1,415 @@
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:33 on Oct 04,2026
+vlog gowin_pll.v 
+-- Compiling module Gowin_PLL
+
+Top level modules:
+	Gowin_PLL
+End time: 22:26:33 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:33 on Oct 04,2026
+vlog ..\spi\spi.v 
+-- Compiling module spi
+
+Top level modules:
+	spi
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\cmcu\cmcu.v 
+-- Compiling module cmcu_inst
+
+Top level modules:
+	cmcu_inst
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\dummy_ssg\dummy_ssg.v 
+-- Compiling module dummy_ssg
+
+Top level modules:
+	dummy_ssg
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\msx_bus_mux\msx_bus_mux.v 
+-- Compiling module msx_bus_mux
+
+Top level modules:
+	msx_bus_mux
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\pause_led\pause_led.v 
+-- Compiling module pause_led
+
+Top level modules:
+	pause_led
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\spi\ip_spi.v 
+-- Compiling module ip_spi
+
+Top level modules:
+	ip_spi
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\msx_slot\msx_slot_decode.v 
+-- Compiling module msx_slot_decode
+
+Top level modules:
+	msx_slot_decode
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\msx_slot\msx_slot.v 
+-- Compiling module msx_slot
+
+Top level modules:
+	msx_slot
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\address_decode\address_decode.v 
+-- Compiling module address_decode
+
+Top level modules:
+	address_decode
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\memory_mapper\memory_mapper.v 
+-- Compiling module memory_mapper
+
+Top level modules:
+	memory_mapper
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\secondary_slot\secondary_slot.v 
+-- Compiling module secondary_slot
+
+Top level modules:
+	secondary_slot
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\ssram\ssram.v 
+-- Compiling module ssram
+
+Top level modules:
+	ssram
+End time: 22:26:34 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:34 on Oct 04,2026
+vlog ..\ssram\ssram_test_model.v 
+-- Compiling module ssram_test_model
+
+Top level modules:
+	ssram_test_model
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog ..\bootrom\ram.v 
+-- Compiling module ip_ram
+-- Compiling module SP
+
+Top level modules:
+	ip_ram
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog ..\bootrom\rom.v 
+-- Compiling module rom
+
+Top level modules:
+	rom
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog ..\bootrom\bootrom.v 
+-- Compiling module bootrom
+
+Top level modules:
+	bootrom
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog ..\ppi\ppi.v 
+-- Compiling module ppi
+
+Top level modules:
+	ppi
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog flashrom_test_model.v 
+-- Compiling module flashrom_test_model
+
+Top level modules:
+	flashrom_test_model
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog ..\cz80\cz80_alu.v 
+-- Compiling module cz80_alu
+
+Top level modules:
+	cz80_alu
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog ..\cz80\cz80_mcode.v 
+-- Compiling module cz80_mcode
+
+Top level modules:
+	cz80_mcode
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog ..\cz80\cz80_reg.v 
+-- Compiling module cz80_registers
+
+Top level modules:
+	cz80_registers
+End time: 22:26:35 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:35 on Oct 04,2026
+vlog ..\cz80\cz80.v 
+-- Compiling module cz80
+
+Top level modules:
+	cz80
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cz80\cz80_inst.v 
+-- Compiling module cz80_inst
+
+Top level modules:
+	cz80_inst
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cr800\cr800_alu.v 
+-- Compiling module cr800_alu
+
+Top level modules:
+	cr800_alu
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cr800\cr800_mcode.v 
+-- Compiling module cr800_mcode
+
+Top level modules:
+	cr800_mcode
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cr800\cr800_reg.v 
+-- Compiling module cr800_registers
+
+Top level modules:
+	cr800_registers
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cr800\cr800.v 
+-- Compiling module cr800
+
+Top level modules:
+	cr800
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cr800\cr800_inst.v 
+-- Compiling module cr800_inst
+
+Top level modules:
+	cr800_inst
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cr800\r800_cache.v 
+-- Compiling module r800_cache
+
+Top level modules:
+	r800_cache
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cr800\r800_cache_ram.v 
+-- Compiling module r800_cache_ram
+
+Top level modules:
+	r800_cache_ram
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\cr800\r800_rom_cache.v 
+-- Compiling module r800_rom_cache
+
+Top level modules:
+	r800_rom_cache
+End time: 22:26:36 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:36 on Oct 04,2026
+vlog ..\msx_bus_mux\msx_bus_mux.v 
+-- Compiling module msx_bus_mux
+
+Top level modules:
+	msx_bus_mux
+End time: 22:26:37 on Oct 04,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:37 on Oct 04,2026
+vlog ..\s2026\s2026_register.v 
+-- Compiling module s2026_register
+
+Top level modules:
+	s2026_register
+End time: 22:26:37 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:37 on Oct 04,2026
+vlog ..\s2026\s2026_cpu_select.v 
+-- Compiling module s2026_cpu_select
+
+Top level modules:
+	s2026_cpu_select
+End time: 22:26:37 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:37 on Oct 04,2026
+vlog ..\s2026\s2026.v 
+-- Compiling module s2026
+
+Top level modules:
+	s2026
+End time: 22:26:37 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:37 on Oct 04,2026
+vlog ..\rtc\rtc.v 
+-- Compiling module rtc
+
+Top level modules:
+	rtc
+End time: 22:26:37 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:37 on Oct 04,2026
+vlog ..\system_flag\system_flag.v 
+-- Compiling module system_flag
+
+Top level modules:
+	system_flag
+End time: 22:26:37 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:37 on Oct 04,2026
+vlog ..\FPGA_MSXtR_CPU_Stack.v 
+-- Compiling module fpga_msxtr_cpu_stack
+
+Top level modules:
+	fpga_msxtr_cpu_stack
+End time: 22:26:37 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:26:37 on Oct 04,2026
+vlog tb.sv 
+-- Compiling module tb
+
+Top level modules:
+	tb
+End time: 22:26:37 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps tb -do "add wave -r *; run -all; quit -f" 
+# Start time: 22:26:38 on Oct 04,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.fpga_msxtr_cpu_stack
+# Loading work.Gowin_PLL
+# ** Error: (vsim-3033) Instantiation of 'r800_debugger' failed. The design unit was not found.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_dut File: ../FPGA_MSXtR_CPU_Stack.v Line: 538
+#         Searched libraries:
+#             C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/test_002/work
+# ** Error: (vsim-3033) Instantiation of 'vdp_logger' failed. The design unit was not found.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_dut File: ../FPGA_MSXtR_CPU_Stack.v Line: 551
+#         Searched libraries:
+#             C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/test_002/work
+# Loading work.ip_spi
+# Loading work.spi
+# Loading work.cmcu_inst
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.s2026
+# Loading work.s2026_cpu_select
+# Loading work.s2026_register
+# Loading work.msx_bus_mux
+# Loading work.msx_slot
+# Loading work.address_decode
+# Loading work.secondary_slot
+# Loading work.ppi
+# Loading work.memory_mapper
+# Loading work.r800_cache
+# Loading work.ssram
+# Loading work.rtc
+# Loading work.pause_led
+# Loading work.system_flag
+# Loading work.dummy_ssg
+# Loading work.ssram_test_model
+# Loading work.flashrom_test_model
+# Error loading design
+Error loading design
+# End time: 22:26:38 on Oct 04,2026, Elapsed time: 0:00:00
+# Errors: 2, Warnings: 0
+        1 個のファイルを移動しました。

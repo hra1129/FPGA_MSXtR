@@ -53,6 +53,10 @@ module tb;
 	reg slot_wait_n = 1'b1;
 	reg inject_opcode_wait = 1'b0;
 	reg test_passed = 1'b0;
+	reg cpu_switch_test = 1'b0;
+	reg cpu_switch_ram = 1'b0;
+	reg [1:0] previous_cpu_sel = 2'b10;
+	integer cpu_switch_count = 0;
 	wire flash_drive = !slot_rom0_ce_n && !slot_rd_n;
 	wire slot1_drive = !slot_sltsl1_n && !slot_cs1_n && !slot_rd_n && slot_iorq_n;
 	wire slot2_drive = !slot_sltsl2_n && !slot_cs2_n && !slot_rd_n && slot_iorq_n;
@@ -154,6 +158,57 @@ module tb;
 		else if( rom_id == 1 ) slot1_rom[256] = expected_data;
 		else if( rom_id == 2 ) slot2_rom[256] = expected_data;
 		else ram_code[256] = expected_data;
+	endtask
+
+	task automatic switch_processor(input [7:0] mode);
+		emit_byte(0, 8'h3e); emit_byte(0, 8'h06);
+		emit_byte(0, 8'hd3); emit_byte(0, 8'he4);
+		emit_byte(0, 8'h3e); emit_byte(0, mode);
+		emit_byte(0, 8'hd3); emit_byte(0, 8'he5);
+	endtask
+
+	task automatic switch_memory_write(input [7:0] value);
+		emit_byte(0, 8'h3e); emit_byte(0, value);
+		emit_byte(0, 8'h32); emit_word(0, 16'hc100);
+	endtask
+
+	task automatic switch_memory_check(input [7:0] value);
+		emit_byte(0, 8'h3a); emit_word(0, 16'hc100);
+		emit_byte(0, 8'hfe); emit_byte(0, value);
+		emit_byte(0, 8'hc2); emit_word(0, 16'h0030);
+	endtask
+
+	task automatic make_cpu_switch_rom;
+		rom_cursor = 0;
+		emit_byte(0, 8'hf3);
+		emit_byte(0, 8'h31); emit_word(0, 16'hff00);
+		emit_byte(0, 8'h3e); emit_byte(0, 8'hc0);
+		emit_byte(0, 8'hd3); emit_byte(0, 8'ha8);
+		emit_byte(0, 8'hdb); emit_byte(0, 8'hf3);
+		emit_byte(0, 8'hfe); emit_byte(0, 8'h11);
+		emit_byte(0, 8'hca); emit_word(0, cpu_switch_ram ? 16'hc200 : 16'h2000);
+		emit_byte(0, 8'hc3); emit_word(0, 16'h1000);
+		rom_cursor = 16'h1000;
+		if( cpu_switch_ram ) begin
+			emit_byte(0, 8'h21); emit_word(0, 16'h2000);
+			emit_byte(0, 8'h11); emit_word(0, 16'hc200);
+			emit_byte(0, 8'h01); emit_word(0, 16'h0028);
+			emit_byte(0, 8'hed); emit_byte(0, 8'hb0);
+		end
+		switch_memory_write(8'h11);
+		emit_byte(0, 8'hd3); emit_byte(0, 8'hf3);
+		switch_processor(8'h40);
+		switch_memory_check(8'h22);
+		switch_memory_write(8'h33);
+		switch_processor(8'h40);
+		emit_byte(0, 8'hc3); emit_word(0, 16'h0030);
+		rom_cursor = 16'h2000;
+		switch_memory_check(8'h11);
+		switch_memory_write(8'h22);
+		switch_memory_check(8'h22);
+		switch_processor(8'h60);
+		switch_memory_check(8'h33);
+		emit_byte(0, 8'hc3); emit_word(0, 16'h0040);
 	endtask
 
 	task automatic spi_byte(input [7:0] value);
@@ -279,8 +334,25 @@ module tb;
 		previous_rfsh_n = slot_rfsh_n;
 	end
 
+	always @(posedge u_dut.clk42m) begin
+		#0.001;
+		if( cpu_switch_test && slot_reset_n ) begin
+			if( u_dut.w_debug_f3 == 8'h5a ) $fatal(1, "CPU switch ROM failed: owner=%0d Z80_PC=%04h R800_PC=%04h", u_dut.w_cpu_sel, u_dut.w_z80_pc, u_dut.w_r800_pc);
+			if( previous_cpu_sel != u_dut.w_cpu_sel ) begin
+				$display("[CPU_SWITCH] %0d -> %0d Z80_PC=%04h R800_PC=%04h SRAM_CE=%b at %0t", previous_cpu_sel, u_dut.w_cpu_sel, u_dut.w_z80_pc, u_dut.w_r800_pc, sram_ce_n, $time);
+				if( u_dut.w_z80_run_ack || u_dut.w_r800_run_ack || u_dut.w_pico_run_ack ) $fatal(1, "Owner changed before all processors stopped");
+				if( sram_ce_n !== 4'b1111 ) $fatal(1, "Owner changed during SRAM transaction");
+				if( u_dut.u_ssram.ff_busy_clk ) $fatal(1, "Owner changed with pending SRAM request");
+				if( !previous_cpu_sel[1] && !u_dut.w_cpu_sel[1] ) cpu_switch_count = cpu_switch_count + 1;
+			end
+		end
+		previous_cpu_sel = u_dut.w_cpu_sel;
+	end
+
 	initial begin
 		inject_contention = $test$plusargs("inject_contention");
+		cpu_switch_ram = $test$plusargs("cpu_switch_ram");
+		cpu_switch_test = $test$plusargs("cpu_switch") || cpu_switch_ram;
 		inject_opcode_wait = $test$plusargs("indexed_wait");
 		for( index = 0; index < 524288; index = index + 1 ) flash_rom[index] = 8'hff;
 		for( index = 0; index < 16384; index = index + 1 ) begin
@@ -333,6 +405,7 @@ module tb;
 		make_cartridge(2, 16'h8000, 8'h39, 16'h0080);
 		make_cartridge(3, 16'hc100, 8'h57, 16'h0040);
 		for( index = 0; index <= 256; index = index + 1 ) flash_rom[16'h2000 + index] = ram_code[index];
+		if( cpu_switch_test ) make_cpu_switch_rom();
 		repeat(15000) @(posedge u_dut.clk42m);
 		spi_command(8'h0c);
 		mcu_cs_n = 1'b0;
@@ -344,6 +417,14 @@ module tb;
 		spi_command(8'h07);
 		wait(u_dut.w_debug_f3 == 8'ha5);
 		repeat(24) @(posedge u_dut.clk42m);
+		if( cpu_switch_test ) begin
+			if( cpu_switch_count != 3 ) $fatal(1, "Expected Z80-R800-Z80-R800 transitions, got %0d", cpu_switch_count);
+			$display("[CACHE] hits=%0d misses=%0d fill_wait=%0d", u_dut.w_r800_cache_hits, u_dut.w_r800_cache_misses, u_dut.w_r800_cache_fill_wait);
+			if( u_dut.w_r800_cache_hits == 0 || u_dut.w_r800_cache_misses < 2 ) $fatal(1, "CPU switch did not exercise cache hits and re-fill");
+			$display("PASS: real CPU switch, SRAM write completion and cache coherence");
+			test_passed = 1'b1;
+			$finish;
+		end
 		for( index = 0; index <= 3; index = index + 1 ) begin
 			$display("%s M1=%0d READ=%0d WRITE=%0d IO_READ=%0d IO_WRITE=%0d INTERNAL=%0d REFRESH=%0d", phase_name[index], m1_count[index], read_count[index], write_count[index], io_read_count[index], io_write_count[index], internal_count[index], refresh_count[index]);
 			if( m1_count[index] == 0 || read_count[index] == 0 || write_count[index] != 1 || io_read_count[index] == 0 || io_write_count[index] == 0 || internal_count[index] == 0 || refresh_count[index] == 0 ) $fatal(1, "Missing access coverage for SLOT#%0d", index);

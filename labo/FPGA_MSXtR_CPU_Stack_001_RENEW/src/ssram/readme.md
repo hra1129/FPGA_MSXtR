@@ -160,3 +160,4 @@ read データを受信すると、`bus_rdata` にデータを出力し、`bus_r
 - `ssram.v` の `sram_ce0_n`～`sram_ce3_n` は Low active です。
 - トップレベルで使用する場合は、4 本の CE を対応する FPGA 外部ポートへ接続してください。
 - 初期化中に SRAM へアクセスしないでください。`bus_ready` が High になるまで要求を待つ必要があります。
+

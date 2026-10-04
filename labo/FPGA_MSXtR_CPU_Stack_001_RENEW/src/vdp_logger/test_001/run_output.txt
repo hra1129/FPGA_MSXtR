@@ -1,5 +1,5 @@
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 09:44:42 on Oct 04,2026
+Start time: 21:55:50 on Oct 04,2026
 vlog ..\vdp_logger.v ..\..\spi\spi.v ..\..\spi\ip_spi.v tb.sv 
 -- Compiling module vdp_logger
 -- Compiling module vdp_logger_sram
@@ -11,14 +11,14 @@ vlog ..\vdp_logger.v ..\..\spi\spi.v ..\..\spi\ip_spi.v tb.sv
 Top level modules:
 	tb
 	tb_spi
-End time: 09:44:42 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 21:55:50 on Oct 04,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Reading pref.tcl
 
 # 2020.1
 
 # vsim -c -t 1ps -l log.txt tb -do "run.do" 
-# Start time: 09:44:42 on Oct 04,2026
+# Start time: 21:55:50 on Oct 04,2026
 # Loading sv_std.std
 # Loading work.tb
 # Loading work.vdp_logger
@@ -28,24 +28,32 @@ Reading pref.tcl
 # ** Note: $finish    : tb.sv(89)
 #    Time: 460171 ns  Iteration: 0  Instance: /tb
 # Break in Module tb at tb.sv line 89
-# End time: 09:44:43 on Oct 04,2026, Elapsed time: 0:00:01
+# End time: 21:55:51 on Oct 04,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 Reading pref.tcl
 
 # 2020.1
 
 # vsim -c -t 1ps -l spi_log.txt tb_spi -do "run_spi.do" 
-# Start time: 09:44:43 on Oct 04,2026
+# Start time: 21:55:52 on Oct 04,2026
 # Loading sv_std.std
 # Loading work.tb_spi
 # Loading work.vdp_logger
 # Loading work.vdp_logger_sram
 # Loading work.ip_spi
 # Loading work.spi
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_spi'.  Expected 47, found 41.
+#    Time: 0 ps  Iteration: 0  Instance: /tb_spi/u_spi File: tb.sv Line: 136
+# ** Warning: (vsim-3722) tb.sv(136): [TFMPC] - Missing connection for port 'r800_debug_count'.
+# ** Warning: (vsim-3722) tb.sv(136): [TFMPC] - Missing connection for port 'r800_debug_arm'.
+# ** Warning: (vsim-3722) tb.sv(136): [TFMPC] - Missing connection for port 'r800_debug_read_request'.
+# ** Warning: (vsim-3722) tb.sv(136): [TFMPC] - Missing connection for port 'r800_debug_read_address'.
+# ** Warning: (vsim-3722) tb.sv(136): [TFMPC] - Missing connection for port 'r800_debug_read_valid'.
+# ** Warning: (vsim-3722) tb.sv(136): [TFMPC] - Missing connection for port 'r800_debug_read_record'.
 # do run_spi.do
 # PASS: SPI empty, count L/H, A/D/PC L/H order, A/D/PC-low abort retention, concurrent append, full ring drain
 # ** Note: $finish    : tb.sv(213)
 #    Time: 3164253520 ps  Iteration: 0  Instance: /tb_spi
 # Break in Module tb_spi at tb.sv line 213
-# End time: 09:44:45 on Oct 04,2026, Elapsed time: 0:00:02
-# Errors: 0, Warnings: 0
+# End time: 21:55:53 on Oct 04,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 7

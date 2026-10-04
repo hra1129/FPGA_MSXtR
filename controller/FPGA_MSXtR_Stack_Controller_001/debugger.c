@@ -57,7 +57,6 @@ void dump_cpu_ram( void ) {
 	printf( "RAM dump finished.\r\n" );
 }
 
-// ---------------------------------------------------------
 void dump_slot(void) {
 	char s_line[16 * 3 + 1];
 	char *p_dest;

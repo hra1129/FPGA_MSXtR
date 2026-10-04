@@ -1,0 +1,43 @@
+# vsim -c -t 1ps -l run_check.log tb -do "run.do" 
+# Start time: 22:26:00 on Oct 04,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.ssram
+# Loading work.ssram_test_model
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_ssram'.  Expected 21, found 17.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_ssram File: tb.sv Line: 57
+# ** Warning: (vsim-3722) tb.sv(57): [TFMPC] - Missing connection for port 'bus_burst'.
+# ** Warning: (vsim-3722) tb.sv(57): [TFMPC] - Missing connection for port 'bus_burst_rdata'.
+# ** Warning: (vsim-3722) tb.sv(57): [TFMPC] - Missing connection for port 'bus_burst_rdata_en'.
+# ** Warning: (vsim-3722) tb.sv(57): [TFMPC] - Missing connection for port 'startup_busy'.
+# do run.do
+# ======================================
+# Test 1: Basic write and read test
+# ======================================
+# write_data( 0x00123, 0x12 )
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# write_data( 0x01234, 0x56 )
+# [SRAM Model] Write: addr=0x00123 data=0x12
+# write_data( 0x12345, 0xab )
+# [SRAM Model] Write: addr=0x01234 data=0x56
+# [SRAM Model] Write: addr=0x12345 data=0xab
+# [SRAM Model] Read complete: addr=0x00124 data=0x00
+# [TIMEOUT] Waiting for rdata_en high in read_data, address=0x00123
+# read_data( 0x00123, 0x12 )
+# [TIMEOUT] Waiting for ready in read_data, address=0x01234
+# [TIMEOUT] Waiting for rdata_en high in read_data, address=0x01234
+# read_data( 0x01234, 0x12 )
+# [ERROR] Test 1: Address 0x01234 expected 0x56, got 0x12
+# [TIMEOUT] Waiting for ready in read_data, address=0x12345
+# [TIMEOUT] Waiting for rdata_en high in read_data, address=0x12345
+# read_data( 0x12345, 0x12 )
+# [ERROR] Test 1: Address 0x12345 expected 0xAB, got 0x12
+# ======================================
+# Test 2: Sequential address write/read test
+# ======================================
+# write_data( 0x00000, 0x00 )
+# End time: 22:26:21 on Oct 04,2026, Elapsed time: 0:00:21
+# Errors: 0, Warnings: 5

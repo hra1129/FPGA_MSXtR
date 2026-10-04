@@ -17,6 +17,27 @@ vsim -c -t 1ps -l contention.log -wlf contention.wlf tb +inject_contention -do r
 
 ## ROMと起動手順
 
+### 実CPUの切替確認
+
+通常ケースをrun.batでコンパイルした後、次の追加ケースを実行できる。いずれも実際のZ80/R800、S2026、RAMキャッシュ、SSRAMモデルを使用し、RTL本体は変更していない。
+
+```bat
+vsim -c -t 1ps -l cpu_switch.log -wlf cpu_switch.wlf tb +cpu_switch -do run.do
+vsim -c -t 1ps -l cpu_switch_ram.log -wlf cpu_switch_ram.wlf tb +cpu_switch_ram -do run.do
+```
+
+Z80がC100hへ11hを書いてS2026のE4h/E5h (register 6)からR800へ切り替える。R800は11hを読んで22hを書き、再読出しでキャッシュヒットを確認してZ80へ戻す。Z80は22hを読み、33hを書いてR800へ再切替。R800は33hを確認してF3hへA5hを出し正常完了する。割り込みはDIで禁止し、page0=FlashROM、page3=内部RAMを使用する。
+
+cpu_switchではR800用コードを2000hから実行。cpu_switch_ramではZ80自身が2000hの40byteをC200hへLDIRでコピーし、R800はRAM上から命令を取得する。直接RAMロードやCPU状態のforceは使用しない。各CPUは自身のPC・レジスタを保持し、CPU間のレジスタ転送を検証するものではない。
+
+CPU所有者の変更時に全run_ack=0、全SRAM CS非選択、SSRAM内部busy解除を検査する。ROMプログラムは各再開後の命令列とRAM値を照合し、3回のCPU切替、キャッシュのヒットと再取得も検査する。
+
+2026-10-04: ROM実行ケースPASS (hit=1, miss=2)、RAM実行ケースPASS (hit=35, miss=8)。後者は内部busy解除の検査を含めてPASS。Z80の停止・再開PCは101Ah、R800の停止・再開PCはC21Dh。Z80が更新した33hをR800が再取得できた。既存の通常test_005もPASS。
+
+この短い切替シーケンスでは未完了SRAM取引の残留、古いRAMキャッシュの再利用、再開直後の命令取得失敗は再現しなかった。実機BIOSによる切替、割り込みを有効にした切替、カートリッジ上でのR800実行は未確認であり、実機の暴走原因を確定する結果ではない。タイミング制約は変更していない。
+
+### 通常の4領域テスト
+
 ROMデータはtb.sv内の配列に生成する。実機用イメージの書き換えは行わない。
 
 - FlashROM0: DI、A8h=C0h、SP=FF00h、A8h=E4h、JP 1000h。

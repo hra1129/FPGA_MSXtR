@@ -1,0 +1,294 @@
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog gowin_pll.v 
+** Error: (vlog-7) Failed to open design unit file "gowin_pll.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\spi\spi.v 
+** Error: (vlog-7) Failed to open design unit file "..\spi\spi.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\cmcu\cmcu.v 
+** Error: (vlog-7) Failed to open design unit file "..\cmcu\cmcu.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\dummy_ssg\dummy_ssg.v 
+** Error: (vlog-7) Failed to open design unit file "..\dummy_ssg\dummy_ssg.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\msx_bus_mux\msx_bus_mux.v 
+** Error: (vlog-7) Failed to open design unit file "..\msx_bus_mux\msx_bus_mux.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\pause_led\pause_led.v 
+** Error: (vlog-7) Failed to open design unit file "..\pause_led\pause_led.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\spi\ip_spi.v 
+** Error: (vlog-7) Failed to open design unit file "..\spi\ip_spi.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\msx_slot\msx_slot_decode.v 
+** Error: (vlog-7) Failed to open design unit file "..\msx_slot\msx_slot_decode.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\msx_slot\msx_slot.v 
+** Error: (vlog-7) Failed to open design unit file "..\msx_slot\msx_slot.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:44 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:44 on Oct 04,2026
+vlog ..\address_decode\address_decode.v 
+** Error: (vlog-7) Failed to open design unit file "..\address_decode\address_decode.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:01
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\memory_mapper\memory_mapper.v 
+** Error: (vlog-7) Failed to open design unit file "..\memory_mapper\memory_mapper.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\secondary_slot\secondary_slot.v 
+** Error: (vlog-7) Failed to open design unit file "..\secondary_slot\secondary_slot.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\ssram\ssram.v 
+** Error: (vlog-7) Failed to open design unit file "..\ssram\ssram.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\ssram\ssram_test_model.v 
+** Error: (vlog-7) Failed to open design unit file "..\ssram\ssram_test_model.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\bootrom\ram.v 
+** Error: (vlog-7) Failed to open design unit file "..\bootrom\ram.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\bootrom\rom.v 
+** Error: (vlog-7) Failed to open design unit file "..\bootrom\rom.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\bootrom\bootrom.v 
+** Error: (vlog-7) Failed to open design unit file "..\bootrom\bootrom.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\ppi\ppi.v 
+** Error: (vlog-7) Failed to open design unit file "..\ppi\ppi.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog flashrom_test_model.v 
+** Error: (vlog-7) Failed to open design unit file "flashrom_test_model.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\cz80\cz80_alu.v 
+** Error: (vlog-7) Failed to open design unit file "..\cz80\cz80_alu.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\cz80\cz80_mcode.v 
+** Error: (vlog-7) Failed to open design unit file "..\cz80\cz80_mcode.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\cz80\cz80_reg.v 
+** Error: (vlog-7) Failed to open design unit file "..\cz80\cz80_reg.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:45 on Oct 04,2026
+vlog ..\cz80\cz80.v 
+** Error: (vlog-7) Failed to open design unit file "..\cz80\cz80.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:45 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cz80\cz80_inst.v 
+** Error: (vlog-7) Failed to open design unit file "..\cz80\cz80_inst.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cr800\cr800_alu.v 
+** Error: (vlog-7) Failed to open design unit file "..\cr800\cr800_alu.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cr800\cr800_mcode.v 
+** Error: (vlog-7) Failed to open design unit file "..\cr800\cr800_mcode.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cr800\cr800_reg.v 
+** Error: (vlog-7) Failed to open design unit file "..\cr800\cr800_reg.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cr800\cr800.v 
+** Error: (vlog-7) Failed to open design unit file "..\cr800\cr800.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cr800\cr800_inst.v 
+** Error: (vlog-7) Failed to open design unit file "..\cr800\cr800_inst.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cr800\r800_cache.v 
+** Error: (vlog-7) Failed to open design unit file "..\cr800\r800_cache.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cr800\r800_cache_ram.v 
+** Error: (vlog-7) Failed to open design unit file "..\cr800\r800_cache_ram.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\cr800\r800_rom_cache.v 
+** Error: (vlog-7) Failed to open design unit file "..\cr800\r800_rom_cache.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\msx_bus_mux\msx_bus_mux.v 
+** Error: (vlog-7) Failed to open design unit file "..\msx_bus_mux\msx_bus_mux.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\s2026\s2026_register.v 
+** Error: (vlog-7) Failed to open design unit file "..\s2026\s2026_register.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\s2026\s2026_cpu_select.v 
+** Error: (vlog-7) Failed to open design unit file "..\s2026\s2026_cpu_select.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\s2026\s2026.v 
+** Error: (vlog-7) Failed to open design unit file "..\s2026\s2026.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\rtc\rtc.v 
+** Error: (vlog-7) Failed to open design unit file "..\rtc\rtc.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:46 on Oct 04,2026
+vlog ..\system_flag\system_flag.v 
+** Error: (vlog-7) Failed to open design unit file "..\system_flag\system_flag.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:46 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:47 on Oct 04,2026
+vlog ..\FPGA_MSXtR_CPU_Stack.v 
+** Error: (vlog-7) Failed to open design unit file "..\FPGA_MSXtR_CPU_Stack.v" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:47 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:23:47 on Oct 04,2026
+vlog tb.sv 
+** Error: (vlog-7) Failed to open design unit file "tb.sv" in read mode.
+No such file or directory. (errno = ENOENT)
+End time: 22:23:47 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 1, Warnings: 0
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps tb -do "add wave -r *; run -all; quit -f" 
+# Start time: 22:23:47 on Oct 04,2026
+# ** Error: (vsim-3170) Could not find 'tb'.
+#         Searched libraries:
+#             C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/work
+# Error loading design
+Error loading design
+# End time: 22:23:47 on Oct 04,2026, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 0
+        1 個のファイルを移動しました。
