@@ -34,6 +34,45 @@ BIOS自身のPUSH/EXX/EX AF/LD (FFFDh),SP/OTIR/LD SP,(FFFDh)/POP/RETを実行す
 
 この条件では実機の初回Syntax Errorは再現しない。実BASICの呼び出し状態、割り込み動作、実デバイスの遅延・電気特性まで検証した結果ではない。合成・PnR・実機書き込みは行っていない。
 
+### 2026-10-05 SP観測の検証
+
+コアSPをtopへ観測用に出力し、Z80所有/PC=0488hとR800所有/PC=04BFhの間だけ
+それぞれ16bitラッチへ取り込む構成を検査する。PC一致期間は毎クロック更新し、その後保持する。
+BIOSの保存・復元後、両ラッチがEFE8hとなることを確認した (呼出し前SP=F000h、CALLで2byte、
+保存レジスタで22byte使用)。このテスト値を実BASICの期待SPとして扱わない。
+
+SPI0Ahから既存33byteを読み、byte16-19が両ラッチをlittle-endianで返し、末尾A5hが変わらないこと、
+読出しで記録が変わらないことを検査する。SPI14hが一度だけクリア信号を出し、
+両ラッチを5A5Ahへ戻し、MCUメモリバス要求を出さないことも検査する。MSXリセット時も5A5Ahへ戻す。
+10回の切替、同CPU呼出し、全レジスタ復元および要求多重受付防止の既存検査もPASS。
+
+SP観測版のGowin合成/PnRはsetup/hold違反0件、最悪setup slack +0.020ns。
+SSRAM RTLとタイミング制約は変更していない。実機検証は未実施。
+
+### `+cache_sp_reuse`: FFFDh stack-line再取得
+
+初期化のR800→Z80切替を実行した後、次の3回のBIOS呼出しを行う専用ケース。
+
+1. Z80の呼出し前SPをF06Chにし、BIOSのCALL/保存push後にFFFDhへF054hが保存される状態でR800へ切替。
+2. R800からZ80へ戻し、Z80側SPをF090hにして、次のCALL/保存push後にFFFDhへF078hを保存してR800へ切替。
+3. 2回目のR800復元後、SP=F090hで戻ることを確認。
+
+起動準備後のowner変化が Z80→R800→Z80→R800 となる。TBはpage3=segment0の物理SSRAMにある
+03FFDh/03FFEhが、各復元前に54h/F0h、次に78h/F0hへ更新されたことを直接確認する。
+同時にR800のcache missが両方で物理ライン03FF8hのburst readを発行した回数を数え、
+2回となることを確認する。R800復元地点SPもF054h、F078hの順で照合する。
+
+実行方法 (通常の`run.bat`でコンパイルしたworkライブラリを使用):
+
+```bat
+vsim -c -t 1ps -l cache_sp_reuse.log -wlf cache_sp_reuse.wlf tb +cache_sp_reuse -do run.do
+```
+
+2026-10-05: PASS。物理SSRAMのFFFDh/FFFEh書込み、2回の同一stack line burst refill、
+R800 SP復元F054h→F078h、3回の復帰と4回のCPU所有者遷移を確認。
+これはRTL/SSRAMモデル上でvalid invalidationと再fillが動くことを示すが、
+実機の54h再現原因や実SerialSRAMの電気的タイミングを確定する結果ではない。
+
 ## 切替要求の重複受付防止
 
 修正前は切替完了でセレクタがIDLEへ戻った次のクロックに、要求元がまだHighの切替要求を下げるのと同時に同じ要求を再受理していた。CPU種は変わらないがrun_reqが再低下し、余計な停止・再開が発生する。CPU種の変化数だけでは検出できない。

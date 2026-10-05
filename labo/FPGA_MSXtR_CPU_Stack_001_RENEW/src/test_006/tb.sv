@@ -8,6 +8,10 @@ module tb;
 	reg mcu_sclk = 0;
 	reg mcu_mosi = 0;
 	wire mcu_intr;
+	wire mcu_miso;
+	reg [7:0] spi_received;
+	reg [7:0] debug_bytes [0:32];
+	integer sp_clear_count = 0;
 	wire [3:0] sram_sio;
 	wire sram_sclk;
 	wire [3:0] sram_ce_n;
@@ -35,7 +39,17 @@ module tb;
 	reg previous_pico_request = 0;
 	reg previous_pico_changing = 0;
 	reg checking_switches = 0;
-	wire [1:0] expected_owner = (phase < c_switch_count && phase % 2 == 0) ? 2'b01 : 2'b00;
+	reg cache_sp_reuse = 0;
+	integer expected_return_count;
+	integer expected_switch_count;
+	integer stack_line_fill_count = 0;
+	integer cache_clear_cycle_count = 0;
+	reg previous_stack_line_fill = 0;
+	reg cache_clear_was_active = 0;
+	wire [1:0] expected_owner = cache_sp_reuse ? (phase == 1 ? 2'b00 : 2'b01) :
+		((phase < c_switch_count && phase % 2 == 0) ? 2'b01 : 2'b00);
+	wire stack_line_fill = (u_dut.w_cpu_sel == 2'b01) && u_dut.w_cache_ssram_burst &&
+		u_dut.w_cache_ssram_valid && (u_dut.w_cache_ssram_address == 21'h03ff8);
 	reg [1:0] previous_owner = 2'b10;
 	reg [15:0] previous_pc = 0;
 	wire flash_drive = !slot_rom0_ce_n && !slot_rd_n;
@@ -77,7 +91,7 @@ module tb;
 	fpga_msxtr_cpu_stack u_dut (
 		.clk_28m(clk_28m), .clk_50m(clk_50m),
 		.mcu_cs_n(mcu_cs_n), .mcu_sclk(mcu_sclk), .mcu_mosi(mcu_mosi),
-		.mcu_miso(), .mcu_intr(mcu_intr),
+		.mcu_miso(mcu_miso), .mcu_intr(mcu_intr),
 		.sram_ce0_n(sram_ce_n[0]), .sram_ce1_n(sram_ce_n[1]),
 		.sram_ce2_n(sram_ce_n[2]), .sram_ce3_n(sram_ce_n[3]),
 		.sram_sclk(sram_sclk), .sram_sio(sram_sio),
@@ -156,16 +170,31 @@ module tb;
 		rom_cursor = 16'h0800;
 		emit_byte(8'h31); emit_word(16'he000);
 		call_bios(0, 16'h0030);
-		for(index = 0; index < c_switch_count; index = index + 1) begin
-			rom_cursor = 16'h1000 + index * 16'h0100;
+		if( cache_sp_reuse ) begin
+			rom_cursor = 16'h1000;
+			emit_byte(8'h31); emit_word(16'hf06c);
+			seed_registers(); call_bios(8'h02, 16'h1100);
+			rom_cursor = 16'h1100;
+			emit_byte(8'h31); emit_word(16'hf06c);
+			seed_registers(); call_bios(0, 16'h1200);
+			rom_cursor = 16'h1200;
+			emit_byte(8'h31); emit_word(16'hf090);
+			seed_registers(); call_bios(8'h02, 16'h1300);
+			rom_cursor = 16'h1300;
+		end
+		else begin
+			for(index = 0; index < c_switch_count; index = index + 1) begin
+				rom_cursor = 16'h1000 + index * 16'h0100;
+				emit_byte(8'h00);
+				seed_registers();
+				call_bios(index % 2 == 0 ? 8'h02 : 8'h00, 16'h1100 + index * 16'h0100);
+			end
+			rom_cursor = 16'h1000 + c_switch_count * 16'h0100;
 			emit_byte(8'h00);
 			seed_registers();
-			call_bios(index % 2 == 0 ? 8'h02 : 8'h00, 16'h1100 + index * 16'h0100);
+			call_bios(0, 16'h1100 + c_switch_count * 16'h0100);
+			rom_cursor = 16'h1100 + c_switch_count * 16'h0100;
 		end
-		rom_cursor = 16'h1000 + c_switch_count * 16'h0100;
-		emit_byte(8'h00);
-		seed_registers(); call_bios(0, 16'h1100 + c_switch_count * 16'h0100);
-		rom_cursor = 16'h1100 + c_switch_count * 16'h0100;
 		emit_byte(8'h00);
 		load_a(8'ha5); out_port(8'hf3); emit_byte(8'h76);
 		rom_cursor = 16'h0030;
@@ -175,7 +204,9 @@ module tb;
 		integer bit_index;
 		for(bit_index = 7; bit_index >= 0; bit_index = bit_index - 1) begin
 			@(posedge u_dut.clk42m); mcu_mosi = value[bit_index];
-			@(posedge u_dut.clk42m); mcu_sclk = 1;
+			@(posedge u_dut.clk42m);
+			spi_received[bit_index] = mcu_miso;
+			mcu_sclk = 1;
 			@(posedge u_dut.clk42m); mcu_sclk = 0;
 		end
 		repeat(6) @(posedge u_dut.clk42m);
@@ -190,6 +221,30 @@ module tb;
 	endtask
 
 	always @(posedge u_dut.clk42m) begin
+		if( !u_dut.ff_ssram_reset_n ) begin
+			cache_clear_cycle_count = 0;
+			cache_clear_was_active = 0;
+		end
+		else if( !u_dut.w_r800_cache_ready ) begin
+			cache_clear_cycle_count = cache_clear_cycle_count + 1;
+			cache_clear_was_active = 1;
+			if( u_dut.w_cpu_sel == 2'b01 && u_dut.w_r800_core_run_req ) $fatal(1, "R800 run_req asserted before cache valid clear completes");
+		end
+		else if( cache_clear_was_active ) begin
+			if( cache_clear_cycle_count != 64 ) $fatal(1, "Cache valid clear took %0d clocks instead of 64", cache_clear_cycle_count);
+			$display("[CACHE_VALID_CLEAR] cycles=%0d", cache_clear_cycle_count);
+			cache_clear_cycle_count = 0;
+			cache_clear_was_active = 0;
+		end
+		if( cache_sp_reuse && !previous_stack_line_fill && stack_line_fill && checking_switches ) begin
+			stack_line_fill_count = stack_line_fill_count + 1;
+			$display("[STACK_LINE_FILL] address=%05h count=%0d", u_dut.w_cache_ssram_address, stack_line_fill_count);
+		end
+		previous_stack_line_fill = stack_line_fill;
+		if( u_dut.w_debug_sp_clear ) begin
+			sp_clear_count = sp_clear_count + 1;
+			if( u_dut.w_mcu_valid ) $fatal(1, "SP clear issued a memory bus request");
+		end
 		#0.001;
 		if( !previous_cpu_request && u_dut.u_s2026.u_cpu_select.cpu_change_req ) cpu_request_count = cpu_request_count + 1;
 		if( !previous_cpu_changing && u_dut.u_s2026.u_cpu_select.ff_state0 ) cpu_stop_count = cpu_stop_count + 1;
@@ -207,7 +262,7 @@ module tb;
 				if( u_dut.u_ssram.ff_busy_clk || sram_ce_n !== 4'b1111 ) $fatal(1, "Owner changed during SRAM transaction");
 				if( checking_switches ) begin
 					owner_change_count = owner_change_count + 1;
-					if( phase >= c_switch_count || u_dut.w_cpu_sel !== expected_owner ) $fatal(1, "Unexpected CPU transition in phase %0d", phase);
+					if( phase >= expected_switch_count || u_dut.w_cpu_sel !== expected_owner ) $fatal(1, "Unexpected CPU transition in phase %0d", phase);
 				end
 			end
 			if( active_pc != previous_pc && active_pc >= 16'h04b9 && active_pc <= 16'h04d1 ) $display("[RESTORE] owner=%0d PC=%04h SP=%04h AF=%02h%02h time=%0t", u_dut.w_cpu_sel, active_pc, active_sp, active_a, active_f, $time);
@@ -215,7 +270,12 @@ module tb;
 				$display("[RETURN] phase=%0d owner=%0d PC=%04h SP=%04h AF=%02h%02h", phase, u_dut.w_cpu_sel, active_pc, active_sp, active_a, active_f);
 				if( active_pc !== 16'h1100 + phase * 16'h0100 ) $fatal(1, "Unexpected BIOS return order");
 				if( u_dut.w_cpu_sel !== expected_owner ) $fatal(1, "BIOS returned on wrong CPU");
-				if( active_sp !== 16'hf000 ) $fatal(1, "Restored SP mismatch");
+				if( active_sp !== (cache_sp_reuse ? (phase == 2 ? 16'hf090 : 16'hf06c) : 16'hf000) ) $fatal(1, "Restored SP mismatch in phase %0d: %04h", phase, active_sp);
+				if( cache_sp_reuse && (phase == 0 || phase == 2) ) begin
+					if( u_dut.ff_z80_saved_sp !== (phase == 0 ? 16'hf054 : 16'hf078) ) $fatal(1, "Saved SP latch mismatch in phase %0d: %04h", phase, u_dut.ff_z80_saved_sp);
+					if( u_dut.ff_r800_restored_sp !== (phase == 0 ? 16'hf054 : 16'hf078) ) $fatal(1, "Restored SP latch mismatch in phase %0d: %04h", phase, u_dut.ff_r800_restored_sp);
+					if( u_sram0.mem[19'h03ffd] !== (phase == 0 ? 8'h54 : 8'h78) || u_sram0.mem[19'h03ffe] !== 8'hf0 ) $fatal(1, "SSRAM SP bytes mismatch in phase %0d: %02h %02h", phase, u_sram0.mem[19'h03ffd], u_sram0.mem[19'h03ffe]);
+				end
 				if( active_a !== (expected_owner[0] ? 8'h02 : 8'h00) || active_f !== 8'h44 ) $fatal(1, "Restored AF mismatch");
 				$display("[REGISTERS] BC/DE/HL/BC'/DE'/HL'/IX/IY/AF'/I=%038h", active_registers);
 				if( active_registers !== {16'h1234, 16'h5678, 16'h9abc, 16'h2345, 16'h6789, 16'habcd, 16'h3456, 16'h789a, 16'ha744, 8'h5a} ) $fatal(1, "Restored register mismatch in phase %0d", phase);
@@ -228,9 +288,13 @@ module tb;
 	end
 
 	initial begin
+		cache_sp_reuse = $test$plusargs("cache_sp_reuse");
+		expected_return_count = cache_sp_reuse ? 3 : c_switch_count + 1;
+		expected_switch_count = cache_sp_reuse ? 3 : c_switch_count;
 		make_rom();
 		repeat(15000) @(posedge u_dut.clk42m);
 		spi_command(8'h0c);
+		if( {u_dut.ff_r800_restored_sp, u_dut.ff_z80_saved_sp} !== 32'h5a5a5a5a ) $fatal(1, "SP reset marker mismatch");
 		@(posedge u_dut.clk42m); mcu_cs_n = 0;
 		repeat(10) @(posedge u_dut.clk42m);
 		spi_byte(8'h10); spi_byte(8'h00);
@@ -240,10 +304,31 @@ module tb;
 		spi_command(8'h07);
 		wait(u_dut.w_debug_f3 == 8'ha5);
 		repeat(12) @(posedge u_dut.clk42m);
-		if( phase != c_switch_count + 1 || owner_change_count != c_switch_count ) $fatal(1, "BIOS switch counts mismatch: returns=%0d transitions=%0d", phase, owner_change_count);
+		if( phase != expected_return_count || owner_change_count != expected_switch_count ) $fatal(1, "BIOS switch counts mismatch: returns=%0d transitions=%0d", phase, owner_change_count);
+		if( cache_sp_reuse && stack_line_fill_count != 2 ) $fatal(1, "Expected two SRAM refills of stack cache line, got %0d", stack_line_fill_count);
 		$display("[REQUESTS] CPU=%0d stops=%0d Pico=%0d stops=%0d", cpu_request_count, cpu_stop_count, pico_request_count, pico_stop_count);
 		if( cpu_request_count == 0 || cpu_stop_count != cpu_request_count || pico_request_count == 0 || pico_stop_count != pico_request_count ) $fatal(1, "Switch request accepted more than once");
-		$display("PASS: %0d alternating BIOS CPU switches and one same-CPU call; all registers restored", owner_change_count);
+		if( cache_sp_reuse ) $display("PASS: R800->Z80 startup history, SP F054->F078 and two stack-line SRAM refills");
+		else $display("PASS: %0d alternating BIOS CPU switches and one same-CPU call; all registers restored", owner_change_count);
+		if( !cache_sp_reuse ) begin
+			if( u_dut.ff_z80_saved_sp !== 16'hefe8 || u_dut.ff_r800_restored_sp !== 16'hefe8 ) $fatal(1, "SP latch mismatch: Z80=%04h R800=%04h", u_dut.ff_z80_saved_sp, u_dut.ff_r800_restored_sp);
+			@(posedge u_dut.clk42m);
+			mcu_cs_n = 0;
+			repeat(10) @(posedge u_dut.clk42m);
+			spi_byte(8'h0a);
+			for(index = 0; index < 33; index = index + 1) begin
+				spi_byte(0);
+				debug_bytes[index] = spi_received;
+			end
+			@(posedge u_dut.clk42m);
+			mcu_cs_n = 1;
+			repeat(10) @(posedge u_dut.clk42m);
+			if( {debug_bytes[19], debug_bytes[18], debug_bytes[17], debug_bytes[16]} !== 32'hefe8efe8 || debug_bytes[32] !== 8'ha5 ) $fatal(1, "SP debug SPI payload mismatch");
+			if( u_dut.ff_z80_saved_sp !== 16'hefe8 || u_dut.ff_r800_restored_sp !== 16'hefe8 ) $fatal(1, "Debug read changed SP capture");
+			spi_command(8'h14);
+			if( sp_clear_count != 1 || {u_dut.ff_r800_restored_sp, u_dut.ff_z80_saved_sp} !== 32'h5a5a5a5a ) $fatal(1, "SPI SP clear mismatch");
+			$display("PASS: SP capture EFE8/EFE8, 33-byte debug SPI, reset and clear to 5A5A without bus requests");
+		end
 		test_passed = 1;
 		$finish;
 	end

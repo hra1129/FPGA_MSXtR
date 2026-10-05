@@ -608,8 +608,20 @@ void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal ) {
 	debug_signal->r800_bus_address		= fpga_debug_get_bits( data, 96, 16 );
 	debug_signal->cpu_status			= data[14];
 	debug_signal->cpu_mode_change_count	= data[15];
+	debug_signal->z80_saved_sp = fpga_debug_get_bits( data, 128, 16 );
+	debug_signal->r800_restored_sp = fpga_debug_get_bits( data, 144, 16 );
 	debug_signal->r800_cache_hits			= fpga_debug_get_bits( data, 160, 32 );
 	debug_signal->r800_cache_misses		= fpga_debug_get_bits( data, 192, 32 );
 	debug_signal->r800_cache_fill_wait_cycles = fpga_debug_get_bits( data, 224, 32 );
 	debug_signal->link_pattern			= data[32];
+}
+
+bool fpga_clear_debug_sp( void ) {
+	uint8_t command = 0x14;
+	gpio_put( SPI0_CSN_PIN, 0 );
+	spi_write_blocking( SPI0_PORT, &command, 1 );
+	bool ready = fpga_wait_intr( 50 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+	return ready;
 }

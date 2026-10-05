@@ -53,6 +53,8 @@ typedef struct {
 	uint16_t	r800_bus_address;
 	uint8_t		cpu_status;			//	bit0:mode bit1:pause bit2:z80_reset_n bit3:r800_reset_n
 	uint8_t		cpu_mode_change_count;
+	uint16_t z80_saved_sp;
+	uint16_t r800_restored_sp;
 	uint32_t	r800_cache_hits;
 	uint32_t	r800_cache_misses;
 	uint32_t	r800_cache_fill_wait_cycles;
@@ -89,6 +91,7 @@ bool fpga_get_msx_pause_timeout( void );
 bool fpga_get_msx_reset_timeout( void );
 uint8_t fpga_set_keyboard_matrix( const uint8_t *matrix );
 void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal );
+bool fpga_clear_debug_sp( void );
 
 #define FPGA_VDP_LOG_CAPACITY 2048
 #define FPGA_VDP_LOG_RECORD_SIZE 4

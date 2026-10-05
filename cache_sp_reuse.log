@@ -1,0 +1,8 @@
+# vsim -c -t 1ps -l cache_sp_reuse.log -wlf cache_sp_reuse.wlf tb "+cache_sp_reuse" -do "run.do" 
+# Start time: 22:18:20 on Oct 05,2026
+# ** Error: (vsim-3170) Could not find 'tb'.
+#         Searched libraries:
+#             C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/work
+# Error loading design
+# End time: 22:18:21 on Oct 05,2026, Elapsed time: 0:00:01
+# Errors: 1, Warnings: 0

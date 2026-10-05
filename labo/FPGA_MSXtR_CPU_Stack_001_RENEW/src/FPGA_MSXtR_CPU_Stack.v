@@ -134,6 +134,11 @@ module fpga_msxtr_cpu_stack (
 	wire			w_r800_bus_rdata_en;
 	wire	[2:0]	w_r800_t_state;
 	wire	[15:0]	w_r800_pc;
+	wire [15:0] w_z80_sp;
+	wire [15:0] w_r800_sp;
+	wire w_debug_sp_clear;
+	reg [15:0] ff_z80_saved_sp;
+	reg [15:0] ff_r800_restored_sp;
 	wire			w_processor_mode;
 	wire	[255:0]	w_debug_signal;
 	wire	[31:0]	w_r800_cache_hits;
@@ -143,6 +148,8 @@ module fpga_msxtr_cpu_stack (
 	wire			w_z80_run_req;
 	wire			w_z80_run_ack;
 	wire			w_r800_run_req;
+	wire			w_r800_cache_ready;
+	wire			w_r800_core_run_req = w_r800_run_req && w_r800_cache_ready;
 	wire			w_r800_run_ack;
 	wire			w_pico_run_req;
 	wire			w_pico_run_ack;
@@ -383,12 +390,28 @@ module fpga_msxtr_cpu_stack (
 		end
 	end
 
-	//	SPI 0Ah: PC, slot registers, system flags, bus addresses, CPU state, mode count, reserved.
+	always @(posedge clk42m) begin
+		if( !w_msx_reset_n || !ff_spi_reset_n || w_debug_sp_clear ) begin
+			ff_z80_saved_sp <= 16'h5a5a;
+			ff_r800_restored_sp <= 16'h5a5a;
+		end
+		else begin
+			if( w_cpu_sel == 2'b00 && w_z80_pc == 16'h0488 ) begin
+				ff_z80_saved_sp <= w_z80_sp;
+			end
+			if( w_cpu_sel == 2'b01 && w_r800_pc == 16'h04bf ) begin
+				ff_r800_restored_sp <= w_r800_sp;
+			end
+		end
+	end
+
+	//	SPI 0Ah: PC, slot registers, system flags, bus addresses, CPU state, mode count, latched SP.
 	assign w_debug_signal = {
 			w_r800_cache_fill_wait,
 			w_r800_cache_misses,
 			w_r800_cache_hits,
-			32'd0,
+			ff_r800_restored_sp,
+			ff_z80_saved_sp,
 			ff_processor_mode_change_count,
 			4'd0, ff_r800_reset_n, ff_z80_reset_n, w_msx_pause, w_processor_mode,
 			w_r800_bus_address,
@@ -567,6 +590,7 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_matrix_valid			( w_keyboard_matrix_valid			),
 		.keyboard_update_count			( w_keyboard_update_count			),
 		.debug_signal					( w_debug_signal					),
+		.debug_sp_clear(w_debug_sp_clear),
 		.vdp_log_count(w_vdp_log_count), .vdp_log_read_request(w_vdp_log_read_request),
 		.vdp_log_read_valid(w_vdp_log_read_valid), .vdp_log_read_a(w_vdp_log_read_a),
 		.vdp_log_read_d(w_vdp_log_read_d), .vdp_log_read_pc(w_vdp_log_read_pc), .vdp_log_consume(w_vdp_log_consume)
@@ -639,6 +663,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_rdata						( w_z80_bus_rdata					),
 		.bus_rdata_en					( w_z80_bus_rdata_en				),
 		.pc								( w_z80_pc							),
+		.debug_sp(w_z80_sp),
 		.int_ack						( 									)
 	);
 
@@ -660,7 +685,7 @@ module fpga_msxtr_cpu_stack (
 		.wr_n							( w_r800_slot_wr_n					),
 		.slot_d_oe						( w_r800_slot_d_oe					),
 		.rfsh_n							( w_r800_slot_rfsh_n				),
-		.run_req						( w_r800_run_req					),
+		.run_req						( w_r800_core_run_req				),
 		.run_ack						( w_r800_run_ack					),
 		.slot_d							( slot_d							),
 		.flash_cs						( w_cpu_flash_cs					),
@@ -676,6 +701,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_rdata						( w_r800_bus_rdata					),
 		.bus_rdata_en					( w_r800_bus_rdata_en				),
 		.pc								( w_r800_pc							),		//	debug
+		.debug_sp(w_r800_sp),
 		.int_ack						( 									)		//	debug
 	);
 
@@ -1039,6 +1065,7 @@ module fpga_msxtr_cpu_stack (
 		.reset_n						( ff_ssram_reset_n					),
 		.clk							( clk42m							),
 		.r800_active					( w_cpu_sel == 2'b01				),
+		.cache_ready					( w_r800_cache_ready				),
 		.bus_cs							( w_device_ssram_active				),
 		.bus_address					( w_ssram_address					),
 		.bus_write						( w_device_write					),

@@ -1,14 +1,14 @@
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:14 on Oct 05,2026
 vlog ..\test_004\gowin_pll.v 
 -- Compiling module Gowin_PLL
 
 Top level modules:
 	Gowin_PLL
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:14 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:14 on Oct 05,2026
 vlog ..\spi\spi.v ..\spi\ip_spi.v ..\cmcu\cmcu.v ..\msx_bus_mux\msx_bus_mux.v 
 -- Compiling module spi
 -- Compiling module ip_spi
@@ -19,20 +19,20 @@ Top level modules:
 	ip_spi
 	cmcu_inst
 	msx_bus_mux
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:14 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:14 on Oct 05,2026
 vlog ..\vdp_logger\vdp_logger.v 
 -- Compiling module vdp_logger
 -- Compiling module vdp_logger_sram
 
 Top level modules:
 	vdp_logger
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:14 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:14 on Oct 05,2026
 vlog ..\dummy_ssg\dummy_ssg.v ..\pause_led\pause_led.v ..\msx_slot\msx_slot_decode.v ..\msx_slot\msx_slot.v 
 -- Compiling module dummy_ssg
 -- Compiling module pause_led
@@ -44,10 +44,10 @@ Top level modules:
 	pause_led
 	msx_slot_decode
 	msx_slot
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:14 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:14 on Oct 05,2026
 vlog ..\address_decode\address_decode.v ..\memory_mapper\memory_mapper.v ..\secondary_slot\secondary_slot.v 
 -- Compiling module address_decode
 -- Compiling module memory_mapper
@@ -57,10 +57,10 @@ Top level modules:
 	address_decode
 	memory_mapper
 	secondary_slot
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:14 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:14 on Oct 05,2026
 vlog ..\ssram\ssram.v ..\ssram\ssram_test_model.v 
 -- Compiling module ssram
 -- Compiling module ssram_test_model
@@ -68,30 +68,30 @@ vlog ..\ssram\ssram.v ..\ssram\ssram_test_model.v
 Top level modules:
 	ssram
 	ssram_test_model
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:14 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:14 on Oct 05,2026
 vlog ..\test_004\bootrom\ram.v 
 -- Compiling module ip_ram
 -- Compiling module SP
 
 Top level modules:
 	ip_ram
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:14 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:14 on Oct 05,2026
 vlog "+incdir+..\test_004\bootrom" ..\test_004\bootrom\rom.v ..\test_004\bootrom\bootrom.v 
 -- Compiling module rom
 -- Compiling module bootrom
 
 Top level modules:
 	bootrom
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:14 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:15 on Oct 05,2026
 vlog ..\ppi\ppi.v ..\rtc\rtc.v ..\system_flag\system_flag.v 
 -- Compiling module ppi
 -- Compiling module rtc
@@ -101,10 +101,10 @@ Top level modules:
 	ppi
 	rtc
 	system_flag
-End time: 23:02:16 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:15 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:16 on Oct 04,2026
+Start time: 22:46:15 on Oct 05,2026
 vlog ..\cz80\cz80_alu.v ..\cz80\cz80_mcode.v ..\cz80\cz80_reg.v ..\cz80\cz80.v ..\cz80\cz80_inst.v 
 -- Compiling module cz80_alu
 -- Compiling module cz80_mcode
@@ -114,10 +114,10 @@ vlog ..\cz80\cz80_alu.v ..\cz80\cz80_mcode.v ..\cz80\cz80_reg.v ..\cz80\cz80.v .
 
 Top level modules:
 	cz80_inst
-End time: 23:02:17 on Oct 04,2026, Elapsed time: 0:00:01
+End time: 22:46:15 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:17 on Oct 04,2026
+Start time: 22:46:15 on Oct 05,2026
 vlog ..\cr800\cr800_alu.v ..\cr800\cr800_mcode.v ..\cr800\cr800_reg.v ..\cr800\cr800.v ..\cr800\cr800_inst.v 
 -- Compiling module cr800_alu
 -- Compiling module cr800_mcode
@@ -127,10 +127,10 @@ vlog ..\cr800\cr800_alu.v ..\cr800\cr800_mcode.v ..\cr800\cr800_reg.v ..\cr800\c
 
 Top level modules:
 	cr800_inst
-End time: 23:02:17 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:15 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:17 on Oct 04,2026
+Start time: 22:46:15 on Oct 05,2026
 vlog ..\cr800\r800_cache.v ..\cr800\r800_cache_ram.v ..\cr800\r800_rom_cache.v 
 -- Compiling module r800_cache
 -- Compiling module r800_cache_ram
@@ -139,10 +139,10 @@ vlog ..\cr800\r800_cache.v ..\cr800\r800_cache_ram.v ..\cr800\r800_rom_cache.v
 Top level modules:
 	r800_cache
 	r800_rom_cache
-End time: 23:02:17 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:15 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:17 on Oct 04,2026
+Start time: 22:46:15 on Oct 05,2026
 vlog ..\s2026\s2026_register.v ..\s2026\s2026_cpu_select.v ..\s2026\s2026.v 
 -- Compiling module s2026_register
 -- Compiling module s2026_cpu_select
@@ -150,10 +150,10 @@ vlog ..\s2026\s2026_register.v ..\s2026\s2026_cpu_select.v ..\s2026\s2026.v
 
 Top level modules:
 	s2026
-End time: 23:02:17 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:15 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-Start time: 23:02:17 on Oct 04,2026
+Start time: 22:46:15 on Oct 05,2026
 vlog ..\FPGA_MSXtR_CPU_Stack.v tb.sv 
 -- Compiling module fpga_msxtr_cpu_stack
 -- Compiling module tb
@@ -162,14 +162,14 @@ vlog ..\FPGA_MSXtR_CPU_Stack.v tb.sv
 Top level modules:
 	tb
 	tb_selector_request
-End time: 23:02:17 on Oct 04,2026, Elapsed time: 0:00:00
+End time: 22:46:15 on Oct 05,2026, Elapsed time: 0:00:00
 Errors: 0, Warnings: 0
 Reading pref.tcl
 
 # 2020.1
 
 # vsim -c -t 1ps -l log.txt -wlf test_006.wlf tb -do "run.do" 
-# Start time: 23:02:18 on Oct 04,2026
+# Start time: 22:46:16 on Oct 05,2026
 # Loading sv_std.std
 # Loading work.tb
 # Loading work.fpga_msxtr_cpu_stack
@@ -209,6 +209,7 @@ Reading pref.tcl
 # Loading work.r800_cache_ram
 # do run.do
 # /tb
+# [CACHE_VALID_CLEAR] cycles=64
 # [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
 # [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
 # [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
@@ -248,6 +249,7 @@ Reading pref.tcl
 # [SRAM Model] Write: addr=0x03cb1 data=0x02
 # [RESTORE] owner=1 PC=04b9 SP=dfe8 AF=4054 time=514313000
 # [SWITCH] owner=0 Z80_PC=001c R800_PC=04b9 SP=f000 time=514849000
+# [CACHE_VALID_CLEAR] cycles=64
 # [SRAM Model] Write: addr=0x02fff data=0x10
 # [SRAM Model] Write: addr=0x02ffe data=0x2b
 # [SRAM Model] Write: addr=0x02ffd data=0x02
@@ -345,6 +347,7 @@ Reading pref.tcl
 # [SRAM Model] Write: addr=0x03cb1 data=0x02
 # [RESTORE] owner=1 PC=04b9 SP=efe8 AF=0054 time=770021000
 # [SWITCH] owner=0 Z80_PC=04b7 R800_PC=04b9 SP=efe8 time=770556000
+# [CACHE_VALID_CLEAR] cycles=64
 # [RESTORE] owner=0 PC=04b9 SP=efe8 AF=6002 time=773047000
 # [RESTORE] owner=0 PC=04ba SP=efe8 AF=6042 time=776958000
 # [RESTORE] owner=0 PC=04bb SP=efe8 AF=6042 time=778355000
@@ -495,6 +498,7 @@ Reading pref.tcl
 # [SRAM Model] Write: addr=0x03cb1 data=0x02
 # [RESTORE] owner=1 PC=04b9 SP=efe8 AF=0054 time=1087374000
 # [SWITCH] owner=0 Z80_PC=04b7 R800_PC=04b9 SP=efe8 time=1087909000
+# [CACHE_VALID_CLEAR] cycles=64
 # [RESTORE] owner=0 PC=04b9 SP=efe8 AF=6002 time=1090400000
 # [RESTORE] owner=0 PC=04ba SP=efe8 AF=6042 time=1094311000
 # [RESTORE] owner=0 PC=04bb SP=efe8 AF=6042 time=1095708000
@@ -645,6 +649,7 @@ Reading pref.tcl
 # [SRAM Model] Write: addr=0x03cb1 data=0x02
 # [RESTORE] owner=1 PC=04b9 SP=efe8 AF=0054 time=1404727000
 # [SWITCH] owner=0 Z80_PC=04b7 R800_PC=04b9 SP=efe8 time=1405262000
+# [CACHE_VALID_CLEAR] cycles=64
 # [RESTORE] owner=0 PC=04b9 SP=efe8 AF=6002 time=1407753000
 # [RESTORE] owner=0 PC=04ba SP=efe8 AF=6042 time=1411664000
 # [RESTORE] owner=0 PC=04bb SP=efe8 AF=6042 time=1413061000
@@ -795,6 +800,7 @@ Reading pref.tcl
 # [SRAM Model] Write: addr=0x03cb1 data=0x02
 # [RESTORE] owner=1 PC=04b9 SP=efe8 AF=0054 time=1722080000
 # [SWITCH] owner=0 Z80_PC=04b7 R800_PC=04b9 SP=efe8 time=1722615000
+# [CACHE_VALID_CLEAR] cycles=64
 # [RESTORE] owner=0 PC=04b9 SP=efe8 AF=6002 time=1725106000
 # [RESTORE] owner=0 PC=04ba SP=efe8 AF=6042 time=1729017000
 # [RESTORE] owner=0 PC=04bb SP=efe8 AF=6042 time=1730414000
@@ -945,6 +951,7 @@ Reading pref.tcl
 # [SRAM Model] Write: addr=0x03cb1 data=0x02
 # [RESTORE] owner=1 PC=04b9 SP=efe8 AF=0054 time=2039433000
 # [SWITCH] owner=0 Z80_PC=04b7 R800_PC=04b9 SP=efe8 time=2039968000
+# [CACHE_VALID_CLEAR] cycles=64
 # [RESTORE] owner=0 PC=04b9 SP=efe8 AF=6002 time=2042459000
 # [RESTORE] owner=0 PC=04ba SP=efe8 AF=6042 time=2046370000
 # [RESTORE] owner=0 PC=04bb SP=efe8 AF=6042 time=2047767000
@@ -1086,17 +1093,18 @@ Reading pref.tcl
 # [REGISTERS] BC/DE/HL/BC'/DE'/HL'/IX/IY/AF'/I=123456789abc23456789abcd3456789aa7445a
 # [REQUESTS] CPU=19 stops=19 Pico=1 stops=1
 # PASS: 10 alternating BIOS CPU switches and one same-CPU call; all registers restored
-# ** Note: $finish    : tb.sv(248)
-#    Time: 2360138040 ps  Iteration: 2  Instance: /tb
-# Break in Module tb at tb.sv line 248
-# End time: 23:02:27 on Oct 04,2026, Elapsed time: 0:00:09
+# PASS: SP capture EFE8/EFE8, 33-byte debug SPI, reset and clear to 5A5A without bus requests
+# ** Note: $finish    : tb.sv(333)
+#    Time: 2385815880 ps  Iteration: 1  Instance: /tb
+# Break in Module tb at tb.sv line 333
+# End time: 22:46:26 on Oct 05,2026, Elapsed time: 0:00:10
 # Errors: 0, Warnings: 0
 Reading pref.tcl
 
 # 2020.1
 
 # vsim -c -t 1ps -l selector_request.log -wlf selector_request.wlf tb_selector_request -do "set test_root /tb_selector_request; do run.do" 
-# Start time: 23:02:28 on Oct 04,2026
+# Start time: 22:46:26 on Oct 05,2026
 # Loading sv_std.std
 # Loading work.tb_selector_request
 # Loading work.s2026_cpu_select
@@ -1104,8 +1112,8 @@ Reading pref.tcl
 # /tb_selector_request
 #  do run.do
 # PASS: CPU/Pico held requests accepted once, same target and re-arm
-# ** Note: $finish    : tb.sv(324)
+# ** Note: $finish    : tb.sv(409)
 #    Time: 2291 ns  Iteration: 0  Instance: /tb_selector_request
-# Break in Module tb_selector_request at tb.sv line 324
-# End time: 23:02:28 on Oct 04,2026, Elapsed time: 0:00:00
+# Break in Module tb_selector_request at tb.sv line 409
+# End time: 22:46:27 on Oct 05,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0

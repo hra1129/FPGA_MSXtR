@@ -89,6 +89,7 @@ module cz80_inst (
 	input	[7:0]	bus_rdata	,
 	input			bus_rdata_en,
 	output	[15:0]	pc			,
+	output [15:0] debug_sp,
 	output			int_ack					//	debug
 );
 	reg					ff_enable;
@@ -672,6 +673,7 @@ module cz80_inst (
 		.intcycle_n		( w_intcycle_n			),
 		.inte			( 						),
 		.stop			( 						),
+		.p_sp(debug_sp),
 		.p_pc			( pc					)		//	debug
 	);
 endmodule

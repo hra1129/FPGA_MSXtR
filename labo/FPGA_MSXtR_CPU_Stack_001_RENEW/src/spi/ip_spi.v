@@ -75,7 +75,8 @@ module ip_spi (
 	input	[7:0]	vdp_log_read_a,
 	input	[7:0]	vdp_log_read_d,
 	input	[15:0]	vdp_log_read_pc,
-	output			vdp_log_consume
+	output			vdp_log_consume,
+	output debug_sp_clear
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -145,6 +146,7 @@ module ip_spi (
 	reg				ff_flashrom_access;
 	reg				ff_slot_wait_n;
 	reg				ff_spi_intr_req;
+	assign debug_sp_clear = reset_n & ~spi_cs_n & ~ff_spi_cs_n & (ff_state == ST_COMMAND) & spi_rdata_en & (spi_rdata == 8'h14);
 	assign vdp_log_read_request = reset_n & ~spi_cs_n & ~ff_spi_cs_n & (ff_state == ST_LOG_REQUEST);
 	assign vdp_log_consume = reset_n & ~spi_cs_n & ~ff_spi_cs_n & (ff_state == ST_LOG_PC_H) & ~ff_spi_valid & spi_ready;
 
@@ -428,6 +430,11 @@ module ip_spi (
 						ff_state <= ST_LOG_COUNT_H;
 						ff_spi_valid <= 1'b1;
 						ff_spi_write <= 1'b1;
+					end
+					8'h14: begin
+						ff_bus_write <= 1'b1;
+						ff_spi_intr_req <= 1'b1;
+						ff_state <= ST_IDLE;
 					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command

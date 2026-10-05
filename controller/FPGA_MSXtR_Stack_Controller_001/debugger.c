@@ -134,6 +134,8 @@ void dump_fpga_debug_signal( void ) {
 			debug_signal.r800_pc,
 			(debug_signal.cpu_status & 0x01) ? "Z80" : "R800" );
 	printf( "  CPU switch: mode_count=%u\r\n", debug_signal.cpu_mode_change_count );
+	printf( "  SP capture: Z80@0488=0x%04X R800@04BF=0x%04X\r\n",
+		debug_signal.z80_saved_sp, debug_signal.r800_restored_sp );
 	printf( "  Z80 bus: addr=0x%04X reset_n=%u\r\n",
 			debug_signal.z80_bus_address,
 			(debug_signal.cpu_status >> 2) & 0x01 );

@@ -1517,3 +1517,143 @@ BASICの式評価や実機のSyntax Errorを再現するテストではない。
 
 今日は起動可能な構成への復帰と検証までで一区切り。次回、観測対象を変えない解析方法から再開する。
 
+---
+
+## 2026-10-05 朝 作業履歴 (最小SP観測・実機Syntax Error再現・キャッシュ経路の切り分け)
+
+### 1. 観測対象を変更しない最小SP観測
+
+前日の教訓を踏まえ、イベントRAMや追加のSRAMアクセスを使わず、必要なSPの2値だけを保持する方式を実装した。
+
+- Z80/R800コアの実体SPを`p_sp`、wrapperの`debug_sp`を経由してtopへ出力。
+- Z80所有かつPC=0488hの期間に`ff_z80_saved_sp`、R800所有かつPC=04BFhの期間に
+  `ff_r800_restored_sp`を毎クロック更新し、それ以外は保持する。
+- PCは命令完了前にも進むため、最初の一致だけで記録せず、一致期間の最後まで取り込む。
+- MSXリセットおよび9キーのSPI14hクリアで両ラッチを5A5Ahへ初期化する。
+  クリアはCPU/Picoどちらの所有中でも実行可能。追加のメモリ要求は出さず、SPI_INTRで完了を通知する。
+- 3キーのSPI0Ah診断表示へSPの2値を追加。予約32bitを使用し、byte16-17にZ80保存地点SP、
+  byte18-19にR800復元地点SPをlittle-endianで配置する。応答長33byte、既存cache counter、
+  70MHzのSPI速度および1usのbyte間隔は維持。
+- 前日のイベントloggerは未接続のまま。SSRAM RTL、CPU実行制御、SDC、デバイス設定は変更していない。
+
+### 2. 実装・タイミング検証
+
+- `src/test_006/run.bat`: 実BIOSを使う10回のCPU切替と同CPU呼出し、全レジスタ復元はPASS。
+  保存／復元地点のSPラッチはEFE8h/EFE8hで一致した (呼出し前SP=F000h、CALLで2byte、PUSHで22byte使用)。
+- 同テストで33byte診断SPIのSP位置と末尾A5h、非破壊読出し、リセット／クリアの5A5Ah、
+  クリア信号が1回だけ発生しMCUメモリ要求を出さないことを確認。
+- SPI0Ahは既存仕様でSPI_INTRを出さない。テストに入れた通知待ちを除去してPASSした。
+- VDP logger/SPI回帰およびController_001のWSL `make -j` はPASS。
+- 同一設定のGowin合成・PnRとbitstream生成が完了。setup/hold違反0件、最悪setup slack +0.020ns。
+  追加前の+0.029nsから9ps小さく、余裕は依然として小さい。制約や対象回路を変えて回避していない。
+- 追加前のbitstreamとSTAレポートを一時フォルダ
+  `C:/Users/hra/AppData/Local/Temp/FPGA_MSXtR_sp_baseline_20261005_062726`へ退避した。
+
+### 3. 最小観測版での実機結果
+
+ユーザーが実機で「9で初期化、3でクリア確認、DEFUSR=&H180:A=USR(0)、Syntax Error確認、3で表示」を実行。
+起動を維持したまま、初回CPU切替時の不具合とSP不一致を再現した。
+
+| 項目 | クリア直後 | 初回USR後 |
+| --- | --- | --- |
+| CPUモード | Z80 | R800 |
+| mode_count | 4 | 5 |
+| Z80@0488のSP | 5A5Ah | F078h |
+| R800@04BFのSP | 5A5Ah | F054h |
+| 非選択CPUのPC | R800=04B9h | Z80=04B7h |
+
+両時点ともA8h=F0h、SSL0=00h、SSL3=00h、CPU reset_n=1、link_pattern=A5h。
+この観測で確認できたのは保存地点と復元地点のコアSPの不一致であり、
+今回のFFFDhへの書込みが物理SRAMへ完了したことまでは証明していない。
+
+### 4. memory_mapperとシングル／バースト経路の確認
+
+- `memory_mapper_cs`は`device_io`と下位アドレスFCh-FFhの一致で決まる。
+  メモリアクセスの`device_io=0`なら、FFFDh/FFFEhの下位byteがFDh/FEhでもマッパーは選択されない。
+- マッパーレジスタの書込みは`bus_cs && bus_valid && bus_write`が必要。
+  仮にFFFDh/FFFEhがI/Oと誤認されればページ1/ページ2のレジスタを選び、ページ3を直接更新するわけではない。
+- ただし、マッパー読み出し応答の誤選択という候補も検討した。コード確認だけで実機の応答元を確定はしていない。
+- `ssram`のシングル／バースト選択入力は`bus_burst`。Z80/Picoはシングルアクセスでcacheをバイパスする。
+- R800はcache hitならSRAMへ要求せず、missなら8byte境界からバースト読み出しを行う。
+  `r800_cache`側が`ff_address[2:0]*8`でbyteを選び、CPU向けのread応答を出す。
+  FFFDhのmissではFFF8h-FFFFhを取得し、FFFDhは6番目、FFFEhは7番目のbyteを使う。
+
+Z80が安定動作し、切替後にcache/burst経路が加わることから、R800側の復元読出しを優先候補とした。
+ただし、Z80の今回の保存書込み成功は未確認のまま保留する。
+
+### 5. BASICのPEEKによる追加情報
+
+ユーザーがBASICで上から順に実行し、次の結果を得た。
+
+```text
+DEFUSR=&H180:A=USR(0)       -> Syntax error
+? HEX$(PEEK(&HFFFD))       -> 54
+? INP(&HFD)                -> 2
+A=USR(0)                  -> 正常終了
+? HEX$(PEEK(&HFFFD))       -> 78
+```
+
+初回の不一致はSPレジスタへの取り込みだけが壊れている説明ではなく、
+FFFDhの読み出し値自体が54hとなっている可能性を強める情報。
+INP(FDh)の値2は、その時点の54hがマッパーFDhレジスタの値そのものではないことを示す。
+ただし、初回切替後のPEEKもR800/cache経路を通るため、物理SRAMに54hが残ったか、
+SRAMには78hがあるのにcacheが古い54hを返したかは未確定。
+
+### 帰宅後の再開点
+
+- 第一に分けたいのは「Z80の保存書込みが反映されず古い54hが残った」と
+  「保存書込みは成功したがR800/cache経路が古い54hを返した」の二択。
+- R800がFFFDh/FFFEhの応答として受け取った2byteを小さく保持すれば、read経路とSPへの取り込みを分けられる。
+  ただし、実装はまだ行っておらず、観測対象への負荷を評価してから判断する。
+- Picoによるcacheを通らないreadも候補。ただしR800からPicoへの所有権切替自体がcacheを無効化するため、
+  比較時点と副作用を明確にした手順が必要。Z80へBIOS切替して読むとFFFDh自体を書き換える可能性にも注意する。
+- 追加する観測は必要最小限に限定し、SSRAM・cache・CPU切替の稼働回路やSDCを変えずに解析する。
+
+出勤のため、ここで作業を中断。根本原因は未確定で、回路修正や追加観測は帰宅後に再検討する。
+
+### 6. 帰宅後: R800 cache line無効化・再取得の専用シミュレーション
+
+実機でBASICのPEEK(FFFDh)が54h、Pico所有中の直接PEEKが78hとなる結果を受け、
+初期R800起動→Z80復帰後に作られた古いstack cache lineが、Z80の次の更新後も有効のまま残る可能性を検証した。
+
+`src/test_006`に`+cache_sp_reuse`ケースを追加。起動準備中のR800→Z80経路は既存のままにし、
+その後Z80→R800→Z80→R800を実BIOS・実CPU・SSRAMモデルで実行する。
+
+- 1回目: caller SP=F06ChからCALLし、BIOSがFFFDh/FFFEhへF054hを保存。R800がF054hを復元。
+- R800からZ80へ復帰後、2回目はcaller SP=F090hからCALLし、FFFDh/FFFEhをF078h/F0hへ更新。
+- 2回目のR800がSP=F078hを復元し、callerへSP=F090hで戻る。
+- cache missによる物理SSRAMライン03FF8hのburst readを数え、1回目・2回目それぞれ発生することを確認。
+- TBから物理SSRAMモデルのFFFDh/FFFEhも直接確認し、書込み値が54h/F0hから78h/F0hへ変わることを照合。
+
+結果: PASS。起動準備後のZ80→R800→Z80→R800、FFFDhの物理書込み、stack line 03FF8hの2回のburst refill、
+R800 SPのF054h→F078h復元を確認。現在のRTLではR800が非activeへ移ると全cache validを消し、
+次のR800 missでSSRAMから更新値を再取得できることがシミュレーション上で確認された。
+
+この結果は、実機で観測したR800の54hについて原因を特定しない。実機ではcache invalidationが失敗しているのか、
+burst refillの戻り値が化けるのか、slot/page/電気的条件が異なるのかは未確定。
+特にテストはSerialSRAMの論理モデルであり、実チップのタイミングや信号品質は再現しない。
+RTL、SSRAM、SDCへの変更は行っていない。
+
+## 2026-10-05 夜 作業履歴 (R800 cache valid 64clock clear FSM)
+
+`ff_valid`全配列を1clockでclearするRTLが、実BSRAMでは全entryへの書込みにならない懸念に対し、
+64行×16bitのvalid RAMと明示clear FSMを実装した。reset解除後およびR800 inactiveへの遷移後に、
+1行ずつ64clockで0を書き込む。`cache_ready`をtopへ接続し、clear完了まではR800 coreの`run_req`を抑止する。
+
+- valid RAMのlookup、fill、clearは同一alwaysブロックの排他的操作とし、Gowin合成後も単一BSRAMのwrite portを共有する形にした。
+- 生成netlistでvalid用BSRAMのclear時write enable、clear rowのアドレス選択、DI=0となるdata muxを確認。
+  `u_r800_cache`はBSRAM 13個 (cache data 12個 + valid 1個)、Register=945、LUT=1374。
+- `test_006/run.bat`: PASS。TBはclear開始から完了までを計数し、各sweepが64 rising edgeであることをassert。
+- `test_006 +cache_sp_reuse`: PASS。R800はclear中にrun_reqを出さず、stack line 03FF8hを2回refillし、SP F054h→F078hを復元。
+- `test_005/run.bat`および`+cpu_switch_ram`: PASS。後者はcache hits=35、misses=8、fill_wait=232。
+- 最新ソースでGowin合成、PnR、bitstream生成が完了。setup/hold違反0件、最悪setup slack +0.047ns。
+  最悪パスは引き続きSSRAM burst serialのenable経路。SDC、SSRAM RTL、device設定は変更していない。
+
+この結果でRTL sim上の64clock clearと合成BSRAMへのclear書込みは確認できたが、実機のFFFDh読出し問題が解消したとはまだ判断しない。
+物理SerialSRAMの波形・信号品質はシミュレーション対象外のため、実機で最終確認を行った。
+
+### 実機確認
+
+最新bitstreamを書き込んだ実機で`DEFUSR=&H180:A=USR(0)`を実行。
+Syntax Errorは発生せず、CPUが正常に切り替わってUSR呼出しが完了した。今回の64clock valid clear導入後、
+当初の実機症状が解消したことを確認した。SP診断値やFFFDhのPEEK値については今回未報告のため、ここでは結論しない。

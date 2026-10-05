@@ -9,7 +9,7 @@ Analyzing included file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\la
 Back to file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\bootrom\rom.v'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\bootrom\rom.v":55)
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cmcu\cmcu.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v'
-Undeclared symbol 'mc', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":880)
+Undeclared symbol 'mc', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":882)
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800_alu.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800_inst.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800_mcode.v'
@@ -60,13 +60,13 @@ Compiling module 'cz80_inst'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSX
 Compiling module 'cz80'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":63)
 Compiling module 'cz80_mcode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80_mcode.v":63)
 Compiling module 'cz80_alu'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80_alu.v":63)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":388)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":534)
-WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":537)
-WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":550)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":553)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":390)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":536)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":539)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":552)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":555)
 Compiling module 'cz80_registers'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80_reg.v":55)
-WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":1016)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cz80\cz80.v":1018)
 Compiling module 'cr800_inst'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800_inst.v":63)
 Compiling module 'r800_rom_cache'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_rom_cache.v":1)
 Extracting RAM for identifier 'ff_valid'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_rom_cache.v":19)
@@ -76,14 +76,14 @@ Extracting RAM for identifier 'memory'("C:\Users\hra\Documents\github\HRA_produc
 Compiling module 'cr800'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":63)
 Compiling module 'cr800_mcode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800_mcode.v":63)
 Compiling module 'cr800_alu'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800_alu.v":63)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":385)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":531)
-WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":534)
-WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":547)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":550)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":387)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":533)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":536)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":549)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":552)
 Compiling module 'cr800_registers'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800_reg.v":55)
-WARN  (EX3791) : Expression size 3 truncated to fit in target size 1("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":880)
-WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":1014)
+WARN  (EX3791) : Expression size 3 truncated to fit in target size 1("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":882)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\cr800.v":1016)
 Compiling module 's2026'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\s2026\s2026.v":34)
 Compiling module 's2026_cpu_select'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\s2026\s2026_cpu_select.v":34)
 Compiling module 's2026_register'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\s2026\s2026_register.v":34)
@@ -94,11 +94,12 @@ Compiling module 'address_decode'("C:\Users\hra\Documents\github\HRA_product\FPG
 Compiling module 'secondary_slot'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\secondary_slot\secondary_slot.v":34)
 Compiling module 'ppi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ppi\ppi.v":34)
 Compiling module 'memory_mapper'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\memory_mapper\memory_mapper.v":50)
-Compiling module 'r800_cache'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":1)
-Extracting RAM for identifier 'ff_valid'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":51)
-Extracting RAM for identifier 'ff_plru'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":52)
+Compiling module 'r800_cache'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":34)
+Extracting RAM for identifier 'ff_valid'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":88)
+Extracting RAM for identifier 'ff_plru'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":89)
 Compiling module 'r800_cache_ram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache_ram.v":1)
 Extracting RAM for identifier 'memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache_ram.v":12)
+WARN  (EX3791) : Expression size 16 truncated to fit in target size 4("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":181)
 Compiling module 'ssram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ssram\ssram.v":34)
 Compiling module 'rtc'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\rtc\rtc.v":53)
 Extracting RAM for identifier 'ff_memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\rtc\rtc.v":93)
@@ -132,8 +133,8 @@ Running technical mapping ...
 [75%] Tech-Mapping Phase 2 completed
 [80%] Tech-Mapping Phase 3 completed
 [90%] Tech-Mapping Phase 4 completed
-WARN  (NL0002) : The module "address_decode" instantiated to "u_address_decode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":906)
-WARN  (NL0002) : The module "msx_bus_mux" instantiated to "u_msx_bus_mux" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":751)
+WARN  (NL0002) : The module "address_decode" instantiated to "u_address_decode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":932)
+WARN  (NL0002) : The module "msx_bus_mux" instantiated to "u_msx_bus_mux" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":777)
 WARN  (NL0002) : The module "vdp_logger_sram" instantiated to "SRAM_A" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":95)
 [95%] Generate netlist file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack.vg" completed
 [100%] Generate report file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack_syn.rpt.html" completed

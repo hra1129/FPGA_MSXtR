@@ -1,10 +1,9 @@
 # vsim -c -t 1ps -l cpu_switch_ram.log -wlf cpu_switch_ram.wlf tb "+cpu_switch_ram" -do "run.do" 
-# Start time: 22:33:59 on Oct 04,2026
+# Start time: 22:45:18 on Oct 05,2026
 # Loading sv_std.std
 # Loading work.tb
 # Loading work.fpga_msxtr_cpu_stack
 # Loading work.Gowin_PLL
-# Loading work.r800_debugger
 # Loading work.vdp_logger
 # Loading work.vdp_logger_sram
 # Loading work.ip_spi
@@ -104,5 +103,5 @@
 # ** Note: $finish    : tb.sv(426)
 #    Time: 786200520 ps  Iteration: 1  Instance: /tb
 # Break in Module tb at tb.sv line 426
-# End time: 22:34:03 on Oct 04,2026, Elapsed time: 0:00:04
+# End time: 22:45:22 on Oct 05,2026, Elapsed time: 0:00:04
 # Errors: 0, Warnings: 0

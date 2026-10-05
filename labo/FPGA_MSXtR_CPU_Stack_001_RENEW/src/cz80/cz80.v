@@ -84,6 +84,7 @@ module cz80 (
 	output			inte		,
 	output			stop		,
 	output			indexed_opcode_fetch,
+	output [15:0] p_sp,
 	output	[15:0]	p_pc				//	debug
 );
 
@@ -295,6 +296,7 @@ module cz80 (
 	);
 
 	assign p_pc = pc;		//	debug
+	assign p_sp = sp;
 
 	// --------------------------------------------------------------------
 	cz80_alu u_alu (

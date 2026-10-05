@@ -1,5 +1,5 @@
 # vsim -c -t 1ps -l selector_request.log -wlf selector_request.wlf tb_selector_request -do "set test_root /tb_selector_request; do run.do" 
-# Start time: 23:02:28 on Oct 04,2026
+# Start time: 22:46:26 on Oct 05,2026
 # Loading sv_std.std
 # Loading work.tb_selector_request
 # Loading work.s2026_cpu_select
@@ -7,8 +7,8 @@
 # /tb_selector_request
 #  do run.do
 # PASS: CPU/Pico held requests accepted once, same target and re-arm
-# ** Note: $finish    : tb.sv(324)
+# ** Note: $finish    : tb.sv(409)
 #    Time: 2291 ns  Iteration: 0  Instance: /tb_selector_request
-# Break in Module tb_selector_request at tb.sv line 324
-# End time: 23:02:28 on Oct 04,2026, Elapsed time: 0:00:00
+# Break in Module tb_selector_request at tb.sv line 409
+# End time: 22:46:27 on Oct 05,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0

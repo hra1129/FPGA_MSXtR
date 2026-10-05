@@ -224,6 +224,13 @@ int main(void) {
 			else if( key_press( 1, 0 ) ) {
 				dump_cpu_ram();
 			}
+			else if( key_press( 1, 1 ) ) {
+				printf( "%s\r\n", fpga_clear_debug_sp() ? "SP capture cleared to 5A5A." : "SP capture clear timeout." );
+			}
+			else if( key_press( 1, 2 ) ) {
+				//	- キーが押されたら、0FFFDh の内容を表示する
+				printf( "Peek( 0FFFDh ) : 0x%02X\r\n", fpga_peek( 0x0FFFD ) );
+			}
 		}
 		else {
 			//	MSX CPUがバス所有権を持っている場合の処理
@@ -238,6 +245,9 @@ int main(void) {
 				dump_fpga_debug_signal();
 			}
 			s_fpga_led_state = fpga_set_keyboard_matrix( keymatrix );
+			if( key_press( 1, 1 ) ) {
+				printf( "%s\r\n", fpga_clear_debug_sp() ? "SP capture cleared to 5A5A." : "SP capture clear timeout." );
+			}
 			if( key_press( 0, 7 ) ) {
 				vdp_log_enabled = !vdp_log_enabled;
 				vdp_logger_reset();
