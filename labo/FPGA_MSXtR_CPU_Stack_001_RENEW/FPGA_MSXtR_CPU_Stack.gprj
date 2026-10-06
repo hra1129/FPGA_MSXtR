@@ -25,6 +25,8 @@
         <File path="src/cz80/cz80_mcode.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_reg.v" type="file.verilog" enable="1"/>
         <File path="src/dummy_ssg/dummy_ssg.v" type="file.verilog" enable="1"/>
+        <File path="src/fdc8566/fdc8566.v" type="file.verilog" enable="1"/>
+        <File path="src/dos_mapper/dos_mapper.v" type="file.verilog" enable="1"/>
         <File path="src/extio/extio.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1"/>

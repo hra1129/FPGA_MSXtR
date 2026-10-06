@@ -114,6 +114,7 @@ module msx_slot #(
 	input	[7:0]	slot_primary,
 	input	[7:0]	slot_secondary0,
 	input	[7:0]	slot_secondary3,
+	input	[1:0]	dos_bank,
 	input			jis1_kanji_en,
 	input			jis2_kanji_en,
 	output			cpu_slot12_cs,		//	1: 選択中CPUのアドレスが SLOT#1/#2 (メモリアクセス判定用)
@@ -181,7 +182,6 @@ module msx_slot #(
 	reg		[16:0]	ff_jis2_kanji_address;
 	reg				ff_jis1_increment;
 	reg				ff_jis2_increment;
-	reg		[1:0]	ff_dos_bank;
 	reg				ff_slot_rom0_ce_n;
 	reg				ff_slot_rom1_ce_n;
 	reg				ff_slot_cs1_n;
@@ -223,12 +223,8 @@ module msx_slot #(
 			ff_jis2_kanji_address	<= 17'd0;
 			ff_jis1_increment		<= 1'b0;
 			ff_jis2_increment		<= 1'b0;
-			ff_dos_bank				<= 2'd0;
 		end
 		else begin
-			if( w_bus_write && !w_bus_io && (w_primary_slot == 2'd3) && (w_secondary_slot == 2'd2) && (w_page == 2'd1) && ({w_slot_address[13:11], 11'd0} == 14'h3000) ) begin
-				ff_dos_bank <= w_slot_d[1:0];
-			end
 			if( w_jis1_kanji_cs ) begin
 				if( w_bus_write ) begin
 					if( w_slot_address[0] == 1'b0 ) begin
@@ -293,7 +289,7 @@ module msx_slot #(
 				ff_slot_cs12_n		<= 1'b1;
 			end
 			else if( w_jis1_kanji_cs ) begin
-				ff_slot_a			<= { 2'd0, ff_jis1_kanji_address };
+				ff_slot_a				<= { 2'd0, ff_jis1_kanji_address };
 				ff_slot_rom0_ce_n	<= 1'b1;
 				ff_slot_rom1_ce_n	<= ~slot_rfsh_n;
 				ff_slot_sltsl0_n	<= 1'b1;
@@ -334,7 +330,7 @@ module msx_slot #(
 				{ 2'd0, 2'd1 }: begin
 					//	SLOT#0-0 page#1: MAIN-ROM (upper)
 					ff_slot_a				<= { 3'd0, 2'b01, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom0_ce_n	<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -360,7 +356,7 @@ module msx_slot #(
 				{ 2'd1, 2'd1 }: begin
 					//	SLOT#0-1 page#1: Option-ROM1
 					ff_slot_a				<= { 3'd0, 2'b11, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom0_ce_n	<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -478,7 +474,7 @@ module msx_slot #(
 				{ 2'd1, 2'd1 }: begin
 					//	SLOT#3-1 page#1: KanjiDriver (Lower)
 					ff_slot_a				<= { 3'd2, 2'b01, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom0_ce_n	<= ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;
@@ -516,8 +512,8 @@ module msx_slot #(
 				end
 				{ 2'd2, 2'd1 }: begin
 					//	SLOT#3-2 page#1: MSX-DOS2
-					ff_slot_a				<= { 3'd3, ff_dos_bank, w_slot_address[13:0] };
-					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_a				<= { 3'd3, dos_bank, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n	<= ((w_slot_address[13:0] >= 14'h3FF1) && (w_slot_address[13:0] <= 14'h3FFB)) ? 1'b1 : ~slot_rfsh_n;
 					ff_slot_rom1_ce_n		<= 1'b1;
 					ff_slot_sltsl0_n		<= 1'b1;
 					ff_slot_sltsl1_n		<= 1'b1;

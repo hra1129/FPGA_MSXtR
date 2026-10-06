@@ -12,7 +12,7 @@ vlog ..\vdp_logger\vdp_logger.v
 if errorlevel 1 exit /b 1
 vlog ..\dummy_ssg\dummy_ssg.v ..\pause_led\pause_led.v ..\msx_slot\msx_slot_decode.v ..\msx_slot\msx_slot.v
 if errorlevel 1 exit /b 1
-vlog ..\address_decode\address_decode.v ..\memory_mapper\memory_mapper.v ..\secondary_slot\secondary_slot.v
+vlog ..\address_decode\address_decode.v ..\fdc8566\fdc8566.v ..\dos_mapper\dos_mapper.v ..\memory_mapper\memory_mapper.v ..\secondary_slot\secondary_slot.v
 if errorlevel 1 exit /b 1
 vlog ..\ssram\ssram.v ..\ssram\ssram_test_model.v
 if errorlevel 1 exit /b 1

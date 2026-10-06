@@ -34,6 +34,7 @@
 module address_decode (
 	input	[15:0]	device_address,		//	Z80 address
 	input			device_io,			//	1: I/O access, 0: Memory access
+	input			device_write,
 	input			bootrom_en,
 	input	[7:0]	primary_slot,
 	input	[7:0]	secondary_slot3,
@@ -43,6 +44,9 @@ module address_decode (
 	input	[7:0]	device_mapper_rdata,
 	input			device_mapper_rdata_en,
 	input			device_mapper_ready,
+	input	[7:0]	device_dos_mapper_rdata,
+	input			device_dos_mapper_rdata_en,
+	input			device_dos_mapper_ready,
 	input	[7:0]	device_secondary_rdata,
 	input			device_secondary_rdata_en,
 	input			device_secondary_ready,
@@ -71,6 +75,7 @@ module address_decode (
 	output			bootrom_cs,
 	output			ppi_cs,
 	output			memory_mapper_cs,
+	output			dos_mapper_cs,
 	output			ssram_cs,
 	output			rtc_cs,
 	output			ssg_cs,
@@ -100,6 +105,7 @@ module address_decode (
 	assign ssram_active		= ssram_cs & ~secondary_cs;
 	assign device_rdata		=	device_ppi_rdata_en				? device_ppi_rdata			:
 								device_mapper_rdata_en			? device_mapper_rdata		:
+								device_dos_mapper_rdata_en	? device_dos_mapper_rdata	:
 								device_secondary_rdata_en		? device_secondary_rdata	:
 								device_ssram_rdata_en			? device_ssram_rdata		:
 								device_rtc_rdata_en				? device_rtc_rdata			:
@@ -110,6 +116,7 @@ module address_decode (
 								device_s2026_rdata_en			? device_s2026_rdata		: 8'b0;
 	assign device_rdata_en	=	device_ppi_rdata_en	| 
 								device_mapper_rdata_en |
+								device_dos_mapper_rdata_en |
 								device_ssram_rdata_en |
 								device_secondary_rdata_en |
 								device_rtc_rdata_en	| 
@@ -120,6 +127,7 @@ module address_decode (
 								device_s2026_rdata_en;
 	assign device_ready		= ppi_cs				? device_ppi_ready			:
 							  memory_mapper_cs		? device_mapper_ready		:
+							  dos_mapper_cs			? device_dos_mapper_ready	:
 							  secondary_cs			? device_secondary_ready	:
 							  ssram_active			? device_ssram_ready		:
 							  rtc_cs				? device_rtc_ready			:
@@ -147,4 +155,9 @@ module address_decode (
 	assign system_flag_cs	= device_io & ( device_address[7:0] >= 8'hF3 ) & ( device_address[7:0] <= 8'hF5 );
 	//	I/O FCh-FFh -> Memory mapper segment registers
 	assign memory_mapper_cs	= device_io & ( device_address[7:2] == 6'b111111 );
+	//	SLOT#3-2 page1: bank register 7FF0h (write only), status/FDC 7FF1h-7FFBh
+	assign dos_mapper_cs	= ~device_io && ( access_primary_slot == 2'd3 ) && ( access_secondary_slot3 == 2'd2 ) &&
+							(device_address[15:4] == 12'h7FF) &&
+							(((device_address[3:0] == 4'h0) && device_write) ||
+							 ((device_address[3:0] >= 4'h1) && (device_address[3:0] <= 4'hB)));
 endmodule

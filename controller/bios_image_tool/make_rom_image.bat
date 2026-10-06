@@ -46,7 +46,7 @@ copy /b ^
     bios\a1stext.rom + ^
     bios\a1stkdr.rom + ^
     ff_fill.bin + ^
-    ff_fill.bin + ff_fill.bin + ff_fill.bin + ff_fill.bin + ^
+    bios\a1stdosb.rom + ^
     ff_fill.bin + ff_fill.bin + ff_fill.bin + ff_fill.bin + ^
     ff_fill.bin + ff_fill.bin + ff_fill.bin + ff_fill.bin + ^
     ff_fill.bin + ff_fill.bin + ff_fill.bin + ff_fill.bin + ^

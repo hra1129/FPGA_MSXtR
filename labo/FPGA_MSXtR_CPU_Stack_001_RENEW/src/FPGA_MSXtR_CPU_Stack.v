@@ -285,6 +285,16 @@ module fpga_msxtr_cpu_stack (
 	wire	[7:0]	w_device_mapper_rdata;
 	wire			w_device_mapper_rdata_en;
 	wire	[6:0]	w_mapper_segment;				//	SRAM address [20:14]
+	wire			w_device_dos_mapper_cs;
+	wire			w_device_dos_mapper_ready;
+	wire	[7:0]	w_device_dos_mapper_rdata;
+	wire			w_device_dos_mapper_rdata_en;
+	wire	[1:0]	w_dos_bank;
+	wire			w_dos_status_read;
+	wire			w_dos_rdfdc_n;
+	wire			w_dos_wrfdc_n;
+	wire	[3:0]	w_dos_fdc_address;
+	wire			w_dos_fdc_interrupt;
 
 	wire			w_device_rtc_cs;
 	wire			w_device_rtc_ready;
@@ -546,13 +556,23 @@ module fpga_msxtr_cpu_stack (
 	wire w_vdp_log_consume;
 
 	vdp_logger u_vdp_logger (
-		.reset_n(w_msx_reset_n & ff_spi_reset_n), .clk(clk42m),
-		.cpu_active(~w_cpu_sel[1]), .io_n(slot_iorq_n), .m1_n(slot_m1_n),
-		.rd_n(slot_rd_n), .wr_n(slot_wr_n), .address(slot_a[7:0]), .data(slot_d),
-		.pc(w_cpu_sel[0] ? w_r800_pc : w_z80_pc),
-		.count(w_vdp_log_count), .read_request(w_vdp_log_read_request),
-		.read_valid(w_vdp_log_read_valid), .read_a(w_vdp_log_read_a),
-		.read_d(w_vdp_log_read_d), .read_pc(w_vdp_log_read_pc), .consume(w_vdp_log_consume)
+		.reset_n						( w_msx_reset_n & ff_spi_reset_n	), 
+		.clk							( clk42m							),
+		.cpu_active						( ~w_cpu_sel[1]						), 
+		.io_n							( slot_iorq_n						), 
+		.m1_n							( slot_m1_n							),
+		.rd_n							( slot_rd_n							), 
+		.wr_n							( slot_wr_n							), 
+		.address						( slot_a[7:0]						), 
+		.data							( slot_d							),
+		.pc								( w_cpu_sel[0] ? w_r800_pc : w_z80_pc),
+		.count							( w_vdp_log_count					), 
+		.read_request					( w_vdp_log_read_request			),
+		.read_valid						( w_vdp_log_read_valid				), 
+		.read_a							( w_vdp_log_read_a					),
+		.read_d							( w_vdp_log_read_d					), 
+		.read_pc						( w_vdp_log_read_pc					), 
+		.consume						( w_vdp_log_consume					)
 	);
 
 	ip_spi u_controller_spi (
@@ -590,10 +610,14 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_matrix_valid			( w_keyboard_matrix_valid			),
 		.keyboard_update_count			( w_keyboard_update_count			),
 		.debug_signal					( w_debug_signal					),
-		.debug_sp_clear(w_debug_sp_clear),
-		.vdp_log_count(w_vdp_log_count), .vdp_log_read_request(w_vdp_log_read_request),
-		.vdp_log_read_valid(w_vdp_log_read_valid), .vdp_log_read_a(w_vdp_log_read_a),
-		.vdp_log_read_d(w_vdp_log_read_d), .vdp_log_read_pc(w_vdp_log_read_pc), .vdp_log_consume(w_vdp_log_consume)
+		.debug_sp_clear					( w_debug_sp_clear					),
+		.vdp_log_count					( w_vdp_log_count					), 
+		.vdp_log_read_request			( w_vdp_log_read_request			),
+		.vdp_log_read_valid				( w_vdp_log_read_valid				), 
+		.vdp_log_read_a					( w_vdp_log_read_a					),
+		.vdp_log_read_d					( w_vdp_log_read_d					), 
+		.vdp_log_read_pc				( w_vdp_log_read_pc					), 
+		.vdp_log_consume				( w_vdp_log_consume					)
 	);
 
 	cmcu_inst u_cmcu_inst (
@@ -663,7 +687,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_rdata						( w_z80_bus_rdata					),
 		.bus_rdata_en					( w_z80_bus_rdata_en				),
 		.pc								( w_z80_pc							),
-		.debug_sp(w_z80_sp),
+		.debug_sp						( w_z80_sp							),
 		.int_ack						( 									)
 	);
 
@@ -701,7 +725,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_rdata						( w_r800_bus_rdata					),
 		.bus_rdata_en					( w_r800_bus_rdata_en				),
 		.pc								( w_r800_pc							),		//	debug
-		.debug_sp(w_r800_sp),
+		.debug_sp						( w_r800_sp				    		),
 		.int_ack						( 									)		//	debug
 	);
 
@@ -835,7 +859,7 @@ module fpga_msxtr_cpu_stack (
 		.slot_cs2_n						( slot_cs2_n						),
 		.slot_cs12_n					( slot_cs12_n						),
 		.slot_a							( slot_a							),
-		.slot_int_n						( slot_int_n						),
+		.slot_int_n						( slot_int_n && !w_dos_fdc_interrupt	),
 		.slot_wait_n					( slot_wait_n						),
 		.slot_reset_n					( slot_reset_n						),
 		.slot_busdir					( slot_busdir						),
@@ -851,6 +875,7 @@ module fpga_msxtr_cpu_stack (
 		.slot_primary					( w_primary_slot					),
 		.slot_secondary0				( w_secondary_slot0					),
 		.slot_secondary3				( w_secondary_slot3					),
+		.dos_bank						( w_dos_bank						),
 		.jis1_kanji_en					( w_kanji1_en						),
 		.jis2_kanji_en					( w_kanji2_en						),
 		.cpu_slot12_cs					( w_cpu_slot12_cs					),
@@ -869,6 +894,7 @@ module fpga_msxtr_cpu_stack (
 	address_decode u_address_decode (
 		.device_address					( w_device_address					),
 		.device_io						( w_device_io						),
+		.device_write					( w_device_write					),
 	`ifdef TEST_BOOTROM
 		.bootrom_en						( w_bootrom_en						),
 	`else
@@ -882,6 +908,9 @@ module fpga_msxtr_cpu_stack (
 		.device_mapper_rdata			( w_device_mapper_rdata				),
 		.device_mapper_rdata_en			( w_device_mapper_rdata_en			),
 		.device_mapper_ready			( w_device_mapper_ready				),
+		.device_dos_mapper_rdata		( w_device_dos_mapper_rdata			),
+		.device_dos_mapper_rdata_en		( w_device_dos_mapper_rdata_en		),
+		.device_dos_mapper_ready		( w_device_dos_mapper_ready			),
 		.device_secondary_rdata			( w_device_secondary_rdata			),
 		.device_secondary_rdata_en		( w_device_secondary_rdata_en		),
 		.device_secondary_ready			( w_device_secondary_ready			),
@@ -915,6 +944,7 @@ module fpga_msxtr_cpu_stack (
 		.bootrom_cs						( w_device_bootrom_cs				),
 		.ppi_cs							( w_device_ppi_cs					),
 		.memory_mapper_cs				( w_device_mapper_cs				),
+		.dos_mapper_cs					( w_device_dos_mapper_cs			),
 		.ssram_cs						( w_device_ssram_cs					),
 		.rtc_cs							( w_device_rtc_cs					),
 		.ssg_cs							( w_device_ssg_cs					),
@@ -929,6 +959,28 @@ module fpga_msxtr_cpu_stack (
 		.device_rdata					( w_peripheral_rdata				),
 		.device_rdata_en				( w_peripheral_rdata_en				),
 		.device_ready					( w_peripheral_ready				)
+	);
+
+	// --------------------------------------------------------------------
+	//	MSX-DOS2 mapper and FDC address decode
+	// --------------------------------------------------------------------
+	dos_mapper u_dos_mapper (
+		.reset_n						( ff_slot_reset_n					),
+		.clk							( clk42m							),
+		.bus_cs							( w_device_dos_mapper_cs			),
+		.bus_address					( w_device_address					),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_wdata						( w_device_wdata					),
+		.bus_ready						( w_device_dos_mapper_ready			),
+		.bus_rdata						( w_device_dos_mapper_rdata			),
+		.bus_rdata_en					( w_device_dos_mapper_rdata_en		),
+		.dos_bank						( w_dos_bank						),
+		.status_read					( w_dos_status_read					),
+		.rdfdc_n						( w_dos_rdfdc_n						),
+		.wrfdc_n						( w_dos_wrfdc_n						),
+		.fdc_address						( w_dos_fdc_address				),
+		.fdc_interrupt					( w_dos_fdc_interrupt			)
 	);
 
 	// --------------------------------------------------------------------
@@ -1008,7 +1060,7 @@ module fpga_msxtr_cpu_stack (
 		.bus_wdata						( w_device_wdata					),
 		.bus_address					( w_device_address					),
 		.bus_rdata						( w_device_bootrom_rdata			),
-		.bus_rdata_en					( w_device_bootrom_rdata_en		),
+		.bus_rdata_en					( w_device_bootrom_rdata_en			),
 		.bus_ready						( w_device_bootrom_ready			)
 	);
 	`endif

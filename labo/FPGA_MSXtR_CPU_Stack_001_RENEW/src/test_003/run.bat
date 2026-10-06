@@ -14,6 +14,8 @@ vlog ..\spi\ip_spi.v
 vlog ..\msx_slot\msx_slot_decode.v
 vlog ..\msx_slot\msx_slot.v
 vlog ..\address_decode\address_decode.v
+vlog ..\fdc8566\fdc8566.v
+vlog ..\dos_mapper\dos_mapper.v
 vlog ..\memory_mapper\memory_mapper.v
 vlog ..\secondary_slot\secondary_slot.v
 vlog ..\ssram\ssram.v

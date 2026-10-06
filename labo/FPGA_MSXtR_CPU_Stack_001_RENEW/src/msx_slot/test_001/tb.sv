@@ -104,6 +104,7 @@ module tb;
 	reg		[7:0]	slot_primary;
 	reg		[7:0]	slot_secondary0;
 	reg		[7:0]	slot_secondary3;
+	reg		[1:0]	dos_bank;
 	reg				jis1_kanji_en;
 	reg				jis2_kanji_en;
 
@@ -195,6 +196,7 @@ module tb;
 		.slot_primary		( slot_primary		),
 		.slot_secondary0	( slot_secondary0	),
 		.slot_secondary3	( slot_secondary3	),
+		.dos_bank			( dos_bank			),
 		.jis1_kanji_en		( jis1_kanji_en		),
 		.jis2_kanji_en		( jis2_kanji_en		)
 	);
@@ -262,6 +264,7 @@ module tb;
 		slot_primary	= 8'hAA;	// Slot 2
 		slot_secondary0	= 8'h00;
 		slot_secondary3	= 8'h00;
+		dos_bank		= 2'd0;
 		jis1_kanji_en	= 1'b0;
 		jis2_kanji_en	= 1'b0;
 
@@ -607,17 +610,31 @@ module tb;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h30500, "MSX-DOS2 bank 0 address is 0x30500 ({3'd3, 2'b00, 14'h0500})" );
 
-		// 7.6: MSX-DOS2 Bank Switch to Bank 3 (write 0x03 to 0x7000: {w_slot_address[13:11], 11'd0} == 14'h3000)
-		z80_address = 20'h07000;
-		z80_wdata = 8'h03;
-		z80_bus_write = 1'b1;
-		@( posedge clk ); #1;
+		// 7.6: SLOT#3-2 7FF0h uses the external bank register and remains ROM-readable
+		dos_bank = 2'd3;
+		z80_address = 20'h07FF0;
 		z80_bus_write = 1'b0;
-		z80_address = 20'h04500;
 		@( posedge clk ); #1;
-		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h3C500, "MSX-DOS2 bank 3 address is 0x3C500 ({3'd3, 2'b11, 14'h0500})" );
+		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h3FFF0, "MSX-DOS2 bank 3 maps 7FF0h to ROM0 and remains readable" );
 
-		// 7.7: SLOT#3-0 page#2 is handled by Memory Mapper / Serial SRAM outside msx_slot
+		// 7.7: Status and FDC overlay ROM0; reserved FFC-F remains in the DOS ROM window
+		z80_address = 20'h07FF1;
+		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == 1'b1, "DOS status address 7FF1h disables ROM0" );
+		z80_address = 20'h07FF2;
+		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == 1'b1, "DOS FDC address 7FF2h disables ROM0" );
+		z80_address = 20'h07FFB;
+		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == 1'b1, "DOS FDC address 7FFBh disables ROM0" );
+		z80_address = 20'h07FFC;
+		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h3FFFC, "Reserved FFC-F stays mapped to DOS ROM0" );
+		z80_address = 20'h07FFF;
+		@( posedge clk ); #1;
+		check( slot_rom0_ce_n == 1'b0 && slot_a == 19'h3FFFF, "Reserved FFF remains mapped to DOS ROM0" );
+
+		// 7.8: SLOT#3-0 page#2 is handled by Memory Mapper / Serial SRAM outside msx_slot
 		slot_secondary3 = 8'h00; // Sec Slot 3-0
 		z80_address = 16'h8000;
 		@( posedge clk ); #1;

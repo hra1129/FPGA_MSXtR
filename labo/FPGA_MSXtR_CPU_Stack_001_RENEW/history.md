@@ -1657,3 +1657,71 @@ RTL、SSRAM、SDCへの変更は行っていない。
 最新bitstreamを書き込んだ実機で`DEFUSR=&H180:A=USR(0)`を実行。
 Syntax Errorは発生せず、CPUが正常に切り替わってUSR呼出しが完了した。今回の64clock valid clear導入後、
 当初の実機症状が解消したことを確認した。SP診断値やFFFDhのPEEK値については今回未報告のため、ここでは結論しない。
+
+## 2026-10-06 朝 作業履歴 (MSX-DOS2 bank switch / FDC decode)
+
+SLOT#3-2 page1 のMSX-DOS2 bank切替に向け、`dos_mapper`を追加し、既存の`msx_slot.v`内にあった`ff_dos_bank`を移設した。
+7FF0h writeで`wdata[1:0]`を保持し、reset値はBANK#0。`msx_slot`はそのbank値でROM0のBANK#0〜3を選択する。
+
+- `address_decode.v`にSLOT#3-2の7FF0h writeおよび7FF1h〜7FFBhのchip selectを追加。
+- `dos_mapper.v`で7FF1h status read、7FF2h〜7FFBhの`/RDFDC`・`/WRFDC`とFDC addressをdecode。
+  FDC/status未実装部のreadはFFh、busは即時完了。7FF0h readと7FFCh〜7FFFhはDOS ROM側に残す。
+- 専用test_001は15 checks PASS。reset bank、4 bank値、7FF0h read-only動作、status/FDC範囲、予約領域、slot/I/O誤選択を確認。
+- `msx_slot/test_001`: 99 checks PASS。`test_005`、`test_006`もPASS。
+- Gowin合成/PnR・bitstream生成完了。setup/hold違反0件、最悪setup slack +0.027ns。
+
+### 実機確認と次回調査
+
+DOS2 ROM領域をFFhで埋めた状態ではBASICまで起動した。一方、実DOS2 ROMを書き込むと、起動時のDOS2初期化から戻らず停止した。
+FDCを実装していないためstatus/FDC応答が原因と考えられるが、BASICまで起動するかはこの時点では未確認。
+
+### 帰宅後の7FF4h polling調査
+
+実機debugでZ80 PCが7971h〜7978h付近を反復し、7FF4hへのアクセスを観測した。
+`a1stdosb.rom`のROM offset 3972hには`3A F4 7F E6 10 20 F9`があり、
+`LD A,(7FF4h); AND 10h; JR NZ,-7`としてbit4が0になるまで7FF4hをpollする。
+従来のFDC stubはread値が常にFFhだったため、bit4が常に1となってこのloopから抜けられない状態だった。
+
+7FF4h readのみ00hを返す暫定idle responseを追加し、それ以外の未実装FDC readはFFhのままにした。
+専用dos_mapper testは16 checks PASS (compile/sim warnings 0)。test_005、test_006もPASS。
+Gowin合成/PnR・bitstream生成完了、setup/hold違反0件、最悪setup slack +0.015ns。
+この暫定responseで実機がBASICまで進むか、またDOS2初期化が次にどのFDC状態を要求するかは実機再確認待ち。
+
+### 7FF4h DRQ pollの追加確認
+
+暫定00h responseを書き込んだ後のdebugでは、PCが7974h付近から7967h付近へ進んだ。
+ROM offset 3960h付近には`LD A,(7FF4h); AND C0h; CP 80h; JR NZ,-9`があり、
+7FF4hのbit[7:6]が`10b`になるまで再度pollしていた。00hはこの条件を満たさない。
+
+7FF4hの暫定値を80hへ変更した。これは先行する`AND 10h == 0`条件と、後続の`(value & C0h) == 80h`条件を両方満たす。
+専用testでaddress_decodeのCPU read mux経由でも80hになることを確認。dos_mapper 16 checks、test_005、test_006はPASS。
+Gowin PnR/bitstream再生成完了、setup/hold違反0件、最悪setup slack +0.015ns。
+実機でBASIC到達するか、以降に追加のFDC状態待ちがあるかは未確認であり、80hはFDC未実装時の暫定idle/DRQ応答である。
+
+その後のdebugではPCが797Fh、7997h、7954h、7968h、79ADh付近を移動しており、80h固定では`(IX+13h)&20h`のresult待ちから抜けられない可能性が分かった。
+ROMは7FF4h statusがC0hのとき7FF5h resultをreadし、そのbit5をIX+13hへ保存してから、status 80hへ戻る流れを持つ。
+
+FDC未実装時の暫定one-shot handshakeとして、7FF5h write後の7FF4h readにC0h、続く7FF5h readに20hを返し、result read後に7FF4hを80hへ戻すstateを追加した。
+dos_mapper専用19 checks、test_005、test_006はPASS。最新Gowin PnR/bitstream生成完了、setup/hold違反0件、最悪setup slack +0.014ns。
+この合成resultで実機のDOS2初期化が完了する保証はなく、最新bitstreamでのBASIC到達確認と、次に止まる場合のFDC transaction観測が必要。
+
+### TC8566AF最小command/result FSM
+
+固定C0h/20hを返すone-shot stubを廃止し、再利用用`src/fdc8566/fdc8566.v`にDOS2 INIT向けの最小command/result FSMを実装した。
+FRES release、SPECIFY/NDMA、READ DATA(46h)の9-byte command packet、未挿入diskの7-byte abnormal result、
+SEEK/RECALIBRATEとSENSE INTERRUPT(08h)、unsupported commandのinvalid-command resultを扱う。
+FDC実media transfer、DMA、disk image/Pico連携は対象外。FDC MSRはRQM/DIO/NDM/CB、IRQはINTE bitでgateする。
+
+- `dos_mapper/test_001`: 42 checks PASS、warnings 0。ROM setup (F2=04h/F3=20h)、SPECIFY、READ DATA packet長/result、seek interruptとsense acknowledgeを検証。
+- `test_005`、`test_006`: PASS、warnings 0。
+- Gowin合成/PnR/bitstream生成完了。setup/hold違反0件、最悪setup slack +0.036ns。
+  `u_fdc8566` Register=120、LUT=201。
+
+このFSMはBASIC起動に必要な初期化応答に限定した暫定emulationであり、実ディスクのread/writeや一般的なFDC commandは未実装。
+
+### 実機確認: Disk BASIC起動
+
+FSM版bitstreamを実機で動作させ、MSX BASIC version 4.0、Disk BASIC version 2.01の表示後に`Ok` promptまで到達した。
+DOSが有効な状態でBASIC起動する当初の目的を達成した。画面表示はDisk BASICが組み込まれて起動したことを確認するが、
+実ディスクのread/writeや他のFDC commandが動作することまでは確認していない。現行`fdc8566`はDOS2初期化用の最小応答FSMとして扱い、
+実ディスクアクセスを追加する際はcommand/phaseを段階的に拡張する。
