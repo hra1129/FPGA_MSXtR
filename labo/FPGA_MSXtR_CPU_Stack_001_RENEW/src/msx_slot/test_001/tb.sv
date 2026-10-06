@@ -95,6 +95,7 @@ module tb;
 	wire			slot_rd_n;
 	wire			slot_rom0_ce_n;
 	wire			slot_rom1_ce_n;
+	wire			cpu_rom0_cs;
 	wire			slot_rfsh_n;
 	wire			slot_iorq_n;
 	wire			slot_merq_n;
@@ -198,7 +199,8 @@ module tb;
 		.slot_secondary3	( slot_secondary3	),
 		.dos_bank			( dos_bank			),
 		.jis1_kanji_en		( jis1_kanji_en		),
-		.jis2_kanji_en		( jis2_kanji_en		)
+		.jis2_kanji_en		( jis2_kanji_en		),
+		.cpu_rom0_cs			( cpu_rom0_cs		)
 	);
 
 	// ---------------------------------------------------------
@@ -457,7 +459,7 @@ module tb;
 		slot_secondary0 = 8'h00; // Sec Slot 0-0
 		z80_address = 20'h01234;
 		@( posedge clk ); #1;
-		check( slot_rom0_ce_n == 1'b1 && u_msx_slot.cpu_flash_cs == 1'b1, "ROM0 stays inactive outside /MREQ while decode remains selected" );
+		check( slot_rom0_ce_n == 1'b1 && u_msx_slot.cpu_flash_cs == 1'b1 && cpu_rom0_cs == 1'b1, "ROM0 cache select remains visible while external CE waits for /MREQ" );
 		z80_merq_n = 1'b0;
 		#1;
 		check( slot_rom0_ce_n == 1'b0 && slot_rom1_ce_n == 1'b1, "SLOT#0-0 page#0 selects ROM0" );
@@ -620,10 +622,10 @@ module tb;
 		// 7.7: Status and FDC overlay ROM0; reserved FFC-F remains in the DOS ROM window
 		z80_address = 20'h07FF1;
 		@( posedge clk ); #1;
-		check( slot_rom0_ce_n == 1'b1, "DOS status address 7FF1h disables ROM0" );
+		check( slot_rom0_ce_n == 1'b1 && cpu_rom0_cs == 1'b0, "DOS status address 7FF1h disables ROM0 and cache" );
 		z80_address = 20'h07FF2;
 		@( posedge clk ); #1;
-		check( slot_rom0_ce_n == 1'b1, "DOS FDC address 7FF2h disables ROM0" );
+		check( slot_rom0_ce_n == 1'b1 && cpu_rom0_cs == 1'b0, "DOS FDC address 7FF2h disables ROM0 and cache" );
 		z80_address = 20'h07FFB;
 		@( posedge clk ); #1;
 		check( slot_rom0_ce_n == 1'b1, "DOS FDC address 7FFBh disables ROM0" );
@@ -639,7 +641,7 @@ module tb;
 		z80_address = 16'h8000;
 		@( posedge clk ); #1;
 		check( slot_sltsl3_n == 1'b1 && slot_rom0_ce_n == 1'b1, "SLOT#3-0 page#2 does not assert slot_sltsl3_n" );
-		check( slot_rom0_ce_n == 1'b1 && slot_rom1_ce_n == 1'b1, "SLOT#3-0 page#2 does not select internal ROM" );
+		check( slot_rom0_ce_n == 1'b1 && slot_rom1_ce_n == 1'b1 && cpu_rom0_cs == 1'b0, "SLOT#3-0 page#2 does not select internal ROM or cache" );
 		check( slot_cs1_n == 1'b1 && slot_cs2_n == 1'b1 && slot_cs12_n == 1'b1, "SLOT#3-0 page#2 keeps external CS inactive" );
 		check( slot_data_dir == 1'b1, "SLOT#3-0 SRAM read blocks cartridge-to-CPU data" );
 

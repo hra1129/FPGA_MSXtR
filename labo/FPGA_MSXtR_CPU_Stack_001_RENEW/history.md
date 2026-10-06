@@ -1725,3 +1725,80 @@ FSM版bitstreamを実機で動作させ、MSX BASIC version 4.0、Disk BASIC ver
 DOSが有効な状態でBASIC起動する当初の目的を達成した。画面表示はDisk BASICが組み込まれて起動したことを確認するが、
 実ディスクのread/writeや他のFDC commandが動作することまでは確認していない。現行`fdc8566`はDOS2初期化用の最小応答FSMとして扱い、
 実ディスクアクセスを追加する際はcommand/phaseを段階的に拡張する。
+
+## 2026-10-06 R800性能計測
+
+BASICの入力待ちやPico/CPU所有権切替時間を測定窓に含めないよう、内部I/O F6h writeで計測開始、F7h writeで停止する方式を追加した。
+両markerは即時readyでCPUを待たせず、R800選択中の受理transactionだけがR800計測FSMを制御する。
+
+- `cr800_inst`が42.95454MHz基準でactive cycles、`/WAIT`期間、CY_FLASH期間、ROM cache hit/miss/fill cyclesを32bit計数。
+- SPI command 0Fhでactive状態と6 counterをsnapshot read。既存SPI command 0Ahとその33byte形式は変更せず、0Fhは28byte little-endian payload + A5h marker。
+- Pico `fpga_get_r800_performance()`とdebugger表示を追加。既存CPU debug表示の後にperf snapshotを表示する。
+- marker decoder testは45 checks PASS。test005でSPI 0Fh応答の28byte長とA5h終端を確認。test006もPASS。Pico `make -j` PASS。
+- 最新Gowin合成/PnR・bitstream生成完了。setup/hold違反0件、最悪setup slack +0.103ns。
+
+BASIC測定例: benchmark前に`OUT &HF6,0`、測定終了直後に`OUT &HF7,0`を実行する。これで入力待ちは窓外になる。
+0Fh snapshotはF7h後にdebuggerから取得する。カウンタの実機値と表示はまだ未確認で、BASIC `TIME`結果との相関も今後測定する。
+ROM cache counterは現行R800 ROM cache実装対象（MAIN-ROM）だけを数え、Flash/DOS ROM全体のcache性能を示すものではない。
+
+## 2026-10-07 R800 ROM0キャッシュ改修と実機性能確認
+
+ROM cacheの対象をMAIN-ROM限定からFlashROM0全域（512KB）へ拡張した。
+cache keyをCPU address下位15bitからROM0の19bit物理addressへ変更し、bankが異なる同一offsetを別lineとして識別する。
+容量は従来の8KB（4-way、256 sets、8 bytes/line）のまま。512KB全体を常駐させる変更ではない。
+
+- `msx_slot`に内部ROM0選択信号`cpu_rom0_cs`を追加。外部CEの`/MREQ` gateより前の選択をR800へ渡し、外部read開始前のcache分類を可能にした。
+- topから`rom0_cs`と`rom0_address=slot_a`を接続。BootROMは除外し、ROM1はcacheをbypassして既存のFlashアクセス経路を使用する。
+- ROM cacheはR800専用。`!run_req || !ff_run`で無効化し、R800からバス所有権を移す際に古いlineを残さない。
+- R800のROM0 writeは外部Flashへwriteを出さず即時完了する。内部bus transactionは維持し、DOS2の7FF0h bank latch writeを外部ROM writeと分離する。
+- 前節の「MAIN-ROMだけを計数する」という記述は改修前の状態。改修後のROM perf counterはROM0全域のcacheアクセスを対象とする。
+
+### RTL検証と合成
+
+- `cr800/test_001`: 全6 test tops PASS。19bit bank tagの非alias、line fill/hit、無効化、miss時の70ns ROM read、hit時の外部read省略を確認。
+  既存RAM cache単体TBの`cache_ready`未接続warningは残るが、ROM cache/fetch testはwarnings 0。
+- `msx_slot/test_001`: 99 checks PASS。`/MREQ`前のROM0内部選択、FDC overlayと非ROM mappingの除外を確認。
+- `test_005`、`test_006`: PASS。slot access/bus safety、SPI性能snapshot形式、CPU切替とレジスタ復元を確認。
+- Gowin合成・PnR・bitstream生成完了。ただし最初の改修後PnRではsetup violationが発生した。
+  その後ユーザーが合成条件を変更して再合成し、タイミングバイオレーションが解消したと報告。変更後のslack数値は今回未報告。
+
+### 実機確認: ROM0キャッシュとBASIC benchmark
+
+DOS2組み込み（FDC stub）の初期化ルーチンがR800へ切り替えるため、BASIC到達時点でR800が動作している。
+この状態で以下のbenchmarkを入力・実行し、画面の`TIME`値が改修前の8から5へ短縮したことを確認した。
+
+```basic
+10 DEFINT A-Z
+20 OUT &HF6,0
+30 TIME=0
+40 FOR I=0 TO 1000:NEXT
+50 OUT &HF7,0
+60 PRINT TIME
+```
+
+本物のR800でも同benchmarkは5との報告があり、この測定では近い速度に到達した。
+ただし`TIME`の分解能と単一benchmarkの結果だけでは、実機R800と本設計のどちらが速いか、また全命令の速度互換性は判断できない。
+
+実行後のdebug log:
+
+```text
+FPGA CPU debug: Z80_PC=0x04B7 R800_PC=0x0D7E mode=R800
+  CPU switch: mode_count=9
+  SP capture: Z80@0488=0xEA98 R800@04BF=0xEA98
+  Z80 bus: addr=0x04B7 reset_n=1
+  R800 bus: addr=0xF3DE reset_n=1
+  Shared bus: pause=0
+  Slot map: A8=0xF0 SSL0=0x30 SSL3=0x08
+  System flag: F3=0x00 F4=0x80 F5=0xEB
+  R800 cache: hit=275767676 miss=1310 fill_wait=37990 cycles
+  R800 perf: STOP total=4090376 wait=2513715 flash=0 rom_hit=289097 rom_miss=96 rom_fill=5376 cycles
+  link_pattern=0xA5 (OK)
+```
+
+F6h/F7hで区切った測定窓でROM hit=289097、miss=96を観測し、従来0だったROM cache counterが実機で動作することを確認した。
+ROM hit率は約99.967%。`rom_fill=5376`は96 misses × 8 bytes × 7 clocksと一致する。
+`flash=0`は直接Flash経路の計数であり、ROM cache miss時の外部readが無かったという意味ではない。
+先行する`R800 cache`行はRAM cache側の統計で、ROM perfの測定窓内counterとは区別する。
+
+今回の区切りでは、ROM0キャッシュ改修後のBASIC benchmark高速化と性能counterの実機観測まで確認した。
+他のROM bankを使うソフト、ROM1 cartridge、長時間動作などの広範な実機互換性確認は今後の対象とする。

@@ -83,7 +83,8 @@ module cr800_inst #(
 	input	[7:0]	slot_d		,
 	//	Slot decode hints from msx_slot (現在の bus_address に対するデコード結果)
 	input			flash_cs	,	//	1: オンボードFlashROM (rom0/rom1) が対象
-	input			main_rom_cs,	//	1: SLOT#0-0 MAIN-ROMが対象
+	input			rom0_cs,		//	1: un-gated FlashROM0 selection from msx_slot
+	input	[18:0]	rom0_address,	//	physical address within FlashROM0
 	input			slot12_cs	,	//	1: SLOT#1/#2 (外部カートリッジ) が対象
 	input			ssram_access,	//	1: 内部Serial SRAMへのアクセス
 	//	Internal bus interface (device transaction, replaces raw Z80 timing pins)
@@ -95,6 +96,9 @@ module cr800_inst #(
 	output	[7:0]	bus_wdata	,
 	input	[7:0]	bus_rdata	,
 	input			bus_rdata_en,
+	input			performance_start,
+	input			performance_stop,
+	output	[223:0]	performance_signal,
 	output	[15:0]	pc			,
 	output [15:0] debug_sp,
 	output			int_ack					//	debug
@@ -157,6 +161,17 @@ module cr800_inst #(
 	wire				w_cycle_start;
 	wire				w_has_access;
 	wire				w_io_early_done;
+	reg				ff_perf_active;
+	reg				ff_perf_start_d;
+	reg				ff_perf_stop_d;
+	reg		[31:0]	ff_perf_total_cycles;
+	reg		[31:0]	ff_perf_wait_cycles;
+	reg		[31:0]	ff_perf_flash_cycles;
+	reg		[31:0]	ff_perf_rom_hits;
+	reg		[31:0]	ff_perf_rom_misses;
+	reg		[31:0]	ff_perf_rom_fill_cycles;
+	wire				w_perf_start_pulse;
+	wire				w_perf_stop_pulse;
 	//	リフレッシュタイマー
 	reg		[15:0]		ff_refresh_cnt;
 	reg					ff_refresh_pending;
@@ -176,8 +191,13 @@ module cr800_inst #(
 	assign w_cycle_start	= ( w_t_state == 3'd1 ) && ( ff_t_state_d != 3'd1 );
 	assign w_has_access		= ~w_noread | w_write | w_iorq;
 	assign w_rom_cache_lookup = ff_run && ff_cyc_state == CY_CLASSIFY2 && !ff_cyc_io &&
-		!slot12_cs && flash_cs && main_rom_cs && !ff_cyc_write;
+		!slot12_cs && flash_cs && rom0_cs && !ff_cyc_write;
 	assign w_rom_fill_byte = ff_run && ff_cyc_state == CY_ROM_FILL && ff_flash_cnt == 4'd6;
+	assign w_perf_start_pulse = performance_start && !ff_perf_start_d;
+	assign w_perf_stop_pulse = performance_stop && !ff_perf_stop_d;
+	assign performance_signal = { 31'd0, ff_perf_active, ff_perf_total_cycles, ff_perf_wait_cycles,
+								   ff_perf_flash_cycles, ff_perf_rom_hits, ff_perf_rom_misses,
+								   ff_perf_rom_fill_cycles };
 
 	r800_rom_cache u_rom_cache (
 		.clk(clk),
@@ -185,7 +205,7 @@ module cr800_inst #(
 		.invalidate(!run_req || !ff_run),
 		.lookup(w_rom_cache_lookup),
 		.miss_start(ff_run && ff_cyc_state == CY_ROM_CHECK),
-		.address(ff_bus_address[14:0]),
+		.address(rom0_address),
 		.hit(w_rom_cache_hit),
 		.hit_data(w_rom_cache_data),
 		.fill_byte(w_rom_fill_byte),
@@ -193,6 +213,56 @@ module cr800_inst #(
 		.fill_data(slot_d),
 		.fill_requested_data(w_rom_fill_data)
 	);
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_perf_active			<= 1'b0;
+			ff_perf_start_d		<= 1'b0;
+			ff_perf_stop_d			<= 1'b0;
+			ff_perf_total_cycles	<= 32'd0;
+			ff_perf_wait_cycles	<= 32'd0;
+			ff_perf_flash_cycles	<= 32'd0;
+			ff_perf_rom_hits		<= 32'd0;
+			ff_perf_rom_misses		<= 32'd0;
+			ff_perf_rom_fill_cycles <= 32'd0;
+		end
+		else begin
+			ff_perf_start_d <= performance_start;
+			ff_perf_stop_d <= performance_stop;
+			if( w_perf_start_pulse ) begin
+				ff_perf_active			<= 1'b1;
+				ff_perf_total_cycles	<= 32'd0;
+				ff_perf_wait_cycles	<= 32'd0;
+				ff_perf_flash_cycles	<= 32'd0;
+				ff_perf_rom_hits		<= 32'd0;
+				ff_perf_rom_misses		<= 32'd0;
+				ff_perf_rom_fill_cycles <= 32'd0;
+			end
+			else if( w_perf_stop_pulse ) begin
+				ff_perf_active <= 1'b0;
+			end
+			else if( ff_perf_active && ff_run ) begin
+				ff_perf_total_cycles <= ff_perf_total_cycles + 32'd1;
+				if( !ff_wait_n_i ) begin
+					ff_perf_wait_cycles <= ff_perf_wait_cycles + 32'd1;
+				end
+				if( ff_cyc_state == CY_FLASH ) begin
+					ff_perf_flash_cycles <= ff_perf_flash_cycles + 32'd1;
+				end
+				if( ff_cyc_state == CY_ROM_CHECK ) begin
+					if( w_rom_cache_hit ) begin
+						ff_perf_rom_hits <= ff_perf_rom_hits + 32'd1;
+					end
+					else begin
+						ff_perf_rom_misses <= ff_perf_rom_misses + 32'd1;
+					end
+				end
+				if( ff_cyc_state == CY_ROM_FILL ) begin
+					ff_perf_rom_fill_cycles <= ff_perf_rom_fill_cycles + 32'd1;
+				end
+			end
+		end
+	end
 
 	// ---------------------------------------------------------
 	//	CPU切替: M1サイクルで run_req を取り込んで停止。停止中は run_req=1 で再開。
@@ -334,6 +404,11 @@ module cr800_inst #(
 				if( ff_cyc_io || slot12_cs ) begin
 					//	I/O(動的判定) と SLOT#1/#2 は Z80 と同じ速度で実行
 					ff_cyc_state	<= CY_ALIGN;
+				end
+				else if( rom0_cs && ff_cyc_write ) begin
+					//	ROM0 writes are ignored; internal mapped write devices still receive the bus transaction
+					ff_wait_n_i		<= 1'b1;
+					ff_cyc_state	<= CY_IDLE;
 				end
 				else if( w_rom_cache_lookup ) begin
 					ff_cyc_state <= CY_ROM_CHECK;

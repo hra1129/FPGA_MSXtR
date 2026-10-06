@@ -61,6 +61,17 @@ typedef struct {
 	uint8_t		link_pattern;		//	SPI通信経路確認用の固定パターン。0xA5でなければ通信自体が不成立
 } fpga_debug_signal_t;
 
+typedef struct {
+	uint32_t	active;
+	uint32_t	total_cycles;
+	uint32_t	wait_cycles;
+	uint32_t	flash_cycles;
+	uint32_t	rom_cache_hits;
+	uint32_t	rom_cache_misses;
+	uint32_t	rom_cache_fill_cycles;
+	uint8_t		link_pattern;
+} fpga_r800_performance_t;
+
 #define FPGA_LED_R800				(1 << 0)
 #define FPGA_LED_PAUSE				(1 << 1)
 #define FPGA_LED_CAPS				(1 << 2)
@@ -91,6 +102,8 @@ bool fpga_get_msx_pause_timeout( void );
 bool fpga_get_msx_reset_timeout( void );
 uint8_t fpga_set_keyboard_matrix( const uint8_t *matrix );
 void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal );
+bool fpga_get_r800_performance( fpga_r800_performance_t *performance );
+bool fpga_get_r800_performance( fpga_r800_performance_t *performance );
 bool fpga_clear_debug_sp( void );
 
 #define FPGA_VDP_LOG_CAPACITY 2048

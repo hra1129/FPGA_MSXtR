@@ -12,27 +12,27 @@
   <Part Number>: GW5A-LV25MG121NC1/I0
   <Device>: GW5A-25
   <Device Version>: A
-  <Created Time>:Tue Oct  6 21:32:04 2026
+  <Created Time>:Wed Oct  7 07:17:41 2026
 
 
 2. PnR Details
 
   Running placement:
-    Placement Phase 0: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
-    Placement Phase 1: CPU time = 0h 0m 0.347s, Elapsed time = 0h 0m 0.347s
-    Placement Phase 2: CPU time = 0h 0m 5s, Elapsed time = 0h 0m 5s
+    Placement Phase 0: CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
+    Placement Phase 1: CPU time = 0h 0m 0.405s, Elapsed time = 0h 0m 0.405s
+    Placement Phase 2: CPU time = 0h 0m 7s, Elapsed time = 0h 0m 7s
     Placement Phase 3: CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
-    Total Placement: CPU time = 0h 0m 10s, Elapsed time = 0h 0m 10s
+    Total Placement: CPU time = 0h 0m 14s, Elapsed time = 0h 0m 14s
  Running routing:
     Routing Phase 0: CPU time = 0h 0m 0.008s, Elapsed time = 0h 0m 0.008s
-    Routing Phase 1: CPU time = 0h 0m 14s, Elapsed time = 0h 0m 14s
-    Routing Phase 2: CPU time = 0h 0m 0.137s, Elapsed time = 0h 0m 0.138s
+    Routing Phase 1: CPU time = 0h 0m 10s, Elapsed time = 0h 0m 10s
+    Routing Phase 2: CPU time = 0h 0m 0.163s, Elapsed time = 0h 0m 0.164s
     Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
-    Total Routing: CPU time = 0h 0m 14s, Elapsed time = 0h 0m 14s
+    Total Routing: CPU time = 0h 0m 10s, Elapsed time = 0h 0m 10s
  Generate output files:
     CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
 
- Total Time and Memory Usage: CPU time = 0h 0m 26s, Elapsed time = 0h 0m 26s, Peak memory usage = 793MB
+ Total Time and Memory Usage: CPU time = 0h 0m 26s, Elapsed time = 0h 0m 26s, Peak memory usage = 833MB
 
 
 3. Resource Usage Summary
@@ -40,15 +40,15 @@
   --------------------------------------------------------------------------------
   Resources                   | Usage                               | Utilization
   --------------------------------------------------------------------------------
-  Logic                       | 9260/23040                          |  41%
-    --LUT,ALU,ROM16           | 9260(8702 LUT, 558 ALU, 0 ROM16)    | -
+  Logic                       | 11366/23040                         |  50%
+    --LUT,ALU,ROM16           | 11366(10605 LUT, 761 ALU, 0 ROM16)  | -
     --SSRAM(RAM16)            | 0                                   | -
-  Register                    | 4701/23280                          |  21%
+  Register                    | 5098/23280                          |  22%
     --Logic Register as Latch | 0/23040                             |  0%
-    --Logic Register as FF    | 4690/23040                          |  21%
+    --Logic Register as FF    | 5094/23040                          |  23%
     --I/O Register as Latch   | 0/240                               |  0%
-    --I/O Register as FF      | 11/240                              |  5%
-  CLS                         | 7050/11520                          |  62%
+    --I/O Register as FF      | 4/240                               |  2%
+  CLS                         | 8213/11520                          |  72%
   I/O Port                    | 77/86                               |  90%
   I/O Buf                     | 70                                  | -
     --Input Buf               | 7                                   | -
@@ -98,17 +98,17 @@
   Signal         | Global Clock   | Location
   -------------------------------------------
   clk_50m_d      | PRIMARY        |  TR TL
-  ff_ssg_reset_n | PRIMARY        |  BR
-  clk215m        | PRIMARY        |  TR BR
+  ff_ssg_reset_n | PRIMARY        |  TL
+  ff_ssram_reset_n| PRIMARY        |  TL BL
+  clk215m        | PRIMARY        |  TL BR BL
   clk42m         | PRIMARY        |  TR TL BR BL
-  u_controller_spi/ff_debug_signal_255_12| PRIMARY        |  TR BR
   ff_spi_reset_n | LW             |  -
   slot_reset_n_d | LW             |  -
   ff_ppi_reset_n | LW             |  -
-  ff_ssram_reset_n| LW             |  -
   ff_z80_reset_n | LW             |  -
   ff_r800_reset_n| LW             |  -
   n485_4         | LW             |  -
+  u_r800/n4036_4 | LW             |  -
   u_dos_mapper/u_fdc8566/n148_4| LW             |  -
   ===========================================
 

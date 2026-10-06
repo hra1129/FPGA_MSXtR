@@ -127,6 +127,7 @@ void dump_slot(void) {
 // ---------------------------------------------------------
 void dump_fpga_debug_signal( void ) {
 	fpga_debug_signal_t debug_signal;
+	fpga_r800_performance_t performance;
 
 	fpga_get_debug_signal( &debug_signal );
 	printf( "FPGA CPU debug: Z80_PC=0x%04X R800_PC=0x%04X mode=%s\r\n",
@@ -153,6 +154,16 @@ void dump_fpga_debug_signal( void ) {
 			(unsigned long)debug_signal.r800_cache_hits,
 			(unsigned long)debug_signal.r800_cache_misses,
 			(unsigned long)debug_signal.r800_cache_fill_wait_cycles );
+	if( fpga_get_r800_performance( &performance ) ) {
+		printf( "  R800 perf: %s total=%lu wait=%lu flash=%lu rom_hit=%lu rom_miss=%lu rom_fill=%lu cycles\r\n",
+				performance.active ? "RUN" : "STOP",
+				(unsigned long)performance.total_cycles,
+				(unsigned long)performance.wait_cycles,
+				(unsigned long)performance.flash_cycles,
+				(unsigned long)performance.rom_cache_hits,
+				(unsigned long)performance.rom_cache_misses,
+				(unsigned long)performance.rom_cache_fill_cycles );
+	}
 	if( debug_signal.link_pattern == 0xA5 ) {
 		printf( "  link_pattern=0x%02X (OK)\r\n", debug_signal.link_pattern );
 	}

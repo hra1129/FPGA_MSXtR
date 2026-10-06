@@ -69,6 +69,7 @@ module ip_spi (
 	output			keyboard_matrix_valid,
 	output	[7:0]	keyboard_update_count,
 	input	[255:0]	debug_signal,
+	input	[223:0]	performance_signal,
 	input	[11:0]	vdp_log_count,
 	output			vdp_log_read_request,
 	input			vdp_log_read_valid,
@@ -103,12 +104,14 @@ module ip_spi (
 	localparam [4:0] ST_LOG_D = 5'd22;
 	localparam [4:0] ST_LOG_PC_L = 5'd23;
 	localparam [4:0] ST_LOG_PC_H = 5'd24;
+	localparam [4:0] ST_PERF_H = 5'd25;
 	reg [11:0] ff_log_remaining;
 	reg [7:0] ff_log_data;
 	reg [15:0] ff_log_pc;
 	reg ff_log_active;
 	localparam			SPI_RX_WDATA		 = 8'h64;
 	localparam	[5:0]	DEBUG_SIGNAL_BYTES	 = 6'd33;	//	debug_signal 32byte + 通信確認用の固定パターン(0xA5) 1byte
+	localparam	[5:0]	PERF_SIGNAL_BYTES	 = 6'd29;	//	performance 28byte + 0xA5 marker
 	localparam			DEBUG_SIGNAL_PATTERN = 8'hA5;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
@@ -142,6 +145,9 @@ module ip_spi (
 	reg		[7:0]	ff_keyboard_update_count;
 	reg		[255:0]	ff_debug_signal;
 	reg		[5:0]	ff_debug_byte_index;
+	reg		[223:0]	ff_performance_signal;
+	reg		[4:0]	ff_performance_byte_index;
+
 	reg		[19:0]	ff_flashrom_address;
 	reg				ff_flashrom_access;
 	reg				ff_slot_wait_n;
@@ -197,6 +203,8 @@ module ip_spi (
 			ff_keyboard_update_toggle	<= 1'b0;
 			ff_keyboard_update_count	<= 8'd0;
 			ff_debug_signal				<= 256'd0;
+			ff_performance_signal		<= 224'd0;
+			ff_performance_byte_index	<= 5'd0;
 			ff_flashrom_address			<= 20'd0;
 			ff_flashrom_access			<= 1'b0;
 			ff_debug_byte_index			<= 5'd0;
@@ -287,6 +295,7 @@ module ip_spi (
 			//   0Ch                               ... MSX BootROM disable (bootrom_en = 0)
 			//   0Dh, addr_l, addr_m, addr_h, data  ... FlashROM write
 			//   0Eh, addr_l, addr_m, addr_h, dummy ... FlashROM read
+			//   0Fh, dummy x PERF_SIGNAL_BYTES   ... R800 performance snapshot, A5h marker
 			//   10h, owner                         ... Bus owner select (0: CPU, 1: SPI/Pico)
 			//   11h, matrix[0..11]                 ... Keyboard matrix update
 			//   FFh                               ... presence check
@@ -407,6 +416,15 @@ module ip_spi (
 						ff_flashrom_access	<= 1'b1;
 						ff_spi_valid		<= 1'b1;
 						ff_spi_write		<= 1'b0;
+					end
+					8'h0f: begin
+						ff_bus_write			<= 1'b1;		//	SPI interruptは出さない
+						ff_performance_signal <= performance_signal;
+						ff_performance_byte_index <= 5'd1;
+						ff_spi_wdata			<= performance_signal[7:0];
+						ff_spi_valid			<= 1'b1;
+						ff_spi_write			<= 1'b1;
+						ff_state				<= ST_PERF_H;
 					end
 					8'h10: begin
 						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
@@ -543,6 +561,20 @@ module ip_spi (
 					end
 					ff_spi_valid	<= 1'b1;
 					ff_spi_write	<= 1'b1;
+				end
+			end
+			ST_PERF_H: begin
+				if( spi_ready ) begin
+					if( ff_performance_byte_index == (PERF_SIGNAL_BYTES - 6'd1) ) begin
+						ff_spi_wdata <= DEBUG_SIGNAL_PATTERN;
+						ff_state <= ST_SEND;
+					end
+					else begin
+						ff_spi_wdata <= ff_performance_signal[ff_performance_byte_index * 8 +: 8];
+						ff_performance_byte_index <= ff_performance_byte_index + 5'd1;
+					end
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
 				end
 			end
 			ST_LOG_COUNT_H: begin

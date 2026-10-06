@@ -6,6 +6,7 @@ module tb;
 	reg mcu_cs_n = 1'b1;
 	reg mcu_sclk = 1'b0;
 	reg mcu_mosi = 1'b0;
+	wire mcu_miso;
 	wire mcu_intr;
 	wire [3:0] sram_sio;
 	wire sram_sclk;
@@ -24,6 +25,8 @@ module tb;
 	reg [7:0] ram_code [0:256];
 	integer rom_cursor;
 	integer m1_count [0:3];
+	integer perf_index;
+	reg [7:0] perf_byte;
 	integer read_count [0:3];
 	integer bit_read_count [0:3];
 	integer write_count [0:3];
@@ -82,7 +85,7 @@ module tb;
 	fpga_msxtr_cpu_stack u_dut (
 		.clk_28m(clk_28m), .clk_50m(clk_50m),
 		.mcu_cs_n(mcu_cs_n), .mcu_sclk(mcu_sclk), .mcu_mosi(mcu_mosi),
-		.mcu_miso(), .mcu_intr(mcu_intr),
+		.mcu_miso(mcu_miso), .mcu_intr(mcu_intr),
 		.sram_ce0_n(sram_ce_n[0]), .sram_ce1_n(sram_ce_n[1]),
 		.sram_ce2_n(sram_ce_n[2]), .sram_ce3_n(sram_ce_n[3]),
 		.sram_sclk(sram_sclk), .sram_sio(sram_sio),
@@ -232,6 +235,22 @@ module tb;
 		repeat(10) @(posedge u_dut.clk42m);
 		mcu_cs_n = 1'b1;
 		repeat(10) @(posedge u_dut.clk42m);
+	endtask
+
+	task automatic spi_byte_read(input [7:0] tx_value, output [7:0] rx_value);
+		integer bit_index;
+		rx_value = 8'd0;
+		for( bit_index = 7; bit_index >= 0; bit_index = bit_index - 1 ) begin
+			@(posedge u_dut.clk42m);
+			mcu_mosi = tx_value[bit_index];
+			#1;
+			rx_value[bit_index] = mcu_miso;
+			@(posedge u_dut.clk42m);
+			mcu_sclk = 1'b1;
+			@(posedge u_dut.clk42m);
+			mcu_sclk = 1'b0;
+		end
+		repeat(6) @(posedge u_dut.clk42m);
 	endtask
 
 	always @(cpu_drive or flash_drive or reverse_drive or forward_drive or slot1_output_en or slot2_output_en or slot_reset_n or inject_contention) begin
@@ -440,6 +459,18 @@ module tb;
 				$fatal(1, "VDP logger PC mismatch for phase %0d: expected %04h got %04h", index, code_base[index] + 16'h0016, u_dut.u_vdp_logger.SRAM_C.memory[index]);
 			$display("VDP logger phase %0d OUT at %04h captured PC=%04h", index, code_base[index] + 16'h0014, u_dut.u_vdp_logger.SRAM_C.memory[index]);
 		end
+		mcu_cs_n = 1'b0;
+		repeat(10) @(posedge u_dut.clk42m);
+		spi_byte(8'h0f);
+		repeat(10) @(posedge u_dut.clk42m);
+		for( perf_index = 0; perf_index < 29; perf_index = perf_index + 1 ) begin
+			spi_byte_read(8'h00, perf_byte);
+			if( perf_index < 28 && perf_byte !== 8'h00 ) $fatal(1, "Performance snapshot counter byte %0d was %02h, expected zero", perf_index, perf_byte);
+			if( perf_index == 28 && perf_byte !== 8'hA5 ) $fatal(1, "Performance snapshot marker mismatch: %02h", perf_byte);
+		end
+		mcu_cs_n = 1'b1;
+		repeat(10) @(posedge u_dut.clk42m);
+		$display("PASS: SPI 0Fh performance snapshot length=28 marker=A5");
 		$display("VDP logger captured four CPU writes to port 98h with data E4h");
 		$display("Read direction one-clock release checks=%0d", direction_hold_count);
 		$display("PASS: test_005 slot access coverage and bus safety");

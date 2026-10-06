@@ -141,6 +141,11 @@ module fpga_msxtr_cpu_stack (
 	reg [15:0] ff_r800_restored_sp;
 	wire			w_processor_mode;
 	wire	[255:0]	w_debug_signal;
+	wire			w_performance_start_cs;
+	wire			w_performance_stop_cs;
+	wire			w_r800_performance_start;
+	wire			w_r800_performance_stop;
+	wire	[223:0]	w_r800_performance_signal;
 	wire	[31:0]	w_r800_cache_hits;
 	wire	[31:0]	w_r800_cache_misses;
 	wire	[31:0]	w_r800_cache_fill_wait;
@@ -610,6 +615,7 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_matrix_valid			( w_keyboard_matrix_valid			),
 		.keyboard_update_count			( w_keyboard_update_count			),
 		.debug_signal					( w_debug_signal					),
+		.performance_signal				( w_r800_performance_signal	),
 		.debug_sp_clear					( w_debug_sp_clear					),
 		.vdp_log_count					( w_vdp_log_count					), 
 		.vdp_log_read_request			( w_vdp_log_read_request			),
@@ -693,6 +699,7 @@ module fpga_msxtr_cpu_stack (
 
 	//	Highspeed CPU core
 	wire			w_cpu_slot12_cs;
+	wire			w_cpu_rom0_cs;
 	wire			w_cpu_flash_cs;
 
 	cr800_inst u_r800 (
@@ -713,7 +720,8 @@ module fpga_msxtr_cpu_stack (
 		.run_ack						( w_r800_run_ack					),
 		.slot_d							( slot_d							),
 		.flash_cs						( w_cpu_flash_cs					),
-		.main_rom_cs					( !slot_rom0_ce_n && slot_a[18:15] == 4'd0 && !w_device_bootrom_cs ),
+		.rom0_cs						( w_cpu_rom0_cs && !w_device_bootrom_cs ),
+		.rom0_address					( slot_a							),
 		.slot12_cs						( w_cpu_slot12_cs					),
 		.ssram_access					( w_device_ssram_active				),
 		.bus_io							( w_r800_bus_io						),
@@ -724,6 +732,9 @@ module fpga_msxtr_cpu_stack (
 		.bus_wdata						( w_r800_bus_wdata					),
 		.bus_rdata						( w_r800_bus_rdata					),
 		.bus_rdata_en					( w_r800_bus_rdata_en				),
+		.performance_start				( w_r800_performance_start			),
+		.performance_stop				( w_r800_performance_stop			),
+		.performance_signal				( w_r800_performance_signal			),
 		.pc								( w_r800_pc							),		//	debug
 		.debug_sp						( w_r800_sp				    		),
 		.int_ack						( 									)		//	debug
@@ -878,12 +889,15 @@ module fpga_msxtr_cpu_stack (
 		.dos_bank						( w_dos_bank						),
 		.jis1_kanji_en					( w_kanji1_en						),
 		.jis2_kanji_en					( w_kanji2_en						),
+		.cpu_rom0_cs					( w_cpu_rom0_cs						),
 		.cpu_slot12_cs					( w_cpu_slot12_cs					),
 		.cpu_flash_cs					( w_cpu_flash_cs					)
 	);
 
 	assign w_device_flash_direct		= w_cpu_sel[1] & w_pico_bus_flash_en;
 	assign w_device_valid_peripheral	= w_device_valid & ~w_device_flash_direct;
+	assign w_r800_performance_start		= w_performance_start_cs && w_device_valid_peripheral && (w_cpu_sel == 2'b01);
+	assign w_r800_performance_stop		= w_performance_stop_cs && w_device_valid_peripheral && (w_cpu_sel == 2'b01);
 	assign w_device_ready				= w_device_flash_direct ? 1'b1 : w_peripheral_ready;
 	assign w_device_rdata				= w_peripheral_rdata;
 	assign w_device_rdata_en			= w_device_flash_direct ? 1'b0 : w_peripheral_rdata_en;
@@ -951,6 +965,8 @@ module fpga_msxtr_cpu_stack (
 		.system_flag_cs					( w_device_system_flag_cs			),
 		.pause_led_cs					( w_device_pause_led_cs				),
 		.s2026_cs						( w_device_s2026_cs					),
+		.performance_start_cs			( w_performance_start_cs			),
+		.performance_stop_cs			( w_performance_stop_cs				),
 		.access_primary_slot			( w_access_primary_slot				),
 		.access_secondary_slot3			( w_access_secondary_slot3			),
 		.slot3_0_selected				( w_slot3_0_selected				),
@@ -979,8 +995,8 @@ module fpga_msxtr_cpu_stack (
 		.status_read					( w_dos_status_read					),
 		.rdfdc_n						( w_dos_rdfdc_n						),
 		.wrfdc_n						( w_dos_wrfdc_n						),
-		.fdc_address						( w_dos_fdc_address				),
-		.fdc_interrupt					( w_dos_fdc_interrupt			)
+		.fdc_address					( w_dos_fdc_address					),
+		.fdc_interrupt					( w_dos_fdc_interrupt				)
 	);
 
 	// --------------------------------------------------------------------

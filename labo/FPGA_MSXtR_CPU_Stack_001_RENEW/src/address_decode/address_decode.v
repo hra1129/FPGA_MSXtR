@@ -82,6 +82,8 @@ module address_decode (
 	output			system_flag_cs,
 	output			pause_led_cs,
 	output			s2026_cs,
+	output			performance_start_cs,
+	output			performance_stop_cs,
 	output	[1:0]	access_primary_slot,
 	output	[1:0]	access_secondary_slot3,
 	output			slot3_0_selected,
@@ -125,7 +127,8 @@ module address_decode (
 								device_pause_led_rdata_en | 
 								device_bootrom_rdata_en |
 								device_s2026_rdata_en;
-	assign device_ready		= ppi_cs				? device_ppi_ready			:
+	assign device_ready		= ( performance_start_cs || performance_stop_cs ) ? 1'b1 :
+							  ppi_cs				? device_ppi_ready			:
 							  memory_mapper_cs		? device_mapper_ready		:
 							  dos_mapper_cs			? device_dos_mapper_ready	:
 							  secondary_cs			? device_secondary_ready	:
@@ -153,6 +156,9 @@ module address_decode (
 	assign s2026_cs			= device_io & ( device_address[7:2] == 6'b111001 );
 	//	I/O F3h-F5h -> system flag latches (F5h bit0/1: Kanji JIS1/JIS2 enable)
 	assign system_flag_cs	= device_io & ( device_address[7:0] >= 8'hF3 ) & ( device_address[7:0] <= 8'hF5 );
+	//	I/O F6h/F7h -> R800 performance measurement markers (write only)
+	assign performance_start_cs = device_io && device_write && ( device_address[7:0] == 8'hF6 );
+	assign performance_stop_cs = device_io && device_write && ( device_address[7:0] == 8'hF7 );
 	//	I/O FCh-FFh -> Memory mapper segment registers
 	assign memory_mapper_cs	= device_io & ( device_address[7:2] == 6'b111111 );
 	//	SLOT#3-2 page1: bank register 7FF0h (write only), status/FDC 7FF1h-7FFBh

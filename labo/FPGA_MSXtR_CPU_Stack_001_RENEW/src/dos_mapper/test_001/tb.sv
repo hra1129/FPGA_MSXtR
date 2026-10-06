@@ -11,6 +11,8 @@ module tb;
 	reg bus_valid = 1'b0;
 	reg [7:0] bus_wdata = 8'd0;
 	wire dos_mapper_cs;
+	wire performance_start_cs;
+	wire performance_stop_cs;
 	wire bus_ready;
 	wire [7:0] bus_rdata;
 	wire bus_rdata_en;
@@ -71,6 +73,8 @@ module tb;
 		.ppi_cs				(),
 		.memory_mapper_cs		(),
 		.dos_mapper_cs			( dos_mapper_cs ),
+		.performance_start_cs	( performance_start_cs ),
+		.performance_stop_cs	( performance_stop_cs ),
 		.ssram_cs			(),
 		.rtc_cs				(),
 		.ssg_cs				(),
@@ -239,8 +243,14 @@ module tb;
 		device_io = 1'b1;
 		secondary_slot3[3:2] = 2'd2;
 		#1 check(!dos_mapper_cs, "I/O access does not select the memory-mapped DOS mapper");
+		set_bus(16'h00F6, 1'b1, 1'b1, 8'h01);
+		check(performance_start_cs && !performance_stop_cs && decoder_ready, "I/O write F6h starts measurement and completes immediately");
+		set_bus(16'h00F7, 1'b1, 1'b1, 8'h00);
+		check(!performance_start_cs && performance_stop_cs && decoder_ready, "I/O write F7h stops measurement and completes immediately");
+		set_bus(16'h00F6, 1'b0, 1'b1, 8'h00);
+		check(!performance_start_cs && !performance_stop_cs, "I/O reads do not trigger performance markers");
 
-		$display("PASS: dos_mapper checks=%0d", pass_count);
+		$display("PASS: dos_mapper/performance marker checks=%0d", pass_count);
 		$finish;
 	end
 endmodule

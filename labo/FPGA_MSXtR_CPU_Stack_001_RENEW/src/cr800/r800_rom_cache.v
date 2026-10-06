@@ -6,7 +6,7 @@ module r800_rom_cache #(
 	input invalidate,
 	input lookup,
 	input miss_start,
-	input [14:0] address,
+	input [18:0] address,
 	output hit,
 	output [7:0] hit_data,
 	input fill_byte,
@@ -15,12 +15,12 @@ module r800_rom_cache #(
 	output [7:0] fill_requested_data
 );
 	localparam c_sets = 1 << c_set_bits;
-	localparam c_tag_bits = 12 - c_set_bits;
+	localparam c_tag_bits = 19 - c_set_bits - 3;
 	reg [3:0] ff_valid [0:c_sets-1];
 	reg [2:0] ff_plru [0:c_sets-1];
 	reg [3:0] ff_lookup_valid;
 	reg [2:0] ff_lookup_plru;
-	reg [14:0] ff_lookup_address;
+	reg [18:0] ff_lookup_address;
 	reg [1:0] ff_victim;
 	reg [63:0] ff_fill_line;
 	wire [63+c_tag_bits:0] w_line [0:3];
@@ -37,7 +37,7 @@ module r800_rom_cache #(
 	integer set_index;
 
 	assign w_set = ff_lookup_address[c_set_bits+2:3];
-	assign w_tag = ff_lookup_address[14:c_set_bits+3];
+	assign w_tag = ff_lookup_address[18:c_set_bits+3];
 	assign w_hit[0] = ff_lookup_valid[0] && w_line[0][63+c_tag_bits:64] == w_tag;
 	assign w_hit[1] = ff_lookup_valid[1] && w_line[1][63+c_tag_bits:64] == w_tag;
 	assign w_hit[2] = ff_lookup_valid[2] && w_line[2][63+c_tag_bits:64] == w_tag;
@@ -75,7 +75,7 @@ module r800_rom_cache #(
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
-			ff_lookup_address <= 15'd0;
+			ff_lookup_address <= 19'd0;
 			ff_lookup_valid <= 4'd0;
 			ff_lookup_plru <= 3'd0;
 			ff_victim <= 2'd0;

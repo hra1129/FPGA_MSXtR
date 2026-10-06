@@ -208,11 +208,12 @@ module tb_r800_wait;
 		.int_n(1'b1), .nmi_n(1'b1), .wait_n(1'b1),
 		.m1_n(), .merq_n(), .iorq_n(), .rd_n(), .wr_n(),
 		.slot_d_oe(), .rfsh_n(), .run_req(1'b1), .run_ack(),
-		.slot_d(8'hFF), .flash_cs(1'b0), .main_rom_cs(1'b0), .slot12_cs(1'b0),
+		.slot_d(8'hFF), .flash_cs(1'b0), .rom0_cs(1'b0), .rom0_address(19'd0), .slot12_cs(1'b0),
 		.ssram_access(1'b1), .bus_io(), .bus_write(),
 		.bus_valid(bus_valid), .bus_ready(1'b0), .bus_address(),
 		.bus_wdata(), .bus_rdata(8'h00), .bus_rdata_en(bus_rdata_en),
-		.pc(pc), .int_ack()
+		.performance_start(1'b0), .performance_stop(1'b0), .performance_signal(),
+		.pc(pc), .debug_sp(), .int_ack()
 	);
 
 	initial begin
@@ -422,7 +423,7 @@ module tb_rom_cache;
 	reg invalidate = 1'b0;
 	reg lookup = 1'b0;
 	reg miss_start = 1'b0;
-	reg [14:0] address = 15'd0;
+	reg [18:0] address = 19'd0;
 	wire hit;
 	wire [7:0] hit_data;
 	reg fill_byte = 1'b0;
@@ -441,7 +442,7 @@ module tb_rom_cache;
 		.fill_requested_data(fill_requested_data)
 	);
 
-	task automatic request_lookup( input [14:0] requested_address );
+	task automatic request_lookup( input [18:0] requested_address );
 		begin
 			@( negedge clk );
 			address = requested_address;
@@ -456,7 +457,7 @@ module tb_rom_cache;
 		repeat(3) @( posedge clk );
 		@( negedge clk );
 		reset_n = 1'b1;
-		request_lookup(15'h0123);
+		request_lookup(19'h00123);
 		if( hit !== 1'b0 ) $fatal(1, "ROM cache cold lookup hit");
 		miss_start = 1'b1;
 		@( negedge clk );
@@ -471,16 +472,37 @@ module tb_rom_cache;
 			@( negedge clk );
 		end
 		fill_byte = 1'b0;
-		request_lookup(15'h0123);
+		request_lookup(19'h00123);
 		if( hit !== 1'b1 || hit_data !== 8'hA3 ) $fatal(1, "ROM cache hit data=%h", hit_data);
-		request_lookup(15'h0126);
+		request_lookup(19'h00126);
 		if( hit !== 1'b1 || hit_data !== 8'hA6 ) $fatal(1, "ROM cache adjacent byte=%h", hit_data);
+		request_lookup(19'h10123);
+		if( hit !== 1'b0 ) $fatal(1, "ROM bank tag aliased with lower 15-bit address");
+		miss_start = 1'b1;
+		@( negedge clk );
+		miss_start = 1'b0;
+		for( byte_index = 0; byte_index < 8; byte_index = byte_index + 1 ) begin
+			fill_index = byte_index[2:0];
+			fill_data = 8'hB0 + byte_index;
+			fill_byte = 1'b1;
+			if( byte_index == 7 && fill_requested_data !== 8'hB3 ) begin
+				$fatal(1, "Second ROM bank fill returned %h", fill_requested_data);
+			end
+			@( negedge clk );
+		end
+		fill_byte = 1'b0;
+		request_lookup(19'h00123);
+		if( hit !== 1'b1 || hit_data !== 8'hA3 ) $fatal(1, "First ROM bank was lost after second fill: %h", hit_data);
+		request_lookup(19'h10123);
+		if( hit !== 1'b1 || hit_data !== 8'hB3 ) $fatal(1, "Second ROM bank hit data=%h", hit_data);
 		invalidate = 1'b1;
 		@( negedge clk );
 		invalidate = 1'b0;
-		request_lookup(15'h0123);
+		request_lookup(19'h00123);
 		if( hit !== 1'b0 ) $fatal(1, "ROM cache not invalidated after CPU switch");
-		$display("PASS: ROM line fill, hit and CPU switch invalidation");
+		request_lookup(19'h10123);
+		if( hit !== 1'b0 ) $fatal(1, "ROM bank cache not invalidated after CPU switch");
+		$display("PASS: 19-bit ROM bank tags, line fill, hit and CPU switch invalidation");
 		$finish;
 	end
 endmodule
@@ -508,11 +530,12 @@ module tb_r800_rom_fetch;
 		.int_n(1'b1), .nmi_n(1'b1), .wait_n(1'b1),
 		.m1_n(), .merq_n(), .iorq_n(), .rd_n(rd_n), .wr_n(),
 		.slot_d_oe(), .rfsh_n(), .run_req(1'b1), .run_ack(),
-		.slot_d(slot_d), .flash_cs(1'b1), .main_rom_cs(1'b1), .slot12_cs(1'b0),
+		.slot_d(slot_d), .flash_cs(1'b1), .rom0_cs(1'b1), .rom0_address({4'd0, bus_address[14:0]}), .slot12_cs(1'b0),
 		.ssram_access(1'b0), .bus_io(), .bus_write(),
 		.bus_valid(), .bus_ready(1'b0), .bus_address(bus_address),
 		.bus_wdata(), .bus_rdata(8'hFF), .bus_rdata_en(1'b0),
-		.pc(pc), .int_ack()
+		.performance_start(1'b0), .performance_stop(1'b0), .performance_signal(),
+		.pc(pc), .debug_sp(), .int_ack()
 	);
 
 	initial begin

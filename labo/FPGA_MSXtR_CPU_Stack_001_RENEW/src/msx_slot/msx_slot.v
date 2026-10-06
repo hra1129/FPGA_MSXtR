@@ -117,9 +117,10 @@ module msx_slot #(
 	input	[1:0]	dos_bank,
 	input			jis1_kanji_en,
 	input			jis2_kanji_en,
+	output			cpu_rom0_cs,
 	output			cpu_slot12_cs,		//	1: 選択中CPUのアドレスが SLOT#1/#2 (メモリアクセス判定用)
 	output			cpu_flash_cs		//	1: 選択中CPUのアドレスがオンボードFlashROM (1clk遅延のデコード結果)
-);
+	);
 	wire			w_slot_wr_n;
 	wire			w_slot_d_oe;
 	wire			w_slot_rd_n;
@@ -212,6 +213,7 @@ module msx_slot #(
 	end
 
 	assign cpu_slot12_cs	= ( w_primary_slot == 2'd1 ) || ( w_primary_slot == 2'd2 );
+	assign cpu_rom0_cs		= !ff_slot_rom0_ce_n;
 	assign cpu_flash_cs		= ~( ff_slot_rom0_ce_n & ff_slot_rom1_ce_n );
 
 	assign w_jis1_kanji_cs	= jis1_kanji_en & w_bus_io & ({w_slot_address[7:1], 1'b0} == 8'hD8);

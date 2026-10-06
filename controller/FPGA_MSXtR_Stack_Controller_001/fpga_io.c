@@ -616,6 +616,33 @@ void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal ) {
 	debug_signal->link_pattern			= data[32];
 }
 
+bool fpga_get_r800_performance( fpga_r800_performance_t *performance ) {
+	uint8_t command = 0x0F;
+	uint8_t dummy = 0x00;
+	uint8_t data[29];
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	spi_write_blocking( SPI0_PORT, &command, 1 );
+	sleep_us( 1 );
+	for( int index = 0; index < 29; index++ ) {
+		spi_write_read_blocking( SPI0_PORT, &dummy, &data[index], 1 );
+		sleep_us( 1 );
+	}
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+
+	performance->rom_cache_fill_cycles = fpga_debug_get_bits( data, 0, 32 );
+	performance->rom_cache_misses = fpga_debug_get_bits( data, 32, 32 );
+	performance->rom_cache_hits = fpga_debug_get_bits( data, 64, 32 );
+	performance->flash_cycles = fpga_debug_get_bits( data, 96, 32 );
+	performance->wait_cycles = fpga_debug_get_bits( data, 128, 32 );
+	performance->total_cycles = fpga_debug_get_bits( data, 160, 32 );
+	performance->active = fpga_debug_get_bits( data, 192, 1 );
+	performance->link_pattern = data[28];
+
+	return performance->link_pattern == 0xA5;
+}
+
 bool fpga_clear_debug_sp( void ) {
 	uint8_t command = 0x14;
 	gpio_put( SPI0_CSN_PIN, 0 );

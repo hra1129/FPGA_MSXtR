@@ -1,0 +1,12 @@
+# vsim -c -t 1ps -l rom_cache_19bit.log tb_rom_cache -do "run -all; quit -f" 
+# Start time: 06:43:43 on Oct 07,2026
+# Loading sv_std.std
+# Loading work.tb_rom_cache
+# Loading work.r800_rom_cache
+# Loading work.r800_cache_ram
+# run -all
+# PASS: 19-bit ROM bank tags, line fill, hit and CPU switch invalidation
+# ** Note: $finish    : tb.sv(505)
+#    Time: 381 ns  Iteration: 0  Instance: /tb_rom_cache
+# End time: 06:43:43 on Oct 07,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
