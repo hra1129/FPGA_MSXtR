@@ -357,7 +357,7 @@ module cr800_alu (
 			3'd1:	func_q_t	= { busa[0], busa[7:1] };		//	rrc
 			3'd3:	func_q_t	= { f_in_c, busa[7:1] };		//	rr
 			3'd4:	func_q_t	= { busa[6:0], 1'b0 };			//	sla
-			3'd6:	func_q_t	= { busa[6:0], 1'b1 };			//	sll (undocumented)
+			3'd6:	func_q_t	= { busa[6:0], 1'b0 };			//	R800 SLL behaves like SLA
 			3'd5:	func_q_t	= { busa[7], busa[7:1] };		//	sra
 			default:func_q_t	= { 1'b0, busa[7:1] };			//	srl
 			endcase

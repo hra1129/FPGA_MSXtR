@@ -1815,7 +1815,7 @@ R800拡張命令のうち、仕様上動作が保証された整数乗算命令�
 - flagsは仕様どおり、S=0、Z=product zero、P/V=0、C=上位積が0でなければ1とし、H/Nとundocumented X/Yは保持。
 - `cr800_registers`に乗算operand用pair read portを追加。R800 state machineは乗算結果commit中のみ停止し、乗算結果の書戻しを優先する。
 
-### 検証結果
+### 追加差分の検証
 
 - `cr800/test_001/run.bat`: 全test tops PASS。
 - `tb_r800_mulub`: B/C/D/E各operand、overflow carry、zero flag/resultを確認。
@@ -1825,3 +1825,23 @@ R800拡張命令のうち、仕様上動作が保証された整数乗算命令�
   最悪setup slack +0.018ns、最悪hold slack +0.180ns。最悪setup pathは従来どおりSSRAM state経路。
 - Resource: Logic 50% (LUT/ALU)、FF 23%、BSRAM 50%、DSP 6% (MULT12X12 x1、MULTALU27X18 x1)。
 - 実機での乗算命令実行は未確認。対象はMULUB/MULUWであり、R800固有opcode全体やZ80未定義opcode群の完全対応を意味しない。
+
+## 2026-10-07 R800/Z80挙動差分の追加
+
+R800チェック資料で確認された差分のうち、SLL、連続DD/FD prefix、未使用F flagsを`cr800`へ反映した。
+
+- `SLL r`のbit 0を0にし、SLA相当の結果とする。
+- 既にDD/FD index stateがある状態で次のDD/FD prefixを受けた場合、index stateを解除する。
+  これにより`DD DD 23`等はindex registerのINCではなく、通常opcodeとして`INC HL`になる。
+- ALU、CPL/CCF/SCF、BITによるF更新ではF3/F5を変更せず保持する。`POP AF`による全F byte loadと
+  `EX AF,AF'`によるAF bank交換は明示的なregister transferとして維持する。
+- `cz80`のSLL、prefix、flags処理は変更していない。
+
+### 検証結果
+
+- `tb_r800_compat_differences`: PASS。`SLL A` (81h→02h)、`DD DD 23` (HLだけを1増加)、
+  `POP AF`でセットしたF3/F5が`XOR A`とSLL後も保持されることを確認。
+- `cr800/test_001/run.bat`: 全test tops PASS。`test_005`、`test_006`もPASS。
+- Gowin合成・PnR・bitstream生成完了。setup/hold violation 0、setup最悪+0.018ns、
+  hold最悪+0.180ns。最悪setup pathはSSRAM state経路。
+- 実機での今回3差分の専用動作確認は未実施。

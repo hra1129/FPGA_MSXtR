@@ -436,12 +436,18 @@ module cr800 (
 					iset <= 2'b00;
 					if( prefix != 2'b00 ) begin
 						if( prefix == 2'b11 ) begin
-							//	DDh = 11011101, FDh = 11111101h
-							if( ir[5] == 1'b1 ) begin
-								xy_state <= 2'b10;		//	IY
+							if( xy_state != 2'b00 ) begin
+								xy_state <= 2'b00;
+								xy_ind <= 1'b0;
 							end
 							else begin
-								xy_state <= 2'b01;		//	IX
+								//	DDh selects IX and FDh selects IY
+								if( ir[5] == 1'b1 ) begin
+									xy_state <= 2'b10;	//	IY
+								end
+								else begin
+									xy_state <= 2'b01;	//	IX
+								end
 							end
 						end
 						else begin
@@ -535,25 +541,19 @@ module cr800 (
 					if( i_cpl == 1'b1 ) begin
 						// cpl
 						acc <= ~acc;
-						f[flag_y] <= ~acc[5];
 						f[flag_h] <= 1'b1;
-						f[flag_x] <= ~acc[3];
 						f[flag_n] <= 1'b1;
 					end
 					if( i_ccf == 1'b1 ) begin
 						// ccf
 						f[flag_c] <= ~f[flag_c];
-						f[flag_y] <= acc[5];
 						f[flag_h] <= f[flag_c];
-						f[flag_x] <= acc[3];
 						f[flag_n] <= 1'b0;
 					end
 					if( i_scf == 1'b1 ) begin
 						// scf
 						f[flag_c] <= 1'b1;
-						f[flag_y] <= acc[5];
 						f[flag_h] <= 1'b0;
-						f[flag_x] <= acc[3];
 						f[flag_n] <= 1'b0;
 					end
 				end
@@ -641,7 +641,9 @@ module cr800 (
 			end
 
 			if( (i_djnz == 1'b0 && save_alu_r == 1'b1) || alu_op_r == 4'b1001 ) begin
-				f[7:1] <= f_out[7:1];
+				f[7:6] <= f_out[7:6];
+				f[4] <= f_out[4];
+				f[2:1] <= f_out[2:1];
 				if( preservec_r == 1'b0 ) begin
 					f[flag_c] <= f_out[0];
 				end
@@ -682,8 +684,6 @@ module cr800 (
 			end
 
 			if( tstate == 1 && i_bt == 1'b1 ) begin
-				f[flag_x] <= alu_q[3];
-				f[flag_y] <= alu_q[1];
 				f[flag_h] <= 1'b0;
 				f[flag_n] <= 1'b0;
 			end

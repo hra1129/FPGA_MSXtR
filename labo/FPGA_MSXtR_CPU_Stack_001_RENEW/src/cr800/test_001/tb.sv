@@ -798,3 +798,94 @@ module tb_r800_muluw;
 		$fatal(1, "R800 MULUW test timeout");
 	end
 endmodule
+
+module tb_r800_compat_differences;
+	reg clk = 1'b0;
+	reg reset_n = 1'b0;
+	reg [7:0] memory [0:63];
+	wire [15:0] address;
+	wire [7:0] instruction_data;
+	wire [7:0] data_in;
+	wire [7:0] output_data;
+	wire halt_n;
+	integer index;
+
+	always #5 clk = ~clk;
+	assign instruction_data = memory[address[5:0]];
+	assign data_in = memory[address[5:0] - 6'd1];
+
+	cr800 u_cpu (
+		.reset_n(reset_n),
+		.clk_n(clk),
+		.cen(1'b1),
+		.wait_n(1'b1),
+		.int_n(1'b1),
+		.nmi_n(1'b1),
+		.busrq_n(1'b1),
+		.m1_n(),
+		.iorq(),
+		.noread(),
+		.write(),
+		.rfsh_n(),
+		.halt_n(halt_n),
+		.busak_n(),
+		.a(address),
+		.dinst(instruction_data),
+		.di(data_in),
+		.\do (output_data),
+		.ts(),
+		.intcycle_n(),
+		.inte(),
+		.stop(),
+		.p_sp(),
+		.p_pc()
+	);
+
+	initial begin
+		for( index = 0; index < 64; index = index + 1 ) memory[index] = 8'h00;
+		memory[0] = 8'h31;
+		memory[1] = 8'h30;
+		memory[2] = 8'h00;
+		memory[3] = 8'hF1;
+		memory[4] = 8'hAF;
+		memory[5] = 8'h21;
+		memory[6] = 8'h00;
+		memory[7] = 8'h00;
+		memory[8] = 8'hDD;
+		memory[9] = 8'h21;
+		memory[10] = 8'h34;
+		memory[11] = 8'h12;
+		memory[12] = 8'hDD;
+		memory[13] = 8'hDD;
+		memory[14] = 8'h23;
+		memory[15] = 8'h3E;
+		memory[16] = 8'h81;
+		memory[17] = 8'hCB;
+		memory[18] = 8'h37;
+		memory[19] = 8'h76;
+		memory[48] = 8'h28;
+		memory[49] = 8'h00;
+		repeat(3) @( posedge clk );
+		reset_n = 1'b1;
+		wait( halt_n == 1'b0 );
+		if( u_cpu.acc !== 8'h02 ) begin
+			$fatal(1, "R800 SLL A expected 02, got %02h", u_cpu.acc);
+		end
+		if( {u_cpu.u_regs.reg_h0, u_cpu.u_regs.reg_l0} !== 16'h0001 ) begin
+			$fatal(1, "R800 repeated DD expected INC HL, got HL=%04h", {u_cpu.u_regs.reg_h0, u_cpu.u_regs.reg_l0});
+		end
+		if( {u_cpu.u_regs.reg_ixh, u_cpu.u_regs.reg_ixl} !== 16'h1234 ) begin
+			$fatal(1, "R800 repeated DD unexpectedly changed IX=%04h", {u_cpu.u_regs.reg_ixh, u_cpu.u_regs.reg_ixl});
+		end
+		if( {u_cpu.f[5], u_cpu.f[3]} !== 2'b11 ) begin
+			$fatal(1, "R800 unused F bits did not survive XOR/SLL: F=%02h", u_cpu.f);
+		end
+		$display("PASS: R800 SLL, repeated DD prefix, and unused flags");
+		$finish;
+	end
+
+	initial begin
+		#10000;
+		$fatal(1, "R800 compatibility-difference test timeout");
+	end
+endmodule

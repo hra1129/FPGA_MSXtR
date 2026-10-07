@@ -11,4 +11,5 @@ vsim -c tb_rom_cache -do "run -all; quit -f"
 vsim -c tb_r800_rom_fetch -do "run -all; quit -f"
 vsim -c tb_r800_mulub -do "run -all; quit -f"
 vsim -c tb_r800_muluw -do "run -all; quit -f"
+vsim -c tb_r800_compat_differences -do "run -all; quit -f"
 endlocal
