@@ -1,5 +1,5 @@
 # vsim -c -t 1ps -l selector_request.log -wlf selector_request.wlf tb_selector_request -do "set test_root /tb_selector_request; do run.do" 
-# Start time: 06:50:08 on Oct 07,2026
+# Start time: 20:16:05 on Oct 07,2026
 # Loading sv_std.std
 # Loading work.tb_selector_request
 # Loading work.s2026_cpu_select
@@ -10,5 +10,5 @@
 # ** Note: $finish    : tb.sv(409)
 #    Time: 2291 ns  Iteration: 0  Instance: /tb_selector_request
 # Break in Module tb_selector_request at tb.sv line 409
-# End time: 06:50:08 on Oct 07,2026, Elapsed time: 0:00:00
+# End time: 20:16:06 on Oct 07,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0

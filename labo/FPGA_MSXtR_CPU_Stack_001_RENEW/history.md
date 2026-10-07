@@ -1802,3 +1802,26 @@ ROM hit率は約99.967%。`rom_fill=5376`は96 misses × 8 bytes × 7 clocksと�
 
 今回の区切りでは、ROM0キャッシュ改修後のBASIC benchmark高速化と性能counterの実機観測まで確認した。
 他のROM bankを使うソフト、ROM1 cartridge、長時間動作などの広範な実機互換性確認は今後の対象とする。
+
+## 2026-10-07 R800乗算命令 MULUB / MULUW
+
+R800拡張命令のうち、仕様上動作が保証された整数乗算命令を`cr800`へ追加した。
+命令実行時間はR800実機の14/36 clocksへ合わせず、正しい結果を保ちながら短く完了する実装とした。
+
+- `MULUB A,r` (`ED C1/C9/D1/D9`): r=B/C/D/Eをサポートし、HLへ16bit積を書き込む。
+- `MULUW HL,ss` (`ED C3/D3/E3/F3`): ss=BC/DE/HL/SPをサポートし、DE:HLへ32bit積を書き込む。
+- 未定義operand encodingの動作は対象外。
+- combinational 8x8/16x16 multiplyと結果writebackを使用。MULUBは1回、MULUWはHL/DEへ各1回のregister writeで完了する。
+- flagsは仕様どおり、S=0、Z=product zero、P/V=0、C=上位積が0でなければ1とし、H/Nとundocumented X/Yは保持。
+- `cr800_registers`に乗算operand用pair read portを追加。R800 state machineは乗算結果commit中のみ停止し、乗算結果の書戻しを優先する。
+
+### 検証結果
+
+- `cr800/test_001/run.bat`: 全test tops PASS。
+- `tb_r800_mulub`: B/C/D/E各operand、overflow carry、zero flag/resultを確認。
+- `tb_r800_muluw`: BC/DE/HL/SP各operand、32bit DE:HL result、overflow/zero flagsを確認。
+- `test_005`、`test_006`: PASS。slot/bus safety、CPU切替、register restoreへの回帰なし。
+- Gowin合成・PnR・bitstream生成完了。setup 25 paths / hold 25 pathsはいずれも違反0。
+  最悪setup slack +0.018ns、最悪hold slack +0.180ns。最悪setup pathは従来どおりSSRAM state経路。
+- Resource: Logic 50% (LUT/ALU)、FF 23%、BSRAM 50%、DSP 6% (MULT12X12 x1、MULTALU27X18 x1)。
+- 実機での乗算命令実行は未確認。対象はMULUB/MULUWであり、R800固有opcode全体やZ80未定義opcode群の完全対応を意味しない。

@@ -557,3 +557,244 @@ module tb_r800_rom_fetch;
 		$finish;
 	end
 endmodule
+
+module tb_r800_mulub;
+	reg clk = 1'b0;
+	reg reset_n = 1'b0;
+	reg [7:0] memory [0:31];
+	wire [15:0] address;
+	wire [7:0] instruction_data;
+	wire [7:0] data_in;
+	wire [7:0] output_data;
+	wire halt_n;
+	integer index;
+	integer multiply_results = 0;
+
+	always #5 clk = ~clk;
+	assign instruction_data = memory[address[4:0]];
+	assign data_in = memory[address[4:0] - 5'd1];
+
+	cr800 u_cpu (
+		.reset_n(reset_n),
+		.clk_n(clk),
+		.cen(1'b1),
+		.wait_n(1'b1),
+		.int_n(1'b1),
+		.nmi_n(1'b1),
+		.busrq_n(1'b1),
+		.m1_n(),
+		.iorq(),
+		.noread(),
+		.write(),
+		.rfsh_n(),
+		.halt_n(halt_n),
+		.busak_n(),
+		.a(address),
+		.dinst(instruction_data),
+		.di(data_in),
+		.\do (output_data),
+		.ts(),
+		.intcycle_n(),
+		.inte(),
+		.stop(),
+		.p_sp(),
+		.p_pc()
+	);
+
+	always @( posedge clk ) begin
+		if( reset_n && u_cpu.multiply_commit_final ) begin
+			case( multiply_results )
+			0: if( u_cpu.multiply_product !== 32'h0000000C ) $fatal(1, "MULUB B expected 0000000C, got %08h", u_cpu.multiply_product);
+			1: if( u_cpu.multiply_product !== 32'h0000000F ) $fatal(1, "MULUB C expected 0000000F, got %08h", u_cpu.multiply_product);
+			2: if( u_cpu.multiply_product !== 32'h00000012 ) $fatal(1, "MULUB D expected 00000012, got %08h", u_cpu.multiply_product);
+			3: if( u_cpu.multiply_product !== 32'h00000015 ) $fatal(1, "MULUB E expected 00000015, got %08h", u_cpu.multiply_product);
+			4: if( u_cpu.multiply_product !== 32'h000001FE ) $fatal(1, "MULUB overflow expected 000001FE, got %08h", u_cpu.multiply_product);
+			5: if( u_cpu.multiply_product !== 32'h00000000 ) $fatal(1, "MULUB zero expected 00000000, got %08h", u_cpu.multiply_product);
+			default: $fatal(1, "unexpected extra MULUB commit");
+			endcase
+			#1;
+			case( multiply_results )
+			0, 1, 2, 3: if( (u_cpu.f & 8'hD7) !== 8'h12 ) $fatal(1, "MULUB flags expected 12, got %02h", u_cpu.f & 8'hD7);
+			4: if( (u_cpu.f & 8'hD7) !== 8'h13 ) $fatal(1, "MULUB overflow flags expected 13, got %02h", u_cpu.f & 8'hD7);
+			5: if( (u_cpu.f & 8'hD7) !== 8'h52 ) $fatal(1, "MULUB zero flags expected 52, got %02h", u_cpu.f & 8'hD7);
+			endcase
+			multiply_results = multiply_results + 1;
+		end
+	end
+
+	initial begin
+		for( index = 0; index < 32; index = index + 1 ) memory[index] = 8'h00;
+		memory[0] = 8'h3E;
+		memory[1] = 8'h03;
+		memory[2] = 8'h06;
+		memory[3] = 8'h04;
+		memory[4] = 8'hED;
+		memory[5] = 8'hC1;
+		memory[6] = 8'h0E;
+		memory[7] = 8'h05;
+		memory[8] = 8'hED;
+		memory[9] = 8'hC9;
+		memory[10] = 8'h16;
+		memory[11] = 8'h06;
+		memory[12] = 8'hED;
+		memory[13] = 8'hD1;
+		memory[14] = 8'h1E;
+		memory[15] = 8'h07;
+		memory[16] = 8'hED;
+		memory[17] = 8'hD9;
+		memory[18] = 8'h3E;
+		memory[19] = 8'hFF;
+		memory[20] = 8'h06;
+		memory[21] = 8'h02;
+		memory[22] = 8'hED;
+		memory[23] = 8'hC1;
+		memory[24] = 8'h3E;
+		memory[25] = 8'h00;
+		memory[26] = 8'hED;
+		memory[27] = 8'hC1;
+		memory[28] = 8'h76;
+		repeat(3) @( posedge clk );
+		@( negedge clk );
+		reset_n = 1'b1;
+		wait( halt_n == 1'b0 );
+		if( multiply_results != 6 ) begin
+			$fatal(1, "expected 6 MULUB operations, got %0d", multiply_results);
+		end
+		if( {u_cpu.u_regs.reg_h0, u_cpu.u_regs.reg_l0} !== 16'h0000 ) begin
+			$fatal(1, "MULUB zero expected HL=0000, got %04h", {u_cpu.u_regs.reg_h0, u_cpu.u_regs.reg_l0});
+		end
+		if( (u_cpu.f & 8'hD7) !== 8'h52 ) begin
+			$fatal(1, "MULUB zero flags expected masked=52, got %02h", u_cpu.f & 8'hD7);
+		end
+		$display("PASS: R800 MULUB B/C/D/E, overflow and zero flags");
+		$finish;
+	end
+
+	initial begin
+		#10000;
+		$fatal(1, "R800 MULUB test timeout");
+	end
+endmodule
+
+module tb_r800_muluw;
+	reg clk = 1'b0;
+	reg reset_n = 1'b0;
+	reg [7:0] memory [0:63];
+	wire [15:0] address;
+	wire [7:0] instruction_data;
+	wire [7:0] data_in;
+	wire [7:0] output_data;
+	wire halt_n;
+	integer index;
+	integer multiply_results = 0;
+
+	always #5 clk = ~clk;
+	assign instruction_data = memory[address[5:0]];
+	assign data_in = memory[address[5:0] - 6'd1];
+
+	cr800 u_cpu (
+		.reset_n(reset_n),
+		.clk_n(clk),
+		.cen(1'b1),
+		.wait_n(1'b1),
+		.int_n(1'b1),
+		.nmi_n(1'b1),
+		.busrq_n(1'b1),
+		.m1_n(),
+		.iorq(),
+		.noread(),
+		.write(),
+		.rfsh_n(),
+		.halt_n(halt_n),
+		.busak_n(),
+		.a(address),
+		.dinst(instruction_data),
+		.di(data_in),
+		.\do (output_data),
+		.ts(),
+		.intcycle_n(),
+		.inte(),
+		.stop(),
+		.p_sp(),
+		.p_pc()
+	);
+
+	always @( posedge clk ) begin
+		if( reset_n && u_cpu.multiply_commit_final ) begin
+			case( multiply_results )
+			0: if( u_cpu.multiply_product !== 32'h00002468 ) $fatal(1, "MULUW BC expected 00002468, got %08h", u_cpu.multiply_product);
+			1: if( u_cpu.multiply_product !== 32'h0000369C ) $fatal(1, "MULUW DE expected 0000369C, got %08h", u_cpu.multiply_product);
+			2: if( u_cpu.multiply_product !== 32'h014B5A90 ) $fatal(1, "MULUW HL expected 014B5A90, got %08h", u_cpu.multiply_product);
+			3: if( u_cpu.multiply_product !== 32'h1233EDCC ) $fatal(1, "MULUW SP expected 1233EDCC, got %08h", u_cpu.multiply_product);
+			4: if( u_cpu.multiply_product !== 32'h00000000 ) $fatal(1, "MULUW zero expected 00000000, got %08h", u_cpu.multiply_product);
+			default: $fatal(1, "unexpected extra MULUW commit");
+			endcase
+			#1;
+			case( multiply_results )
+			0, 1: if( (u_cpu.f & 8'hD7) !== 8'h12 ) $fatal(1, "MULUW flags expected 12, got %02h", u_cpu.f & 8'hD7);
+			2, 3: if( (u_cpu.f & 8'hD7) !== 8'h13 ) $fatal(1, "MULUW overflow flags expected 13, got %02h", u_cpu.f & 8'hD7);
+			4: if( (u_cpu.f & 8'hD7) !== 8'h52 ) $fatal(1, "MULUW zero flags expected 52, got %02h", u_cpu.f & 8'hD7);
+			endcase
+			multiply_results = multiply_results + 1;
+		end
+	end
+
+	initial begin
+		for( index = 0; index < 64; index = index + 1 ) memory[index] = 8'h00;
+		memory[0] = 8'h21;
+		memory[1] = 8'h34;
+		memory[2] = 8'h12;
+		memory[3] = 8'h01;
+		memory[4] = 8'h02;
+		memory[5] = 8'h00;
+		memory[6] = 8'hED;
+		memory[7] = 8'hC3;
+		memory[8] = 8'h21;
+		memory[9] = 8'h34;
+		memory[10] = 8'h12;
+		memory[11] = 8'h11;
+		memory[12] = 8'h03;
+		memory[13] = 8'h00;
+		memory[14] = 8'hED;
+		memory[15] = 8'hD3;
+		memory[16] = 8'h21;
+		memory[17] = 8'h34;
+		memory[18] = 8'h12;
+		memory[19] = 8'hED;
+		memory[20] = 8'hE3;
+		memory[21] = 8'h21;
+		memory[22] = 8'h34;
+		memory[23] = 8'h12;
+		memory[24] = 8'hED;
+		memory[25] = 8'hF3;
+		memory[26] = 8'h21;
+		memory[27] = 8'h00;
+		memory[28] = 8'h00;
+		memory[29] = 8'h01;
+		memory[30] = 8'h02;
+		memory[31] = 8'h00;
+		memory[32] = 8'hED;
+		memory[33] = 8'hC3;
+		memory[34] = 8'h76;
+		repeat(3) @( posedge clk );
+		#1 reset_n = 1'b1;
+		wait( halt_n == 1'b0 );
+		if( multiply_results != 5 ) begin
+			$fatal(1, "expected 5 MULUW operations, got %0d", multiply_results);
+		end
+		if( {u_cpu.u_regs.reg_d0, u_cpu.u_regs.reg_e0, u_cpu.u_regs.reg_h0, u_cpu.u_regs.reg_l0} !== 32'h00000000 ) begin
+			$fatal(1, "MULUW zero expected DE:HL=00000000, got %04h%04h",
+				{u_cpu.u_regs.reg_d0, u_cpu.u_regs.reg_e0}, {u_cpu.u_regs.reg_h0, u_cpu.u_regs.reg_l0});
+		end
+		if( (u_cpu.f & 8'hD7) !== 8'h52 ) begin
+			$fatal(1, "MULUW zero flags expected masked=52, got %02h", u_cpu.f & 8'hD7);
+		end
+		$display("PASS: R800 MULUW BC/DE/HL/SP products and flags");
+		$finish;
+	end
+
+	initial begin
+		#10000;
+		$fatal(1, "R800 MULUW test timeout");
+	end
+endmodule

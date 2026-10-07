@@ -61,6 +61,9 @@ module cr800_registers (
 	input	[2:0]	address_a,
 	input	[2:0]	address_b,
 	input	[2:0]	address_c,
+	input	[1:0]	multiply_pair_address_a,
+	input	[1:0]	multiply_pair_address_b,
+	input			multiply_bank,
 	input	[7:0]	wdata_h,
 	input	[7:0]	wdata_l,
 	output	[7:0]	rdata_ah,
@@ -68,7 +71,9 @@ module cr800_registers (
 	output	[7:0]	rdata_bh,
 	output	[7:0]	rdata_bl,
 	output	[7:0]	rdata_ch,
-	output	[7:0]	rdata_cl
+	output	[7:0]	rdata_cl,
+	output	[15:0]	multiply_data_a,
+	output	[15:0]	multiply_data_b
 );
 	reg		[7:0]	reg_b0;
 	reg		[7:0]	reg_d0;
@@ -170,5 +175,9 @@ module cr800_registers (
 	assign rdata_bh = register_sel( address_b, reg_b0, reg_d0, reg_h0, reg_ixh, reg_b1, reg_d1, reg_h1, reg_iyh );
 	assign rdata_bl = register_sel( address_b, reg_c0, reg_e0, reg_l0, reg_ixl, reg_c1, reg_e1, reg_l1, reg_iyl );
 	assign rdata_ch = register_sel( address_c, reg_b0, reg_d0, reg_h0, reg_ixh, reg_b1, reg_d1, reg_h1, reg_iyh );
+	assign multiply_data_a = { register_sel( { multiply_bank, multiply_pair_address_a }, reg_b0, reg_d0, reg_h0, reg_ixh, reg_b1, reg_d1, reg_h1, reg_iyh ),
+								register_sel( { multiply_bank, multiply_pair_address_a }, reg_c0, reg_e0, reg_l0, reg_ixl, reg_c1, reg_e1, reg_l1, reg_iyl ) };
+	assign multiply_data_b = { register_sel( { multiply_bank, multiply_pair_address_b }, reg_b0, reg_d0, reg_h0, reg_ixh, reg_b1, reg_d1, reg_h1, reg_iyh ),
+								register_sel( { multiply_bank, multiply_pair_address_b }, reg_c0, reg_e0, reg_l0, reg_ixl, reg_c1, reg_e1, reg_l1, reg_iyl ) };
 	assign rdata_cl = register_sel( address_c, reg_c0, reg_e0, reg_l0, reg_ixl, reg_c1, reg_e1, reg_l1, reg_iyl );
 endmodule

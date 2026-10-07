@@ -130,6 +130,22 @@ module cr800 (
 	wire			regweh;
 	wire			regwel;
 	reg				alternate;
+	wire	[15:0]	multiply_data_a;
+	wire	[15:0]	multiply_data_b;
+	wire	[1:0]	multiply_pair_address_a;
+	wire	[1:0]	multiply_pair_address_b;
+	wire			multiply_start;
+	wire			multiply_commit;
+	wire			multiply_commit_final;
+	wire	[7:0]	multiply_byte_operand;
+	wire	[15:0]	multiply_word_operand;
+	wire	[15:0]	multiply_byte_product;
+	wire	[31:0]	multiply_product_comb;
+	reg				multiply_busy;
+	reg				multiply_word;
+	reg				multiply_bank;
+	reg		[31:0]	multiply_product;
+	reg			multiply_commit_step;
 
 	// help registers
 	reg		[15:0]	tmpaddr;			// temporary address register
@@ -315,11 +331,25 @@ module cr800 (
 	// --------------------------------------------------------------------
 	//
 	// --------------------------------------------------------------------
-	assign clken			= cen & ~busack;
+	assign clken			= cen & ~busack & ~multiply_busy;
 	assign t_res			= (tstate == tstates );
 	assign nextis_xy_fetch	= (xy_state != 2'b00 && !xy_ind && ((set_addr_to == axy) || 
 							  (mcycle == 3'd1 && ir == 8'hCB) || (mcycle == 3'd1 && ir == 8'h36)) );
 	assign save_mux			= exchangerp ? busb: (save_alu_r ? alu_q: di_reg);
+	assign multiply_start = cen && !busack && !multiply_busy && mcycle == 3'd1 &&
+		tstate == 3'd2 && wait_n && iset == 2'b00 && ir == 8'hED &&
+		dinst[7:6] == 2'b11 &&
+		(((dinst[2:0] == 3'b001) && (dinst[5:3] <= 3'd3)) || (dinst[2:0] == 3'b011));
+	assign multiply_pair_address_a = (dinst[2:0] == 3'b001) ? { 1'b0, dinst[4] } : dinst[5:4];
+	assign multiply_pair_address_b = 2'd2;
+	assign multiply_byte_operand = dinst[3] ? multiply_data_a[7:0] : multiply_data_a[15:8];
+	assign multiply_word_operand = (dinst[5:4] == 2'b11) ? sp : multiply_data_a;
+	assign multiply_byte_product = { 8'd0, acc } * { 8'd0, multiply_byte_operand };
+	assign multiply_product_comb = (dinst[2:0] == 3'b001) ? { 16'd0, multiply_byte_product } :
+		{ 16'd0, multiply_data_b } * { 16'd0, multiply_word_operand };
+	assign multiply_commit = cen && !busack && multiply_busy;
+	assign multiply_commit_final = multiply_commit &&
+		(!multiply_word || multiply_commit_step == 1'b1);
 
 	always @( posedge clk_n ) begin
 		if( !reset_n ) begin
@@ -352,6 +382,12 @@ module cr800 (
 			save_alu_r <= 1'b0;
 			preservec_r <= 1'b0;
 			xy_ind <= 1'b0;
+		end
+		else if( multiply_commit_final ) begin
+			f[flag_s] <= 1'b0;
+			f[flag_z] <= (multiply_product == 32'd0);
+			f[flag_p] <= 1'b0;
+			f[flag_c] <= multiply_word ? (multiply_product[31:16] != 16'd0) : (multiply_product[15:8] != 8'd0);
 		end
 		else if( clken ) begin
 
@@ -680,6 +716,31 @@ module cr800 (
 		end
 	end
 
+	always @( posedge clk_n ) begin
+		if( !reset_n ) begin
+			multiply_busy <= 1'b0;
+			multiply_word <= 1'b0;
+			multiply_bank <= 1'b0;
+			multiply_product <= 32'd0;
+			multiply_commit_step <= 1'b0;
+		end
+		else if( multiply_start ) begin
+			multiply_busy <= 1'b1;
+			multiply_word <= (dinst[2:0] == 3'b011);
+			multiply_bank <= alternate;
+			multiply_product <= multiply_product_comb;
+			multiply_commit_step <= 1'b0;
+		end
+		else if( multiply_busy && cen && !busack ) begin
+			if( multiply_commit_final ) begin
+				multiply_busy <= 1'b0;
+			end
+			else begin
+				multiply_commit_step <= 1'b1;
+			end
+		end
+	end
+
 	// --------------------------------------------------------------------
 	// bc('), de('), hl('), ix and iy
 	// --------------------------------------------------------------------
@@ -728,6 +789,7 @@ module cr800 (
 	end
 
 	assign regaddra	=
+			multiply_commit ? { multiply_bank, multiply_commit_step ? 2'b01 : 2'b10 }:
 			// 16 bit increment/decrement
 			( (tstate == 3'd2 || (tstate == 3'd3 && mcycle == 3'd1 && incdec_16[2])) && xy_state       == 2'd0 ) ? { alternate, incdec_16[1:0] }:
 			( (tstate == 3'd2 || (tstate == 3'd3 && mcycle == 3'd1 && incdec_16[2])) && incdec_16[1:0] == 2'd2 ) ? { xy_state[1], 2'b11 }:
@@ -776,25 +838,30 @@ module cr800 (
 		end
 	endfunction
 
-	assign regweh = func_regwe( tstate, save_alu_r, auto_wait_t1, alu_op_r, read_to_reg_r, exchangedh, incdec_16, wait_n, mcycle, ~read_to_reg_r[0] );
-	assign regwel = func_regwe( tstate, save_alu_r, auto_wait_t1, alu_op_r, read_to_reg_r, exchangedh, incdec_16, wait_n, mcycle,  read_to_reg_r[0] );
+	assign regweh = multiply_commit ? 1'b1 : (!multiply_busy && func_regwe( tstate, save_alu_r, auto_wait_t1, alu_op_r, read_to_reg_r, exchangedh, incdec_16, wait_n, mcycle, ~read_to_reg_r[0] ));
+	assign regwel = multiply_commit ? 1'b1 : (!multiply_busy && func_regwe( tstate, save_alu_r, auto_wait_t1, alu_op_r, read_to_reg_r, exchangedh, incdec_16, wait_n, mcycle,  read_to_reg_r[0] ));
 
-	assign regdih	= ( incdec_16[2] && ((tstate == 3'd2 && mcycle != 3'd1) || (tstate == 3'd3 && mcycle == 3'd1)) ) ? id16[15:8] :
+	assign regdih	= multiply_commit ? (multiply_commit_step ? multiply_product[31:24] : multiply_product[15:8]) :
+					  ( incdec_16[2] && ((tstate == 3'd2 && mcycle != 3'd1) || (tstate == 3'd3 && mcycle == 3'd1)) ) ? id16[15:8] :
 					  ( exchangedh && tstate == 3'd4 ) ? regbusa_r[15:8]:
 					  ( exchangedh && tstate == 3'd3 ) ? regbusb[15:8]: save_mux;
-	assign regdil	= ( incdec_16[2] && ((tstate == 3'd2 && mcycle != 3'd1) || (tstate == 3'd3 && mcycle == 3'd1)) ) ? id16[ 7:0] :
+	assign regdil	= multiply_commit ? (multiply_commit_step ? multiply_product[23:16] : multiply_product[7:0]) :
+					  ( incdec_16[2] && ((tstate == 3'd2 && mcycle != 3'd1) || (tstate == 3'd3 && mcycle == 3'd1)) ) ? id16[ 7:0] :
 					  ( exchangedh && tstate == 3'd4 ) ? regbusa_r[7:0]:
 					  ( exchangedh && tstate == 3'd3 ) ? regbusb[7:0]: save_mux;
 
 	cr800_registers u_regs (
 		.reset_n		( reset_n			),
 		.clk			( clk_n				),
-		.cen			( clken				),
+		.cen			( cen && !busack	),
 		.we_h			( regweh			),
 		.we_l			( regwel			),
 		.address_a		( regaddra			),
 		.address_b		( regaddrb			),
 		.address_c		( regaddrc			),
+		.multiply_pair_address_a( multiply_pair_address_a ),
+		.multiply_pair_address_b( multiply_pair_address_b ),
+		.multiply_bank	( alternate		),
 		.wdata_h		( regdih			),
 		.wdata_l		( regdil			),
 		.rdata_ah		( regbusa[15:8]		),
@@ -802,7 +869,9 @@ module cr800 (
 		.rdata_bh		( regbusb[15:8]		),
 		.rdata_bl		( regbusb[ 7:0]		),
 		.rdata_ch		( regbusc[15:8]		),
-		.rdata_cl		( regbusc[ 7:0]		)
+		.rdata_cl		( regbusc[ 7:0]	),
+		.multiply_data_a( multiply_data_a ),
+		.multiply_data_b( multiply_data_b )
 	);
 
 	// --------------------------------------------------------------------
@@ -868,7 +937,7 @@ module cr800 (
 		if( !reset_n ) begin
 			ff_rfsh_n <= 1'b1;
 		end
-		else if( cen ) begin
+		else if( clken ) begin
 			if( mcycle == 3'd1 && ((tstate == 2 && wait_n) || tstate == 3 ) ) begin
 				ff_rfsh_n <= 1'b0;
 			end
@@ -932,7 +1001,7 @@ module cr800 (
 			auto_wait_t2 <= 1'b0;
 			ff_m1_n <= 1'b1;
 		end
-		else if( cen ) begin
+		else if( clken ) begin
 			if( t_res ) begin
 				auto_wait_t1 <= 1'b0;
 			end
