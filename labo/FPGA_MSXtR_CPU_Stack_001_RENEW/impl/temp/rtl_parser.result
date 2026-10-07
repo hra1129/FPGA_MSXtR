@@ -9,7 +9,7 @@
         "SubInsts": [
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 447,
+                "InstLine": 451,
                 "InstName": "u_pll",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/gowin_pll/gowin_pll.v",
                 "ModuleLine": 1,
@@ -35,7 +35,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 563,
+                "InstLine": 567,
                 "InstName": "u_vdp_logger",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/vdp_logger/vdp_logger.v",
                 "ModuleLine": 33,
@@ -69,7 +69,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 583,
+                "InstLine": 587,
                 "InstName": "u_controller_spi",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/spi/ip_spi.v",
                 "ModuleLine": 34,
@@ -87,7 +87,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 629,
+                "InstLine": 633,
                 "InstName": "u_cmcu_inst",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cmcu/cmcu.v",
                 "ModuleLine": 63,
@@ -95,7 +95,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 670,
+                "InstLine": 674,
                 "InstName": "u_z80",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cz80/cz80_inst.v",
                 "ModuleLine": 63,
@@ -139,7 +139,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 705,
+                "InstLine": 709,
                 "InstName": "u_r800",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cr800/cr800_inst.v",
                 "ModuleLine": 63,
@@ -225,7 +225,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 746,
+                "InstLine": 750,
                 "InstName": "u_s2026",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/s2026/s2026.v",
                 "ModuleLine": 34,
@@ -251,7 +251,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 776,
+                "InstLine": 780,
                 "InstName": "u_msx_bus_mux",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/msx_bus_mux/msx_bus_mux.v",
                 "ModuleLine": 33,
@@ -259,7 +259,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 814,
+                "InstLine": 818,
                 "InstName": "u_msx_slot",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/msx_slot/msx_slot.v",
                 "ModuleLine": 34,
@@ -267,7 +267,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 908,
+                "InstLine": 910,
                 "InstName": "u_address_decode",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/address_decode/address_decode.v",
                 "ModuleLine": 34,
@@ -275,7 +275,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 983,
+                "InstLine": 989,
                 "InstName": "u_dos_mapper",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/dos_mapper/dos_mapper.v",
                 "ModuleLine": 34,
@@ -293,7 +293,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1005,
+                "InstLine": 1011,
                 "InstName": "u_secondary_slot",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/secondary_slot/secondary_slot.v",
                 "ModuleLine": 34,
@@ -301,7 +301,15 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1086,
+                "InstLine": 1053,
+                "InstName": "u_kanji_rom",
+                "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/kanji_rom/ip_kanji_rom.v",
+                "ModuleLine": 1,
+                "ModuleName": "ip_kanji_rom"
+            },
+            {
+                "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
+                "InstLine": 1092,
                 "InstName": "u_ppi",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/ppi/ppi.v",
                 "ModuleLine": 34,
@@ -309,7 +317,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1112,
+                "InstLine": 1118,
                 "InstName": "u_memory_mapper",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/memory_mapper/memory_mapper.v",
                 "ModuleLine": 50,
@@ -317,7 +325,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1132,
+                "InstLine": 1138,
                 "InstName": "u_r800_cache",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cr800/r800_cache.v",
                 "ModuleLine": 34,
@@ -359,7 +367,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1161,
+                "InstLine": 1167,
                 "InstName": "u_ssram",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/ssram/ssram.v",
                 "ModuleLine": 34,
@@ -367,7 +375,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1188,
+                "InstLine": 1194,
                 "InstName": "u_rtc",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/rtc/rtc.v",
                 "ModuleLine": 53,
@@ -375,7 +383,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1205,
+                "InstLine": 1211,
                 "InstName": "u_pause_led",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/pause_led/pause_led.v",
                 "ModuleLine": 38,
@@ -383,7 +391,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1223,
+                "InstLine": 1229,
                 "InstName": "u_system_flag",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/system_flag/system_flag.v",
                 "ModuleLine": 44,
@@ -391,7 +399,7 @@
             },
             {
                 "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/FPGA_MSXtR_CPU_Stack.v",
-                "InstLine": 1244,
+                "InstLine": 1250,
                 "InstName": "u_ssg",
                 "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/dummy_ssg/dummy_ssg.v",
                 "ModuleLine": 34,

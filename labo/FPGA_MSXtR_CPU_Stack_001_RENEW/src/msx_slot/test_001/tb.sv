@@ -107,7 +107,6 @@ module tb;
 	reg		[7:0]	slot_secondary3;
 	reg		[1:0]	dos_bank;
 	reg				jis1_kanji_en;
-	reg				jis2_kanji_en;
 
 	//	Bidirectional slot_d driving
 	reg				slot_d_oe;
@@ -198,8 +197,6 @@ module tb;
 		.slot_secondary0	( slot_secondary0	),
 		.slot_secondary3	( slot_secondary3	),
 		.dos_bank			( dos_bank			),
-		.jis1_kanji_en		( jis1_kanji_en		),
-		.jis2_kanji_en		( jis2_kanji_en		),
 		.cpu_rom0_cs			( cpu_rom0_cs		)
 	);
 
@@ -267,8 +264,6 @@ module tb;
 		slot_secondary0	= 8'h00;
 		slot_secondary3	= 8'h00;
 		dos_bank		= 2'd0;
-		jis1_kanji_en	= 1'b0;
-		jis2_kanji_en	= 1'b0;
 
 		z80_m1_n		= 1'b1;
 		z80_slot_d_oe	= 1'b0;
@@ -703,74 +698,25 @@ module tb;
 		sel = 2'b00;
 
 		// ================================================================
-		//	Test 9: Kanji ROM I/O Access (JIS1 & JIS2)
+		//	Test 9: CPU Kanji I/O is isolated from external ROM1
 		// ================================================================
 		test_no = 9;
-		$display( "=== TEST %0d: Kanji ROM I/O Access (JIS1 & JIS2) ===", test_no );
-		jis1_kanji_en = 1'b1;
-		jis2_kanji_en = 1'b1;
+		$display( "=== TEST %0d: CPU Kanji I/O does not select external ROM1 ===", test_no );
 		z80_bus_io = 1'b1;
 		z80_merq_n = 1'b1;
-
-		// 9.1: JIS1 Kanji ROM set address (write 0x12 to 0xD8, write 0x34 to 0xD9)
-		// 0xD8: jis1_addr[10:0] = {wdata[5:0], 5'd0} = {6'b010010, 5'b00000} = 11'b01001000000 (11'h240)
-		// 0xD9: jis1_addr[16:11] = wdata[5:0] = 6'b110100 (6'h34)
-		// Expected jis1_addr = {6'h34, 11'h240} = 17'h1A240
 		z80_address = 20'h000D8;
 		z80_wdata = 8'h12;
 		z80_bus_write = 1'b1;
 		@( posedge clk ); #1;
-		z80_address = 20'h000D9;
-		z80_wdata = 8'h34;
-		@( posedge clk ); #1;
+		#1;
 		z80_bus_write = 1'b0;
-
-		// 1st Read from 0xD9 -> ROM1 selected, slot_a = {2'b00, 17'h1A240} = 19'h1A240
-		@( posedge clk ); #1;
-		check( slot_rom1_ce_n == 1'b1, "Kanji ROM stays inactive outside /IORQ" );
-		z80_iorq_n = 1'b0;
-		#1;
-		check( slot_rom1_ce_n == 1'b0 && slot_rom0_ce_n == 1'b1, "JIS1 read selects ROM1" );
-		check( slot_a == 19'h1A240, "JIS1 address is 0x1A240" );
-		z80_iorq_n = 1'b1;
-		#1;
-		check( slot_rom1_ce_n == 1'b1, "Kanji ROM releases with /IORQ" );
-
-		// End of 1st read cycle (causes address increment)
-		z80_bus_io = 1'b0;
-		@( posedge clk ); #1;
-
-		// 2nd Read from 0xD9 -> address incremented to 17'h1A241
-		z80_bus_io = 1'b1;
-		@( posedge clk ); #1;
-		check( slot_a == 19'h1A241, "JIS1 address auto-incremented to 0x1A241" );
-		z80_bus_io = 1'b0;
-		@( posedge clk ); #1;
-
-		// 9.2: JIS2 Kanji ROM set address (write 0x15 to 0xDA, write 0x2A to 0xDB)
-		// 0xDA: jis2_addr[10:0] = wdata[5:0] = 6'b010101 (11'h015)
-		// 0xDB: jis2_addr[16:11] = wdata[5:0] = 6'b101010 (6'h2A)
-		// Expected jis2_addr = {6'h2A, 11'h015} = 17'h15015
-		// For JIS2, slot_a = {2'b01, jis2_addr} = {2'b01, 17'h15015} = 19'h35015
-		z80_bus_io = 1'b1;
+		check( slot_rom1_ce_n == 1'b1, "CPU Kanji address write leaves external ROM1 inactive" );
 		z80_address = 20'h000DA;
-		z80_wdata = 8'h15;
-		z80_bus_write = 1'b1;
-		@( posedge clk ); #1;
-		z80_address = 20'h000DB;
-		z80_wdata = 8'h2A;
-		@( posedge clk ); #1;
-		z80_bus_write = 1'b0;
-
-		// 1st Read from 0xDB -> ROM1 selected
 		@( posedge clk ); #1;
 		z80_iorq_n = 1'b0;
 		#1;
-		check( slot_rom1_ce_n == 1'b0, "JIS2 read selects ROM1" );
-		check( slot_a == 19'h35015, "JIS2 address is 0x35015 ({2'b01, 17'h15015})" );
-
-		jis1_kanji_en = 1'b0;
-		jis2_kanji_en = 1'b0;
+		check( slot_rom1_ce_n == 1'b1 && slot_rom0_ce_n == 1'b1, "CPU Kanji read is isolated from external ROMs" );
+		z80_iorq_n = 1'b1;
 		z80_bus_io = 1'b0;
 
 		// ================================================================

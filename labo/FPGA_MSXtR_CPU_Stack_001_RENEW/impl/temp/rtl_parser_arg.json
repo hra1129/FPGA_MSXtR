@@ -102,6 +102,10 @@
             "Type": "verilog"
         },
         {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/kanji_rom/ip_kanji_rom.v",
+            "Type": "verilog"
+        },
+        {
             "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/memory_mapper/memory_mapper.v",
             "Type": "verilog"
         },

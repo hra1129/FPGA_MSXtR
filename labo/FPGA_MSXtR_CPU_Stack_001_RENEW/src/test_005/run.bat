@@ -30,7 +30,7 @@ vlog ..\cr800\r800_cache.v ..\cr800\r800_cache_ram.v ..\cr800\r800_rom_cache.v
 if errorlevel 1 exit /b 1
 vlog ..\s2026\s2026_register.v ..\s2026\s2026_cpu_select.v ..\s2026\s2026.v
 if errorlevel 1 exit /b 1
-vlog ..\FPGA_MSXtR_CPU_Stack.v tb.sv
+vlog ..\kanji_rom\ip_kanji_rom.v ..\FPGA_MSXtR_CPU_Stack.v tb.sv
 if errorlevel 1 exit /b 1
 vsim -c -t 1ps -l log.txt -wlf test_005.wlf tb -do run.do
 exit /b %errorlevel%

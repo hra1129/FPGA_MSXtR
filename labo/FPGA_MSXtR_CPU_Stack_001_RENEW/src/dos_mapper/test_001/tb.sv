@@ -11,6 +11,7 @@ module tb;
 	reg bus_valid = 1'b0;
 	reg [7:0] bus_wdata = 8'd0;
 	wire dos_mapper_cs;
+	wire kanji_rom_cs;
 	wire performance_start_cs;
 	wire performance_stop_cs;
 	wire bus_ready;
@@ -57,6 +58,9 @@ module tb;
 		.device_ssg_rdata		( 8'h00 ),
 		.device_ssg_rdata_en		( 1'b0 ),
 		.device_ssg_ready		( 1'b0 ),
+		.device_kanji_rom_rdata	( 8'h00 ),
+		.device_kanji_rom_rdata_en	( 1'b0 ),
+		.device_kanji_rom_ready	( 1'b0 ),
 		.device_system_flag_rdata	( 8'h00 ),
 		.device_system_flag_rdata_en	( 1'b0 ),
 		.device_system_flag_ready	( 1'b0 ),
@@ -78,6 +82,7 @@ module tb;
 		.ssram_cs			(),
 		.rtc_cs				(),
 		.ssg_cs				(),
+		.kanji_rom_cs		( kanji_rom_cs ),
 		.system_flag_cs		(),
 		.pause_led_cs			(),
 		.s2026_cs			(),
@@ -249,6 +254,18 @@ module tb;
 		check(!performance_start_cs && performance_stop_cs && decoder_ready, "I/O write F7h stops measurement and completes immediately");
 		set_bus(16'h00F6, 1'b0, 1'b1, 8'h00);
 		check(!performance_start_cs && !performance_stop_cs, "I/O reads do not trigger performance markers");
+		set_bus(16'h00D7, 1'b0, 1'b1, 8'h00);
+		check(!kanji_rom_cs, "D7h is outside Kanji ROM decode");
+		set_bus(16'h00D8, 1'b0, 1'b1, 8'h00);
+		check(kanji_rom_cs, "D8h selects Kanji ROM");
+		set_bus(16'h00D9, 1'b1, 1'b1, 8'h00);
+		check(kanji_rom_cs, "D9h address write selects Kanji ROM");
+		set_bus(16'h00DA, 1'b0, 1'b1, 8'h00);
+		check(kanji_rom_cs, "DAh selects Kanji ROM");
+		set_bus(16'h00DB, 1'b1, 1'b1, 8'h00);
+		check(kanji_rom_cs, "DBh address write selects Kanji ROM");
+		set_bus(16'h00DC, 1'b0, 1'b1, 8'h00);
+		check(!kanji_rom_cs, "DCh is outside Kanji ROM decode");
 
 		$display("PASS: dos_mapper/performance marker checks=%0d", pass_count);
 		$finish;

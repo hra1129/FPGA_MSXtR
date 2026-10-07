@@ -1845,3 +1845,25 @@ R800チェック資料で確認された差分のうち、SLL、連続DD/FD pref
 - Gowin合成・PnR・bitstream生成完了。setup/hold violation 0、setup最悪+0.018ns、
   hold最悪+0.180ns。最悪setup pathはSSRAM state経路。
 - 実機での今回3差分の専用動作確認は未実施。
+
+## 2026-10-08 漢字ROMを専用SerialROMへ分離
+
+CPUの漢字ROM読み出しを外部ROM1から切り離し、専用SerialROMへ移行した。PicoによるROM1のDirect Flash accessは従来の選択経路を維持する。
+
+- `src/kanji_rom/ip_kanji_rom.v`を追加。既存`ip_spi_rom`を基に、HOLD/WPなし・CS 1本のSPI FAST_READ (0Bh) 制御、JIS1/JIS2アドレス、各enable (`kanji1_en`/`kanji2_en`)、読出しデータ/readyを実装。
+- CPU I/O D8h-D9hをJIS1、DAh-DBhをJIS2としてdecodeし、D8h-DBh以外を選択しない。JISアドレス変換とread後incrementは従来動作を維持。
+- `msx_slot`からCPU Kanji readのROM1 CE出力を除去。Pico Flash accessのROM0/ROM1選択は維持。
+- Gowin projectと全system test compile scriptへ新モジュールを登録。test001-test004にトップ階層で使う`vdp_logger.v`も登録。
+- Kanji専用テストでJIS1/JIS2 SPI address、byte read、JIS1 increment、disabled JIS2のread bypassを確認しPASS (errors/warnings 0)。`dos_mapper` decodeテストは51 checks PASS。`msx_slot`は94 checks PASS (既存TB port warning 3件)。
+- system test003は95 PASS / 0 FAIL、test004はerrors/warnings 0で完了。test005/test006もPASS。
+- test001はTBが現行topに存在しない内部信号5個を階層参照し、elaborationで停止。test002はPico VDP write count=0の既知の1項目失敗 (PASS=4/FAIL=1) が継続。どちらもKanji個別・結合テストの失敗ではなく、今回未解決の回帰制約として扱う。
+- Gowin合成・PnR・bitstream生成完了。setup最悪slack +0.072ns、hold最悪slack +0.189ns。Logic 51%、register 23%、BSRAM 50%。使用したデバイス/SDCは現行プロジェクト設定。
+
+### 実機確認と次作業
+
+SerialROM分離版bitstreamを実機へ書き込み、**MSXの起動に影響しないことを確認した**。ただし、D8h-DBhからのJIS1/JIS2漢字読出し自体と、PicoからのSerialROM書き込みはまだ未確認・未実装。
+
+帰宅後は次の作業を行う。今回は出勤時間のため、ここで作業を中断する。
+
+- PicoからSerialROMへ書き込むためのI/Fを追加する。
+- ROM1をSLOT#1に装着し、メガROMとして使用できるモードを追加する。

@@ -28,6 +28,7 @@ Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\extio\extio.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\gowin_pll\gowin_pll.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\gowin_pll\gowin_pll_mod.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\kanji_rom\ip_kanji_rom.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\memory_mapper\memory_mapper.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\msx_bus_mux\msx_bus_mux.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\msx_slot\msx_slot.v'
@@ -96,6 +97,7 @@ Compiling module 'address_decode'("C:\Users\hra\Documents\github\HRA_product\FPG
 Compiling module 'dos_mapper'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\dos_mapper\dos_mapper.v":34)
 Compiling module 'fdc8566'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\fdc8566\fdc8566.v":34)
 Compiling module 'secondary_slot'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\secondary_slot\secondary_slot.v":34)
+Compiling module 'ip_kanji_rom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\kanji_rom\ip_kanji_rom.v":1)
 Compiling module 'ppi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ppi\ppi.v":34)
 Compiling module 'memory_mapper'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\memory_mapper\memory_mapper.v":50)
 Compiling module 'r800_cache'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":34)
@@ -111,15 +113,11 @@ Compiling module 'pause_led'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSX
 Compiling module 'system_flag'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\system_flag\system_flag.v":44)
 Compiling module 'dummy_ssg'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\dummy_ssg\dummy_ssg.v":34)
 NOTE  (EX0101) : Current top module is "fpga_msxtr_cpu_stack"
-WARN  (EX0211) : The output port "srom_sclk" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":68)
-WARN  (EX0211) : The output port "srom_cs_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":69)
-WARN  (EX0211) : The output port "srom_mosi" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":70)
 WARN  (EX0211) : The output port "flash_spi_clk" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":73)
 WARN  (EX0211) : The output port "flash_spi_cs_n" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":74)
 WARN  (EX0211) : The output port "uart_tx" of module "fpga_msxtr_cpu_stack" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":77)
 [5%] Running netlist conversion ...
 WARN  (CV0016) : Input slot_busdir is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":57)
-WARN  (CV0016) : Input srom_miso is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":71)
 WARN  (CV0016) : Input uart_rx is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":78)
 WARN  (CV0017) : Inout flash_spi_io is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":75)
 Running device independent optimization ...
@@ -137,8 +135,8 @@ Running technical mapping ...
 [75%] Tech-Mapping Phase 2 completed
 [80%] Tech-Mapping Phase 3 completed
 [90%] Tech-Mapping Phase 4 completed
-WARN  (NL0002) : The module "address_decode" instantiated to "u_address_decode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":978)
-WARN  (NL0002) : The module "msx_bus_mux" instantiated to "u_msx_bus_mux" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":812)
+WARN  (NL0002) : The module "address_decode" instantiated to "u_address_decode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":984)
+WARN  (NL0002) : The module "msx_bus_mux" instantiated to "u_msx_bus_mux" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":816)
 WARN  (NL0002) : The module "vdp_logger_sram" instantiated to "SRAM_A" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":95)
 [95%] Generate netlist file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack.vg" completed
 [100%] Generate report file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack_syn.rpt.html" completed

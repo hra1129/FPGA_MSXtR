@@ -5,6 +5,7 @@ if exist work rmdir /s /q work
 vlib work
 
 vlog gowin_pll.v
+vlog ..\vdp_logger\vdp_logger.v
 vlog ..\spi\spi.v
 vlog ..\cmcu\cmcu.v
 vlog ..\dummy_ssg\dummy_ssg.v
@@ -44,6 +45,7 @@ vlog ..\s2026\s2026_cpu_select.v
 vlog ..\s2026\s2026.v
 vlog ..\rtc\rtc.v
 vlog ..\system_flag\system_flag.v
+vlog ..\kanji_rom\ip_kanji_rom.v
 vlog ..\FPGA_MSXtR_CPU_Stack.v
 vlog tb.sv
 

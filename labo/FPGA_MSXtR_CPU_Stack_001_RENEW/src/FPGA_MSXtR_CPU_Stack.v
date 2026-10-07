@@ -315,6 +315,10 @@ module fpga_msxtr_cpu_stack (
 	wire			w_device_system_flag_ready;
 	wire	[7:0]	w_device_system_flag_rdata;
 	wire			w_device_system_flag_rdata_en;
+	wire			w_device_kanji_rom_cs;
+	wire			w_device_kanji_rom_ready;
+	wire	[7:0]	w_device_kanji_rom_rdata;
+	wire			w_device_kanji_rom_rdata_en;
 	wire			w_kanji1_en;
 	wire			w_kanji2_en;
 
@@ -887,8 +891,6 @@ module fpga_msxtr_cpu_stack (
 		.slot_secondary0				( w_secondary_slot0					),
 		.slot_secondary3				( w_secondary_slot3					),
 		.dos_bank						( w_dos_bank						),
-		.jis1_kanji_en					( w_kanji1_en						),
-		.jis2_kanji_en					( w_kanji2_en						),
 		.cpu_rom0_cs					( w_cpu_rom0_cs						),
 		.cpu_slot12_cs					( w_cpu_slot12_cs					),
 		.cpu_flash_cs					( w_cpu_flash_cs					)
@@ -937,6 +939,9 @@ module fpga_msxtr_cpu_stack (
 		.device_ssg_rdata				( w_device_ssg_rdata				),
 		.device_ssg_rdata_en			( w_device_ssg_rdata_en				),
 		.device_ssg_ready				( w_device_ssg_ready				),
+		.device_kanji_rom_rdata			( w_device_kanji_rom_rdata			),
+		.device_kanji_rom_rdata_en		( w_device_kanji_rom_rdata_en		),
+		.device_kanji_rom_ready			( w_device_kanji_rom_ready			),
 		.device_system_flag_rdata		( w_device_system_flag_rdata		),
 		.device_system_flag_rdata_en	( w_device_system_flag_rdata_en		),
 		.device_system_flag_ready		( w_device_system_flag_ready		),
@@ -962,6 +967,7 @@ module fpga_msxtr_cpu_stack (
 		.ssram_cs						( w_device_ssram_cs					),
 		.rtc_cs							( w_device_rtc_cs					),
 		.ssg_cs							( w_device_ssg_cs					),
+		.kanji_rom_cs					( w_device_kanji_rom_cs				),
 		.system_flag_cs					( w_device_system_flag_cs			),
 		.pause_led_cs					( w_device_pause_led_cs				),
 		.s2026_cs						( w_device_s2026_cs					),
@@ -1018,28 +1024,6 @@ module fpga_msxtr_cpu_stack (
 	);
 
 //	// --------------------------------------------------------------------
-//	//	Extended I/O
-//	// --------------------------------------------------------------------
-//	extio_a u_extio (
-//		.reset_n						( ff_extio_reset_n					),
-//		.clk							( clk42m							),
-//		.bus_cs							( w_bus_extio_cs					),
-//		.bus_address					( w_bus_address[3:0]				),
-//		.bus_write						( w_bus_write						),
-//		.bus_valid						( w_bus_valid						),
-//		.bus_ready						( w_bus_extio_ready					),
-//		.bus_wdata						( w_bus_wdata						),
-//		.bus_rdata						( w_bus_extio_rdata					),
-//		.bus_rdata_en					( w_bus_extio_rdata_en				),
-//		.bus_crom_cs					( w_bus_crom_cs						),
-//		.bus_crom_rdata					( w_bus_crom_rdata					),
-//		.bus_crom_rdata_en				( w_bus_crom_rdata_en				),
-//		.bus_erom_cs					( w_bus_erom_cs						),
-//		.bus_erom_rdata					( w_bus_erom_rdata					),
-//		.bus_erom_rdata_en				( w_bus_erom_rdata_en				)
-//	);
-//
-//	// --------------------------------------------------------------------
 //	//	config SPI ROM
 //	// --------------------------------------------------------------------
 //	ip_spi_rom u_config_rom (
@@ -1054,8 +1038,8 @@ module fpga_msxtr_cpu_stack (
 //		.bus_wdata						( w_bus_wdata						),
 //		.bus_rdata						( w_bus_crom_rdata					),
 //		.bus_rdata_en					( w_bus_crom_rdata_en				),
-//		.srom0_cs_n						( 									),
-//		.srom1_cs_n						( flash_spi_cs_n					),
+//		.srom0_cs_n						( flash_spi_cs_n					),
+//		.srom1_cs_n						( 									),
 //		.srom_clk						( flash_spi_clk						),
 //		.srom_hold_n					( flash_spi_hold_n					),
 //		.srom_wp_n						( flash_spi_wp_n					),
@@ -1063,6 +1047,28 @@ module fpga_msxtr_cpu_stack (
 //		.srom_di						( flash_spi_di						)
 //	);
 //
+	// --------------------------------------------------------------------
+	//	Kanji ROM (Serial ROM)
+	// --------------------------------------------------------------------
+	ip_kanji_rom u_kanji_rom (
+		.reset							( ~ff_slot_reset_n					),
+		.clk							( clk42m							),
+		.bus_cs							( w_device_kanji_rom_cs				),
+		.bus_address					( w_device_address[1:0]				),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_kanji_rom_ready			),
+		.bus_wdata						( w_device_wdata					),
+		.bus_rdata						( w_device_kanji_rom_rdata			),
+		.bus_rdata_en					( w_device_kanji_rom_rdata_en		),
+		.kanji1_en						( w_kanji1_en						),
+		.kanji2_en						( w_kanji2_en						),
+		.srom_cs_n						( srom_cs_n							),
+		.srom_sclk						( srom_sclk							),
+		.srom_mosi						( srom_mosi							),
+		.srom_miso						( srom_miso							)
+	);
+
 	// --------------------------------------------------------------------
 	//	BOOT ROM
 	// --------------------------------------------------------------------

@@ -115,8 +115,6 @@ module msx_slot #(
 	input	[7:0]	slot_secondary0,
 	input	[7:0]	slot_secondary3,
 	input	[1:0]	dos_bank,
-	input			jis1_kanji_en,
-	input			jis2_kanji_en,
 	output			cpu_rom0_cs,
 	output			cpu_slot12_cs,		//	1: 選択中CPUのアドレスが SLOT#1/#2 (メモリアクセス判定用)
 	output			cpu_flash_cs		//	1: 選択中CPUのアドレスがオンボードFlashROM (1clk遅延のデコード結果)
@@ -177,12 +175,6 @@ module msx_slot #(
 	reg				ff_slot_sltsl1_n;
 	reg				ff_slot_sltsl2_n;
 	reg				ff_slot_sltsl3_n;
-	wire			w_jis1_kanji_cs;
-	wire			w_jis2_kanji_cs;
-	reg		[16:0]	ff_jis1_kanji_address;
-	reg		[16:0]	ff_jis2_kanji_address;
-	reg				ff_jis1_increment;
-	reg				ff_jis2_increment;
 	reg				ff_slot_rom0_ce_n;
 	reg				ff_slot_rom1_ce_n;
 	reg				ff_slot_cs1_n;
@@ -216,54 +208,6 @@ module msx_slot #(
 	assign cpu_rom0_cs		= !ff_slot_rom0_ce_n;
 	assign cpu_flash_cs		= ~( ff_slot_rom0_ce_n & ff_slot_rom1_ce_n );
 
-	assign w_jis1_kanji_cs	= jis1_kanji_en & w_bus_io & ({w_slot_address[7:1], 1'b0} == 8'hD8);
-	assign w_jis2_kanji_cs	= jis2_kanji_en & w_bus_io & ({w_slot_address[7:1], 1'b0} == 8'hDA) ;
-
-	always @( posedge clk ) begin
-		if( !reset_n ) begin
-			ff_jis1_kanji_address	<= 17'd0;
-			ff_jis2_kanji_address	<= 17'd0;
-			ff_jis1_increment		<= 1'b0;
-			ff_jis2_increment		<= 1'b0;
-		end
-		else begin
-			if( w_jis1_kanji_cs ) begin
-				if( w_bus_write ) begin
-					if( w_slot_address[0] == 1'b0 ) begin
-						ff_jis1_kanji_address[10:0]		<= { w_slot_d[5:0], 5'd0 };
-					end
-					else begin
-						ff_jis1_kanji_address[16:11]	<= w_slot_d[5:0];
-					end
-				end
-				else begin
-					ff_jis1_increment	<= 1'b1;
-				end
-			end
-			else if( w_jis2_kanji_cs ) begin
-				if( w_bus_write ) begin
-					if( w_slot_address[0] == 1'b0 ) begin
-						ff_jis2_kanji_address[10:0]		<= w_slot_d[5:0];
-					end
-					else begin
-						ff_jis2_kanji_address[16:11]	<= w_slot_d[5:0];
-					end
-				end
-				else begin
-					ff_jis2_increment	<= 1'b1;
-				end
-			end
-			else if( ff_jis1_increment ) begin
-				ff_jis1_kanji_address	<= ff_jis1_kanji_address + 17'd1;
-				ff_jis1_increment		<= 1'b0;
-			end
-			else if( ff_jis2_increment ) begin
-				ff_jis2_kanji_address	<= ff_jis2_kanji_address + 17'd1;
-				ff_jis2_increment		<= 1'b0;
-			end
-		end
-	end
-
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_slot_a			<= 19'd0;
@@ -282,30 +226,6 @@ module msx_slot #(
 				ff_slot_a			<= w_slot_address[18:0];
 				ff_slot_rom0_ce_n	<= ~slot_rfsh_n | w_slot_address[19];
 				ff_slot_rom1_ce_n	<= ~slot_rfsh_n | ~w_slot_address[19];
-				ff_slot_sltsl0_n	<= 1'b1;
-				ff_slot_sltsl1_n	<= 1'b1;
-				ff_slot_sltsl2_n	<= 1'b1;
-				ff_slot_sltsl3_n	<= 1'b1;
-				ff_slot_cs1_n		<= 1'b1;
-				ff_slot_cs2_n		<= 1'b1;
-				ff_slot_cs12_n		<= 1'b1;
-			end
-			else if( w_jis1_kanji_cs ) begin
-				ff_slot_a				<= { 2'd0, ff_jis1_kanji_address };
-				ff_slot_rom0_ce_n	<= 1'b1;
-				ff_slot_rom1_ce_n	<= ~slot_rfsh_n;
-				ff_slot_sltsl0_n	<= 1'b1;
-				ff_slot_sltsl1_n	<= 1'b1;
-				ff_slot_sltsl2_n	<= 1'b1;
-				ff_slot_sltsl3_n	<= 1'b1;
-				ff_slot_cs1_n		<= 1'b1;
-				ff_slot_cs2_n		<= 1'b1;
-				ff_slot_cs12_n		<= 1'b1;
-			end
-			else if( w_jis2_kanji_cs ) begin
-				ff_slot_a			<= { 2'd1, ff_jis2_kanji_address };
-				ff_slot_rom0_ce_n	<= 1'b1;
-				ff_slot_rom1_ce_n	<= ~slot_rfsh_n;
 				ff_slot_sltsl0_n	<= 1'b1;
 				ff_slot_sltsl1_n	<= 1'b1;
 				ff_slot_sltsl2_n	<= 1'b1;

@@ -59,6 +59,9 @@ module address_decode (
 	input	[7:0]	device_ssg_rdata,
 	input			device_ssg_rdata_en,
 	input			device_ssg_ready,
+	input	[7:0]	device_kanji_rom_rdata,
+	input			device_kanji_rom_rdata_en,
+	input			device_kanji_rom_ready,
 	input	[7:0]	device_system_flag_rdata,
 	input			device_system_flag_rdata_en,
 	input			device_system_flag_ready,
@@ -79,6 +82,7 @@ module address_decode (
 	output			ssram_cs,
 	output			rtc_cs,
 	output			ssg_cs,
+	output			kanji_rom_cs,
 	output			system_flag_cs,
 	output			pause_led_cs,
 	output			s2026_cs,
@@ -112,6 +116,7 @@ module address_decode (
 								device_ssram_rdata_en			? device_ssram_rdata		:
 								device_rtc_rdata_en				? device_rtc_rdata			:
 								device_ssg_rdata_en				? device_ssg_rdata			:
+								device_kanji_rom_rdata_en	? device_kanji_rom_rdata	:
 								device_system_flag_rdata_en		? device_system_flag_rdata	:
 								device_pause_led_rdata_en		? device_pause_led_rdata	:
 								device_bootrom_rdata_en			? device_bootrom_rdata		:
@@ -123,6 +128,7 @@ module address_decode (
 								device_secondary_rdata_en |
 								device_rtc_rdata_en	| 
 								device_ssg_rdata_en	| 
+								device_kanji_rom_rdata_en |
 								device_system_flag_rdata_en |
 								device_pause_led_rdata_en | 
 								device_bootrom_rdata_en |
@@ -135,6 +141,7 @@ module address_decode (
 							  ssram_active			? device_ssram_ready		:
 							  rtc_cs				? device_rtc_ready			:
 							  ssg_cs				? device_ssg_ready			:
+							  kanji_rom_cs			? device_kanji_rom_ready	:
 							  system_flag_cs		? device_system_flag_ready	:
 							  pause_led_cs			? device_pause_led_ready	:
 							  bootrom_cs			? device_bootrom_ready		:
@@ -146,6 +153,8 @@ module address_decode (
 	assign ssram_cs			= slot3_0_selected & ~device_io & ( device_address != 16'hFFFF );
 	//	I/O A0h-A2h -> SSG
 	assign ssg_cs			= device_io & ( device_address[7:2] == 6'b101000 );
+	//	I/O D8h-DBh -> Kanji SerialROM
+	assign kanji_rom_cs	= device_io & ( device_address[7:2] == 6'b110110 );
 	//	I/O A7h -> pause LED
 	assign pause_led_cs		= device_io & ( device_address[7:0] == 8'hA7 );
 	//	I/O A8h-ABh -> i8255 PPI (primary_slot / keyboard / cassette / command)

@@ -30,6 +30,7 @@
         <File path="src/extio/extio.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/kanji_rom/ip_kanji_rom.v" type="file.verilog" enable="1"/>
         <File path="src/memory_mapper/memory_mapper.v" type="file.verilog" enable="1"/>
         <File path="src/msx_bus_mux/msx_bus_mux.v" type="file.verilog" enable="1"/>
         <File path="src/msx_slot/msx_slot.v" type="file.verilog" enable="1"/>
