@@ -77,7 +77,17 @@ module ip_spi (
 	input	[7:0]	vdp_log_read_d,
 	input	[15:0]	vdp_log_read_pc,
 	output			vdp_log_consume,
-	output debug_sp_clear
+	output debug_sp_clear,
+	output srom_request,
+	output [1:0] srom_operation,
+	output [23:0] srom_address,
+	output [8:0] srom_length,
+	output srom_buffer_write,
+	output [7:0] srom_buffer_index,
+	output [7:0] srom_buffer_wdata,
+	input [7:0] srom_buffer_rdata,
+	input srom_done,
+	input [7:0] srom_status
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -115,7 +125,23 @@ module ip_spi (
 	localparam			DEBUG_SIGNAL_PATTERN = 8'hA5;
 	reg				ff_spi_cs_n_pre;
 	reg				ff_spi_cs_n;
-	reg		[4:0]	ff_state;
+	localparam [5:0] ST_SROM_ADDR_L = 6'd26;
+	localparam [5:0] ST_SROM_ADDR_M = 6'd27;
+	localparam [5:0] ST_SROM_ADDR_H = 6'd28;
+	localparam [5:0] ST_SROM_LENGTH = 6'd29;
+	localparam [5:0] ST_SROM_DATA = 6'd30;
+	localparam [5:0] ST_SROM_LAUNCH = 6'd31;
+	localparam [5:0] ST_SROM_ACCEPT = 6'd32;
+	localparam [5:0] ST_SROM_WAIT = 6'd33;
+	localparam [5:0] ST_SROM_PAYLOAD = 6'd34;
+	localparam [5:0] ST_SROM_FETCH = 6'd35;
+	reg [5:0] ff_state;
+	reg [1:0] ff_srom_operation;
+	reg [23:0] ff_srom_address;
+	reg [8:0] ff_srom_length;
+	reg [7:0] ff_srom_index;
+	reg [1:0] ff_srom_delay;
+	reg [7:0] ff_srom_rejection;
 	reg		[7:0]	ff_spi_wdata;
 	reg				ff_spi_write;
 	reg				ff_spi_valid;
@@ -125,6 +151,14 @@ module ip_spi (
 	wire	[7:0]	spi_rdata;
 	wire			spi_rdata_en;
 	wire			spi_tx_load_en;
+	assign srom_request = reset_n && !spi_cs_n && !ff_spi_cs_n && ff_state == ST_SROM_LAUNCH && ff_srom_rejection == 8'd0;
+	assign srom_operation = ff_srom_operation;
+	assign srom_address = ff_srom_address;
+	assign srom_length = ff_srom_length;
+	assign srom_buffer_write = reset_n && !spi_cs_n && !ff_spi_cs_n &&
+		ff_state == ST_SROM_DATA && spi_rdata_en && cpu_sel[1] && !srom_status[0] && ff_srom_rejection == 8'd0;
+	assign srom_buffer_index = ff_srom_index;
+	assign srom_buffer_wdata = spi_rdata;
 	reg		[15:0]	ff_bus_address;
 	reg		[7:0]	ff_bus_wdata;
 	reg				ff_bus_io;
@@ -212,6 +246,12 @@ module ip_spi (
 			ff_log_data <= 8'd0;
 			ff_log_pc <= 16'd0;
 			ff_log_active <= 1'b0;
+			ff_srom_operation <= 2'd0;
+			ff_srom_address <= 24'd0;
+			ff_srom_length <= 9'd0;
+			ff_srom_index <= 8'd0;
+			ff_srom_delay <= 2'd0;
+			ff_srom_rejection <= 8'd0;
 		end
 		//	spi_cs_n解除は異常時のリカバリを兼ねるため、どのステートより優先して ST_IDLE へ戻す
 		else if( ff_spi_cs_n ) begin
@@ -255,6 +295,9 @@ module ip_spi (
 			end
 		end
 		else if( ff_state == ST_BUS_OWNER_WAIT ) begin
+			if( !ff_pico_change_target && !srom_status[0] && srom_status[7:1] == 7'd0 ) begin
+				ff_pico_change_req <= 1'b1;
+			end
 			//	実際に s2026 側の cpu_sel[1] が切り替わるまで待ってから intr を上げる
 			if( cpu_sel[1] == ff_pico_change_target ) begin
 				ff_spi_intr_req		<= 1'b1;
@@ -454,6 +497,29 @@ module ip_spi (
 						ff_spi_intr_req <= 1'b1;
 						ff_state <= ST_IDLE;
 					end
+					8'h15, 8'h16: begin
+						ff_srom_rejection <= !cpu_sel[1] ? 8'd2 : srom_status[0] ? 8'd6 : 8'd0;
+						ff_bus_write <= 1'b0;
+						ff_srom_operation <= spi_rdata == 8'h15 ? 2'd1 : 2'd2;
+						ff_srom_index <= 8'd0;
+						ff_srom_length <= 9'd256;
+						ff_state <= ST_SROM_ADDR_L;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
+					end
+					8'h17: begin
+						ff_srom_rejection <= !cpu_sel[1] ? 8'd2 : srom_status[0] ? 8'd6 : 8'd0;
+						ff_bus_write <= 1'b0;
+						ff_srom_operation <= 2'd3;
+						ff_state <= ST_SROM_LAUNCH;
+					end
+					8'h18: begin
+						ff_bus_write <= 1'b0;
+						ff_spi_wdata <= srom_status;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b1;
+						ff_state <= ST_SEND;
+					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command
 						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
@@ -543,8 +609,107 @@ module ip_spi (
 				if( spi_rdata_en ) begin
 					//	コマンドのowner bitは(0:CPU, 1:SPI/Pico)なので、pico_change_target(1:Pico)へは反転して格納する
 					ff_pico_change_target	<= spi_rdata[0];
-					ff_pico_change_req		<= 1'b1;
+					ff_pico_change_req <= spi_rdata[0] || (!srom_status[0] && srom_status[7:1] == 7'd0);
 					ff_state				<= ST_BUS_OWNER_WAIT;
+				end
+			end
+			ST_SROM_ADDR_L: begin
+				if( spi_rdata_en ) begin
+					ff_srom_address[7:0] <= spi_rdata;
+					ff_state <= ST_SROM_ADDR_M;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b0;
+				end
+			end
+			ST_SROM_ADDR_M: begin
+				if( spi_rdata_en ) begin
+					ff_srom_address[15:8] <= spi_rdata;
+					ff_state <= ST_SROM_ADDR_H;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b0;
+				end
+			end
+			ST_SROM_ADDR_H: begin
+				if( spi_rdata_en ) begin
+					ff_srom_address[23:16] <= spi_rdata;
+					ff_state <= ff_srom_operation == 2'd1 ? ST_SROM_LENGTH : ST_SROM_DATA;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b0;
+				end
+			end
+			ST_SROM_LENGTH: begin
+				if( spi_rdata_en ) begin
+					ff_srom_length <= {1'b0, spi_rdata} + 9'd1;
+					ff_state <= ST_SROM_LAUNCH;
+				end
+			end
+			ST_SROM_DATA: begin
+				if( spi_rdata_en ) begin
+					if( ff_srom_index == 8'hFF ) begin
+						ff_state <= ST_SROM_LAUNCH;
+					end
+					else begin
+						ff_srom_index <= ff_srom_index + 8'd1;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
+					end
+				end
+			end
+			ST_SROM_LAUNCH: begin
+				ff_srom_delay <= 2'd0;
+				if( ff_srom_rejection != 8'd0 ) begin
+					ff_spi_wdata <= ff_srom_rejection;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_state <= ST_SEND;
+				end
+				else begin
+					ff_state <= ST_SROM_ACCEPT;
+				end
+			end
+			ST_SROM_ACCEPT: begin
+				ff_srom_delay <= ff_srom_delay + 2'd1;
+				if( ff_srom_delay == 2'd2 ) begin
+					if( ff_srom_operation == 2'd1 && srom_status == 8'd1 ) begin
+						ff_state <= ST_SROM_WAIT;
+					end
+					else begin
+						ff_spi_wdata <= srom_status;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b1;
+						ff_state <= ST_SEND;
+					end
+				end
+			end
+			ST_SROM_WAIT: begin
+				if( srom_done ) begin
+					ff_spi_wdata <= srom_status;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_srom_index <= 8'd0;
+					ff_log_active <= 1'b1;
+					ff_state <= srom_status == 8'd0 ? ST_SROM_PAYLOAD : ST_SEND;
+				end
+			end
+			ST_SROM_PAYLOAD: begin
+				if( spi_ready ) begin
+					ff_spi_wdata <= srom_buffer_rdata;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					if( {1'b0, ff_srom_index} + 9'd1 == ff_srom_length ) begin
+						ff_state <= ST_SEND;
+					end
+					else begin
+						ff_srom_index <= ff_srom_index + 8'd1;
+						ff_srom_delay <= 2'd0;
+						ff_state <= ST_SROM_FETCH;
+					end
+				end
+			end
+			ST_SROM_FETCH: begin
+				ff_srom_delay <= ff_srom_delay + 2'd1;
+				if( ff_srom_delay == 2'd2 ) begin
+					ff_state <= ST_SROM_PAYLOAD;
 				end
 			end
 			ST_DEBUG_H: begin

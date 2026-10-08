@@ -1,0 +1,26 @@
+# vsim -c -t 1ps -l injected_stale.log tb_cpu_kanji "+mixed_io" "+inject_stale" -do "onbreak {quit -code 1 -f}; run -all; quit -code 1 -f" -gc_r800=1 
+# Start time: 23:09:50 on Oct 08,2026
+# Loading sv_std.std
+# Loading work.tb_cpu_kanji
+# Loading work.msx_slot
+# Loading work.ip_kanji_rom
+# Loading work.r800_cache
+# Loading work.ssram
+# Loading work.ssram_test_model
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.r800_cache_ram
+# onbreak {quit -code 1 -f}
+#  Warning: onbreak command for use within macro
+#  run -all
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# ** Fatal: VDP read 0 returned 85, expected 20 R800=1
+#    Time: 87916920 ps  Scope: tb_cpu_kanji File: tb.sv Line: 703
+# ** Note: $finish    : tb.sv(703)
+#    Time: 87916920 ps  Iteration: 1  Instance: /tb_cpu_kanji
+# End time: 23:09:51 on Oct 08,2026, Elapsed time: 0:00:01
+# Errors: 1, Warnings: 0

@@ -211,12 +211,82 @@ bool flashrom_write_image( const char *path, uint32_t base_address, const char *
 }
 
 // ---------------------------------------------------------
+static bool serialrom_write_image( const char *path ) {
+	FIL file;
+	FILINFO file_info;
+	UINT read_size;
+	uint8_t expected[FPGA_SERIALROM_PAGE_SIZE];
+	uint8_t actual[FPGA_SERIALROM_PAGE_SIZE];
+	FRESULT result = f_stat( path, &file_info );
+	if( result != FR_OK || file_info.fsize != FPGA_SERIALROM_SIZE ) {
+		printf( "SerialROM image must be exactly 262144 bytes: %s\r\n", path );
+		return false;
+	}
+	result = f_open( &file, path, FA_READ );
+	if( result != FR_OK ) {
+		printf( "f_open failed: %s (%d)\r\n", path, (int)result );
+		return false;
+	}
+	printf( "Erase SerialROM 00000h-3FFFFh...\r\n" );
+	if( !fpga_serialrom_erase() ) {
+		f_close( &file );
+		return false;
+	}
+	printf( "Write SerialROM: %s\r\n", path );
+	for( uint32_t offset = 0; offset < FPGA_SERIALROM_SIZE; offset += sizeof(expected) ) {
+		result = f_read( &file, expected, sizeof(expected), &read_size );
+		if( result != FR_OK || read_size != sizeof(expected) || !fpga_serialrom_program_page( offset, expected ) ) {
+			printf( "SerialROM write failed at 0x%05lX\r\n", (unsigned long)offset );
+			f_close( &file );
+			return false;
+		}
+		if( (offset & 0x3FFFu) == 0 ) printf( "*" );
+	}
+	if( f_lseek( &file, 0 ) != FR_OK ) {
+		f_close( &file );
+		return false;
+	}
+	printf( "\r\nVerify all 256KB...\r\n" );
+	for( uint32_t offset = 0; offset < FPGA_SERIALROM_SIZE; offset += sizeof(expected) ) {
+		result = f_read( &file, expected, sizeof(expected), &read_size );
+		if( result != FR_OK || read_size != sizeof(expected) || !fpga_serialrom_read( offset, actual, sizeof(actual) ) ) {
+			printf( "SerialROM verify read failed at 0x%05lX\r\n", (unsigned long)offset );
+			f_close( &file );
+			return false;
+		}
+		for( size_t index = 0; index < sizeof(expected); index++ ) {
+			if( actual[index] != expected[index] ) {
+				printf( "SerialROM mismatch at 0x%05lX: expected %02X, actual %02X\r\n",
+					(unsigned long)(offset + index), expected[index], actual[index] );
+				f_close( &file );
+				return false;
+			}
+		}
+	}
+	f_close( &file );
+	fpga_serialrom_set_verified( true );
+	printf( "SerialROM write and verify complete: 262144 bytes\r\n" );
+	return true;
+}
+
+void write_kanji_rom_image( void ) {
+	if( fpga_get_bus_owner() != BUS_OWNER_PICO || !sdcard_init_and_mount() ) {
+		printf( "SerialROM update requires Pico ownership and a mounted SD card\r\n" );
+		return;
+	}
+	serialrom_write_image( "/bios/kanji.rom" );
+}
+
 void write_flashrom_images( void ) {
 	const char *p_msxtr = "/bios/msxtr.rom";
 	const char *p_msx2p = "/bios/msx2p.rom";
 	const char *p_msx2 = "/bios/msx2.rom";
 	const char *p_msx1 = "/bios/msx1.rom";
 	const char *p_bios;
+	if( fpga_get_bus_owner() != BUS_OWNER_PICO ) {
+		printf( "ROM update requires Pico ownership\r\n" );
+		return;
+	}
 
 	printf( "FlashROM write start\r\n" );
 	if( !sdcard_init_and_mount() ) {
@@ -247,14 +317,7 @@ void write_flashrom_images( void ) {
 		return;
 	}
 
-	if( !flashrom_check_image( "/bios/kanji.rom" ) ) {
-		printf( "[ERROR] Not found KanjiROM image.\r\n" );
-		return;
-	}
-	if( !flashrom_chip_erase( FLASHROM_ROM1_BASE, "ROM1" ) ) {
-		return;
-	}
-	if( !flashrom_write_image( "/bios/kanji.rom", FLASHROM_ROM1_BASE, "ROM1" ) ) {
+	if( !serialrom_write_image( "/bios/kanji.rom" ) ) {
 		return;
 	}
 
@@ -292,6 +355,17 @@ static void dump_flashrom( const char *name, uint32_t base_address ) {
 
 // ---------------------------------------------------------
 void dump_flashrom_images( void ) {
+	uint8_t data[FPGA_SERIALROM_PAGE_SIZE];
 	dump_flashrom( "ROM0", FLASHROM_ROM0_BASE );
 	dump_flashrom( "ROM1", FLASHROM_ROM1_BASE );
+	if( !fpga_serialrom_read( 0, data, sizeof(data) ) ) {
+		printf( "SerialROM dump failed\r\n" );
+		return;
+	}
+	printf( "Dump SerialROM: 00000h-000FFh\r\n" );
+	for( unsigned int offset = 0; offset < sizeof(data); offset += 16 ) {
+		printf( "%05X:", offset );
+		for( unsigned int index = 0; index < 16; index++ ) printf( " %02X", data[offset + index] );
+		printf( "\r\n" );
+	}
 }

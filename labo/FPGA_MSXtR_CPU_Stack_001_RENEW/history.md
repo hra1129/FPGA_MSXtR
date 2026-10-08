@@ -1867,3 +1867,133 @@ SerialROM分離版bitstreamを実機へ書き込み、**MSXの起動に影響し
 
 - PicoからSerialROMへ書き込むためのI/Fを追加する。
 - ROM1をSLOT#1に装着し、メガROMとして使用できるモードを追加する。
+
+## 2026-10-08 夜 Picoから漢字SerialROMを更新・照合するI/F
+
+帰宅後、専用SerialROMの先頭256KBをPicoから更新する機能を実装した。ROM1のSLOT#1メガROM化は次の作業として残す。
+
+- SPI 15hに任意アドレス1-256byte read、16hに256byte page program、17hに先頭256KB消去開始、18hにBUSY/error status取得を追加。
+- 00000h-3FFFFhの範囲とページ境界をFPGA/Pico双方で検査する。全消去は64KB Block Eraseを4回行い、未使用の残り領域は保護する。
+- 256byte全受信後にのみprogramを開始し、途中通信では書き込まない。Write Enable後のWELとprogram/erase後のBUSYを確認し、タイムアウトを通知する。
+- `ip_kanji_rom`内のSPI制御をCPU/Picoで共有し、Pico所有中だけ直接操作を受理する。MSXバスには直接操作を流さない。SerialROM制御はFPGA reset、JISアドレスはMSX resetへ分離し、MSX reset中でも更新できる。
+- R800内部デバイス待ち127clockに収まるよう、SPIの同一command内byte間待ちを短縮。TBでCPU向け漢字readが120clock以内に返ることを確認した。コマンド間CS-high時間は維持。
+- Controller_001は `/bios/kanji.rom` の正確な256KBイメージを消去・1024ページ書き込み後、全256KBを読み戻して比較する。Pico所有中7キーで漢字のみ更新、4キーでROM0 BIOSと漢字更新、5キーでSerialROM先頭もダンプ。ROM1への漢字書込みを廃止。
+- 更新失敗・照合不一致ではPico所有を維持しCPU復帰を抑止する。FPGA側もBUSY/error中のCPU復帰を抑止。更新は電源断に対して原子的ではなく、途中電源断後はmaintenance modeから再更新が必要。
+
+### 検証
+
+- Kanji/Pico SPI統合TB `+full_update`: 1024ページprogramと全256KBのFlashモデル内容照合、SPI readback、使用領域外保護、範囲/所有権/途中ページ/非整列拒否、BUSY要求拒否、timeout、CPU復帰抑止、更新後JIS1/JIS2 readがPASS。errors/warnings 0。
+- 既存SPI `test_002`: スクリプト指定の1ns分解能で61 PASS / 0 FAIL。既存の未接続TB port warning 10件は残る。
+- system test005/test006: バス安全性、10回BIOS CPU切替・レジスタ復元、SP診断、CPU/Pico request再受付がPASS。
+- VDP logger/SPI回帰はPASS (logger本体warnings 0、SPI側既存port warning 3件)。Controller_001のWSL `make -j` は成功。
+- Gowin 1.9.12.03合成・PnR・bitstream生成完了。最悪setup slack +0.207ns、hold +0.192ns。Logic 53%、register 23%、BSRAM 30/56 (54%)、latch 0。SDC/device条件は変更していない。
+- 更新前bitstream・レポートはTEMPの `FPGA_MSXtR_before_serialrom_write_20261008_192314` へ退避。
+
+実機でPicoからSerialROMを書き込み、全域verifyを通し、Z80/R800から漢字を読み出す確認は未実施。FPGAとPicoの両方を更新し、7キーの漢字単独更新から確認する。
+
+## 2026-10-08 夜 漢字ROMの連続readとZ80/R800完了待ち
+
+ユーザーが実機で7キーの書き込み後にR800から漢字を読んだところ、DFhが繰り返し返り、読み出しを続けるとハングした。
+従来のR800 I/O経路はSerialROMの応答前に外部サイクルとして終了し、遅れて届く応答を別サイクル中にも取り込める構造だった。
+Z80にも通常I/O終端でslot dataへフォールバックする処理があり、両CPUで内部漢字readの完了待ちが必要と判断した。
+以前の「127clock以内ならよい」という判断は内部memory経路の上限との混同であり、I/O応答待ちを保証していなかった。
+
+### 実装
+
+- ユーザー指定どおり、D8h/DAh writeはCPU側SPIのどの送信状態からでもCSをHigh、SCLKをLowへ戻す。
+- D9h/DBh writeでFAST_READ command/address/dummyを送り、準備完了後もCSをLowに保持する。
+- D9h/DBh readは8bitだけ転送し、CSをLowのまま維持。FPGA側アドレスもincrementし、SerialROMへアドレスを再送しない。
+- JIS1/JIS2交互の1byte readには対応しない。切替時にはlow/high address portの両方を設定し直す。
+- Pico所有への切替とMSX resetでCPU streamを終了。Pico直接read/program/eraseは従来の独立transactionとして維持する。
+- R800のD8h-DBh I/Oを内部完了待ちへ分岐し、127clockのfallback対象から除外した。
+- Z80は漢字read応答まで内部WAITを保持し、I/O終端で外部slot dataへ打ち切る処理を抑止した。外部カートリッジI/Oのタイミングは変更しない。
+
+### 検証
+
+- 実CPUの回帰を既存Kanji TBへ追加。修正前R800では最初のINが外部モデルのDFhを返す失敗を再現した。
+- 修正後は実Z80/R800ともPASS。最初の応答を180clock遅延しても先へ進まず、8回連続JIS1 readとJIS2再設定後readを正しく実行した。errors/warnings 0。
+- 単体で準備済みreadが24clock以内、32byteのglyph readでheader再送なし、送信中D8 recovery、Pico切替/reset時CS解放を確認。
+- `+full_update`でPicoの1024ページ更新・全域モデル照合・SPI readbackと既存の保護テストがPASS。
+- Z80/R800外部memory/I/O timing、system test005/test006のバス安全性・BIOS CPU切替がPASS。旧R800 timing TBのmain_rom_cs接続を現行rom0_csへ修正して検証した。
+- Gowin合成・PnR・bitstream生成は完了したが、setup違反2件、最悪slack -0.104ns。該当パスはu_ssram/ff_state_2からw_state_tick経由の内部経路。hold最悪+0.180ns、違反0。
+- Logic 54%、register 23%、BSRAM 30/56 (54%)、latch 0。SSRAM RTL、SDC、デバイス設定は変更していない。更新前bitstream/レポートはTEMPへ退避済み。
+
+機能シミュレーションは通過したが、タイミング未収束のため現在の生成bitstreamは実機投入不可として扱う。
+次は現行の制約を維持してPnRのsetup違反を解消し、その後FPGAを更新して実機のDFh/ハング解消を確認する。Pico firmwareとSerialROM内容の再更新は今回のCPU/stream修正だけなら不要。
+
+## 2026-10-08 夜 漢字アドレス仕様の再確認と追加回帰
+
+ユーザーが合成パラメータを変更し、前節のタイミング違反を解消したと報告。実機でD9hからDFh以外が読めるようになった一方、CALL KANJIの文字崩れとSCREEN5のPUTKANJI(0,0),4321h,15によるハングが残った。
+この報告は今回の追加修正前の構成に対するものであり、追加修正後のタイミング・実機結果はまだ未確認。
+
+- 手元のkanji.romと元a1stkfn.romはいずれも256KBで、内容が完全一致した。SDカード上の実ファイルについては今回直接確認していない。
+- 実a1stkdr.romに通常INだけでなくINIR、およびOUT(C),L / ADD HL,HL x2 / OUT(C),Hによる漢字アドレス設定列があることを確認。
+- 既存の実CPU TBを拡張し、両CPUで32byte INIR-to-RAMと間接OUTの列を実行。これらは修正前にもPASSし、今回の実機ハング自体は再現できていない。
+- openMSXのMSXKanji実装とも照合し、DAhの6bit columnはD8hと同じく5bit左シフトする必要があること、D9h/DBh writeも文字内counterを0へ戻すことを確認。従来コードはJIS2のshiftが欠落し、high writeに古いcounterが残っていた。
+- 仕様ベースのテストで、D9hのみ再設定後に先頭ではなく3byte目を読む失敗 (期待85h、実値87h) とJIS2アドレス違いを検出。RTLでDAh shift、両high-port write時のcounter clear、内部counterの5bit更新を修正した。
+- 新回帰では両high-port再設定、JIS2 physical address、内部counterからglyph addressへcarryしないことを検査。両CPUの間接OUT/INIRも通常run.batに登録。全5 test runsはPASS、errors/warnings 0。
+- ModelSimの終了コードだけではFatalを見落とすケースがあったため、run.batはログのFatal/Errorも検査する。
+
+JIS1全体の文字崩れとPUTKANJIハングがこれだけで解消するとは断定しない。連続SPIの方式とCPU WAITは維持し、ユーザーが調整した合成条件・SDCには手を加えていない。今回はPnRとbitstream生成を再実行していない。
+次の実機切り分けでは、D8h=96/D9h=32でphysical 10400hを指定し、先頭8byteが00 00 20 10 08 04 02 01となるか、Z80/R800で比較する。新RTLは現行の合成条件で再合成・タイミング確認後にFPGAへ反映する。
+
+### 追加の実機結果とRAM経路の回帰
+
+ユーザーがR800モードでphysical 10400hの先頭8byteを確認し、00 00 20 10 08 04 02 01が期待通り読めた。
+一方、R800のCALL KANJIでは全文字が崩れ、PUTKANJI(0,0),4321h,15でハングする。Z80ではCALL KANJIの半角16dot文字は正常表示し、ひらがな入力時にハングする。
+この観測は直接readの改善を確認するが、連続read全域や描画ルーチン全体の正常動作を保証しない。
+
+実ROMではフォントをF806hへINIRで取り込むため、既存Kanji CPU TBへ実r800_cache、ssram、SerialSRAM chip modelを接続した。
+Z80のsingle SRAM access、R800のcache経由で、間接OUT、32byte INIRによるF806h buffer書込み、buffer全byte読戻し比較を確認。通常run.batに追加し、全7 test runsがPASS、errors/warnings 0。
+RAM物理アドレスはTB内の単純なidentity mappingであり、実機のslot/mapper全体やVDPへの描画、CALL KANJI/PUTKANJI全処理は再現していない。
+
+今回はTB/run.batだけを変更し、RTL・合成条件・生成bitstreamには変更なし。実機ハングの根本原因は未確定。
+次にハング直後の3キーdiagnosticを複数回採取する。MENUによる所有権変更は行わず、選択CPUのPC・bus address・slot mapping・link patternを比較し、停止命令が漢字read、RAM、VDP待ち、別の処理のどれかを切り分ける。
+
+### VDPステータス待ちの観測と漢字/VDP混在テスト
+
+R800の実機ログではPCが2BF7h-2BFEh付近を反復し、RAM cache hitは増加、miss/fill_waitは一定だった。
+A8=F3h/SSL3=09hからpage0はSLOT#3-1 EXT-ROMであり、MAIN-ROMの同PCでは解釈できない。
+a1stext.romの2BF8hはIN A,(99h)、周辺はVDP status readの選択・保存・選択解除で、E28Dh/E28Ehのstack accessとも整合した。
+status #2のCE待ちは有力だが、このroutineには他のcallerもあり、PCログだけで待機flagは確定していない。
+ユーザーは正常なZ80/漢字ROM搭載MSXにV9968を取り付け、PUTKANJIが正常表示して戻ることを確認。本機CPU側の応答残留/VDP read混入を検証することにした。
+
+- 既存tb_cpu_kanjiにmixed_ioを追加。漢字32byteを読む間に外部99h readを32回挟み、VDP役の20h/21h交互応答と全CPU受信値を検査。
+- 外部VDP readは内部bus_ready/rdata_enで返さず、CPUの/IORQ・/RDとslot_dataで応答する。最初の漢字応答には既存の180clock遅延を維持。
+- VDP read中の漢字/internal応答、SerialROM clock、受信値の取り違えをassert。漢字の続きとJIS2再設定後readも検査する。
+- 次にVDP_Stack_002の実msx_slot RTLを接続し、CPU約42.95MHz、VDP約85.9MHz、serial約214.77MHzの比率で実行。VDP内部busのstatus返信だけをモデルとし、同期・応答保持・双方向data driveを通した。
+- 簡易外部モデル/実VDP slot receiverとも、Z80/R800の全4混在ケースがPASS。漢字応答の残留、VDP値の混入、CPU/VDP同時driveは検出されなかった。
+- 故障注入inject_staleでは、VDP readに直前の漢字値85hを返し、期待20hとの不一致を最初のreadで検出。通常の検査がデータ混入を検出できることを確認。
+- 全11 regression runsを通常run.batへ登録し、errors/warnings 0で通過。RTL本体・合成条件・bitstreamは変更していない。
+
+このテストでは実機のハングは再現できていない。VDP command engine、実ROMの描画全処理、基板/level shifterの電気的遅延は対象外であり、実機でのVDP read異常やコマンド未完了を否定しない。
+
+## 2026-10-08 作業終了・翌日の再開点
+
+就寝のため、本日の作業はここで中断する。以下は今日の到達点と、翌日に引き継ぐ未解決事項の要約。
+
+### 今日の到達点
+
+- 漢字ROMを専用SerialROMへ分離し、Picoから先頭256KBのread/program/eraseと全域verifyを行うI/Fを追加した。7キーで漢字のみ更新、ROM1への漢字書込みは廃止。
+- CPU漢字readを連続SPIへ変更。D8h/DAh writeでCS Highへ復帰、D9h/DBh writeでcommand/address/dummyを送信し、read後はCS Lowを維持する。Z80/R800には漢字readの完了待ちを追加。
+- JIS2 columnのshift欠落と、high-port再設定時の文字内counter残留を修正した。
+- 実機ではR800でphysical 10400hの先頭8byteが期待値00 00 20 10 08 04 02 01と一致。Z80のCALL KANJIでは半角文字が正常表示することを確認した。
+- ModelSimではPico全域更新、実CPUの通常IN/間接OUT/INIR、F806hへの実SerialSRAM buffer転送、漢字/外部VDP混在readを検証した。最終の通常回帰は11ケースすべてPASS、errors/warnings 0。
+- ユーザーが合成パラメータ変更でタイミング違反を解消したと報告。調整した条件とSDCは維持する。こちらでは後続の追加修正後にPnRを再実行していない。
+
+### 未解決の実機症状
+
+- R800: CALL KANJIで文字全体が崩れ、SCREEN5のPUTKANJI(0,0),4321h,15でハングする。
+- Z80: 半角は正常だが、ひらがな入力時にハングする。
+- R800は完全停止ではなく、EXT-ROMのVDP status read付近を反復している。PCだけではstatus番号、CE/TR等の待機flagを確定できない。
+- 正常なMSX+V9968では同じPUTKANJIが成功する。一方、本機の漢字応答残留/VDP read混入は、今回の混在テストでは再現できなかった。V9968単体の正常動作と本機の接続・アクセスの正常性は区別する。
+
+### 明日の解析方針
+
+- 実機で待っているVDP status番号と実値、またはstatus read routineの呼び出し元を特定する。status誤読と、実際のcommand/transfer待ちを分けることを優先する。
+- Picoからstatusを読む診断を追加する場合は、バス所有権変更とR#15変更・status readの副作用を明確にし、手順と復元方法を決めてから実装する。今日はその診断は追加していない。
+- 必要に応じてTBを実ROMの描画アクセス列やVDP command engineへ広げる。既存の混在・RAM・CPU回帰を利用し、未再現の原因を推測だけでRTL変更しない。
+- 稼働中のSSRAM/cache、ユーザー調整済み合成条件、SDCへ解析目的の変更を加えない。観測回路を追加する場合は影響範囲とタイミングを別途評価する。
+- ROM1をSLOT#1のメガROMとして使うモードは未実装のまま。現在の漢字描画問題とは別の次作業として残す。
+
+今回は記録の追記だけを行い、追加テスト・コード変更・commit/pushは行わず終了する。

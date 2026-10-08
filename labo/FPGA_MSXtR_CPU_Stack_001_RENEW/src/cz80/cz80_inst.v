@@ -99,6 +99,7 @@ module cz80_inst (
 	reg					ff_iorq_n;
 	reg					ff_wait_n;			//	外部からくる /WAIT信号
 	reg					ff_wait_n_i;		//	内部生成の /WAIT信号 for MSX
+	reg ff_kanji_read_pending;
 	reg					ff_rd_n;
 	reg					ff_wr_n;
 	reg					ff_slot_d_oe;
@@ -337,7 +338,7 @@ module cz80_inst (
 		end
 	end
 
-	assign w_wait_n = ff_wait_n & ff_wait_n_i;
+	assign w_wait_n = ff_wait_n & ff_wait_n_i & ~ff_kanji_read_pending;
 
 	// ---------------------------------------------------------
 	//	/RD signal generation
@@ -559,6 +560,7 @@ module cz80_inst (
 			ff_bus_rdata			<= 8'hFF;
 			ff_di					<= 8'hFF;
 			ff_wait_bus_rdata_en	<= 1'b0;
+			ff_kanji_read_pending <= 1'b0;
 		end
 		else if( !ff_run ) begin
 			// hold
@@ -573,6 +575,7 @@ module cz80_inst (
 					ff_bus_valid			<= 1'b0;
 					ff_wait_bus_rdata_en	<= 1'b0;
 					ff_bus_rdata			<= bus_rdata;
+					ff_kanji_read_pending <= 1'b0;
 				end
 				else if( !ff_m1_n || w_indexed_opcode_fetch ) begin
 					if( ff_t_state_d == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && (!ff_new_tstate || w_indexed_opcode_fetch) && (!w_indexed_opcode_fetch || w_wait_n) ) begin
@@ -585,7 +588,7 @@ module cz80_inst (
 					end
 				end
 				else if( ff_bus_io ) begin
-					if( ff_t_state_d == c_rd_io_tstate_rise && state_count == c_rd_io_cycle_rise ) begin
+					if( !ff_kanji_read_pending && ff_t_state_d == c_rd_io_tstate_rise && state_count == c_rd_io_cycle_rise ) begin
 						//	タイムアウト処理 (I/Oサイクル)
 						//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
 						//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている
@@ -638,6 +641,7 @@ module cz80_inst (
 				ff_bus_valid				<= !w_noread;
 				ff_bus_io					<= w_iorq;
 				ff_bus_write				<= 1'b0;
+				ff_kanji_read_pending <= !w_noread && w_iorq && ff_bus_address[7:2] == 6'b110110;
 			end
 		end
 	end

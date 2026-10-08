@@ -213,7 +213,10 @@ module tb ();
 		.keyboard_matrix		( keyboard_matrix			),
 		.keyboard_matrix_valid	( keyboard_matrix_valid		),
 		.keyboard_update_count	( keyboard_rx_count			),
-		.debug_signal			( debug_signal				)
+		.debug_signal			( debug_signal				),
+		.srom_request(), .srom_operation(), .srom_address(), .srom_length(),
+		.srom_buffer_write(), .srom_buffer_index(), .srom_buffer_wdata(),
+		.srom_buffer_rdata(8'd0), .srom_done(1'b0), .srom_status(8'd0)
 	);
 
 	// --------------------------------------------------------------------

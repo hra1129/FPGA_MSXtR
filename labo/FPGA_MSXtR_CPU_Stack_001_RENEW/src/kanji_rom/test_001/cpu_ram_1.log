@@ -1,0 +1,64 @@
+# vsim -c -t 1ps -l cpu_ram_1.log tb_cpu_kanji "+block_read" "+driver_ports" "+real_ram" -do "onbreak {if {[examine -radix unsigned /tb_cpu_kanji/test_passed] == 1} {quit -code 0 -f} else {quit -code 1 -f}}; onerror {quit -code 1 -f}; run -all; quit -code 1 -f" -gc_r800=1 
+# Start time: 23:10:40 on Oct 08,2026
+# Loading sv_std.std
+# Loading work.tb_cpu_kanji
+# Loading work.msx_slot
+# Loading work.ip_kanji_rom
+# Loading work.r800_cache
+# Loading work.ssram
+# Loading work.ssram_test_model
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.r800_cache_ram
+# onbreak {if {[examine -radix unsigned /tb_cpu_kanji/test_passed] == 1} {quit -code 0 -f} else {quit -code 1 -f}}
+#  Warning: onbreak command for use within macro
+#  onerror {quit -code 1 -f}
+#  Warning: onerror command for use within macro
+#  run -all
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] Write: addr=0x0f806 data=0x85
+# [SRAM Model] Write: addr=0x0f807 data=0x84
+# [SRAM Model] Write: addr=0x0f808 data=0x87
+# [SRAM Model] Write: addr=0x0f809 data=0x86
+# [SRAM Model] Write: addr=0x0f80a data=0x81
+# [SRAM Model] Write: addr=0x0f80b data=0x80
+# [SRAM Model] Write: addr=0x0f80c data=0x83
+# [SRAM Model] Write: addr=0x0f80d data=0x82
+# [SRAM Model] Write: addr=0x0f80e data=0x8d
+# [SRAM Model] Write: addr=0x0f80f data=0x8c
+# [SRAM Model] Write: addr=0x0f810 data=0x8f
+# [SRAM Model] Write: addr=0x0f811 data=0x8e
+# [SRAM Model] Write: addr=0x0f812 data=0x89
+# [SRAM Model] Write: addr=0x0f813 data=0x88
+# [SRAM Model] Write: addr=0x0f814 data=0x8b
+# [SRAM Model] Write: addr=0x0f815 data=0x8a
+# [SRAM Model] Write: addr=0x0f816 data=0x95
+# [SRAM Model] Write: addr=0x0f817 data=0x94
+# [SRAM Model] Write: addr=0x0f818 data=0x97
+# [SRAM Model] Write: addr=0x0f819 data=0x96
+# [SRAM Model] Write: addr=0x0f81a data=0x91
+# [SRAM Model] Write: addr=0x0f81b data=0x90
+# [SRAM Model] Write: addr=0x0f81c data=0x93
+# [SRAM Model] Write: addr=0x0f81d data=0x92
+# [SRAM Model] Write: addr=0x0f81e data=0x9d
+# [SRAM Model] Write: addr=0x0f81f data=0x9c
+# [SRAM Model] Write: addr=0x0f820 data=0x9f
+# [SRAM Model] Write: addr=0x0f821 data=0x9e
+# [SRAM Model] Write: addr=0x0f822 data=0x99
+# [SRAM Model] Write: addr=0x0f823 data=0x98
+# [SRAM Model] Write: addr=0x0f824 data=0x9b
+# [SRAM Model] Write: addr=0x0f825 data=0x9a
+# [SRAM Model] Read complete: addr=0x0f808 data=0x87
+# [SRAM Model] Read complete: addr=0x0f810 data=0x8f
+# [SRAM Model] Read complete: addr=0x0f818 data=0x97
+# [SRAM Model] Read complete: addr=0x0f820 data=0x9f
+# [SRAM Model] Read complete: addr=0x0f828 data=0x00
+# PASS: real CPU R800=1 delayed first read, JIS1 bytes=32, VDP reads=0, VDP receiver=0, INIR=1, indirect ports=1, SerialSRAM=1, JIS2 restart
+# ** Note: $finish    : tb.sv(700)
+#    Time: 198334960 ps  Iteration: 0  Instance: /tb_cpu_kanji
+# End time: 23:10:41 on Oct 08,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0

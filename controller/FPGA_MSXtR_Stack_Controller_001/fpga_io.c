@@ -45,6 +45,7 @@ static bool s_msx_reset_timeout = false;
 static bool s_bus_owner_wait_ready_timeout = false;
 // 0: Pico owns the bus, 1: MSX CPU owns the bus.
 static BUS_OWNER_T s_bus_owner = BUS_OWNER_PICO;
+static bool s_serialrom_verified = true;
 
 // SPI write completion is reported by FPGA after bus_ready is received.
 static bool fpga_wait_intr( uint32_t timeout_ms ) {
@@ -295,6 +296,132 @@ uint8_t fpga_peek( uint16_t io_address ) {
 }
 
 // ---------------------------------------------------------
+static void serialrom_send_byte( uint8_t data ) {
+	spi_write_blocking( SPI0_PORT, &data, 1 );
+	sleep_us( 1 );
+}
+
+static bool serialrom_receive_byte( uint8_t *data ) {
+	uint8_t dummy = 0;
+	if( !fpga_wait_intr( 50 ) ) {
+		printf( "SerialROM SPI response timeout\r\n" );
+		return false;
+	}
+	spi_write_read_blocking( SPI0_PORT, &dummy, data, 1 );
+	sleep_us( 1 );
+	return true;
+}
+
+static void serialrom_end( void ) {
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+}
+
+static void serialrom_header( uint8_t command, uint32_t address ) {
+	gpio_put( SPI0_CSN_PIN, 0 );
+	sleep_us( 1 );
+	serialrom_send_byte( command );
+	serialrom_send_byte( (uint8_t)address );
+	serialrom_send_byte( (uint8_t)(address >> 8) );
+	serialrom_send_byte( (uint8_t)(address >> 16) );
+}
+
+bool fpga_serialrom_get_status( uint8_t *status ) {
+	bool result;
+	if( status == NULL ) {
+		return false;
+	}
+	gpio_put( SPI0_CSN_PIN, 0 );
+	sleep_us( 1 );
+	serialrom_send_byte( 0x18 );
+	result = serialrom_receive_byte( status );
+	serialrom_end();
+	return result;
+}
+
+static bool serialrom_wait_done( uint32_t timeout_ms ) {
+	absolute_time_t deadline = make_timeout_time_ms( timeout_ms );
+	uint8_t status;
+	while( !time_reached( deadline ) ) {
+		if( !fpga_serialrom_get_status( &status ) ) {
+			return false;
+		}
+		if( (status & 0xFE) != 0 ) {
+			printf( "SerialROM error: %u\r\n", status >> 1 );
+			return false;
+		}
+		if( (status & 1) == 0 ) {
+			return true;
+		}
+		sleep_ms( 1 );
+	}
+	printf( "SerialROM operation timeout\r\n" );
+	return false;
+}
+
+bool fpga_serialrom_read( uint32_t address, uint8_t *data, size_t length ) {
+	uint8_t status;
+	bool result;
+	if( s_bus_owner != BUS_OWNER_PICO || data == NULL || length == 0 || length > FPGA_SERIALROM_PAGE_SIZE ||
+		address >= FPGA_SERIALROM_SIZE || length > FPGA_SERIALROM_SIZE - address ) {
+		return false;
+	}
+	serialrom_header( 0x15, address );
+	serialrom_send_byte( (uint8_t)(length - 1) );
+	result = serialrom_receive_byte( &status );
+	if( result && status == 0 ) {
+		for( size_t index = 0; index < length; index++ ) {
+			if( !serialrom_receive_byte( &data[index] ) ) {
+				result = false;
+				break;
+			}
+		}
+	}
+	else {
+		result = false;
+	}
+	serialrom_end();
+	return result;
+}
+
+bool fpga_serialrom_program_page( uint32_t address, const uint8_t *data ) {
+	uint8_t status;
+	bool result;
+	if( s_bus_owner != BUS_OWNER_PICO || data == NULL || address >= FPGA_SERIALROM_SIZE || (address & 255u) != 0 ) {
+		return false;
+	}
+	if( !fpga_serialrom_get_status( &status ) || (status & 1) != 0 ) {
+		return false;
+	}
+	s_serialrom_verified = false;
+	serialrom_header( 0x16, address );
+	for( size_t index = 0; index < FPGA_SERIALROM_PAGE_SIZE; index++ ) {
+		serialrom_send_byte( data[index] );
+	}
+	result = serialrom_receive_byte( &status );
+	serialrom_end();
+	return result && (status & 0xFE) == 0 && serialrom_wait_done( 100 );
+}
+
+bool fpga_serialrom_erase( void ) {
+	uint8_t status;
+	bool result;
+	if( s_bus_owner != BUS_OWNER_PICO || !fpga_serialrom_get_status( &status ) || (status & 1) != 0 ) {
+		return false;
+	}
+	s_serialrom_verified = false;
+	gpio_put( SPI0_CSN_PIN, 0 );
+	sleep_us( 1 );
+	serialrom_send_byte( 0x17 );
+	result = serialrom_receive_byte( &status );
+	serialrom_end();
+	return result && (status & 0xFE) == 0 && serialrom_wait_done( 45000 );
+}
+
+void fpga_serialrom_set_verified( bool verified ) {
+	s_serialrom_verified = verified;
+}
+
 void flashrom_write( uint32_t address, uint8_t data ) {
 	uint8_t buf;
 
@@ -430,6 +557,11 @@ void fpga_set_bus_owner( BUS_OWNER_T owner ) {
 	uint8_t cmd;
 	absolute_time_t timeout_time;
 	bool intr_ready;
+	if( owner == BUS_OWNER_CPU && !s_serialrom_verified ) {
+		s_bus_owner_timeout = true;
+		printf( "CPU resume blocked: SerialROM image is not verified\r\n" );
+		return;
+	}
 
 	if( !fpga_wait_ready() ) {
 		s_bus_owner_wait_ready_timeout = true;

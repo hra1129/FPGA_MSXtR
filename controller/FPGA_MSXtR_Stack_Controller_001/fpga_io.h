@@ -90,6 +90,13 @@ void fpga_poke( uint16_t io_address, uint8_t data );
 uint8_t fpga_peek( uint16_t io_address );
 void flashrom_write( uint32_t address, uint8_t data );
 uint8_t flashrom_read( uint32_t address );
+#define FPGA_SERIALROM_SIZE (256u * 1024u)
+#define FPGA_SERIALROM_PAGE_SIZE 256u
+bool fpga_serialrom_read( uint32_t address, uint8_t *data, size_t length );
+bool fpga_serialrom_program_page( uint32_t address, const uint8_t *data );
+bool fpga_serialrom_erase( void );
+bool fpga_serialrom_get_status( uint8_t *status );
+void fpga_serialrom_set_verified( bool verified );
 void fpga_msx_reset( bool reset_on );
 void fpga_msx_pause( bool pause_on );
 void fpga_bootrom_enable( bool enable );

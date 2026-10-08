@@ -143,7 +143,10 @@ module tb_spi;
 		.slot_wait_n(1'b1), .ssram_startup_busy(1'b0), .cpu_sel(2'd0),
 		.r800_led(1'b0), .pause_led(1'b0), .caps_led(1'b0), .kana_led(1'b0), .debug_signal(256'd0),
 		.vdp_log_count(count), .vdp_log_read_request(read_request), .vdp_log_read_valid(read_valid),
-		.vdp_log_read_a(read_a), .vdp_log_read_d(read_d), .vdp_log_read_pc(read_pc), .vdp_log_consume(consume));
+		.vdp_log_read_a(read_a), .vdp_log_read_d(read_d), .vdp_log_read_pc(read_pc), .vdp_log_consume(consume),
+		.srom_request(), .srom_operation(), .srom_address(), .srom_length(),
+		.srom_buffer_write(), .srom_buffer_index(), .srom_buffer_wdata(),
+		.srom_buffer_rdata(8'd0), .srom_done(1'b0), .srom_status(8'd0));
 	task tick;
 		@(posedge clk); #1;
 	endtask

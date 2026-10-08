@@ -98,6 +98,7 @@ Compiling module 'dos_mapper'("C:\Users\hra\Documents\github\HRA_product\FPGA_MS
 Compiling module 'fdc8566'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\fdc8566\fdc8566.v":34)
 Compiling module 'secondary_slot'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\secondary_slot\secondary_slot.v":34)
 Compiling module 'ip_kanji_rom'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\kanji_rom\ip_kanji_rom.v":1)
+Extracting RAM for identifier 'ff_buffer'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\kanji_rom\ip_kanji_rom.v":58)
 Compiling module 'ppi'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\ppi\ppi.v":34)
 Compiling module 'memory_mapper'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\memory_mapper\memory_mapper.v":50)
 Compiling module 'r800_cache'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\cr800\r800_cache.v":34)
@@ -135,8 +136,8 @@ Running technical mapping ...
 [75%] Tech-Mapping Phase 2 completed
 [80%] Tech-Mapping Phase 3 completed
 [90%] Tech-Mapping Phase 4 completed
-WARN  (NL0002) : The module "address_decode" instantiated to "u_address_decode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":984)
-WARN  (NL0002) : The module "msx_bus_mux" instantiated to "u_msx_bus_mux" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":816)
+WARN  (NL0002) : The module "address_decode" instantiated to "u_address_decode" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":1004)
+WARN  (NL0002) : The module "msx_bus_mux" instantiated to "u_msx_bus_mux" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\FPGA_MSXtR_CPU_Stack.v":836)
 WARN  (NL0002) : The module "vdp_logger_sram" instantiated to "SRAM_A" is swept in optimizing("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\src\vdp_logger\vdp_logger.v":95)
 [95%] Generate netlist file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack.vg" completed
 [100%] Generate report file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack_001_RENEW\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack_syn.rpt.html" completed

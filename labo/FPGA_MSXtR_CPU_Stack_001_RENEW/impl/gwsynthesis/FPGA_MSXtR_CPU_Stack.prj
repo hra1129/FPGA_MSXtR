@@ -55,7 +55,7 @@
         <Option type="enable_dsrm" value="0"/>
         <Option type="global_freq" value="100.000"/>
         <Option type="looplimit" value="99999"/>
-        <Option type="map_option" value="1"/>
+        <Option type="map_option" value="2"/>
         <Option type="max_fanout" value="1000"/>
         <Option type="netlist_hierarchy" value="1"/>
         <Option type="opt_goal" value="timing"/>

@@ -192,6 +192,16 @@ module fpga_msxtr_cpu_stack (
 	wire	[19:0]	w_pico_bus_address;
 	wire	[7:0]	w_pico_bus_rdata;
 	wire			w_pico_bus_rdata_en;
+	wire w_srom_request;
+	wire [1:0] w_srom_operation;
+	wire [23:0] w_srom_address;
+	wire [8:0] w_srom_length;
+	wire w_srom_buffer_write;
+	wire [7:0] w_srom_buffer_index;
+	wire [7:0] w_srom_buffer_wdata;
+	wire [7:0] w_srom_buffer_rdata;
+	wire w_srom_done;
+	wire [7:0] w_srom_status;
 
 	wire	[3:0]	w_keyboard_matrix_row;
 	wire	[7:0]	w_keyboard_matrix;
@@ -627,7 +637,17 @@ module fpga_msxtr_cpu_stack (
 		.vdp_log_read_a					( w_vdp_log_read_a					),
 		.vdp_log_read_d					( w_vdp_log_read_d					), 
 		.vdp_log_read_pc				( w_vdp_log_read_pc					), 
-		.vdp_log_consume				( w_vdp_log_consume					)
+		.vdp_log_consume				( w_vdp_log_consume					),
+		.srom_request(w_srom_request),
+		.srom_operation(w_srom_operation),
+		.srom_address(w_srom_address),
+		.srom_length(w_srom_length),
+		.srom_buffer_write(w_srom_buffer_write),
+		.srom_buffer_index(w_srom_buffer_index),
+		.srom_buffer_wdata(w_srom_buffer_wdata),
+		.srom_buffer_rdata(w_srom_buffer_rdata),
+		.srom_done(w_srom_done),
+		.srom_status(w_srom_status)
 	);
 
 	cmcu_inst u_cmcu_inst (
@@ -1051,8 +1071,20 @@ module fpga_msxtr_cpu_stack (
 	//	Kanji ROM (Serial ROM)
 	// --------------------------------------------------------------------
 	ip_kanji_rom u_kanji_rom (
-		.reset							( ~ff_slot_reset_n					),
+		.reset							( ~ff_spi_reset_n					),
 		.clk							( clk42m							),
+		.kanji_reset(~ff_slot_reset_n),
+		.pico_owned(w_cpu_sel[1]),
+		.pico_request(w_srom_request),
+		.pico_operation(w_srom_operation),
+		.pico_address(w_srom_address),
+		.pico_length(w_srom_length),
+		.pico_buffer_write(w_srom_buffer_write),
+		.pico_buffer_index(w_srom_buffer_index),
+		.pico_buffer_wdata(w_srom_buffer_wdata),
+		.pico_buffer_rdata(w_srom_buffer_rdata),
+		.pico_done(w_srom_done),
+		.pico_status(w_srom_status),
 		.bus_cs							( w_device_kanji_rom_cs				),
 		.bus_address					( w_device_address[1:0]				),
 		.bus_write						( w_device_write					),

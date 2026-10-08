@@ -1,0 +1,26 @@
+# vsim -c -t 1ps -l cpu_driver_0.log tb_cpu_kanji "+block_read" "+driver_ports" -do "onbreak {if {[examine -radix unsigned /tb_cpu_kanji/test_passed] == 1} {quit -code 0 -f} else {quit -code 1 -f}}; onerror {quit -code 1 -f}; run -all; quit -code 1 -f" -gc_r800=0 
+# Start time: 23:10:34 on Oct 08,2026
+# Loading sv_std.std
+# Loading work.tb_cpu_kanji
+# Loading work.msx_slot
+# Loading work.ip_kanji_rom
+# Loading work.r800_cache
+# Loading work.ssram
+# Loading work.ssram_test_model
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# Loading work.r800_cache_ram
+# onbreak {if {[examine -radix unsigned /tb_cpu_kanji/test_passed] == 1} {quit -code 0 -f} else {quit -code 1 -f}}
+#  Warning: onbreak command for use within macro
+#  onerror {quit -code 1 -f}
+#  Warning: onerror command for use within macro
+#  run -all
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# PASS: real CPU R800=0 delayed first read, JIS1 bytes=32, VDP reads=0, VDP receiver=0, INIR=1, indirect ports=1, SerialSRAM=0, JIS2 restart
+# ** Note: $finish    : tb.sv(700)
+#    Time: 699297280 ps  Iteration: 0  Instance: /tb_cpu_kanji
+# End time: 23:10:35 on Oct 08,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0

@@ -54,11 +54,7 @@ copy /b ^
     msxtr.rom
 
 copy /b ^
-    bios\a1stkfn.rom + ^
-    ff_fill.bin + ff_fill.bin + ff_fill.bin + ff_fill.bin + ^
-    ff_fill.bin + ff_fill.bin + ff_fill.bin + ff_fill.bin + ^
-    ff_fill.bin + ff_fill.bin + ff_fill.bin + ff_fill.bin + ^
-    ff_fill.bin + ff_fill.bin + ff_fill.bin + ff_fill.bin ^
+    bios\a1stkfn.rom ^
     kanji.rom
 
 endlocal

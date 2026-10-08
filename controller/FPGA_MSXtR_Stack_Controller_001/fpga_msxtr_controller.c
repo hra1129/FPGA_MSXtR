@@ -195,7 +195,7 @@ int main(void) {
 				//	MENUキーが押されたら、バス所有権を CPUへ移す
 				printf( "Change to CPU .... " );
 				fpga_set_bus_owner( BUS_OWNER_CPU );
-				printf( "Done.\r\n" );
+				printf( "%s\r\n", fpga_get_bus_owner() == BUS_OWNER_CPU ? "Done." : "Failed; Pico retains ownership." );
 			}
 			else if( key_press( 0, 1 ) ) {
 				//	1キーが押されたら、SLOT のダンプ処理を実施
@@ -220,6 +220,9 @@ int main(void) {
 			else if( key_press( 0, 6 ) ) {
 				//	6キーが押されたら、SSG R#14 をダンプする
 				dump_ssg_r14();
+			}
+			else if( key_press( 0, 7 ) ) {
+				write_kanji_rom_image();
 			}
 			else if( key_press( 1, 0 ) ) {
 				dump_cpu_ram();

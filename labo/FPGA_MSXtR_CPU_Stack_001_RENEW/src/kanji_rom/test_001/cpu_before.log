@@ -1,0 +1,19 @@
+# vsim -c -t 1ps -l cpu_before.log tb_cpu_kanji -do "run -all; quit -f" -gc_r800=1 
+# Start time: 21:10:40 on Oct 08,2026
+# Loading sv_std.std
+# Loading work.tb_cpu_kanji
+# Loading work.ip_kanji_rom
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.r800_cache_ram
+# run -all
+# ** Fatal: CPU Kanji read 0 returned df
+#    Time: 1885 ns  Scope: tb_cpu_kanji File: tb.sv Line: 538
+# ** Note: $finish    : tb.sv(538)
+#    Time: 1885 ns  Iteration: 1  Instance: /tb_cpu_kanji
+# End time: 21:10:41 on Oct 08,2026, Elapsed time: 0:00:01
+# Errors: 1, Warnings: 0

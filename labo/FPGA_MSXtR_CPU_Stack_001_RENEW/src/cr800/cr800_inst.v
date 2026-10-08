@@ -327,6 +327,8 @@ module cr800_inst #(
 	reg		[7:0]		ff_bus_wdata;
 	reg					ff_got_rdata;
 	wire	[7:0]		w_bus_wdata;
+	wire w_kanji_io;
+	assign w_kanji_io = ff_cyc_io && !ff_cyc_m1 && ff_bus_address[7:2] == 6'b110110;
 
 	//	内部I/Oデバイスが応答した場合の短縮終了条件 (外部I/Oは応答が無いのでZ80速度のまま)
 	assign w_io_early_done = ff_cyc_io && !ff_cyc_m1 && ( bus_rdata_en || (ff_cyc_write && ff_bus_valid && bus_ready) );
@@ -401,7 +403,11 @@ module cr800_inst #(
 				ff_cyc_state	<= CY_CLASSIFY2;
 			end
 			CY_CLASSIFY2: begin
-				if( ff_cyc_io || slot12_cs ) begin
+				if( w_kanji_io ) begin
+					ff_cyc_state <= CY_INTERNAL;
+					ff_int_timeout <= 7'd0;
+				end
+				else if( ff_cyc_io || slot12_cs ) begin
 					//	I/O(動的判定) と SLOT#1/#2 は Z80 と同じ速度で実行
 					ff_cyc_state	<= CY_ALIGN;
 				end
@@ -426,12 +432,12 @@ module cr800_inst #(
 				//	内部デバイス: ハンドシェイク完了で即終了 (非実装アドレスはタイムアウト)
 				ff_int_timeout	<= ff_int_timeout + 7'd1;
 				if( ff_cyc_write ) begin
-					if( (ff_bus_valid && bus_ready) || (ff_int_timeout == 7'd127 && !ssram_access) ) begin
+					if( (ff_bus_valid && bus_ready) || (ff_int_timeout == 7'd127 && !ssram_access && !w_kanji_io) ) begin
 						ff_wait_n_i		<= 1'b1;
 						ff_cyc_state	<= CY_IDLE;
 					end
 				end
-				else if( bus_rdata_en || (ff_int_timeout == 7'd127 && !ssram_access) ) begin
+				else if( bus_rdata_en || (ff_int_timeout == 7'd127 && !ssram_access && !w_kanji_io) ) begin
 					ff_wait_n_i		<= 1'b1;
 					ff_cyc_state	<= CY_IDLE;
 				end
@@ -737,7 +743,7 @@ module cr800_inst #(
 				if( w_slot_latch ) begin
 					ff_bus_rdata	<= slot_d;
 				end
-				else if( ff_cyc_state == CY_INTERNAL && ff_int_timeout == 7'd127 && !ssram_access ) begin
+				else if( ff_cyc_state == CY_INTERNAL && ff_int_timeout == 7'd127 && !ssram_access && !w_kanji_io ) begin
 					ff_bus_rdata	<= 8'hFF;
 				end
 			end
