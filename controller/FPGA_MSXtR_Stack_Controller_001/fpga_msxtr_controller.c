@@ -199,9 +199,10 @@ static bool run_with_pico_bus( void (*operation)(void) ) {
 
 static void print_local_key_menu( void ) {
 	printf( "Pico keyboard mode. MENU: forward keys to CPU.\r\n" );
-	printf( "1: slot dump  2: SD card  3: CPU debug  4: ROM update\r\n" );
-	printf( "5: ROM dump   6: SSG R14  7: Kanji ROM update\r\n" );
-	printf( "8: CPU RAM dump\r\n" );
+	printf( "1: CPU debug\r\n" );
+	printf( "2: BIOS update\r\n" );
+	printf( "3: ExtROM update\r\n" );
+	printf( "4: KanjiROM update\r\n" );
 }
 
 // ---------------------------------------------------------
@@ -246,14 +247,10 @@ int main(void) {
 			}
 		}
 		else if( !s_keyboard_to_cpu ) {
-			if( key_press( 0, 1 ) ) run_with_pico_bus( dump_slot );
-			else if( key_press( 0, 2 ) ) sdcard_access();
-			else if( key_press( 0, 3 ) ) dump_fpga_debug_signal();
-			else if( key_press( 0, 4 ) ) run_with_pico_bus( write_flashrom_images );
-			else if( key_press( 0, 5 ) ) run_with_pico_bus( dump_flashrom_images );
-			else if( key_press( 0, 6 ) ) run_with_pico_bus( dump_ssg_r14 );
-			else if( key_press( 0, 7 ) ) run_with_pico_bus( write_kanji_rom_image );
-			else if( key_press( 1, 0 ) ) run_with_pico_bus( dump_cpu_ram );
+			if( key_press( 0, 1 ) ) dump_fpga_debug_signal();
+			else if( key_press( 0, 2 ) ) run_with_pico_bus( write_flashrom_images );
+			else if( key_press( 0, 3 ) ) run_with_pico_bus( write_extrom_image );
+			else if( key_press( 0, 4 ) ) run_with_pico_bus( write_kanji_rom_image );
 		}
 		else {
 			if( key_press( 0, 3 ) ) dump_fpga_debug_signal();

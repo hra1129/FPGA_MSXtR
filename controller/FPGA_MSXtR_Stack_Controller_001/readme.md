@@ -16,15 +16,28 @@ MENUキーはkeyboard matrixの転送先だけを切り替える。CPU/Picoの�
 
 - 起動時にMENUを押していなければkeyboard forwardingを有効にする。起動時にMENUを押していればPico-local modeで起動する。
 - 実行中のMENUでkeyboard forwardingとPico-local modeを切り替える。Pico-localへ切り替える際は、FPGAへ全キーreleaseを送る。
-- Pico-local modeでは操作メニューを表示する。1/4/5/6/7/8キーなどMSXバスを使うコマンドは、実行中だけPicoへバス所有権を移し、終了後CPUへ戻す。
-- 2キーのSDカード操作と3キーのSPI debug表示はMSXバスを使わず、所有権を切り替えない。
+- Pico-local modeでは以下の操作メニューを1行1項目で表示する。2/3/4キーの更新処理は、実行中だけPicoへバス所有権を移し、終了後CPUへ戻す。
+- 1キーのCPU debug表示はSPI診断読出しだけを行い、所有権を切り替えない。keyboard forwarding中の3キーdebug表示と7キーVDP log切替は従来どおり。
 - command完了後にCPU所有権へ戻せなかった場合はPico所有を維持し、エラーを表示する。SerialROMが未照合の場合もCPU復帰を拒否する。
+
+```text
+1: CPU debug
+2: BIOS update
+3: ExtROM update
+4: KanjiROM update
+```
+
+## BIOS / ExtROM更新
+
+- 2キー: ROM0 (512KB)だけを消去・更新する。既存と同じく `/bios/msxtr.rom`、`/bios/msx2p.rom`、`/bios/msx2.rom`、`/bios/msx1.rom` の順で使用可能なBIOSを選ぶ。ROM1と漢字SerialROMは変更しない。
+- 3キー: `/bios/extrom.rom` をROM1 (512KB、Pico物理ベース80000h)へ消去・更新する。ROM0と漢字SerialROMは変更しない。
+- FlashROMイメージは1～524288byteに限定し、消去前に存在とサイズを確認する。各byteは書込み後に読戻し値を照合する。短いイメージの残りは消去済みFFhのままになる。
 
 ## RAMダンプ
 
-Pico-local modeで8キーを押すと、C000h～DFFFhの8192byteとE600h～E6FFhの256byteを標準出力へダンプする。先頭にCPUのPCとスロット情報、メモリを16byte/行のアドレス付き16進数で表示する。
+RAMダンプは現在の4項目メニューには割り当てない。既存の `dump_cpu_ram()` はC000h～DFFFhの8192byteとE600h～E6FFhの256byteを標準出力へダンプする。先頭にCPUのPCとスロット情報、メモリを16byte/行のアドレス付き16進数で表示する。
 
-RAMへの書き込みやリセットは行わない。ダンプ終了後もバス所有権はCPUに戻り、keyboard forwarding modeは変化しない。
+RAMへの書き込みやリセットは行わない。呼出し側でPicoバス所有権を取得する必要がある。
 
 DFFFhの色変数とRAM常駐コードに加え、E62Dh・E63Fh・E651hを先頭とする3レコードの判定用データも採取する。WSLでのファームウェアビルド確認済み。実機読出し確認は未実施。
 
@@ -32,11 +45,9 @@ DFFFhの色変数とRAM常駐コードに加え、E62Dh・E63Fh・E651hを先頭
 
 FPGA/Picoの両方を更新する。W25Q32JVSSの先頭256KB (00000h-3FFFFh) だけを使用し、残りの領域は消去・書き込みしない。
 
-Pico-local modeにし、SDカードに正確に262144byteの `/bios/kanji.rom` を置く。7キーまたは4キーのROM更新処理は必要な間だけPicoへバス所有権を移す。
+Pico-local modeにし、SDカードに正確に262144byteの `/bios/kanji.rom` を置く。4キーのROM更新処理は必要な間だけPicoへバス所有権を移す。
 
-- 7キー: 漢字SerialROMだけを消去・更新・全256KB照合する。ROM0/ROM1は変更しない。
-- 4キー: 既存のROM0 BIOS更新に続けて漢字SerialROMを更新・照合する。漢字イメージをROM1へ書く旧処理は廃止。
-- 5キー: ROM0/ROM1とSerialROM先頭256byteをダンプする。
+- 4キー: 漢字SerialROMだけを消去・更新・全256KB照合する。ROM0/ROM1は変更しない。
 - 更新成功後は自動的にCPU所有へ戻る。失敗時はPico所有を維持し、未照合のままCPUへ戻す操作を拒否する。
 
 使用領域の全消去は64KB Block Erase (D8h)を4回実行し、4MB全体のChip Eraseは行わない。
@@ -110,5 +121,5 @@ ASCII8K bank registers are written in the mirrored ranges `6000h-67FFh`, `6800h-
 ASCII16K bank registers use `6000h-67FFh` for `4000h-7FFFh` and `7000h-77FFh` for `8000h-BFFFh`. All banks reset to segment zero; R-Type's special initial bank is not implemented.
 Bank writes are captured by the FPGA and never assert ROM1 CE. Reads assert ROM1 CE only for the selected mapper windows. Pico ROM1 Direct Flash operations keep their separate 20-bit physical address path.
 
-`fpga_set_slot1_rom_mode()` sends command `19h` and waits for FPGA acknowledgement. The SD-card image selection/programming workflow for ROM1 is not assigned to a controller key yet; this feature only changes the mapping mode and reads existing ROM1 contents.
+`fpga_set_slot1_rom_mode()` sends command `19h` and waits for FPGA acknowledgement. Pico-local key 3 programs ROM1 from `/bios/extrom.rom`; the startup DIPSW setting selects how the CPU reads that image. No file-selection browser is provided.
 

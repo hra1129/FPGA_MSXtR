@@ -147,8 +147,8 @@ bool flashrom_check_image( const char *path ) {
 		printf( "f_stat failed: %s (%d)\r\n", path, (int)result );
 		return false;
 	}
-	if( file_info.fsize > FLASHROM_CHIP_SIZE ) {
-		printf( "File too large: %s (%lu bytes)\r\n", path, (unsigned long)file_info.fsize );
+	if( file_info.fsize == 0 || file_info.fsize > FLASHROM_CHIP_SIZE ) {
+		printf( "Invalid image size: %s (%lu bytes)\r\n", path, (unsigned long)file_info.fsize );
 		return false;
 	}
 
@@ -288,7 +288,7 @@ void write_flashrom_images( void ) {
 		return;
 	}
 
-	printf( "FlashROM write start\r\n" );
+	printf( "BIOS update start\r\n" );
 	if( !sdcard_init_and_mount() ) {
 		printf( "Failed: mount the SD card.\r\n" );
 		return;
@@ -317,11 +317,31 @@ void write_flashrom_images( void ) {
 		return;
 	}
 
-	if( !serialrom_write_image( "/bios/kanji.rom" ) ) {
+	printf( "BIOS update complete\r\n" );
+}
+
+void write_extrom_image( void ) {
+	const char *path = "/bios/extrom.rom";
+	if( fpga_get_bus_owner() != BUS_OWNER_PICO ) {
+		printf( "ExtROM update requires Pico ownership\r\n" );
 		return;
 	}
 
-	printf( "FlashROM write complete\r\n" );
+	printf( "ExtROM update start\r\n" );
+	if( !sdcard_init_and_mount() ) {
+		printf( "Failed: mount the SD card.\r\n" );
+		return;
+	}
+	if( !flashrom_check_image( path ) ) {
+		return;
+	}
+	if( !flashrom_chip_erase( FLASHROM_ROM1_BASE, "ROM1" ) ) {
+		return;
+	}
+	if( !flashrom_write_image( path, FLASHROM_ROM1_BASE, "ROM1" ) ) {
+		return;
+	}
+	printf( "ExtROM update complete\r\n" );
 }
 
 // ---------------------------------------------------------

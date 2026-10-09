@@ -41,6 +41,7 @@ void flashrom_read_device_id( void );
 bool flashrom_check_image( const char *path );
 bool flashrom_write_image( const char *path, uint32_t base_address, const char *name );
 void write_flashrom_images( void );
+void write_extrom_image( void );
 void write_kanji_rom_image( void );
 void dump_flashrom_images( void );
 

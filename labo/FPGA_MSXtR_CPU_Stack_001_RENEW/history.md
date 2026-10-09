@@ -2120,3 +2120,18 @@ ROM cache巡回クリア修正後、ユーザーがDOS ROMを復元した構成�
 - `DEFUSR=&H180:A=USR(0)`が正常に完了し、以前報告された再起動様の症状は再現しなかった。
 
 この実機結果はROM cache validのBSRAM安全なクリア修正による改善を支持する。R800の定量benchmark、修正後netlistのゼロ書込み経路の再確認、長時間動作については今回未報告。こちらで追加のRTL変更やGOWIN EDA実行は行っていない。
+
+## 2026-10-10 Pico更新メニューの整理
+
+ユーザーのcommit/push後、Controller_001のPico-localメニューを1行1項目の4項目へ変更した。
+
+- 1: CPU debug。SPI診断のみでバス所有権を切り替えない。
+- 2: BIOS update。既存のBIOS選択優先順を維持し、ROM0だけを消去・更新する。従来の更新末尾にあった漢字SerialROM更新を外した。
+- 3: ExtROM update。SDの `/bios/extrom.rom` をROM1 (Pico物理ベース80000h)へ消去・更新する。既存Flash書込みAPIのROM1 base選択を使用し、ROM0/SerialROMは変更しない。
+- 4: KanjiROM update。既存の `/bios/kanji.rom` 先頭256KB更新と全域照合を維持する。ROM0/ROM1は変更しない。
+
+2/3/4の更新処理は既存の一時Picoバス所有権wrapperを使用する。MENUはkeyboard forwardingだけを切り替え、通常のCPU所有権を維持する。keyboard forwarding中の3キーdebug、7キーVDP log shortcutは変更しない。旧localのslot/SD/ROM dump/SSG/RAM dumpキー割当ては外し、既存API自体は残した。
+
+Flashイメージは消去前に1～524288byteのサイズを確認する。各byteの書込み後readback照合は既存処理を使用する。READMEに新メニュー、更新先、ExtROMファイル名を反映した。
+
+WSL buildで`make -j`成功。エディタはmainファイルでPico SDK includePath未解決を報告するが、実コンパイル/リンクは成功している。実機の新メニュー操作・ROM1書込み確認は未実施。FPGA RTLとGOWIN設定には変更なし。
