@@ -1997,3 +1997,126 @@ status #2のCE待ちは有力だが、このroutineには他のcallerもあり�
 - ROM1をSLOT#1のメガROMとして使うモードは未実装のまま。現在の漢字描画問題とは別の次作業として残す。
 
 今回は記録の追記だけを行い、追加テスト・コード変更・commit/pushは行わず終了する。
+
+## 2026-10-09 SLOT#1 ASCII8K/ASCII16K mapper
+
+ユーザー合意のDIPSW仕様に従い、ROM1 FlashをSLOT#1へASCIIメガROMとして割り当てる機能を実装した。
+R-Type専用ASCII16K初期bank(0Fh)は対象外とし、全bank registerは0でresetする。
+
+- Pico GPIOの起動時DIPSW低2bitをSPI command 19hでCPU FPGAへ送る。`00/10`は物理カートリッジ、`01`はASCII8K、`11`はASCII16K。設定前にPico所有へ切り替え、MSX reset解除前に設定を完了する。
+- `msx_slot`は物理Slot 1 modeでは従来どおり`/SLTSL1`とpage別CSを出力。ASCII modeでは物理`/SLTSL1`/CSを非アサートし、選択read時だけROM1 CEをアサートする。
+- ASCII8Kは4レジスタ(6000h/6800h/7000h/7800h、各0x800-byte mirror)を使用し、4000h/6000h/8000h/A000h各8KB windowをbank[5:0]で選ぶ。
+- ASCII16Kは2レジスタ(6000h/7000h、各0x800-byte mirror)を使用し、4000h/8000h各16KB windowをbank[4:0]で選ぶ。
+- bank writeではROM1 CEを出さず、外部スロットのdata directionも物理read方向へ切り替えない。Picoの20bit Direct Flash ROM0/ROM1選択は独立経路として維持。
+- `msx_slot/test_001`: ASCII8K 4 bank write/window mapping、ASCII16K 2 bank mapping、physical SLOT#1 isolation、mode-disabled fallback、Pico ROM1 Direct Flashを含めPASS=110/FAIL=0。既存port warning 3件。
+- SPI `test_002`: command 19hで00/01/10/11を設定し、bit0=0のmode10が物理slot modeへ正規化されること、bus accessなし、INTR完了を確認。62 PASS/0 FAIL。既存port warning 10件。
+- system `test_005/test_006`: bus safetyおよび10回BIOS CPU切替がPASS。Controller_001 WSL `make -j`も成功。
+- Gowin合成・PnR・bitstream生成完了。現行ユーザー調整済み条件・SDCを維持し、setup/hold各25 pathで違反0。最悪setup +0.293ns、最悪hold +0.193ns。Logic 53%、register 24%、BSRAM 30/56 (54%)、latch 0。
+
+ROM1 Flashを読み出すmapper経路のみ追加。Controller_001のSDイメージ選択・ROM1 erase/program/verify操作は未実装であり、書き込みkey/file pathも未決定。実機でのASCII8/ASCII16ゲーム起動は未確認。ROM1 image provisioningを追加する場合はユーザーとUI/file conventionを決めてから行う。
+
+### 今朝の作業終了・帰宅後の予定
+
+ここで今朝の作業を中断する。SLOT#1 ASCII8K/ASCII16Kのモード設定・ROM1 read mapper実装、SPI/slot/systemテスト、Picoビルド、PnR確認まで完了した。実機確認とROM1へのゲームイメージ書き込みは未実施。
+
+帰宅後はPico側UIを整理し、ROM1イメージの選択、erase/program、verifyの操作を追加する。イメージのファイル名・配置と操作キーは、そのUI整理時に決める。漢字SerialROM更新機能とROM0 BIOS更新の既存動作を壊さないこと。
+
+## 2026-10-09 夜 Keyboard forwardingとバス所有権の分離
+
+ユーザー要望により、MENUでCPU/Picoのバス所有権をトグルする動作を廃止し、keyboard matrixの転送先だけを切り替える構成に変更した。通常バス所有者はCPUで、PicoのMSX memory/I/O操作中だけ一時的にPicoへ切り替える。
+
+- 起動時はMENUを押していない場合keyboard forwardingを有効、MENU押下中はPico-local modeで起動し、MENU releaseを待って操作メニューを表示する。
+- 実行中MENUはforwarding/localを切り替え、local移行時はFPGAへall-released matrixを送る。forwarding開始を要求したMENU keyは物理releaseまでCPUへ送らない。
+- bus-dependent command (slot/RAM dump、ROM read/write、Kanji update、SSG I/O)を`run_with_pico_bus()`で包み、必要な場合だけPico所有へ移し、完了後CPUへ戻す。SD card access、SPI debug read、CPU所有中のVDP loggerはowner切替なし。
+- ROM update途中などでSerialROM verify guardがCPU復帰を拒否した場合、Pico ownerを維持し、UIで失敗を報告する。
+- controller READMEを新しいMENU/keyboard mode/一時ownerモデルへ更新。
+
+### SP latch debug機能の削除
+
+Z80/R800 SPをBIOS PCで記録するtopの2個のcapture latch、SPI payloadへのキャプチャ値、SPI 14h clear command、Pico debug struct/API/UIを削除した。SPI 0Ahは既存の33byte長と末尾A5hを維持し、byte16-19を0固定のreserved領域とした。
+test006からSP latch/clear前提のassertionを削除し、実CPUのSP/全レジスタ復元、SerialSRAM上のBIOS stack、stack cache refill検査は残す。生のコアSP probeはラッチされず、test observationにのみ残置。
+
+### 検証
+
+- Pico Controller_001 WSL `make -j`: 成功。
+- `test_005`: top slot/bus safetyおよびperformance snapshot PASS。
+- `test_006`: 10回の交互BIOS CPU切替、same-CPU call、全register復元、debug SPI 33byte/A5、selector request re-armがPASS。既存未接続port warning 4件。
+- `cr800/test_001`: SRAM cache/burst、ROM cache/fetch、MULUB/MULUW、互換差分全test PASS。
+- `cz80/test_002`: CZ80/CR800外部memory/I/O write timingとrefresh checks PASS。
+- SPI `test_002`: 62 PASS / 0 FAIL (SP clear command削除後も通常command維持)。既存未接続port warning 9件。
+- Kanji SerialROM一連の11 regression casesもPASS。エディタ診断に新規エラーなし。
+
+FPGA RTLとSPI payloadを変更したためPnRは未実施。CPU/Pico ownership UIの実機操作確認も未実施。明日は同一SDC・現在の合成条件でPnRを行い、menu切替ではCPU ownerが変わらず、local command中のみPico ownerになることを実機確認する。ROM1 game-image write UIは引き続き未実装。
+
+## 2026-10-09 夜 実機R800停止ログのシミュレーション追跡
+
+実機ログでR800のPCがCDDxh付近に留まり、SSRAM cache hit数とbus addressが変化していた。Picoへのowner誤切替やR800内部WAITが原因かを切り分けるため、test_004の実BIOS起動TBにR800 owner中の状態traceを追加した。RTL、合成条件、SDCは変更していない。
+
+- traceはowner、CPU mode、R800 PC/bus address、run request/ack、`ff_wait_n_i`、cycle state/engine T-state、internal timeout、Kanji判定、bus valid/ready/rdata_en、外部slot WAIT、SSRAM cache hit/miss/fill-waitを8 clk42m周期で出力する。
+- test_004は実`msxtr.rom`、実`kanji.rom`とsuper_cobra cartridge modelを接続し、PicoからCPUへownerを移してMSX reset解除後50ms走行する。外部INTは非アサート、slot WAITはHigh固定。BASIC起動後の実機操作全体を再現するTBではない。
+- 隔離ModelSim libraryでcompile/simulation成功。Errors 0、既存port warnings 4件。生成library/trace artifactsは削除済み。
+- R800 owner中に`run/req/ack=1`でPCは04B3h→04B7h→04B9hと進行。PC=04B9hの間にbus addressは04E0h～04E7hを進み、最後に内部WAIT解除後R800→Z80へownerが戻った。Kanji判定は0、slot WAITはHigh、ownerはR800実行区間中Picoへ移っていない。
+- 04B7hの`ED B3`はBIOSのOTIR命令であり、04B9hでPCを保持して反復I/O bus cycleを出す観測と整合する。固定PCだけでは停止と判断できない。
+- 実機ログのCDDxh停止は本シミュレーションで再現しなかった。test_004では初期BIOSのR800区間までしか確認できず、実機の後続ソフトウェア、実デバイス応答、割り込み/電気的タイミングのいずれが異なるかは未特定。`R800 perf STOP`はF6h/F7h計測区間の状態であり、CPU停止判定には使えない。
+
+追跡用変更は`src/test_004/tb.sv`のみ。実機CDDxh停止の原因確定と実VDPを含む表示確認は未実施。
+
+## 2026-10-10 ROM1 mapperとR800 ROM0 cache経路の確認
+
+ユーザー指定により、タイミング収束・bitstream実装状態とBIOS書込み内容は今回の疑いから外し、ROM1 mapper追加がR800のROM0アクセスへ及ぼす論理的影響を調査した。
+
+- 現行差分でROM cache本体とcache RAMに変更なし。R800 wrapperはSP観測端子の整形のみで、lookup/補充/無効化/WAIT解除は変更なし。
+- msx_slot既存TBへR800専用4,608ケースを追加。全ROM1 mode、SLOT#0/#3の副スロット/ページ/DOS bank、境界アドレス、ROM1からROM0/RAMへの遷移、refresh解除を検査。全体PASS=111/FAIL=0、errors 0、既存warnings 3件。
+- 既存ROM cache bank tag検査と70ns ROM fetch検査を再実行し、両方PASS、errors/warnings 0。
+
+### test_003 BootROMによるROMタイミング波形検査
+
+`run_rom_timing.bat`と`+rom_timing`専用ケースを追加。通常のtest_003は維持し、専用ケースだけ短いtest-only BootROMからZ80→R800切替後、ROM0の4000hへジャンプする。CPU内部状態のforceは行わない。モデル内の検査データ以外の実機BIOS内容は変更しない。
+
+- 実CPU top、msx_slot、ROM cacheを接続。ROMモデルはdata/enable delay 70ns、output release 20ns。ROM0 6000h/6001h、ROM1 8000h/8001h、ROM0 6002hの順に比較readを実行。
+- ROM0の各fill byteの19bit物理アドレス・データ・CE、cache-hitデータ、read中アドレス安定、RD Low幅をassert。ROM1 read結果はCPU自身のCP/JPで照合する。
+- ASCII8K/ASCII16K両ケースPASS。それぞれROM0外部byte read=80、ROM1 read=2、ROM0 hit=61、検査済みfill byte=80。ROM0 RD Lowは6 clk42m (約140ns)、ROM1は29 clk42m (約675ns)。70nsはROMデータ確定遅延であり、RDパルス幅ではない。
+- ROM1から戻ったROM0 6002hはcache hitでA7hを取得。両modeともROM0補充06000h/A5hは457.976us、6001h hit/A4hは462.096us、6002h hit/A7hは478.462usで観測した。
+- compile errors/warnings 0。simulation errors 0、既存未接続port warning 4件。通常test_003もPASS=95/FAIL=0。
+- 波形はtest_003内のrom_timing_1.wlf/rom_timing_3.wlfへ保存。`vsim -view rom_timing_1.wlf -do wave_rom_timing.do`で表示する。GUIで読込みエラーなしを確認。readme.mdに実行手順と対象範囲を記載した。
+
+今回の焦点はROM0 cache miss/hitとROM1低速readの接続検証。全ROM0 bank、ROM1 bank write、SerialSRAM read/writeや実機CDDxh暴走は未検証・未再現。実機RTL、合成条件、SDCには変更なし。
+
+## 2026-10-10 ROM cache validのBSRAM安全な巡回クリア
+
+ユーザーの起動シーケンス説明を受け、04B9hを異常な再起動の証拠とした見立てを訂正した。正しい流れはZ80起動→04B7hでR800切替→起動ロゴ→04B9hでZ80復帰→DOS初期化でR800切替→BASIC。DOS ROMをFFhで消すと最後のR800切替がなく、BASICはZ80で起動する。
+
+実機ではDOSなしBASICからA=1を明示するラッパー経由のCPU切替でも再起動様の動作が報告された。以前のRAM cache valid初期化問題を参考に、既存Gowin成果物を読み取り確認した。GOWIN EDAは実行していない。
+
+- 10月10日06:53生成のnetlistではRAM/ROM cacheの両ff_validがSDPB BSRAMへ抽出されていた。
+- RAM cacheには64行巡回クリアのrow FF、アドレスmux、ゼロdata、write enableが残っていた。
+- ROM cacheのvalid BSRAMは1bit write/4bit readで、DI[0]=VCC固定、書込み先は補充対象set/wayのみ。reset/invalidate時のゼロ書込み経路がなく、RTLの全256 set一括クリアと不一致だった。
+- GW5A SDPBのRESETは出力レジスタのみを消し、memory contentsは消さない。RTL simulationのPASSだけではこの合成差異を検出できない。
+
+### 修正
+
+- r800_rom_cacheの一括クリアを廃止。reset時とinvalidateの立上りで256 setを1 set/clockずつ巡回し、valid全4wayとPLRUをゼロにする。
+- validのfill更新はlookup時の4bit valid maskにvictim bitを加えた全4bit書込みとし、clear/fillを同じalwaysの排他的操作にした。配列へのresetループは残さない。
+- cache_readyを追加。clear中およびinvalidate保持中はhit/lookup/fillを抑止する。invalidate保持で巡回を繰り返さず、次の立上りで再受付する。
+- R800 wrapperは実停止状態の!ff_runでinvalidateを発動させる。従来の!run_reqでは停止要求中の未完了cycleでも無効化し得たため、要求発行時ではなく停止完了に合わせた。
+- ROM0 readはclearが終わるまでCY_CLASSIFY2に留まり、WAITを維持する。SerialSRAM cacheの64clock clearや他のアクセス経路は変更しない。
+
+### 検証と次の確認
+
+- ROM cache TBはposedge刺激へ統一。全valid/PLRUを汚した状態から全256行/256clock clearを確認し、保持invalidateで再巡回しないこと、19bit bank非alias、fill/hit/invalidateを検査。PASS、errors/warnings 0。
+- 70ns ROM fetchを含むcr800/test_001の全9 test topsがPASS。RAM cacheの既存optional-port warnings 2件を除きerrors/warnings 0。
+- test_006: BIOS交互CPU切替10回、同CPU指定1回、全レジスタ復元、debug SPI、selector要求再受付がPASS。
+- test_006 +cache_sp_reuse: FFFDh stack-line補充2回とSP F054h→F078h復元がPASS。
+- test_003 ROM timing: ASCII8K/16K両方PASS。ROM0 6clock/ROM1 29clock、fill 80bytes、hit 61回を維持。統合TBの既存warnings 4件、errors 0。
+
+修正後の合成・PnR・実機確認は未実施。ユーザー側で再合成後、ROM valid BSRAMのwrite dataにゼロ経路があり、clear counterが全行を巡回し、その間lookupが抑止されることを生成netlistで確認する。ROMが不変なら保持lineが必ず誤データになるとは限らず、起動暴走/ロゴ遅延との因果関係は実機での改善確認まで未確定。合成条件・SDCは変更していない。
+
+### 実機確認: DOSあり起動・ロゴ・CPU切替の復帰
+
+ROM cache巡回クリア修正後、ユーザーがDOS ROMを復元した構成で実機動作を確認した。
+
+- MSX BASIC version 4.0 / Disk BASIC version 2.01の表示とOk promptまで到達した。DOS初期化中にFF00h付近で反復していた症状は、今回の起動では発生していない。
+- 起動ロゴは2ライン単位のスクロールから、本来のライン単位スクロールへ戻った。
+- `DEFUSR=&H180:A=USR(0)`が正常に完了し、以前報告された再起動様の症状は再現しなかった。
+
+この実機結果はROM cache validのBSRAM安全なクリア修正による改善を支持する。R800の定量benchmark、修正後netlistのゼロ書込み経路の再確認、長時間動作については今回未報告。こちらで追加のRTL変更やGOWIN EDA実行は行っていない。

@@ -1,0 +1,19 @@
+# vsim -c -lib work_rom_clear -t 1ps -l tb_cache_ssram_burst_rom_clear.log tb_cache_ssram_burst -do "run -all; quit -f" 
+# Start time: 07:46:07 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom_clear.tb_cache_ssram_burst
+# Loading work_rom_clear.r800_cache
+# Loading work_rom_clear.ssram
+# Loading work_rom_clear.ssram_test_model
+# Loading work_rom_clear.r800_cache_ram
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_cache'.  Expected 26, found 25.
+#    Time: 0 ps  Iteration: 0  Instance: /tb_cache_ssram_burst/u_cache File: tb.sv Line: 360
+# ** Warning: (vsim-3722) tb.sv(360): [TFMPC] - Missing connection for port 'cache_ready'.
+# run -all
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] Read complete: addr=0x01008 data=0x00
+# PASS: R800 cache miss fills one burst; following read hits without SRAM transaction
+# ** Note: $finish    : tb.sv(416)
+#    Time: 77418640 ps  Iteration: 0  Instance: /tb_cache_ssram_burst
+# End time: 07:46:07 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 2

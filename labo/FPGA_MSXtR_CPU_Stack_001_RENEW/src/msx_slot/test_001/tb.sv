@@ -105,6 +105,7 @@ module tb;
 	reg		[7:0]	slot_primary;
 	reg		[7:0]	slot_secondary0;
 	reg		[7:0]	slot_secondary3;
+	reg		[1:0]	slot1_rom_mode;
 	reg		[1:0]	dos_bank;
 	reg				jis1_kanji_en;
 
@@ -197,6 +198,7 @@ module tb;
 		.slot_secondary0	( slot_secondary0	),
 		.slot_secondary3	( slot_secondary3	),
 		.dos_bank			( dos_bank			),
+		.slot1_rom_mode	( slot1_rom_mode	),
 		.cpu_rom0_cs			( cpu_rom0_cs		)
 	);
 
@@ -241,6 +243,98 @@ module tb;
 
 	// ---------------------------------------------------------
 	//	Main test scenario
+	task automatic check_r800_rom0_isolation;
+		integer mode_index;
+		integer primary_index;
+		integer secondary_index;
+		integer page_index;
+		integer bank_index;
+		integer offset_index;
+		integer checked_cycles;
+		reg [13:0] test_offset;
+		reg [18:0] expected_address;
+		reg expected_rom0;
+		begin
+			checked_cycles = 0;
+			sel = 2'b01;
+			r800_bus_io = 1'b0;
+			r800_bus_write = 1'b0;
+			r800_iorq_n = 1'b1;
+			r800_rd_n = 1'b0;
+			r800_wr_n = 1'b1;
+			r800_slot_d_oe = 1'b0;
+			r800_rfsh_n = 1'b1;
+			for( mode_index = 0; mode_index < 4; mode_index = mode_index + 1 ) begin
+				for( primary_index = 0; primary_index < 2; primary_index = primary_index + 1 ) begin
+					for( secondary_index = 0; secondary_index < 4; secondary_index = secondary_index + 1 ) begin
+						for( page_index = 0; page_index < 4; page_index = page_index + 1 ) begin
+							for( bank_index = 0; bank_index < 4; bank_index = bank_index + 1 ) begin
+								for( offset_index = 0; offset_index < 9; offset_index = offset_index + 1 ) begin
+									case( offset_index )
+									0: test_offset = 14'h0000;
+									1: test_offset = 14'h0001;
+									2: test_offset = 14'h3FF0;
+									3: test_offset = 14'h3FF1;
+									4: test_offset = 14'h3FFB;
+									5: test_offset = 14'h3FFC;
+									6: test_offset = 14'h3FFF;
+									7: test_offset = 14'h0DD6;
+									8: test_offset = 14'h3E26;
+									endcase
+									@( posedge clk ); #1;
+									slot1_rom_mode = mode_index;
+									slot_primary = 8'h55;
+									r800_address = 16'h6000;
+									r800_merq_n = 1'b0;
+									@( posedge clk ); #1;
+									slot_primary = primary_index == 0 ? 8'h00 : 8'hFF;
+									slot_secondary0 = secondary_index * 8'h55;
+									slot_secondary3 = secondary_index * 8'h55;
+									dos_bank = bank_index;
+									r800_address = {page_index[1:0], test_offset};
+									r800_merq_n = 1'b1;
+									expected_address = {3'd0, r800_address};
+									expected_rom0 = 1'b0;
+									if( primary_index == 0 && page_index < 2 ) begin
+										expected_address = {2'd0, secondary_index[1:0], page_index[0], test_offset};
+										expected_rom0 = 1'b1;
+									end
+									else if( primary_index == 1 && secondary_index == 1 ) begin
+										expected_address = {3'd2, r800_address};
+										expected_rom0 = 1'b1;
+									end
+									else if( primary_index == 1 && secondary_index == 2 && page_index == 1 ) begin
+										expected_address = {3'd3, bank_index[1:0], test_offset};
+										expected_rom0 = !(test_offset >= 14'h3FF1 && test_offset <= 14'h3FFB);
+									end
+									@( posedge clk ); #1;
+									if( slot_a !== expected_address || cpu_rom0_cs !== expected_rom0 ||
+										u_msx_slot.cpu_flash_cs !== expected_rom0 || slot_rom0_ce_n !== 1'b1 || slot_rom1_ce_n !== 1'b1 ) begin
+										$fatal( 1, "R800 classify mismatch mode=%0d primary=%0d secondary=%0d bank=%0d addr=%04h physical=%05h expected=%05h rom0=%b expected_rom0=%b", mode_index, primary_index == 0 ? 0 : 3, secondary_index, bank_index, r800_address, slot_a, expected_address, cpu_rom0_cs, expected_rom0 );
+									end
+									r800_merq_n = 1'b0;
+									#1;
+									if( slot_rom0_ce_n !== !expected_rom0 || slot_rom1_ce_n !== 1'b1 || slot_data_dir !== 1'b1 ) begin
+										$fatal( 1, "R800 read selection mismatch mode=%0d addr=%04h", mode_index, r800_address );
+									end
+									r800_rfsh_n = 1'b0;
+									@( posedge clk ); #1;
+									if( cpu_rom0_cs !== 1'b0 || u_msx_slot.cpu_flash_cs !== 1'b0 || {slot_rom0_ce_n, slot_rom1_ce_n} !== 2'b11 ) begin
+										$fatal( 1, "R800 refresh selection mismatch mode=%0d addr=%04h", mode_index, r800_address );
+									end
+									r800_rfsh_n = 1'b1;
+									checked_cycles = checked_cycles + 1;
+								end
+							end
+						end
+					end
+				end
+			end
+			$display( "[PASS] R800 ROM0/RAM isolation: %0d cases across all ROM1 modes", checked_cycles );
+			pass_count = pass_count + 1;
+		end
+	endtask
+
 	// ---------------------------------------------------------
 	initial begin
 		test_no		= 0;
@@ -264,6 +358,7 @@ module tb;
 		slot_secondary0	= 8'h00;
 		slot_secondary3	= 8'h00;
 		dos_bank		= 2'd0;
+		slot1_rom_mode	= 2'b00;
 
 		z80_m1_n		= 1'b1;
 		z80_slot_d_oe	= 1'b0;
@@ -572,6 +667,81 @@ module tb;
 		check( slot_sltsl2_n == 1'b0, "Slot 2 page#2 asserts slot_sltsl2_n" );
 		check( slot_cs2_n == 1'b0 && slot_cs12_n == 1'b0, "Slot 2 page#2 asserts cs2_n and cs12_n" );
 
+		// SLOT#1 virtual ASCII8K mode disables the physical cartridge and exposes four 8KB windows.
+		slot_primary = 8'h55;
+		slot1_rom_mode = 2'b01;
+		z80_bus_write = 1'b0;
+		z80_merq_n = 1'b0;
+		z80_rd_n = 1'b0;
+		z80_address = 16'h4000;
+		@( posedge clk ); #1;
+		check( slot_sltsl1_n == 1'b1 && slot_cs1_n == 1'b1 && slot_cs2_n == 1'b1 && slot_cs12_n == 1'b1, "ASCII8K mode disables physical SLOT#1" );
+		check( slot_rom1_ce_n == 1'b0 && slot_a == 19'h00000, "ASCII8K bank0 maps at 4000h" );
+		check( slot_data_dir == 1'b1, "ASCII8K read keeps physical cartridge transceiver isolated" );
+		z80_bus_write = 1'b1;
+		z80_wr_n = 1'b0;
+		z80_rd_n = 1'b1;
+		z80_wdata = 8'd1;
+		z80_address = 16'h6000;
+		@( posedge clk ); #1;
+		check( u_msx_slot.ff_ascii8_bank0 == 8'd1 && slot_rom1_ce_n == 1'b1 && slot_sltsl1_n == 1'b1, "ASCII8K 6000h bank write does not select ROM or physical slot" );
+		z80_wdata = 8'd2;
+		z80_address = 16'h6800;
+		@( posedge clk ); #1;
+		check( u_msx_slot.ff_ascii8_bank1 == 8'd2, "ASCII8K 6800h selects bank register 1" );
+		z80_wdata = 8'd3;
+		z80_address = 16'h7000;
+		@( posedge clk ); #1;
+		check( u_msx_slot.ff_ascii8_bank2 == 8'd3, "ASCII8K 7000h selects bank register 2" );
+		z80_wdata = 8'd4;
+		z80_address = 16'h7800;
+		@( posedge clk ); #1;
+		check( u_msx_slot.ff_ascii8_bank3 == 8'd4, "ASCII8K 7800h selects bank register 3" );
+		z80_bus_write = 1'b0;
+		z80_wr_n = 1'b1;
+		z80_rd_n = 1'b0;
+		z80_address = 16'h4001;
+		@( posedge clk ); #1;
+		check( slot_rom1_ce_n == 1'b0 && slot_a == 19'h02001, "ASCII8K page0 uses 6000h bank register" );
+		z80_address = 16'h6003;
+		@( posedge clk ); #1;
+		check( slot_a == 19'h04003, "ASCII8K page1 uses 6800h bank register" );
+		z80_address = 16'h8004;
+		@( posedge clk ); #1;
+		check( slot_a == 19'h06004, "ASCII8K page2 uses 7000h bank register" );
+		z80_address = 16'hA005;
+		@( posedge clk ); #1;
+		check( slot_a == 19'h08005, "ASCII8K page3 uses 7800h bank register" );
+
+		// ASCII16K mode has two 16KB windows and the specified 6000h/7000h bank ports.
+		slot1_rom_mode = 2'b11;
+		z80_bus_write = 1'b1;
+		z80_wr_n = 1'b0;
+		z80_rd_n = 1'b1;
+		z80_wdata = 8'd5;
+		z80_address = 16'h6000;
+		@( posedge clk ); #1;
+		check( u_msx_slot.ff_ascii16_bank0 == 8'd5 && slot_rom1_ce_n == 1'b1, "ASCII16K 6000h selects bank register 0 without reading" );
+		z80_wdata = 8'd6;
+		z80_address = 16'h7000;
+		@( posedge clk ); #1;
+		check( u_msx_slot.ff_ascii16_bank1 == 8'd6, "ASCII16K 7000h selects bank register 1" );
+		z80_bus_write = 1'b0;
+		z80_wr_n = 1'b1;
+		z80_rd_n = 1'b0;
+		z80_address = 16'h4001;
+		@( posedge clk ); #1;
+		check( slot_rom1_ce_n == 1'b0 && slot_a == 19'h14001, "ASCII16K lower window uses 6000h bank register" );
+		z80_address = 16'h8003;
+		@( posedge clk ); #1;
+		check( slot_a == 19'h18003, "ASCII16K upper window uses 7000h bank register" );
+
+		// DIPSW 0010 has ROM disabled because DIPSW[0] controls ROM1 enable.
+		slot1_rom_mode = 2'b10;
+		z80_address = 16'h4000;
+		@( posedge clk ); #1;
+		check( slot_sltsl1_n == 1'b0 && slot_rom1_ce_n == 1'b1, "DIPSW[0]=0 preserves physical SLOT#1" );
+
 		// ================================================================
 		//	Test 7: Primary Slot 3 - Internal ROMs & DOS2 Bank Switch
 		// ================================================================
@@ -648,6 +818,7 @@ module tb;
 
 		// ROM0 access by Pico (address[19] = 0)
 		sel = 2'b10;
+		slot1_rom_mode = 2'b11;
 		slot_primary = 8'h55;	// All Slot 1: direct access must ignore normal slot selection
 		pico_rd_n = 1'b0;
 		pico_merq_n = 1'b1;
@@ -718,6 +889,7 @@ module tb;
 		check( slot_rom1_ce_n == 1'b1 && slot_rom0_ce_n == 1'b1, "CPU Kanji read is isolated from external ROMs" );
 		z80_iorq_n = 1'b1;
 		z80_bus_io = 1'b0;
+		check_r800_rom0_isolation();
 
 		// ================================================================
 		//	Summary

@@ -1,0 +1,288 @@
+# vsim -c -lib work_rom_timing -t 1ps -l rom_timing_3.log -wlf rom_timing_3.wlf tb "+rom_timing" "+slot1_mode=3" -do "run_rom_timing.do" 
+# Start time: 07:40:23 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom_timing.tb
+# Loading work_rom_timing.fpga_msxtr_cpu_stack
+# Loading work_rom_timing.Gowin_PLL
+# Loading work_rom_timing.vdp_logger
+# Loading work_rom_timing.vdp_logger_sram
+# Loading work_rom_timing.ip_spi
+# Loading work_rom_timing.spi
+# Loading work_rom_timing.cmcu_inst
+# Loading work_rom_timing.cz80_inst
+# Loading work_rom_timing.cz80
+# Loading work_rom_timing.cz80_mcode
+# Loading work_rom_timing.cz80_alu
+# Loading work_rom_timing.cz80_registers
+# Loading work_rom_timing.cr800_inst
+# Loading work_rom_timing.r800_rom_cache
+# Loading work_rom_timing.cr800
+# Loading work_rom_timing.cr800_mcode
+# Loading work_rom_timing.cr800_alu
+# Loading work_rom_timing.cr800_registers
+# Loading work_rom_timing.s2026
+# Loading work_rom_timing.s2026_cpu_select
+# Loading work_rom_timing.s2026_register
+# Loading work_rom_timing.msx_bus_mux
+# Loading work_rom_timing.msx_slot
+# Loading work_rom_timing.address_decode
+# Loading work_rom_timing.dos_mapper
+# Loading work_rom_timing.fdc8566
+# Loading work_rom_timing.secondary_slot
+# Loading work_rom_timing.ip_kanji_rom
+# Loading work_rom_timing.bootrom
+# Loading work_rom_timing.rom
+# Loading work_rom_timing.ip_ram
+# Loading work_rom_timing.SP
+# Loading work_rom_timing.ppi
+# Loading work_rom_timing.memory_mapper
+# Loading work_rom_timing.r800_cache
+# Loading work_rom_timing.ssram
+# Loading work_rom_timing.rtc
+# Loading work_rom_timing.pause_led
+# Loading work_rom_timing.system_flag
+# Loading work_rom_timing.dummy_ssg
+# Loading work_rom_timing.ssram_test_model
+# Loading work_rom_timing.flashrom_test_model
+# Loading work_rom_timing.r800_cache_ram
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_controller_spi'.  Expected 53, found 52.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_dut/u_controller_spi File: ../FPGA_MSXtR_CPU_Stack.v Line: 577
+# ** Warning: (vsim-3722) ../FPGA_MSXtR_CPU_Stack.v(577): [TFMPC] - Missing connection for port 'vdp_log_read_a'.
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_z80'.  Expected 27, found 26.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_dut/u_z80 File: ../FPGA_MSXtR_CPU_Stack.v Line: 673
+# ** Warning: (vsim-3722) ../FPGA_MSXtR_CPU_Stack.v(673): [TFMPC] - Missing connection for port 'debug_sp'.
+# do run_rom_timing.do
+# [FlashROM] loaded ..\..\..\..\controller\bios_image_tool\msxtr.rom (524288 bytes)
+# [FlashROM] loaded ..\..\..\..\controller\bios_image_tool\kanji.rom (262144 bytes)
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [ROM0 FILL] time=453064000 pc=4000 physical=04000 index=0 data=3e
+# [ROM TIMING] rom=0 physical=04000 rd_low_clocks=6
+# [ROM0 FILL] time=453250000 pc=4000 physical=04001 index=1 data=00
+# [ROM TIMING] rom=0 physical=04001 rd_low_clocks=6
+# [ROM0 FILL] time=453436000 pc=4000 physical=04002 index=2 data=d3
+# [ROM TIMING] rom=0 physical=04002 rd_low_clocks=6
+# [ROM0 FILL] time=453622000 pc=4000 physical=04003 index=3 data=a8
+# [ROM TIMING] rom=0 physical=04003 rd_low_clocks=6
+# [ROM0 FILL] time=453809000 pc=4000 physical=04004 index=4 data=3e
+# [ROM TIMING] rom=0 physical=04004 rd_low_clocks=6
+# [ROM0 FILL] time=453995000 pc=4000 physical=04005 index=5 data=01
+# [ROM TIMING] rom=0 physical=04005 rd_low_clocks=6
+# [ROM0 FILL] time=454181000 pc=4000 physical=04006 index=6 data=d3
+# [ROM TIMING] rom=0 physical=04006 rd_low_clocks=6
+# [ROM0 FILL] time=454367000 pc=4000 physical=04007 index=7 data=f4
+# [ROM TIMING] rom=0 physical=04007 rd_low_clocks=6
+# [ROM0 HIT] time=454530000 physical=04001 data=00
+# [ROM0 HIT] time=454670000 physical=04002 data=d3
+# [ROM0 HIT] time=454833000 physical=04003 data=a8
+# [ROM0 HIT] time=455112000 physical=04004 data=3e
+# [ROM0 HIT] time=455275000 physical=04005 data=01
+# [ROM0 HIT] time=455415000 physical=04006 data=d3
+# [ROM0 HIT] time=455578000 physical=04007 data=f4
+# [ROM0 FILL] time=456044000 pc=4008 physical=04008 index=0 data=3a
+# [ROM TIMING] rom=0 physical=04008 rd_low_clocks=6
+# [ROM0 FILL] time=456230000 pc=4008 physical=04009 index=1 data=00
+# [ROM TIMING] rom=0 physical=04009 rd_low_clocks=6
+# [ROM0 FILL] time=456416000 pc=4008 physical=0400a index=2 data=60
+# [ROM TIMING] rom=0 physical=0400a rd_low_clocks=6
+# [ROM0 FILL] time=456602000 pc=4008 physical=0400b index=3 data=fe
+# [ROM TIMING] rom=0 physical=0400b rd_low_clocks=6
+# [ROM0 FILL] time=456789000 pc=4008 physical=0400c index=4 data=a5
+# [ROM TIMING] rom=0 physical=0400c rd_low_clocks=6
+# [ROM0 FILL] time=456975000 pc=4008 physical=0400d index=5 data=c2
+# [ROM TIMING] rom=0 physical=0400d rd_low_clocks=6
+# [ROM0 FILL] time=457161000 pc=4008 physical=0400e index=6 data=00
+# [ROM TIMING] rom=0 physical=0400e rd_low_clocks=6
+# [ROM0 FILL] time=457347000 pc=4008 physical=0400f index=7 data=41
+# [ROM TIMING] rom=0 physical=0400f rd_low_clocks=6
+# [ROM0 HIT] time=457510000 physical=04009 data=00
+# [ROM0 HIT] time=457650000 physical=0400a data=60
+# [ROM0 FILL] time=457976000 pc=400b physical=06000 index=0 data=a5
+# [ROM TIMING] rom=0 physical=06000 rd_low_clocks=6
+# [ROM0 FILL] time=458162000 pc=400b physical=06001 index=1 data=a4
+# [ROM TIMING] rom=0 physical=06001 rd_low_clocks=6
+# [ROM0 FILL] time=458348000 pc=400b physical=06002 index=2 data=a7
+# [ROM TIMING] rom=0 physical=06002 rd_low_clocks=6
+# [ROM0 FILL] time=458535000 pc=400b physical=06003 index=3 data=a6
+# [ROM TIMING] rom=0 physical=06003 rd_low_clocks=6
+# [ROM0 FILL] time=458721000 pc=400b physical=06004 index=4 data=a1
+# [ROM TIMING] rom=0 physical=06004 rd_low_clocks=6
+# [ROM0 FILL] time=458907000 pc=400b physical=06005 index=5 data=a0
+# [ROM TIMING] rom=0 physical=06005 rd_low_clocks=6
+# [ROM0 FILL] time=459093000 pc=400b physical=06006 index=6 data=a3
+# [ROM TIMING] rom=0 physical=06006 rd_low_clocks=6
+# [ROM0 FILL] time=459279000 pc=400b physical=06007 index=7 data=a2
+# [ROM TIMING] rom=0 physical=06007 rd_low_clocks=6
+# [ROM0 HIT] time=459419000 physical=0400b data=fe
+# [ROM0 HIT] time=459582000 physical=0400c data=a5
+# [ROM0 HIT] time=459722000 physical=0400d data=c2
+# [ROM0 HIT] time=459885000 physical=0400e data=00
+# [ROM0 HIT] time=460024000 physical=0400f data=41
+# [ROM0 FILL] time=460350000 pc=4010 physical=04010 index=0 data=3a
+# [ROM TIMING] rom=0 physical=04010 rd_low_clocks=6
+# [ROM0 FILL] time=460537000 pc=4010 physical=04011 index=1 data=01
+# [ROM TIMING] rom=0 physical=04011 rd_low_clocks=6
+# [ROM0 FILL] time=460723000 pc=4010 physical=04012 index=2 data=60
+# [ROM TIMING] rom=0 physical=04012 rd_low_clocks=6
+# [ROM0 FILL] time=460909000 pc=4010 physical=04013 index=3 data=fe
+# [ROM TIMING] rom=0 physical=04013 rd_low_clocks=6
+# [ROM0 FILL] time=461095000 pc=4010 physical=04014 index=4 data=a4
+# [ROM TIMING] rom=0 physical=04014 rd_low_clocks=6
+# [ROM0 FILL] time=461282000 pc=4010 physical=04015 index=5 data=c2
+# [ROM TIMING] rom=0 physical=04015 rd_low_clocks=6
+# [ROM0 FILL] time=461468000 pc=4010 physical=04016 index=6 data=00
+# [ROM TIMING] rom=0 physical=04016 rd_low_clocks=6
+# [ROM0 FILL] time=461654000 pc=4010 physical=04017 index=7 data=41
+# [ROM TIMING] rom=0 physical=04017 rd_low_clocks=6
+# [ROM0 HIT] time=461817000 physical=04011 data=01
+# [ROM0 HIT] time=461957000 physical=04012 data=60
+# [ROM0 HIT] time=462096000 physical=06001 data=a4
+# [ROM0 HIT] time=462236000 physical=04013 data=fe
+# [ROM0 HIT] time=462399000 physical=04014 data=a4
+# [ROM0 HIT] time=462539000 physical=04015 data=c2
+# [ROM0 HIT] time=462702000 physical=04016 data=00
+# [ROM0 HIT] time=462841000 physical=04017 data=41
+# [ROM0 FILL] time=463167000 pc=4018 physical=04018 index=0 data=3e
+# [ROM TIMING] rom=0 physical=04018 rd_low_clocks=6
+# [ROM0 FILL] time=463353000 pc=4018 physical=04019 index=1 data=10
+# [ROM TIMING] rom=0 physical=04019 rd_low_clocks=6
+# [ROM0 FILL] time=463540000 pc=4018 physical=0401a index=2 data=d3
+# [ROM TIMING] rom=0 physical=0401a rd_low_clocks=6
+# [ROM0 FILL] time=463726000 pc=4018 physical=0401b index=3 data=a8
+# [ROM TIMING] rom=0 physical=0401b rd_low_clocks=6
+# [ROM0 FILL] time=463912000 pc=4018 physical=0401c index=4 data=3e
+# [ROM TIMING] rom=0 physical=0401c rd_low_clocks=6
+# [ROM0 FILL] time=464098000 pc=4018 physical=0401d index=5 data=02
+# [ROM TIMING] rom=0 physical=0401d rd_low_clocks=6
+# [ROM0 FILL] time=464285000 pc=4018 physical=0401e index=6 data=d3
+# [ROM TIMING] rom=0 physical=0401e rd_low_clocks=6
+# [ROM0 FILL] time=464471000 pc=4018 physical=0401f index=7 data=f4
+# [ROM TIMING] rom=0 physical=0401f rd_low_clocks=6
+# [ROM0 HIT] time=464634000 physical=04019 data=10
+# [ROM0 HIT] time=464774000 physical=0401a data=d3
+# [ROM0 HIT] time=464937000 physical=0401b data=a8
+# [ROM0 HIT] time=465216000 physical=0401c data=3e
+# [ROM0 HIT] time=465379000 physical=0401d data=02
+# [ROM0 HIT] time=465519000 physical=0401e data=d3
+# [ROM0 HIT] time=465681000 physical=0401f data=f4
+# [ROM0 FILL] time=466147000 pc=4020 physical=04020 index=0 data=3a
+# [ROM TIMING] rom=0 physical=04020 rd_low_clocks=6
+# [ROM0 FILL] time=466333000 pc=4020 physical=04021 index=1 data=00
+# [ROM TIMING] rom=0 physical=04021 rd_low_clocks=6
+# [ROM0 FILL] time=466520000 pc=4020 physical=04022 index=2 data=80
+# [ROM TIMING] rom=0 physical=04022 rd_low_clocks=6
+# [ROM0 FILL] time=466706000 pc=4020 physical=04023 index=3 data=fe
+# [ROM TIMING] rom=0 physical=04023 rd_low_clocks=6
+# [ROM0 FILL] time=466892000 pc=4020 physical=04024 index=4 data=85
+# [ROM TIMING] rom=0 physical=04024 rd_low_clocks=6
+# [ROM0 FILL] time=467078000 pc=4020 physical=04025 index=5 data=c2
+# [ROM TIMING] rom=0 physical=04025 rd_low_clocks=6
+# [ROM0 FILL] time=467265000 pc=4020 physical=04026 index=6 data=00
+# [ROM TIMING] rom=0 physical=04026 rd_low_clocks=6
+# [ROM0 FILL] time=467451000 pc=4020 physical=04027 index=7 data=41
+# [ROM TIMING] rom=0 physical=04027 rd_low_clocks=6
+# [ROM0 HIT] time=467614000 physical=04021 data=00
+# [ROM0 HIT] time=467753000 physical=04022 data=80
+# [ROM TIMING] rom=1 physical=00000 rd_low_clocks=29
+# [ROM0 HIT] time=468894000 physical=04023 data=fe
+# [ROM0 HIT] time=469057000 physical=04024 data=85
+# [ROM0 HIT] time=469197000 physical=04025 data=c2
+# [ROM0 HIT] time=469360000 physical=04026 data=00
+# [ROM0 HIT] time=469499000 physical=04027 data=41
+# [ROM0 FILL] time=469825000 pc=4028 physical=04028 index=0 data=3a
+# [ROM TIMING] rom=0 physical=04028 rd_low_clocks=6
+# [ROM0 FILL] time=470012000 pc=4028 physical=04029 index=1 data=01
+# [ROM TIMING] rom=0 physical=04029 rd_low_clocks=6
+# [ROM0 FILL] time=470198000 pc=4028 physical=0402a index=2 data=80
+# [ROM TIMING] rom=0 physical=0402a rd_low_clocks=6
+# [ROM0 FILL] time=470384000 pc=4028 physical=0402b index=3 data=fe
+# [ROM TIMING] rom=0 physical=0402b rd_low_clocks=6
+# [ROM0 FILL] time=470570000 pc=4028 physical=0402c index=4 data=27
+# [ROM TIMING] rom=0 physical=0402c rd_low_clocks=6
+# [ROM0 FILL] time=470757000 pc=4028 physical=0402d index=5 data=c2
+# [ROM TIMING] rom=0 physical=0402d rd_low_clocks=6
+# [ROM0 FILL] time=470943000 pc=4028 physical=0402e index=6 data=00
+# [ROM TIMING] rom=0 physical=0402e rd_low_clocks=6
+# [ROM0 FILL] time=471129000 pc=4028 physical=0402f index=7 data=41
+# [ROM TIMING] rom=0 physical=0402f rd_low_clocks=6
+# [ROM0 HIT] time=471292000 physical=04029 data=01
+# [ROM0 HIT] time=471432000 physical=0402a data=80
+# [ROM TIMING] rom=1 physical=00001 rd_low_clocks=29
+# [ROM0 HIT] time=472805000 physical=0402b data=fe
+# [ROM0 HIT] time=472968000 physical=0402c data=27
+# [ROM0 HIT] time=473108000 physical=0402d data=c2
+# [ROM0 HIT] time=473271000 physical=0402e data=00
+# [ROM0 HIT] time=473410000 physical=0402f data=41
+# [ROM0 FILL] time=473736000 pc=4030 physical=04030 index=0 data=3e
+# [ROM TIMING] rom=0 physical=04030 rd_low_clocks=6
+# [ROM0 FILL] time=473923000 pc=4030 physical=04031 index=1 data=00
+# [ROM TIMING] rom=0 physical=04031 rd_low_clocks=6
+# [ROM0 FILL] time=474109000 pc=4030 physical=04032 index=2 data=d3
+# [ROM TIMING] rom=0 physical=04032 rd_low_clocks=6
+# [ROM0 FILL] time=474295000 pc=4030 physical=04033 index=3 data=a8
+# [ROM TIMING] rom=0 physical=04033 rd_low_clocks=6
+# [ROM0 FILL] time=474481000 pc=4030 physical=04034 index=4 data=3e
+# [ROM TIMING] rom=0 physical=04034 rd_low_clocks=6
+# [ROM0 FILL] time=474668000 pc=4030 physical=04035 index=5 data=03
+# [ROM TIMING] rom=0 physical=04035 rd_low_clocks=6
+# [ROM0 FILL] time=474854000 pc=4030 physical=04036 index=6 data=d3
+# [ROM TIMING] rom=0 physical=04036 rd_low_clocks=6
+# [ROM0 FILL] time=475040000 pc=4030 physical=04037 index=7 data=f4
+# [ROM TIMING] rom=0 physical=04037 rd_low_clocks=6
+# [ROM0 HIT] time=475203000 physical=04031 data=00
+# [ROM0 HIT] time=475343000 physical=04032 data=d3
+# [ROM0 HIT] time=475506000 physical=04033 data=a8
+# [ROM0 HIT] time=475785000 physical=04034 data=3e
+# [ROM0 HIT] time=475948000 physical=04035 data=03
+# [ROM0 HIT] time=476088000 physical=04036 data=d3
+# [ROM0 HIT] time=476251000 physical=04037 data=f4
+# [ROM0 FILL] time=476716000 pc=4038 physical=04038 index=0 data=3a
+# [ROM TIMING] rom=0 physical=04038 rd_low_clocks=6
+# [ROM0 FILL] time=476902000 pc=4038 physical=04039 index=1 data=02
+# [ROM TIMING] rom=0 physical=04039 rd_low_clocks=6
+# [ROM0 FILL] time=477089000 pc=4038 physical=0403a index=2 data=60
+# [ROM TIMING] rom=0 physical=0403a rd_low_clocks=6
+# [ROM0 FILL] time=477275000 pc=4038 physical=0403b index=3 data=fe
+# [ROM TIMING] rom=0 physical=0403b rd_low_clocks=6
+# [ROM0 FILL] time=477461000 pc=4038 physical=0403c index=4 data=a7
+# [ROM TIMING] rom=0 physical=0403c rd_low_clocks=6
+# [ROM0 FILL] time=477647000 pc=4038 physical=0403d index=5 data=c2
+# [ROM TIMING] rom=0 physical=0403d rd_low_clocks=6
+# [ROM0 FILL] time=477834000 pc=4038 physical=0403e index=6 data=00
+# [ROM TIMING] rom=0 physical=0403e rd_low_clocks=6
+# [ROM0 FILL] time=478020000 pc=4038 physical=0403f index=7 data=41
+# [ROM TIMING] rom=0 physical=0403f rd_low_clocks=6
+# [ROM0 HIT] time=478183000 physical=04039 data=02
+# [ROM0 HIT] time=478323000 physical=0403a data=60
+# [ROM0 HIT] time=478462000 physical=06002 data=a7
+# [ROM0 HIT] time=478602000 physical=0403b data=fe
+# [ROM0 HIT] time=478765000 physical=0403c data=a7
+# [ROM0 HIT] time=478905000 physical=0403d data=c2
+# [ROM0 HIT] time=479067000 physical=0403e data=00
+# [ROM0 HIT] time=479207000 physical=0403f data=41
+# [ROM0 FILL] time=479533000 pc=4040 physical=04040 index=0 data=3e
+# [ROM TIMING] rom=0 physical=04040 rd_low_clocks=6
+# [ROM0 FILL] time=479719000 pc=4040 physical=04041 index=1 data=a5
+# [ROM TIMING] rom=0 physical=04041 rd_low_clocks=6
+# [ROM0 FILL] time=479906000 pc=4040 physical=04042 index=2 data=d3
+# [ROM TIMING] rom=0 physical=04042 rd_low_clocks=6
+# [ROM0 FILL] time=480092000 pc=4040 physical=04043 index=3 data=f3
+# [ROM TIMING] rom=0 physical=04043 rd_low_clocks=6
+# [ROM0 FILL] time=480278000 pc=4040 physical=04044 index=4 data=76
+# [ROM TIMING] rom=0 physical=04044 rd_low_clocks=6
+# [ROM0 FILL] time=480464000 pc=4040 physical=04045 index=5 data=e0
+# [ROM TIMING] rom=0 physical=04045 rd_low_clocks=6
+# [ROM0 FILL] time=480651000 pc=4040 physical=04046 index=6 data=e3
+# [ROM TIMING] rom=0 physical=04046 rd_low_clocks=6
+# [ROM0 FILL] time=480837000 pc=4040 physical=04047 index=7 data=e2
+# [ROM TIMING] rom=0 physical=04047 rd_low_clocks=6
+# [ROM0 HIT] time=481000000 physical=04041 data=a5
+# [ROM0 HIT] time=481139000 physical=04042 data=d3
+# [ROM0 HIT] time=481302000 physical=04043 data=f3
+# PASS: BootROM R800 ROM0/ROM1 timing mode=3 ROM0_reads=80 ROM1_reads=2 hits=61 fill_bytes=80
+# ** Note: $finish    : rom_timing.vh(136)
+#    Time: 481465320 ps  Iteration: 1  Instance: /tb
+# End time: 07:40:25 on Oct 10,2026, Elapsed time: 0:00:02
+# Errors: 0, Warnings: 4

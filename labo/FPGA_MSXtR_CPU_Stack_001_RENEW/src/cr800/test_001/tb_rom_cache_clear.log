@@ -1,0 +1,14 @@
+# vsim -c -lib work_rom_clear -t 1ps -l tb_rom_cache_clear.log tb_rom_cache -do "run -all; quit -f" 
+# Start time: 07:39:34 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom_clear.tb_rom_cache
+# Loading work_rom_clear.r800_rom_cache
+# Loading work_rom_clear.r800_cache_ram
+# run -all
+# PASS: ROM valid/PLRU clear wrote all 256 sets in 256 clocks
+# PASS: ROM valid/PLRU clear wrote all 256 sets in 256 clocks
+# PASS: 19-bit ROM bank tags, line fill, hit and CPU switch invalidation
+# ** Note: $finish    : tb.sv(537)
+#    Time: 5617 ns  Iteration: 0  Instance: /tb_rom_cache
+# End time: 07:39:34 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0

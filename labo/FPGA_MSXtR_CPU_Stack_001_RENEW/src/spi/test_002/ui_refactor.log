@@ -1,0 +1,141 @@
+# vsim -c -t 1ns -l ui_refactor.log tb -do "run -all; quit -f" 
+# Start time: 21:01:08 on Oct 09,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.ip_spi
+# Loading work.spi
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_dut'.  Expected 53, found 45.
+#    Time: 0 ns  Iteration: 0  Instance: /tb/u_dut File: tb.sv Line: 183
+# ** Warning: (vsim-3722) tb.sv(183): [TFMPC] - Missing connection for port 'performance_signal'.
+# ** Warning: (vsim-3722) tb.sv(183): [TFMPC] - Missing connection for port 'vdp_log_count'.
+# ** Warning: (vsim-3722) tb.sv(183): [TFMPC] - Missing connection for port 'vdp_log_read_request'.
+# ** Warning: (vsim-3722) tb.sv(183): [TFMPC] - Missing connection for port 'vdp_log_read_valid'.
+# ** Warning: (vsim-3722) tb.sv(183): [TFMPC] - Missing connection for port 'vdp_log_read_a'.
+# ** Warning: (vsim-3722) tb.sv(183): [TFMPC] - Missing connection for port 'vdp_log_read_d'.
+# ** Warning: (vsim-3722) tb.sv(183): [TFMPC] - Missing connection for port 'vdp_log_read_pc'.
+# ** Warning: (vsim-3722) tb.sv(183): [TFMPC] - Missing connection for port 'vdp_log_consume'.
+# run -all
+# ------------------------------------------------------------
+# [TEST 1] I/O Write: cmd=0x01, addr=0xAB, data=0xCD
+# [TEST 1]   Sending command byte 0x01 ...
+# [TEST 1]   Sending address byte 0xAB ...
+# [TEST 1]   Sending data byte 0xCD ...
+# [TEST 1] PASS: bus_valid pulsed once (count=1)
+# [TEST 1] PASS: bus_io = 1
+# [TEST 1] PASS: bus_address = 0x000ab
+# [TEST 1] PASS: bus_wdata = 0xcd
+# ------------------------------------------------------------
+# [TEST 2] CS abort after command byte
+# [TEST 2]   Sending command byte 0x01 ...
+# [TEST 2] PASS: bus_valid did not pulse after CS abort (count=1)
+# ------------------------------------------------------------
+# [TEST 3] Unknown command 0x55 (should be ignored)
+# [TEST 3]   Sending unknown command byte 0x55 ...
+# [TEST 3] PASS: bus_valid did not pulse for unknown command (count=1)
+# ------------------------------------------------------------
+# [TEST 4] Second I/O Write: cmd=0x01, addr=0x34, data=0x56
+# [TEST 4]   Sending command byte 0x01 ...
+# [TEST 4]   Sending address byte 0x34 ...
+# [TEST 4]   Sending data byte 0x56 ...
+# [TEST 4] PASS: bus_valid pulsed once (count=1)
+# [TEST 4] PASS: bus_address = 0x00034
+# [TEST 4] PASS: bus_wdata = 0x56
+# ------------------------------------------------------------
+# [TEST 5] I/O Read: cmd=0x02, addr=0x66, expect data=0xA5
+# [TEST 5]   Sending command byte 0x02 ...
+# [TEST 5]   Sending address byte 0x66 ...
+# [TEST 5] PASS: spi_intr asserted before dummy read
+# [TEST 5]   Sending dummy byte and capturing read data ...
+# [TEST 5] PASS: bus_valid pulsed once (count=1)
+# [TEST 5] PASS: bus_io = 1
+# [TEST 5] PASS: bus_write = 0 (read)
+# [TEST 5] PASS: bus_address = 0x00066
+# [TEST 5] PASS: read data = 0xbf
+# ------------------------------------------------------------
+# [TEST 6] Memory Write: cmd=0x03, addr=0x1234, data=0x78
+# [TEST 6]   Sending command byte 0x03 ...
+# [TEST 6]   Sending address byte (low) 0x34 ...
+# [TEST 6]   Sending address byte (high) 0x12 ...
+# [TEST 6]   Sending data byte 0x78 ...
+# [TEST 6] PASS: bus_valid pulsed once (count=1)
+# [TEST 6] PASS: bus_io = 0 (memory)
+# [TEST 6] PASS: bus_write = 1 (write)
+# [TEST 6] PASS: bus_address = 0x01234
+# [TEST 6] PASS: bus_wdata = 0x78
+# ------------------------------------------------------------
+# [TEST 7] Memory Read: cmd=0x04, addr=0xABCD, expect data=0xE7
+# [TEST 7]   Sending command byte 0x04 ...
+# [TEST 7]   Sending address byte (low) 0xCD ...
+# [TEST 7]   Sending address byte (high) 0xAB ...
+# [TEST 7] PASS: spi_intr asserted before dummy read
+# [TEST 7]   Sending dummy byte and capturing read data ...
+# [TEST 7] PASS: bus_valid pulsed once (count=1)
+# [TEST 7] PASS: bus_io = 0 (memory)
+# [TEST 7] PASS: bus_write = 0 (read)
+# [TEST 7] PASS: bus_address = 0x0abcd
+# [TEST 7] PASS: read data = 0xe7
+# ------------------------------------------------------------
+# [TEST 8] Presence check: cmd=0xFF
+# [TEST 8]   Sending presence-check byte 0xFF ...
+# [TEST 8] PASS: presence response = 0x64
+# [TEST 8] PASS: bus_valid did not pulse for 0xFF (count=0)
+# [TEST 8]   Sending command byte 0x01 ...
+# [TEST 8]   Sending address byte 0x77 ...
+# [TEST 8]   Sending data byte 0x88 ...
+# [TEST 8] PASS: bus_valid pulsed once for command after 0xFF (count=1)
+# [TEST 8] PASS: address=0x00077, wdata=0x88 after 0xFF
+# ------------------------------------------------------------
+# [TEST 9] Debug signal read: cmd=0x0A, expect 256bit data (byte0 first)
+# [TEST 9] PASS: spi_intr remained low
+# [TEST 9] PASS: debug response = 0x89abcdef01234567fedcba982233445566778899aabbccddeeff001122334455
+# [TEST 9] PASS: link pattern byte = 0xa5
+# [TEST 9] PASS: bus_valid did not pulse
+# ------------------------------------------------------------
+# [TEST 10] BootROM enable/disable: cmd=0x0B / 0x0C
+# [TEST 10] PASS: bootrom_en initial value = 1
+# [TEST 10] PASS: cmd=0x0C sets bootrom_en=0, spi_intr=0, no bus access
+# [TEST 10] PASS: cmd=0x0B sets bootrom_en=1, spi_intr=0, no bus access
+# ------------------------------------------------------------
+# [TEST 11] FlashROM Write: cmd=0x0D, addr=0x23456, data=0x9A
+# [TEST 11] PASS: bus_valid pulsed once (count=1)
+# [TEST 11] PASS: bus access io=0 write=1 address=0x23456 wdata=0x9a bus_flash_en=1
+# ------------------------------------------------------------
+# [TEST 12] FlashROM Read: cmd=0x0E, addr=0xFEDCB, expect data=0x5C
+# [TEST 12] PASS: spi_intr asserted before dummy read
+# [TEST 12] PASS: bus_valid pulsed once (count=1)
+# [TEST 12] PASS: bus read access io=0 write=0 address=0xfedcb bus_flash_en=1
+# [TEST 12] PASS: flashrom read data = 0x5c
+# ------------------------------------------------------------
+# [TEST 13] Bus owner select: cmd=0x10
+# [TEST 13] PASS: bus_owner initial value = 0
+# [TEST 13] PASS: cmd=0x10 owner=1 sets bus_owner=1, no bus access
+# [TEST 13] PASS: cmd=0x10 owner=0 sets bus_owner=0, no bus access
+# ------------------------------------------------------------
+# [TEST 14] Keyboard matrix bulk update: cmd=0x11
+# [TEST 14] PASS: LED state (0x0a) read and 12 rows updated without bus access or interrupt
+# [TEST 14] PASS: row 0 = 0x80
+# [TEST 14] PASS: row 1 = 0x81
+# [TEST 14] PASS: row 2 = 0x82
+# [TEST 14] PASS: row 3 = 0x83
+# [TEST 14] PASS: row 4 = 0x84
+# [TEST 14] PASS: row 5 = 0x85
+# [TEST 14] PASS: row 6 = 0x86
+# [TEST 14] PASS: row 7 = 0x87
+# [TEST 14] PASS: row 8 = 0x88
+# [TEST 14] PASS: row 9 = 0x89
+# [TEST 14] PASS: row 10 = 0x8a
+# [TEST 14] PASS: row 11 = 0x8b
+# ------------------------------------------------------------
+# [TEST 15] Busy check status: SerialSRAM startup busy bit
+# [TEST 15] PASS: startup busy status = 0x04
+# [TEST 15] PASS: startup ready status = 0x00
+# ------------------------------------------------------------
+# [TEST 16] SLOT#1 ROM mode startup configuration
+# [TEST 16] PASS: 00/01/10/11 maps to physical/ASCII8/physical/ASCII16 without bus cycles
+# ============================================================
+# Results: PASS = 62, FAIL = 0
+# All tests PASSED.
+# ** Note: $finish    : tb.sv(1381)
+#    Time: 89052 ns  Iteration: 1  Instance: /tb
+# End time: 21:01:09 on Oct 09,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 9

@@ -43,10 +43,6 @@ static void dump_256bytes( uint16_t base_address ) {
 
 // ---------------------------------------------------------
 void dump_cpu_ram( void ) {
-	if( fpga_get_bus_owner() != BUS_OWNER_PICO ) {
-		return;
-	}
-
 	printf( "RAM dump C000-DFFF (8192 bytes)\r\n" );
 	dump_fpga_debug_signal();
 	for( uint16_t address = 0xC000; address < 0xE000; address += 0x0100 ) {
@@ -135,8 +131,6 @@ void dump_fpga_debug_signal( void ) {
 			debug_signal.r800_pc,
 			(debug_signal.cpu_status & 0x01) ? "Z80" : "R800" );
 	printf( "  CPU switch: mode_count=%u\r\n", debug_signal.cpu_mode_change_count );
-	printf( "  SP capture: Z80@0488=0x%04X R800@04BF=0x%04X\r\n",
-		debug_signal.z80_saved_sp, debug_signal.r800_restored_sp );
 	printf( "  Z80 bus: addr=0x%04X reset_n=%u\r\n",
 			debug_signal.z80_bus_address,
 			(debug_signal.cpu_status >> 2) & 0x01 );

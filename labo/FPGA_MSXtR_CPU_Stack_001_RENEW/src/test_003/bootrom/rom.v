@@ -44,6 +44,30 @@ module rom (
 );
 	reg		[7:0]	ff_rom_q;
 	reg				ff_rom_q_en;
+	reg [7:0] timing_rom [0:31];
+	integer timing_index;
+
+	initial begin
+		for( timing_index = 0; timing_index < 32; timing_index = timing_index + 1 ) begin
+			timing_rom[timing_index] = 8'h76;
+		end
+		timing_rom[0] = 8'hF3;
+		timing_rom[1] = 8'h3E;
+		timing_rom[2] = 8'h06;
+		timing_rom[3] = 8'hD3;
+		timing_rom[4] = 8'hE4;
+		timing_rom[5] = 8'hDB;
+		timing_rom[6] = 8'hE5;
+		timing_rom[7] = 8'hE6;
+		timing_rom[8] = 8'h20;
+		timing_rom[9] = 8'hCA;
+		timing_rom[10] = 8'h00;
+		timing_rom[11] = 8'h40;
+		timing_rom[12] = 8'h3E;
+		timing_rom[13] = 8'h40;
+		timing_rom[14] = 8'hD3;
+		timing_rom[15] = 8'hE5;
+	end
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -51,10 +75,15 @@ module rom (
 			ff_rom_q_en		<= 1'b0;
 		end
 		else if( rom_cs && bus_valid && !bus_write ) begin
+			if( $test$plusargs("rom_timing") ) begin
+				ff_rom_q <= bus_address < 12'd32 ? timing_rom[bus_address[4:0]] : 8'h76;
+			end
+			else begin
 			case( bus_address )
 `include "bootrom.vh"
 			default:	ff_rom_q <= 8'hC7;
 			endcase
+			end
 			ff_rom_q_en		<= 1'b1;
 		end
 		else begin

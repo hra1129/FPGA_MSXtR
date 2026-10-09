@@ -3,6 +3,8 @@
 // The image is loaded as raw binary data with $fread.
 // -----------------------------------------------------------------------------
 
+`timescale 1ns/1ps
+
 module flashrom_test_model #(
 	parameter IMAGE_FILE = ""
 ) (
@@ -14,6 +16,8 @@ module flashrom_test_model #(
 	reg	[7:0]	rom_data [0:524287];
 	integer		file_handle;
 	integer		read_size;
+	wire [7:0] delayed_data;
+	wire delayed_enable;
 
 	initial begin
 		file_handle = $fopen( IMAGE_FILE, "rb" );
@@ -25,5 +29,8 @@ module flashrom_test_model #(
 		$display( "[FlashROM] loaded %s (%0d bytes)", IMAGE_FILE, read_size );
 	end
 
-	assign data = ( !ce_n && !oe_n ) ? rom_data[address] : 8'hZZ;
+	assign #70 delayed_data = rom_data[address];
+	assign #(70, 20) delayed_enable = !ce_n && !oe_n;
+	assign data = $test$plusargs("rom_timing") ? (delayed_enable ? delayed_data : 8'hZZ) :
+		(( !ce_n && !oe_n ) ? rom_data[address] : 8'hZZ);
 endmodule

@@ -83,6 +83,7 @@ module tb ();
 	int vdp_sequence_violation_count;
 	int vdp_min_low_count;
 	int vdp_current_low_count;
+	integer r800_trace_divider = 0;
 	reg vdp_write_active;
 	reg [18:0] vdp_write_address;
 	reg [7:0] vdp_write_data;
@@ -187,6 +188,27 @@ module tb ();
 				$time, ff_cpu_sel_d[0] ? "R800" : "Z80", u_dut.w_cpu_sel[0] ? "R800" : "Z80",
 				u_dut.w_z80_pc, u_dut.u_z80.u_cz80.sp, u_dut.w_z80_run_ack,
 				u_dut.w_r800_pc, u_dut.u_r800.u_cr800.sp, u_dut.w_r800_run_ack );
+		end
+	end
+
+	always @( posedge u_dut.clk42m ) begin
+		if( u_dut.w_cpu_sel == 2'b01 && r800_trace_divider == 7 ) begin
+			r800_trace_divider = 0;
+			$display( "[R800 TRACE] time=%0t owner=%b mode=%b pc=%04h bus=%04h run=%b req=%b ack=%b wait_n_i=%b cyc=%0d eng_t=%0d int_timeout=%0d kanji=%b bus_valid=%b ready=%b rdata_en=%b slot_wait_n=%b cache_hit=%0d cache_miss=%0d fill_wait=%0d",
+				$time, u_dut.w_cpu_sel, u_dut.w_processor_mode, u_dut.w_r800_pc, u_dut.w_r800_bus_address,
+				u_dut.u_r800.ff_run, u_dut.w_r800_core_run_req, u_dut.w_r800_run_ack,
+				u_dut.u_r800.ff_wait_n_i, u_dut.u_r800.ff_cyc_state, u_dut.u_r800.ff_eng_t,
+				u_dut.u_r800.ff_int_timeout, u_dut.u_r800.w_kanji_io, u_dut.w_r800_bus_valid,
+				u_dut.w_r800_bus_ready, u_dut.w_r800_bus_rdata_en, slot_wait_n,
+				u_dut.w_r800_cache_hits, u_dut.w_r800_cache_misses, u_dut.w_r800_cache_fill_wait );
+		end
+		else begin
+			if( u_dut.w_cpu_sel == 2'b01 ) begin
+				r800_trace_divider = r800_trace_divider + 1;
+			end
+			else begin
+				r800_trace_divider = 0;
+			end
 		end
 	end
 

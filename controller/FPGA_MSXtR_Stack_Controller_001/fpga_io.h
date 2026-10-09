@@ -53,8 +53,6 @@ typedef struct {
 	uint16_t	r800_bus_address;
 	uint8_t		cpu_status;			//	bit0:mode bit1:pause bit2:z80_reset_n bit3:r800_reset_n
 	uint8_t		cpu_mode_change_count;
-	uint16_t z80_saved_sp;
-	uint16_t r800_restored_sp;
 	uint32_t	r800_cache_hits;
 	uint32_t	r800_cache_misses;
 	uint32_t	r800_cache_fill_wait_cycles;
@@ -92,11 +90,15 @@ void flashrom_write( uint32_t address, uint8_t data );
 uint8_t flashrom_read( uint32_t address );
 #define FPGA_SERIALROM_SIZE (256u * 1024u)
 #define FPGA_SERIALROM_PAGE_SIZE 256u
+#define FPGA_SLOT1_ROM_MODE_CARTRIDGE 0x00u
+#define FPGA_SLOT1_ROM_MODE_ASCII8K 0x01u
+#define FPGA_SLOT1_ROM_MODE_ASCII16K 0x03u
 bool fpga_serialrom_read( uint32_t address, uint8_t *data, size_t length );
 bool fpga_serialrom_program_page( uint32_t address, const uint8_t *data );
 bool fpga_serialrom_erase( void );
 bool fpga_serialrom_get_status( uint8_t *status );
 void fpga_serialrom_set_verified( bool verified );
+bool fpga_set_slot1_rom_mode( uint8_t mode );
 void fpga_msx_reset( bool reset_on );
 void fpga_msx_pause( bool pause_on );
 void fpga_bootrom_enable( bool enable );
@@ -111,7 +113,6 @@ uint8_t fpga_set_keyboard_matrix( const uint8_t *matrix );
 void fpga_get_debug_signal( fpga_debug_signal_t *debug_signal );
 bool fpga_get_r800_performance( fpga_r800_performance_t *performance );
 bool fpga_get_r800_performance( fpga_r800_performance_t *performance );
-bool fpga_clear_debug_sp( void );
 
 #define FPGA_VDP_LOG_CAPACITY 2048
 #define FPGA_VDP_LOG_RECORD_SIZE 4

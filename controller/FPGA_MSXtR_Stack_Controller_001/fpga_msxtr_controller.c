@@ -39,6 +39,7 @@
 #include "sdcard.h"
 #include "keyboard.h"
 #include "mode_switch.h"
+#include "dipsw.h"
 #include "vdp_control.h"
 #include "fpga_config.h"
 #include "fpga_io.h"
@@ -61,7 +62,9 @@ static uint8_t prev_keymatrix[ KEYBOARD_KEY_MATRIX_SIZE ];
 
 static bool prev_reset_pressed;
 
-static BUS_OWNER_T bus_owner = BUS_OWNER_PICO;
+static uint8_t s_dipsw_startup_state;
+static bool s_keyboard_to_cpu = true;
+static bool s_suppress_menu_until_release;
 
 static bool vdp_log_enabled = false;
 static uint32_t vdp_log_time;
@@ -134,6 +137,14 @@ static void initialization( void ) {
 	i2c0_init();
 	fpga_io_init();
 	mode_switch_init();
+	dipsw_init();
+	s_dipsw_startup_state = dipsw_get_startup_state();
+	printf( "DIPSW startup state: 0x%X\r\n", s_dipsw_startup_state );
+	fpga_set_bus_owner( BUS_OWNER_PICO );
+	if( !fpga_set_slot1_rom_mode( s_dipsw_startup_state & 0x03 ) ) {
+		printf( "Failed to set SLOT#1 ROM mode; using physical cartridge slot.\r\n" );
+	}
+	fpga_set_bus_owner( BUS_OWNER_CPU );
 	// SPI1 は sd_init_driver() (Core 1 内) が初期化するため spi1_init() 不要
 	memset( prev_keymatrix, 0xFF, KEYBOARD_KEY_MATRIX_SIZE );
 	memset( keymatrix, 0xFF, KEYBOARD_KEY_MATRIX_SIZE );
@@ -151,114 +162,108 @@ static bool key_press( uint8_t row, uint8_t col ) {
 	return (keymatrix[row] & (1 << col)) && !(prev_keymatrix[row] & (1 << col));
 }
 
+static uint8_t send_keyboard_matrix( void ) {
+	uint8_t matrix[KEYBOARD_KEY_MATRIX_SIZE];
+	memcpy( matrix, keymatrix, sizeof(matrix) );
+	if( s_suppress_menu_until_release ) {
+		matrix[11] |= 0x01;
+		if( (keymatrix[11] & 0x01) != 0 ) {
+			s_suppress_menu_until_release = false;
+		}
+	}
+	return fpga_set_keyboard_matrix( matrix );
+}
+
+// ---------------------------------------------------------
+static bool run_with_pico_bus( void (*operation)(void) ) {
+	bool return_to_cpu = fpga_get_bus_owner() == BUS_OWNER_CPU;
+	if( return_to_cpu ) {
+		fpga_set_bus_owner( BUS_OWNER_PICO );
+		if( fpga_get_bus_owner() != BUS_OWNER_PICO ) {
+			printf( "Cannot acquire Pico bus ownership.\r\n" );
+			return false;
+		}
+	}
+
+	operation();
+
+	if( return_to_cpu ) {
+		fpga_set_bus_owner( BUS_OWNER_CPU );
+		if( fpga_get_bus_owner() != BUS_OWNER_CPU ) {
+			printf( "Pico retains bus ownership; check the command result before resuming.\r\n" );
+			return false;
+		}
+	}
+	return true;
+}
+
+static void print_local_key_menu( void ) {
+	printf( "Pico keyboard mode. MENU: forward keys to CPU.\r\n" );
+	printf( "1: slot dump  2: SD card  3: CPU debug  4: ROM update\r\n" );
+	printf( "5: ROM dump   6: SSG R14  7: Kanji ROM update\r\n" );
+	printf( "8: CPU RAM dump\r\n" );
+}
+
 // ---------------------------------------------------------
 // Core 0: SPI通信（FPGAモジュール・SDカード）
 // ---------------------------------------------------------
 int main(void) {
-	char s_keyline[40] = { 0 }, *p_dest, *p_src;
-	int i, j;
-	uint8_t matrix;
-	BUS_OWNER_T bus_owner;
+	uint8_t released_matrix[KEYBOARD_KEY_MATRIX_SIZE];
 
 	initialization();
 	prev_reset_pressed = mode_switch_is_reset_pressed();
-
-	s_fpga_led_state = fpga_set_keyboard_matrix( keymatrix );
-	bus_owner = fpga_get_bus_owner();
-
-	//	起動時に MENUボタンが押されていれば、Pico にバス所有権を残し、押されていなければ CPU にバス所有権を移す
-	if( (keymatrix[11] & 0x01) == 0 ) {
-		sleep_ms( 100 );
-		printf( "Maintenance mode.\r\n" );
-		//	ボタンが解放されるまで待つ
-		while( (keymatrix[11] & 0x01) == 0 ) {
-			printf( "wait release MENU button.\r\n" );
-			sleep_ms( 100 );
-		}
-		printf( "Enter.\r\n" );
-		vdp_set_screen1();
-		vdp_set_screen1_font();
+	s_keyboard_to_cpu = (keymatrix[11] & 0x01) != 0;
+	if( s_keyboard_to_cpu ) {
+		s_fpga_led_state = send_keyboard_matrix();
+		printf( "Boot MSX System. Keyboard forwarding enabled.\r\n" );
 	}
 	else {
-		fpga_set_bus_owner( BUS_OWNER_CPU );
-		printf( "Boot MSX System.\r\n" );
+		sleep_ms( 100 );
+		printf( "Boot MSX System. Keyboard forwarding disabled.\r\n" );
+		print_local_key_menu();
+		memset( released_matrix, 0xFF, sizeof(released_matrix) );
+		s_fpga_led_state = fpga_set_keyboard_matrix( released_matrix );
+		while( (keymatrix[11] & 0x01) == 0 ) {
+			sleep_ms( 10 );
+		}
 	}
 	memcpy( prev_keymatrix, keymatrix, KEYBOARD_KEY_MATRIX_SIZE );
 
 	while (true) {
 		reset_button();
-		//	バス所有権によって挙動を変える
-		bus_owner = fpga_get_bus_owner();
-		if( bus_owner == BUS_OWNER_PICO ) {
-			//	Picoがバス所有権を持っている場合の処理
-			if( key_press( 11, 0 ) ) {
-				//	MENUキーが押されたら、バス所有権を CPUへ移す
-				printf( "Change to CPU .... " );
-				fpga_set_bus_owner( BUS_OWNER_CPU );
-				printf( "%s\r\n", fpga_get_bus_owner() == BUS_OWNER_CPU ? "Done." : "Failed; Pico retains ownership." );
+		if( key_press( 11, 0 ) ) {
+			s_keyboard_to_cpu = !s_keyboard_to_cpu;
+			if( s_keyboard_to_cpu ) {
+				s_suppress_menu_until_release = true;
+				s_fpga_led_state = send_keyboard_matrix();
+				printf( "Keyboard forwarding enabled; CPU retains bus ownership.\r\n" );
 			}
-			else if( key_press( 0, 1 ) ) {
-				//	1キーが押されたら、SLOT のダンプ処理を実施
-				dump_slot();
-			}
-			else if( key_press( 0, 2 ) ) {
-				//	2キーが押されたら、SDカードの内容を表示する
-				sdcard_access();
-			}
-			else if( key_press( 0, 3 ) ) {
-				//	3キーが押されたら、デバッグ情報を表示する
-				dump_fpga_debug_signal();
-			}
-			else if( key_press( 0, 4 ) ) {
-				//	4キーが押されたら、FlashROM にイメージを書き込む
-				write_flashrom_images();
-			}
-			else if( key_press( 0, 5 ) ) {
-				//	5キーが押されたら、FlashROM の先頭256byteをダンプする
-				dump_flashrom_images();
-			}
-			else if( key_press( 0, 6 ) ) {
-				//	6キーが押されたら、SSG R#14 をダンプする
-				dump_ssg_r14();
-			}
-			else if( key_press( 0, 7 ) ) {
-				write_kanji_rom_image();
-			}
-			else if( key_press( 1, 0 ) ) {
-				dump_cpu_ram();
-			}
-			else if( key_press( 1, 1 ) ) {
-				printf( "%s\r\n", fpga_clear_debug_sp() ? "SP capture cleared to 5A5A." : "SP capture clear timeout." );
-			}
-			else if( key_press( 1, 2 ) ) {
-				//	- キーが押されたら、0FFFDh の内容を表示する
-				printf( "Peek( 0FFFDh ) : 0x%02X\r\n", fpga_peek( 0x0FFFD ) );
+			else {
+				memset( released_matrix, 0xFF, sizeof(released_matrix) );
+				s_fpga_led_state = fpga_set_keyboard_matrix( released_matrix );
+				printf( "Keyboard forwarding disabled; CPU retains bus ownership.\r\n" );
+				print_local_key_menu();
 			}
 		}
+		else if( !s_keyboard_to_cpu ) {
+			if( key_press( 0, 1 ) ) run_with_pico_bus( dump_slot );
+			else if( key_press( 0, 2 ) ) sdcard_access();
+			else if( key_press( 0, 3 ) ) dump_fpga_debug_signal();
+			else if( key_press( 0, 4 ) ) run_with_pico_bus( write_flashrom_images );
+			else if( key_press( 0, 5 ) ) run_with_pico_bus( dump_flashrom_images );
+			else if( key_press( 0, 6 ) ) run_with_pico_bus( dump_ssg_r14 );
+			else if( key_press( 0, 7 ) ) run_with_pico_bus( write_kanji_rom_image );
+			else if( key_press( 1, 0 ) ) run_with_pico_bus( dump_cpu_ram );
+		}
 		else {
-			//	MSX CPUがバス所有権を持っている場合の処理
-			if( key_press( 11, 0 ) ) {
-				//	MENUキーが押されたら、バス所有権を Picoへ移す
-				printf( "Change to Pico .... " );
-				fpga_set_bus_owner( BUS_OWNER_PICO );
-				printf( "Done.\r\n" );
-			}
-			else if( key_press( 0, 3 ) ) {
-				//	3キーが押されたら、デバッグ情報を表示する
-				dump_fpga_debug_signal();
-			}
-			s_fpga_led_state = fpga_set_keyboard_matrix( keymatrix );
-			if( key_press( 1, 1 ) ) {
-				printf( "%s\r\n", fpga_clear_debug_sp() ? "SP capture cleared to 5A5A." : "SP capture clear timeout." );
-			}
+			if( key_press( 0, 3 ) ) dump_fpga_debug_signal();
 			if( key_press( 0, 7 ) ) {
 				vdp_log_enabled = !vdp_log_enabled;
 				vdp_logger_reset();
 				printf( "VDP log %s\r\n", vdp_log_enabled ? "ON" : "OFF" );
 			}
-			if( vdp_log_enabled && fpga_get_bus_owner() != BUS_OWNER_PICO ) {
-				poll_vdp_log();
-			}
+			s_fpga_led_state = send_keyboard_matrix();
+			if( vdp_log_enabled && fpga_get_bus_owner() == BUS_OWNER_CPU ) poll_vdp_log();
 		}
 		memcpy( prev_keymatrix, keymatrix, KEYBOARD_KEY_MATRIX_SIZE );
 		sleep_ms(2);

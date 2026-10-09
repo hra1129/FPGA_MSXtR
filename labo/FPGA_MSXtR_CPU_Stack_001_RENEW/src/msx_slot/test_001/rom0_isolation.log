@@ -1,0 +1,142 @@
+# vsim -c -lib work_rom0_isolation -t 1ps -l rom0_isolation.log tb -do "onerror {quit -code 1}; onbreak {quit -code 1}; run -all; quit -code 0" 
+# Start time: 06:16:45 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom0_isolation.tb
+# Loading work_rom0_isolation.msx_slot
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_msx_slot'.  Expected 79, found 77.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_msx_slot File: tb.sv Line: 125
+# ** Warning: (vsim-3722) tb.sv(125): [TFMPC] - Missing connection for port 'cpu_slot12_cs'.
+# ** Warning: (vsim-3722) tb.sv(125): [TFMPC] - Missing connection for port 'cpu_flash_cs'.
+# onerror {quit -code 1}
+#  Warning: onerror command for use within macro
+#  onbreak {quit -code 1}
+#  Warning: onbreak command for use within macro
+#  run -all
+# === TEST 1: Reset & Idle state check ===
+# [PASS] (Test 1) slot_reset_n is 0 during reset
+# [PASS] (Test 1) slot_oe_n is 0
+# [PASS] (Test 1) ROM CE_n are inactive during reset
+# [PASS] (Test 1) All SLTSL_n are inactive during reset
+# [PASS] (Test 1) slot_reset_n is 1 after reset release
+# === TEST 2: Master MUX - Z80 (sel = 2'b00) ===
+# [PASS] (Test 2) slot_m1_n passed from Z80
+# [PASS] (Test 2) slot_merq_n passed from Z80
+# [PASS] (Test 2) slot_rd_n passed from Z80
+# [PASS] (Test 2) slot_wr_n is 1 on read
+# [PASS] (Test 2) slot_data_dir is 0 on read
+# [PASS] (Test 2) z80_rdata received slot_d (0xA5)
+# [PASS] (Test 2) slot_data_dir is 1 on I/O read
+# [PASS] (Test 2) slot_wr_n is 0 on write
+# [PASS] (Test 2) slot_data_dir is 1 on write
+# [PASS] (Test 2) slot_d remains Hi-Z while data output is disabled
+# [PASS] (Test 2) slot_d driven with z80_wdata (0x3C)
+# [PASS] (Test 2) z80_int_n reflects slot_int_n
+# [PASS] (Test 2) z80_wait_n reflects slot_wait_n
+# === TEST 3: Master MUX - R800 (sel = 2'b01) ===
+# [PASS] (Test 3) slot_iorq_n passed from R800
+# [PASS] (Test 3) slot_wr_n passed from R800
+# [PASS] (Test 3) slot_data_dir is 1 on R800 write
+# [PASS] (Test 3) slot_d driven with r800_wdata (0x55)
+# === TEST 4: Master MUX - Pico (sel = 2'b10) ===
+# [PASS] (Test 4) slot_merq_n passed from Pico
+# [PASS] (Test 4) slot_rd_n passed from Pico
+# [PASS] (Test 4) pico_rdata received slot_d (0xE7)
+# [PASS] (Test 4) slot_wr_n passed from Pico write
+# [PASS] (Test 4) Pico slot_d remains Hi-Z while output is disabled
+# [PASS] (Test 4) slot_d driven with pico_wdata while output is enabled
+# === TEST 5: Primary Slot 0 - Internal ROMs Decode ===
+# [PASS] (Test 5) ROM0 cache select remains visible while external CE waits for /MREQ
+# [PASS] (Test 5) SLOT#0-0 page#0 selects ROM0
+# [PASS] (Test 5) SLOT#0-0 page#0 address is 0x01234
+# [PASS] (Test 5) SLOT#0-0 internal ROM does not assert slot_sltsl0_n
+# [PASS] (Test 5) SLOT#0-0 internal ROM read blocks cartridge-to-CPU data
+# [PASS] (Test 5) ROM0 releases with /MREQ without waiting for a clock
+# [PASS] (Test 5) ROM0 has no pulse before refresh with /MREQ inactive
+# [PASS] (Test 5) ROM0 has no pulse after refresh with /MREQ inactive
+# [PASS] (Test 5) SLOT#0-0 page#1 selects ROM0
+# [PASS] (Test 5) SLOT#0-0 page#1 address is 0x05678 ({3'd0, 2'b01, 14'h1678})
+# [PASS] (Test 5) SLOT#0-1 page#0 address is 0x0A000 ({3'd0, 2'b10, 14'h2000})
+# [PASS] (Test 5) SLOT#0-1 page#1 address is 0x0E000 ({3'd0, 2'b11, 14'h2000})
+# [PASS] (Test 5) SLOT#0-2 page#0 address is 0x11000 ({3'd1, 2'b00, 14'h1000})
+# [PASS] (Test 5) SLOT#0-2 page#1 address is 0x15000 ({3'd1, 2'b01, 14'h1000})
+# [PASS] (Test 5) SLOT#0-3 page#0 address is 0x1B000 ({3'd1, 2'b10, 14'h3000})
+# [PASS] (Test 5) SLOT#0-3 page#1 address is 0x1F000 ({3'd1, 2'b11, 14'h3000})
+# [PASS] (Test 5) SLOT#0-0 page#2 does not assert slot_sltsl0_n
+# [PASS] (Test 5) SLOT#0-0 page#2 does not select internal ROM
+# [PASS] (Test 5) SLOT#0-0 page#2 keeps external CS inactive
+# === TEST 6: External Cartridge Slots (Slot 1 & Slot 2) ===
+# [PASS] (Test 6) Slot 1 page#1 asserts slot_sltsl1_n
+# [PASS] (Test 6) Slot 1 page#1 asserts cs1_n and cs12_n
+# [PASS] (Test 6) Slot 1 read sets data direction before /RD
+# [PASS] (Test 6) Slot 1 memory write keeps CPU-to-cartridge direction
+# [PASS] (Test 6) Slot 1 direction stays CPU-to-cartridge while /WR and slot_d_oe are active
+# [PASS] (Test 6) Slot 1 direction returns to cartridge-to-CPU after write ends
+# [PASS] (Test 6) Slot 1 page#2 asserts slot_sltsl1_n
+# [PASS] (Test 6) Slot 1 page#2 asserts cs2_n and cs12_n
+# [PASS] (Test 6) Slot 2 page#1 asserts slot_sltsl2_n
+# [PASS] (Test 6) Slot 2 page#1 asserts cs1_n and cs12_n
+# [PASS] (Test 6) Slot 2 page#2 asserts slot_sltsl2_n
+# [PASS] (Test 6) Slot 2 page#2 asserts cs2_n and cs12_n
+# [PASS] (Test 6) ASCII8K mode disables physical SLOT#1
+# [PASS] (Test 6) ASCII8K bank0 maps at 4000h
+# [PASS] (Test 6) ASCII8K read keeps physical cartridge transceiver isolated
+# [PASS] (Test 6) ASCII8K 6000h bank write does not select ROM or physical slot
+# [PASS] (Test 6) ASCII8K 6800h selects bank register 1
+# [PASS] (Test 6) ASCII8K 7000h selects bank register 2
+# [PASS] (Test 6) ASCII8K 7800h selects bank register 3
+# [PASS] (Test 6) ASCII8K page0 uses 6000h bank register
+# [PASS] (Test 6) ASCII8K page1 uses 6800h bank register
+# [PASS] (Test 6) ASCII8K page2 uses 7000h bank register
+# [PASS] (Test 6) ASCII8K page3 uses 7800h bank register
+# [PASS] (Test 6) ASCII16K 6000h selects bank register 0 without reading
+# [PASS] (Test 6) ASCII16K 7000h selects bank register 1
+# [PASS] (Test 6) ASCII16K lower window uses 6000h bank register
+# [PASS] (Test 6) ASCII16K upper window uses 7000h bank register
+# [PASS] (Test 6) DIPSW[0]=0 preserves physical SLOT#1
+# === TEST 7: Primary Slot 3 - Internal ROMs & DOS2 Bank Switch ===
+# [PASS] (Test 7) SLOT#3-1 page#0 address is 0x20100 ({3'd2, 2'b00, 14'h0100})
+# [PASS] (Test 7) SLOT#3-1 internal ROM read blocks cartridge-to-CPU data
+# [PASS] (Test 7) SLOT#3-1 page#1 address is 0x24200 ({3'd2, 2'b01, 14'h0200})
+# [PASS] (Test 7) SLOT#3-1 page#2 address is 0x28300 ({3'd2, 2'b10, 14'h0300})
+# [PASS] (Test 7) SLOT#3-1 page#3 address is 0x2C400 ({3'd2, 2'b11, 14'h0400})
+# [PASS] (Test 7) MSX-DOS2 bank 0 address is 0x30500 ({3'd3, 2'b00, 14'h0500})
+# [PASS] (Test 7) MSX-DOS2 bank 3 maps 7FF0h to ROM0 and remains readable
+# [PASS] (Test 7) DOS status address 7FF1h disables ROM0 and cache
+# [PASS] (Test 7) DOS FDC address 7FF2h disables ROM0 and cache
+# [PASS] (Test 7) DOS FDC address 7FFBh disables ROM0
+# [PASS] (Test 7) Reserved FFC-F stays mapped to DOS ROM0
+# [PASS] (Test 7) Reserved FFF remains mapped to DOS ROM0
+# [PASS] (Test 7) SLOT#3-0 page#2 does not assert slot_sltsl3_n
+# [PASS] (Test 7) SLOT#3-0 page#2 does not select internal ROM or cache
+# [PASS] (Test 7) SLOT#3-0 page#2 keeps external CS inactive
+# [PASS] (Test 7) SLOT#3-0 SRAM read blocks cartridge-to-CPU data
+# === TEST 8: FlashROM Direct Access (flash_en = 1) ===
+# [PASS] (Test 8) Direct Flash ROM0 follows selection FF with /MREQ inactive
+# [PASS] (Test 8) FlashROM ROM0 selected (addr[19]=0)
+# [PASS] (Test 8) slot_a reflects pico_address[18:0]
+# [PASS] (Test 8) FlashROM direct read blocks cartridge-to-CPU data
+# [PASS] (Test 8) ROM0 CE remains registered between clocks
+# [PASS] (Test 8) Refresh blocks ROM0 selection on next clock
+# [PASS] (Test 8) Refresh blocks internal Flash classification for ROM0
+# [PASS] (Test 8) Refresh release does not expose stale ROM0 selection
+# [PASS] (Test 8) ROM0 selection returns after refresh
+# [PASS] (Test 8) FlashROM ROM1 selected (addr[19]=1)
+# [PASS] (Test 8) slot_a reflects pico_address[18:0]
+# [PASS] (Test 8) ROM1 CE remains registered between clocks
+# [PASS] (Test 8) Refresh blocks ROM1 selection on next clock
+# [PASS] (Test 8) Refresh blocks internal Flash classification for ROM1
+# [PASS] (Test 8) Refresh release does not expose stale ROM1 selection
+# [PASS] (Test 8) ROM1 selection returns after refresh
+# [PASS] (Test 8) Direct Flash ROM1 releases with /MREQ
+# === TEST 9: CPU Kanji I/O does not select external ROM1 ===
+# [PASS] (Test 9) CPU Kanji address write leaves external ROM1 inactive
+# [PASS] (Test 9) CPU Kanji read is isolated from external ROMs
+# [PASS] R800 ROM0/RAM isolation: 4608 cases across all ROM1 modes
+# ============================================================
+# Results: PASS = 111, FAIL = 0
+# ALL TESTS PASSED!
+# ============================================================
+# ** Note: $finish    : tb.sv(907)
+#    Time: 430482121 ps  Iteration: 0  Instance: /tb
+# End time: 06:16:45 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 3

@@ -1,0 +1,15 @@
+# vsim -c -lib work_rom_clear -t 1ps -l tb_rom_clear.log tb -do "run -all; quit -f" 
+# Start time: 07:46:04 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom_clear.tb
+# Loading work_rom_clear.r800_cache
+# Loading work_rom_clear.r800_cache_ram
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_cache'.  Expected 26, found 25.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_cache File: tb.sv Line: 41
+# ** Warning: (vsim-3722) tb.sv(41): [TFMPC] - Missing connection for port 'cache_ready'.
+# run -all
+# PASS: line fill, hit, write-through, bypass and invalidation
+# ** Note: $finish    : tb.sv(187)
+#    Time: 2475 ns  Iteration: 1  Instance: /tb
+# End time: 07:46:04 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 2

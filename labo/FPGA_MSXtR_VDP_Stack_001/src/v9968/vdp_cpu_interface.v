@@ -672,7 +672,7 @@ module vdp_cpu_interface (
 				begin
 					ff_interrupt_line <= ff_1st_byte;
 				end
-			8'd20:	//	R#20 = [S16][EVR][ECOM][EPAL][SCOL][ILNS][SVNS][HS]
+			8'd20:	//	R#20 = [S16][CEIE][FIL][EPAL][SP3][ILNS][SVNS][HS]
 				begin
 					if( !ff_lock_extregs ) begin
 						ff_command_high_speed_mode <= ff_1st_byte[0];

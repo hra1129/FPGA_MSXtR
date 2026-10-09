@@ -95,6 +95,7 @@ module tb ();
 	reg				ssram_startup_busy;
 	reg	[1:0]	cpu_sel;
 	wire			bootrom_en;
+	wire [1:0] slot1_rom_mode;
 	wire			bus_owner;
 	wire			pico_change_req;
 	wire			pico_change_target;
@@ -216,7 +217,8 @@ module tb ();
 		.debug_signal			( debug_signal				),
 		.srom_request(), .srom_operation(), .srom_address(), .srom_length(),
 		.srom_buffer_write(), .srom_buffer_index(), .srom_buffer_wdata(),
-		.srom_buffer_rdata(8'd0), .srom_done(1'b0), .srom_status(8'd0)
+		.srom_buffer_rdata(8'd0), .srom_done(1'b0), .srom_status(8'd0),
+		.slot1_rom_mode(slot1_rom_mode)
 	);
 
 	// --------------------------------------------------------------------
@@ -1336,6 +1338,37 @@ module tb ();
 				$display( "[TEST %0d] FAIL: startup ready status = 0x%02X, bus_count=%0d", test_no, status, bus_valid_count );
 				fail_count = fail_count + 1;
 			end
+		end
+
+		// ================================================================
+		// Test 16: SLOT#1 ROM mode config (command 19h)
+		// ================================================================
+		test_no = 16;
+		$display( "------------------------------------------------------------" );
+		$display( "[TEST %0d] SLOT#1 ROM mode startup configuration", test_no );
+		begin
+			int cnt_before;
+			reg [1:0] mode_value;
+			reg [1:0] expected_mode;
+			cnt_before = bus_valid_count;
+			for( int mode_index = 0; mode_index < 4; mode_index++ ) begin
+				mode_value = mode_index[1:0];
+				expected_mode = mode_value[0] ? mode_value : 2'b00;
+				spi_cs_n = 1'b0;
+				repeat(20) @( posedge clk );
+				spi_send_byte(8'h19);
+				spi_send_byte({6'd0, mode_value});
+				repeat(10) @( posedge clk );
+				if( slot1_rom_mode !== expected_mode || spi_intr !== 1'b1 ) begin
+					$fatal(1, "SLOT#1 mode input=%b latched=%b expected=%b intr=%b", mode_value, slot1_rom_mode, expected_mode, spi_intr);
+				end
+				spi_cs_n = 1'b1;
+				spi_mosi = 1'b0;
+				repeat(10) @( posedge clk );
+			end
+			if( bus_valid_count != cnt_before ) $fatal(1, "SLOT#1 mode configuration leaked to MSX bus");
+			$display("[TEST %0d] PASS: 00/01/10/11 maps to physical/ASCII8/physical/ASCII16 without bus cycles", test_no);
+			pass_count = pass_count + 1;
 		end
 
 		// ================================================================

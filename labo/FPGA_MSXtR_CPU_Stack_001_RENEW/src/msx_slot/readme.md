@@ -60,7 +60,7 @@ MSX カートリッジスロットのタイミングを生成するコントロ�
   - SLOT#3-2 ページ1(DiskROM): bank 12 固定。バンク切替レジスタは未実装のため常に BANK#0 を指す(TODO)。
 - SLOT#3-0 は FlashROM ではなく Memory Mapper / SerialSRAM にマップされる。下位14bitはCPUアドレス
   `A[13:0]`、上位はページに対応するメモリマッパセグメントレジスタの値を使用する。
-- 漢字ROM(ROM1)は未対応。`slot_rom1_ce_n` は常に非アサート(Hi)。
+- DIPSWで有効化した場合、ROM1をSLOT#1のASCII8K/ASCII16KメガROMとして接続する。仮想ROMモードでは物理`/SLTSL1`をHigh固定にし、Pico Direct Flash経路は維持する。
 - 詳細な ROM マップは本ファイル末尾の「ROMマップ」章を参照。
 
 ## アクセスステートマシン(`clk_215m` ドメイン、`ff_access_count`)
@@ -114,10 +114,11 @@ SLOT#{基本スロット番号}-{拡張スロット番号} で SLOT#0 には SLO
 FFFFh の拡張スロット選択レジスタは、拡張スロット選択レジスタに影響を受けず、すべての拡張スロットで同じレジスタが出現する。
 SLOT#0-0, 0-1, 0-2, 0-3 の page0/page1、SLOT#3-1 の全page、SLOT#3-2 のDiskROM page にアクセスする際は、slot_rom0_ce_n = L になる。
 SLOT#0 の page2/page3 は未接続であり、SLOT#3-0 は Memory Mapper / SerialSRAM にマップされる。
-漢字ROM にアクセスする際は 、slot_rom1_ce_n = L になる。
+ROM1 CEはPico Direct Flashアクセス、またはDIPSWで選択したSLOT#1 ASCIIメガROM read時にのみLowになる。
 
 # 漢字ROM
-I/O の D8h, D9h は JIS1漢字ROM, DAh, DBh は JIS2漢字ROM が接続されている。
+I/O の D8h, D9h は JIS1漢字ROM, DAh, DBh は JIS2漢字ROM のアドレス設定/読み出しに使う。
+漢字データ自体は専用SerialROMから取得し、ROM1 Flashは漢字ROMとして使用しない。
 
 
 # ROMマップ
@@ -161,10 +162,17 @@ ROM0
 40000h +---------------------+
 
 ROM1
-00000h +---------------------+
-	   | KanjiROM 128KB      | JIS1 Kanji
-10000h +---------------------+
-	   | KanjiROM 128KB      | JIS2 Kanji
-20000h +---------------------+
-	   | Reserved 256KB      | Reserved
-40000h +---------------------+
+SLOT#1 ROM modeが物理カートリッジの場合、CPUのROM1 CEはPico Direct Flash access専用となり、物理SLOT#1は通常どおり有効。
+SLOT#1 ROM modeがASCII8K/ASCII16Kの場合、物理 `/SLTSL1` は常時Highとし、ROM1の512KBをメガROMデータとしてCPUへ接続する。
+
+ASCII8K (mode 01):
+- 4000h-5FFFh はbank0、6000h-7FFFh はbank1、8000h-9FFFh はbank2、A000h-BFFFh はbank3。
+- 6000h-67FFh、6800h-6FFFh、7000h-77FFh、7800h-7FFFh writeで順にbank0-3を切り替える(各範囲内はmirror)。
+- 19bit物理アドレスは `{bank[5:0], CPU_A[12:0]}`。
+
+ASCII16K (mode 11):
+- 4000h-7FFFh はbank0、8000h-BFFFh はbank1。
+- 6000h-67FFh、7000h-77FFh writeでbank0/1を切り替える(各範囲内はmirror)。
+- 19bit物理アドレスは `{bank[4:0], CPU_A[13:0]}`。
+
+bank register reset値は0。ROM1へのイメージ書き込み操作はController側に未追加であり、使用前に別途ROM1へデータを格納する必要がある。

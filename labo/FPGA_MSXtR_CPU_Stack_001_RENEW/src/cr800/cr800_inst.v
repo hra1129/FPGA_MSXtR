@@ -100,7 +100,7 @@ module cr800_inst #(
 	input			performance_stop,
 	output	[223:0]	performance_signal,
 	output	[15:0]	pc			,
-	output [15:0] debug_sp,
+	output	[15:0]	debug_sp		,
 	output			int_ack					//	debug
 );
 	reg					ff_run;
@@ -152,6 +152,8 @@ module cr800_inst #(
 	reg		[3:0]		ff_flash_cnt;
 	reg		[2:0]		ff_rom_fill_index;
 	wire				w_rom_cache_lookup;
+	wire				w_rom_cache_request;
+	wire				w_rom_cache_ready;
 	wire				w_rom_cache_hit;
 	wire	[7:0]		w_rom_cache_data;
 	wire	[7:0]		w_rom_fill_data;
@@ -190,8 +192,9 @@ module cr800_inst #(
 
 	assign w_cycle_start	= ( w_t_state == 3'd1 ) && ( ff_t_state_d != 3'd1 );
 	assign w_has_access		= ~w_noread | w_write | w_iorq;
-	assign w_rom_cache_lookup = ff_run && ff_cyc_state == CY_CLASSIFY2 && !ff_cyc_io &&
+	assign w_rom_cache_request = ff_run && ff_cyc_state == CY_CLASSIFY2 && !ff_cyc_io &&
 		!slot12_cs && flash_cs && rom0_cs && !ff_cyc_write;
+	assign w_rom_cache_lookup = w_rom_cache_request && w_rom_cache_ready;
 	assign w_rom_fill_byte = ff_run && ff_cyc_state == CY_ROM_FILL && ff_flash_cnt == 4'd6;
 	assign w_perf_start_pulse = performance_start && !ff_perf_start_d;
 	assign w_perf_stop_pulse = performance_stop && !ff_perf_stop_d;
@@ -202,7 +205,8 @@ module cr800_inst #(
 	r800_rom_cache u_rom_cache (
 		.clk(clk),
 		.reset_n(reset_n),
-		.invalidate(!run_req || !ff_run),
+		.invalidate(!ff_run),
+		.cache_ready(w_rom_cache_ready),
 		.lookup(w_rom_cache_lookup),
 		.miss_start(ff_run && ff_cyc_state == CY_ROM_CHECK),
 		.address(rom0_address),
@@ -416,8 +420,10 @@ module cr800_inst #(
 					ff_wait_n_i		<= 1'b1;
 					ff_cyc_state	<= CY_IDLE;
 				end
-				else if( w_rom_cache_lookup ) begin
-					ff_cyc_state <= CY_ROM_CHECK;
+				else if( w_rom_cache_request ) begin
+					if( w_rom_cache_ready ) begin
+						ff_cyc_state <= CY_ROM_CHECK;
+					end
 				end
 				else if( flash_cs ) begin
 					ff_cyc_state	<= CY_FLASH;
@@ -810,7 +816,7 @@ module cr800_inst #(
 		.intcycle_n		( w_intcycle_n		),
 		.inte			( 					),
 		.stop			( 					),
-		.p_sp(debug_sp),
+		.p_sp			( debug_sp			),
 		.p_pc			( pc				)		//	debug
 	);
 endmodule

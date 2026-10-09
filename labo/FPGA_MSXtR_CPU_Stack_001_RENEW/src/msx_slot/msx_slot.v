@@ -115,6 +115,7 @@ module msx_slot #(
 	input	[7:0]	slot_secondary0,
 	input	[7:0]	slot_secondary3,
 	input	[1:0]	dos_bank,
+	input	[1:0]	slot1_rom_mode,
 	output			cpu_rom0_cs,
 	output			cpu_slot12_cs,		//	1: 選択中CPUのアドレスが SLOT#1/#2 (メモリアクセス判定用)
 	output			cpu_flash_cs		//	1: 選択中CPUのアドレスがオンボードFlashROM (1clk遅延のデコード結果)
@@ -170,6 +171,12 @@ module msx_slot #(
 	wire	[1:0]	w_secondary_slot0;
 	wire	[1:0]	w_secondary_slot3;
 	wire	[1:0]	w_secondary_slot;
+	reg	[7:0]	ff_ascii8_bank0;
+	reg	[7:0]	ff_ascii8_bank1;
+	reg	[7:0]	ff_ascii8_bank2;
+	reg	[7:0]	ff_ascii8_bank3;
+	reg	[7:0]	ff_ascii16_bank0;
+	reg	[7:0]	ff_ascii16_bank1;
 	reg		[18:0]	ff_slot_a;
 	reg				ff_slot_sltsl0_n;
 	reg				ff_slot_sltsl1_n;
@@ -192,7 +199,8 @@ module msx_slot #(
 							  ( w_page == 2'd1 ) ? slot_secondary3[3:2] :
 							  ( w_page == 2'd2 ) ? slot_secondary3[5:4] : slot_secondary3[7:6];
 	assign w_secondary_slot	= ( w_primary_slot == 2'd0 ) ? w_secondary_slot0 : w_secondary_slot3;
-	assign w_external_read_allowed = ~w_bus_io & slot_iorq_n & ~w_bus_write & w_slot_wr_n & ~w_slot_d_oe & ~w_flash_en & ((w_primary_slot == 2'd1) | (w_primary_slot == 2'd2));
+	assign w_external_read_allowed = ~w_bus_io & slot_iorq_n & ~w_bus_write & w_slot_wr_n & ~w_slot_d_oe & ~w_flash_en &
+		((w_primary_slot == 2'd2) || (w_primary_slot == 2'd1 && !slot1_rom_mode[0]));
 	assign w_external_memory_read = ~w_slot_merq_n & w_external_read_allowed;
 
 	always @( posedge clk ) begin
@@ -207,6 +215,41 @@ module msx_slot #(
 	assign cpu_slot12_cs	= ( w_primary_slot == 2'd1 ) || ( w_primary_slot == 2'd2 );
 	assign cpu_rom0_cs		= !ff_slot_rom0_ce_n;
 	assign cpu_flash_cs		= ~( ff_slot_rom0_ce_n & ff_slot_rom1_ce_n );
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_ascii8_bank0 <= 8'd0;
+			ff_ascii8_bank1 <= 8'd0;
+			ff_ascii8_bank2 <= 8'd0;
+			ff_ascii8_bank3 <= 8'd0;
+			ff_ascii16_bank0 <= 8'd0;
+			ff_ascii16_bank1 <= 8'd0;
+		end
+		else if( !w_bus_io && w_bus_write && w_primary_slot == 2'd1 && slot1_rom_mode[0] ) begin
+			case( slot1_rom_mode )
+			2'b01: begin
+				case( w_slot_address[15:11] )
+				5'b01100: ff_ascii8_bank0 <= w_slot_d;
+				5'b01101: ff_ascii8_bank1 <= w_slot_d;
+				5'b01110: ff_ascii8_bank2 <= w_slot_d;
+				5'b01111: ff_ascii8_bank3 <= w_slot_d;
+				default: begin
+				end
+				endcase
+			end
+			2'b11: begin
+				case( w_slot_address[15:11] )
+				5'b01100: ff_ascii16_bank0 <= w_slot_d;
+				5'b01110: ff_ascii16_bank1 <= w_slot_d;
+				default: begin
+				end
+				endcase
+			end
+			default: begin
+			end
+			endcase
+		end
+	end
 
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
@@ -354,6 +397,60 @@ module msx_slot #(
 				end
 				endcase
 			end
+			else if( !w_bus_io && w_primary_slot == 2'd1 && slot1_rom_mode[0] ) begin
+				ff_slot_a				<= w_slot_address[18:0];
+				ff_slot_rom0_ce_n		<= 1'b1;
+				ff_slot_rom1_ce_n		<= 1'b1;
+				ff_slot_sltsl0_n		<= 1'b1;
+				ff_slot_sltsl1_n		<= 1'b1;
+				ff_slot_sltsl2_n		<= 1'b1;
+				ff_slot_sltsl3_n		<= 1'b1;
+				ff_slot_cs1_n			<= 1'b1;
+				ff_slot_cs2_n			<= 1'b1;
+				ff_slot_cs12_n			<= 1'b1;
+				if( !w_bus_write ) begin
+					case( slot1_rom_mode )
+					2'b01: begin
+						case( w_slot_address[15:13] )
+						3'b010: begin
+							ff_slot_a <= {ff_ascii8_bank0[5:0], w_slot_address[12:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						3'b011: begin
+							ff_slot_a <= {ff_ascii8_bank1[5:0], w_slot_address[12:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						3'b100: begin
+							ff_slot_a <= {ff_ascii8_bank2[5:0], w_slot_address[12:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						3'b101: begin
+							ff_slot_a <= {ff_ascii8_bank3[5:0], w_slot_address[12:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						default: begin
+						end
+						endcase
+					end
+					2'b11: begin
+						case( w_page )
+						2'd1: begin
+							ff_slot_a <= {ff_ascii16_bank0[4:0], w_slot_address[13:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						2'd2: begin
+							ff_slot_a <= {ff_ascii16_bank1[4:0], w_slot_address[13:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						default: begin
+						end
+						endcase
+					end
+					default: begin
+					end
+					endcase
+				end
+			end
 			else if( !w_bus_io && w_primary_slot == 2'd1 ) begin
 				ff_slot_a				<= w_slot_address[18:0];
 				ff_slot_rom0_ce_n		<= 1'b1;
@@ -488,7 +585,7 @@ module msx_slot #(
 
 	assign slot_a				= ff_slot_a;
 	assign slot_rom0_ce_n		= w_flash_en ? ff_slot_rom0_ce_n : (w_slot_merq_n | ff_slot_rom0_ce_n);
-	assign slot_rom1_ce_n		= (w_flash_en ? w_slot_merq_n : slot_iorq_n) | ff_slot_rom1_ce_n;
+	assign slot_rom1_ce_n		= ((w_flash_en || slot1_rom_mode[0]) ? w_slot_merq_n : slot_iorq_n) | ff_slot_rom1_ce_n;
 	assign slot_sltsl0_n		= w_slot_merq_n | ff_slot_sltsl0_n;
 	assign slot_sltsl1_n		= w_slot_merq_n | ff_slot_sltsl1_n;
 	assign slot_sltsl2_n		= w_slot_merq_n | ff_slot_sltsl2_n;

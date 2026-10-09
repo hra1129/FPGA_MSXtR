@@ -1,0 +1,1201 @@
+# vsim -c -lib work_rom_timing -t 1ps -l rom_timing_default.log -wlf rom_timing_default.wlf tb -do "run -all; quit -f" 
+# Start time: 06:41:02 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom_timing.tb
+# Loading work_rom_timing.fpga_msxtr_cpu_stack
+# Loading work_rom_timing.Gowin_PLL
+# Loading work_rom_timing.vdp_logger
+# Loading work_rom_timing.vdp_logger_sram
+# Loading work_rom_timing.ip_spi
+# Loading work_rom_timing.spi
+# Loading work_rom_timing.cmcu_inst
+# Loading work_rom_timing.cz80_inst
+# Loading work_rom_timing.cz80
+# Loading work_rom_timing.cz80_mcode
+# Loading work_rom_timing.cz80_alu
+# Loading work_rom_timing.cz80_registers
+# Loading work_rom_timing.cr800_inst
+# Loading work_rom_timing.r800_rom_cache
+# Loading work_rom_timing.cr800
+# Loading work_rom_timing.cr800_mcode
+# Loading work_rom_timing.cr800_alu
+# Loading work_rom_timing.cr800_registers
+# Loading work_rom_timing.s2026
+# Loading work_rom_timing.s2026_cpu_select
+# Loading work_rom_timing.s2026_register
+# Loading work_rom_timing.msx_bus_mux
+# Loading work_rom_timing.msx_slot
+# Loading work_rom_timing.address_decode
+# Loading work_rom_timing.dos_mapper
+# Loading work_rom_timing.fdc8566
+# Loading work_rom_timing.secondary_slot
+# Loading work_rom_timing.ip_kanji_rom
+# Loading work_rom_timing.bootrom
+# Loading work_rom_timing.rom
+# Loading work_rom_timing.ip_ram
+# Loading work_rom_timing.SP
+# Loading work_rom_timing.ppi
+# Loading work_rom_timing.memory_mapper
+# Loading work_rom_timing.r800_cache
+# Loading work_rom_timing.ssram
+# Loading work_rom_timing.rtc
+# Loading work_rom_timing.pause_led
+# Loading work_rom_timing.system_flag
+# Loading work_rom_timing.dummy_ssg
+# Loading work_rom_timing.ssram_test_model
+# Loading work_rom_timing.flashrom_test_model
+# Loading work_rom_timing.r800_cache_ram
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_controller_spi'.  Expected 53, found 52.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_dut/u_controller_spi File: ../FPGA_MSXtR_CPU_Stack.v Line: 577
+# ** Warning: (vsim-3722) ../FPGA_MSXtR_CPU_Stack.v(577): [TFMPC] - Missing connection for port 'vdp_log_read_a'.
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_z80'.  Expected 27, found 26.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_dut/u_z80 File: ../FPGA_MSXtR_CPU_Stack.v Line: 673
+# ** Warning: (vsim-3722) ../FPGA_MSXtR_CPU_Stack.v(673): [TFMPC] - Missing connection for port 'debug_sp'.
+# run -all
+# [FlashROM] loaded ..\..\..\..\controller\bios_image_tool\msxtr.rom (524288 bytes)
+# [FlashROM] loaded ..\..\..\..\controller\bios_image_tool\kanji.rom (262144 bytes)
+# [SETUP] Enable BootROM
+# [SETUP] Transfer bus ownership to CPU
+# [SETUP] Release MSX reset
+# [BOOT] Running BootROM CPU switch sequence...
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [VDP WRITE] count=1 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=2 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=3 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=4 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=5 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=6 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=7 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=8 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=9 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=10 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=11 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=12 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=13 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=14 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=15 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=16 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=17 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=18 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=19 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=20 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=21 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=22 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=23 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=24 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=25 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=26 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=27 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=28 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=29 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=30 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=31 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=32 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=33 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=34 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=35 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=36 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=37 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=38 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=39 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=40 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=41 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=42 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=43 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=44 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=45 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=46 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=47 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=48 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=49 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=50 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=51 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=52 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=53 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=54 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=55 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=56 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=57 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=58 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=59 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=60 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=61 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=62 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=63 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=64 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=65 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=66 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=67 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=68 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=69 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=70 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=71 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=72 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=73 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=74 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=75 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=76 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=77 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=78 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=79 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=80 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=81 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=82 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=83 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=84 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=85 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=86 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=87 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=88 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=89 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=90 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=91 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=92 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=93 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=94 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=95 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=96 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=97 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=98 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=99 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=100 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=101 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=102 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=103 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=104 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=105 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=106 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=107 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=108 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=109 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=110 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=111 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=112 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=113 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=114 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=115 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=116 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=117 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=118 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=119 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=120 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=121 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=122 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=123 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=124 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=125 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=126 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=127 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=128 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=129 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=130 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=131 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=132 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=133 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=134 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=135 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=136 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=137 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=138 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=139 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=140 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=141 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=142 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=143 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=144 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=145 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=146 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=147 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=148 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=149 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=150 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=151 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=152 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=153 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=154 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=155 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=156 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=157 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=158 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=159 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=160 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=161 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=162 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=163 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=164 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=165 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=166 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=167 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=168 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=169 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=170 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=171 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=172 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=173 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=174 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=175 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=176 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=177 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=178 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=179 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=180 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=181 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=182 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=183 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=184 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=185 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=186 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=187 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=188 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=189 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=190 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=191 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=192 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=193 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=194 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=195 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=196 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=197 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=198 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=199 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=200 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=201 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=202 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=203 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=204 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=205 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=206 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=207 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=208 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=209 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=210 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=211 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=212 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=213 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=214 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=215 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=216 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=217 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=218 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=219 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=220 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=221 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=222 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=223 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=224 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=225 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=226 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=227 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=228 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=229 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=230 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=231 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=232 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=233 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=234 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=235 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=236 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=237 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=238 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=239 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=240 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=241 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=242 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=243 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=244 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=245 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=246 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=247 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=248 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=249 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=250 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=251 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=252 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=253 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=254 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=255 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=256 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=257 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=258 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=259 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=260 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=261 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=262 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=263 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=264 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=265 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=266 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=267 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=268 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=269 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=270 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=271 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=272 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=273 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=274 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=275 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=276 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=277 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=278 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=279 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=280 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=281 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=282 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=283 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=284 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=285 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=286 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=287 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=288 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=289 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=290 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=291 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=292 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=293 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=294 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=295 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=296 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=297 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=298 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=299 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=300 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=301 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=302 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=303 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=304 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=305 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=306 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=307 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=308 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=309 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=310 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=311 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=312 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=313 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=314 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=315 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=316 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=317 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=318 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=319 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=320 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=321 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=322 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=323 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=324 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=325 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=326 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=327 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=328 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=329 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=330 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=331 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=332 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=333 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=334 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=335 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=336 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=337 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=338 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=339 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=340 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=341 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=342 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=343 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=344 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=345 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=346 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=347 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=348 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=349 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=350 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=351 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=352 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=353 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=354 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=355 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=356 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=357 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=358 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=359 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=360 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=361 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=362 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=363 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=364 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=365 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=366 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=367 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=368 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=369 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=370 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=371 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=372 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=373 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=374 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=375 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=376 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=377 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=378 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=379 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=380 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=381 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=382 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=383 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=384 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=385 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=386 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=387 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=388 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=389 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=390 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=391 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=392 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=393 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=394 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=395 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=396 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=397 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=398 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=399 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=400 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=401 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=402 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=403 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=404 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=405 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=406 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=407 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=408 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=409 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=410 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=411 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=412 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=413 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=414 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=415 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=416 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=417 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=418 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=419 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=420 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=421 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=422 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=423 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=424 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=425 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=426 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=427 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=428 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=429 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=430 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=431 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=432 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=433 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=434 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=435 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=436 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=437 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=438 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=439 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=440 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=441 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=442 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=443 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=444 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=445 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=446 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=447 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=448 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=449 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=450 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=451 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=452 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=453 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=454 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=455 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=456 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=457 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=458 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=459 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=460 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=461 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=462 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=463 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=464 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=465 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=466 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=467 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=468 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=469 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=470 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=471 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=472 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=473 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=474 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=475 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=476 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=477 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=478 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=479 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=480 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=481 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=482 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=483 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=484 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=485 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=486 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=487 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=488 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=489 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=490 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=491 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=492 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=493 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=494 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=495 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=496 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=497 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=498 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=499 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=500 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=501 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=502 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=503 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=504 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=505 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=506 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=507 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=508 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=509 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=510 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=511 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=512 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=513 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=514 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=515 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=516 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=517 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=518 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=519 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=520 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=521 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=522 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=523 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=524 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=525 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=526 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=527 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=528 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=529 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=530 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=531 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=532 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=533 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=534 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=535 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=536 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=537 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=538 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=539 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=540 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=541 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=542 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=543 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=544 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=545 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=546 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=547 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=548 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=549 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=550 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=551 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=552 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=553 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=554 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=555 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=556 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=557 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=558 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=559 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=560 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=561 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=562 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=563 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=564 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=565 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=566 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=567 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=568 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=569 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=570 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=571 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=572 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=573 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=574 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=575 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=576 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=577 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=578 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=579 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=580 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=581 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=582 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=583 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=584 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=585 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=586 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=587 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=588 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=589 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=590 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=591 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=592 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=593 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=594 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=595 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=596 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=597 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=598 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=599 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=600 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=601 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=602 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=603 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=604 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=605 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=606 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=607 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=608 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=609 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=610 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=611 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=612 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=613 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=614 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=615 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=616 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=617 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=618 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=619 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=620 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=621 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=622 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=623 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=624 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=625 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=626 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=627 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=628 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=629 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=630 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=631 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=632 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=633 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=634 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=635 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=636 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=637 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=638 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=639 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=640 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=641 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=642 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=643 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=644 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=645 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=646 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=647 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=648 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=649 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=650 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=651 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=652 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=653 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=654 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=655 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=656 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=657 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=658 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=659 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=660 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=661 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=662 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=663 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=664 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=665 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=666 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=667 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=668 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=669 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=670 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=671 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=672 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=673 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=674 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=675 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=676 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=677 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=678 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=679 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=680 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=681 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=682 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=683 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=684 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=685 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=686 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=687 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=688 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=689 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=690 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=691 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=692 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=693 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=694 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=695 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=696 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=697 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=698 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=699 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=700 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=701 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=702 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=703 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=704 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=705 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=706 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=707 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=708 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=709 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=710 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=711 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=712 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=713 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=714 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=715 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=716 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=717 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=718 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=719 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=720 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=721 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=722 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=723 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=724 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=725 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=726 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=727 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=728 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=729 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=730 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=731 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=732 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=733 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=734 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=735 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=736 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=737 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=738 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=739 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=740 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=741 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=742 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=743 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=744 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=745 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=746 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=747 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=748 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=749 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=750 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=751 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=752 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=753 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=754 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=755 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=756 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=757 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=758 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=759 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=760 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=761 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=762 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=763 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=764 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=765 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=766 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=767 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=768 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=769 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=770 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=771 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=772 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=773 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=774 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=775 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=776 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=777 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=778 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=779 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=780 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=781 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=782 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=783 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=784 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=785 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=786 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=787 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=788 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=789 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=790 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=791 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=792 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=793 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=794 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=795 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=796 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=797 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=798 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=799 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=800 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=801 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=802 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=803 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=804 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=805 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=806 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=807 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=808 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=809 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=810 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=811 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=812 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=813 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=814 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=815 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=816 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=817 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=818 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=819 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=820 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=821 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=822 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=823 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=824 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=825 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=826 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=827 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=828 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=829 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=830 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=831 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=832 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=833 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=834 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=835 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=836 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=837 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=838 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=839 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=840 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=841 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=842 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=843 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=844 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=845 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=846 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=847 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=848 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=849 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=850 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=851 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=852 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=853 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=854 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=855 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=856 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=857 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=858 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=859 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=860 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=861 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=862 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=863 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=864 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=865 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=866 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=867 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=868 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=869 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=870 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=871 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=872 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=873 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=874 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=875 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=876 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=877 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=878 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=879 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=880 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=881 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=882 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=883 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=884 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=885 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=886 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=887 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=888 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=889 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=890 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=891 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=892 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=893 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=894 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=895 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=896 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=897 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=898 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=899 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=900 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=901 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=902 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=903 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=904 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=905 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=906 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=907 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=908 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=909 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=910 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=911 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=912 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=913 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=914 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=915 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=916 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=917 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=918 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=919 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=920 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=921 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=922 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=923 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=924 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=925 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=926 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=927 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=928 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=929 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=930 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=931 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=932 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=933 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=934 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=935 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=936 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=937 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=938 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=939 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=940 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=941 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=942 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=943 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=944 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=945 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=946 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=947 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=948 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=949 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=950 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=951 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=952 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=953 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=954 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=955 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=956 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=957 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=958 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=959 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=960 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=961 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=962 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=963 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=964 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=965 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=966 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=967 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=968 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=969 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=970 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=971 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=972 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=973 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=974 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=975 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=976 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=977 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=978 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=979 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=980 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=981 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=982 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=983 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=984 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=985 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=986 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=987 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=988 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=989 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=990 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=991 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=992 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=993 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=994 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=995 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=996 low_count=28 address=0x05a98 data=0x5a
+# [VDP WRITE] count=997 low_count=28 address=0x05598 data=0x55
+# [VDP WRITE] count=998 low_count=28 address=0x0a598 data=0xa5
+# [VDP WRITE] count=999 low_count=28 address=0x0aa98 data=0xaa
+# [VDP WRITE] count=1000 low_count=28 address=0x05a98 data=0x5a
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# [BUS] Transfer bus ownership to Pico while CPU is running
+# CHECK PASSED: Pico owns the bus after the ownership request
+# CHECK PASSED: Both Z80 and R800 are stopped while Pico owns the bus
+# CHECK PASSED: Both CPU active signals are inactive while Pico owns the bus
+# CHECK PASSED: Z80 PC remains stopped while Pico owns the bus
+# [BUS] Transfer bus ownership back to CPU
+# CHECK PASSED: Z80 owns the bus after returning ownership to CPU
+# CHECK PASSED: Z80 resumes and Pico stops after returning CPU ownership
+# CHECK PASSED: Z80 becomes active after returning CPU ownership
+# CHECK PASSED: Z80 resumes execution from the position held before Pico ownership
+# WARNING: mcu_intr timed out while waiting for read data
+# WARNING: mcu_intr timed out while waiting for read data
+# WARNING: mcu_intr timed out while waiting for read data
+# WARNING: mcu_intr timed out while waiting for read data
+# WARNING: mcu_intr timed out while waiting for read data
+# ============================================================
+# CPU Diagnostics at end of test:
+#   Z80_PC   = 0x00af
+#   R800_PC  = 0x00c3
+#   mode     =  Z80
+#   mode_cnt = 2
+#   A8       = 0x00, SSL0 = 0x00, SSL3 = 0x00
+#   F3=0x00 F4=0x00 F5=0x00
+#   link     = 0xa5
+# ============================================================
+# CHECK PASSED: Two CPU mode transitions completed (Z80->R800, then R800->Z80)
+# CHECK PASSED: Final CPU mode is Z80
+# CHECK PASSED: Primary slot selector A8h preserved as 0x00
+# CHECK PASSED: Secondary slot 0 selector SSL0 preserved as 0x00
+# CHECK PASSED: Debug link pattern is 0xA5
+# CHECK PASSED: 1000 OUT (98h),A writes reached the cartridge slot
+# CHECK PASSED: Every OUT (98h),A had at least 25 clocks of simultaneous /IORQ and /WR low
+# CHECK PASSED: Minimum simultaneous /IORQ and /WR low period was at least 25 clocks
+# CHECK PASSED: Slot address stayed stable during every measured write
+# CHECK PASSED: Slot data stayed stable during every measured write
+# CHECK PASSED: Slot data followed the 55h, A5h, AAh, 5Ah write sequence
+# CHECK PASSED: F3 latch is visible in the debug packet
+# CHECK PASSED: F4 latch is visible in the debug packet
+# CHECK PASSED: F5 latch is visible in the debug packet
+# CHECK PASSED: Debug link pattern remains 0xA5 after flag writes
+# ============================================================
+# Results: PASS = 95, FAIL = 0
+# All tests PASSED.
+# ** Note: $finish    : tb.sv(614)
+#    Time: 20226657640 ps  Iteration: 0  Instance: /tb
+# End time: 06:42:16 on Oct 10,2026, Elapsed time: 0:01:14
+# Errors: 0, Warnings: 4

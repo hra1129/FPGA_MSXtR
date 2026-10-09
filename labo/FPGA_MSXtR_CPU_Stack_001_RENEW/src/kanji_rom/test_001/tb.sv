@@ -76,7 +76,7 @@ module tb;
 		.keyboard_matrix_row(), .keyboard_matrix(), .keyboard_matrix_valid(), .keyboard_update_count(),
 		.debug_signal(256'd0), .performance_signal(224'd0), .vdp_log_count(12'd0),
 		.vdp_log_read_request(), .vdp_log_read_valid(1'b0), .vdp_log_read_a(8'd0),
-		.vdp_log_read_d(8'd0), .vdp_log_read_pc(16'd0), .vdp_log_consume(), .debug_sp_clear(),
+		.vdp_log_read_d(8'd0), .vdp_log_read_pc(16'd0), .vdp_log_consume(),
 		.srom_request(pico_request), .srom_operation(pico_operation), .srom_address(pico_address),
 		.srom_length(pico_length), .srom_buffer_write(pico_buffer_write), .srom_buffer_index(pico_buffer_index),
 		.srom_buffer_wdata(pico_buffer_wdata), .srom_buffer_rdata(pico_buffer_rdata),

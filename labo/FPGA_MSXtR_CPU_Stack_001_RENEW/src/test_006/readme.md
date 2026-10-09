@@ -34,20 +34,10 @@ BIOS自身のPUSH/EXX/EX AF/LD (FFFDh),SP/OTIR/LD SP,(FFFDh)/POP/RETを実行す
 
 この条件では実機の初回Syntax Errorは再現しない。実BASICの呼び出し状態、割り込み動作、実デバイスの遅延・電気特性まで検証した結果ではない。合成・PnR・実機書き込みは行っていない。
 
-### 2026-10-05 SP観測の検証
+### Debug SPI payload
 
-コアSPをtopへ観測用に出力し、Z80所有/PC=0488hとR800所有/PC=04BFhの間だけ
-それぞれ16bitラッチへ取り込む構成を検査する。PC一致期間は毎クロック更新し、その後保持する。
-BIOSの保存・復元後、両ラッチがEFE8hとなることを確認した (呼出し前SP=F000h、CALLで2byte、
-保存レジスタで22byte使用)。このテスト値を実BASICの期待SPとして扱わない。
-
-SPI0Ahから既存33byteを読み、byte16-19が両ラッチをlittle-endianで返し、末尾A5hが変わらないこと、
-読出しで記録が変わらないことを検査する。SPI14hが一度だけクリア信号を出し、
-両ラッチを5A5Ahへ戻し、MCUメモリバス要求を出さないことも検査する。MSXリセット時も5A5Ahへ戻す。
-10回の切替、同CPU呼出し、全レジスタ復元および要求多重受付防止の既存検査もPASS。
-
-SP観測版のGowin合成/PnRはsetup/hold違反0件、最悪setup slack +0.020ns。
-SSRAM RTLとタイミング制約は変更していない。実機検証は未実施。
+SPI 0Ahは32byteの診断情報と末尾A5hを返す。予約byte16-19は0固定で、CPU切替のSP観測ラッチは搭載しない。
+test006では診断読み出しとリンクマーカーを検査する。10回の切替、同CPU呼出し、全レジスタ復元および要求多重受付防止の既存検査も継続する。
 
 ### `+cache_sp_reuse`: FFFDh stack-line再取得
 

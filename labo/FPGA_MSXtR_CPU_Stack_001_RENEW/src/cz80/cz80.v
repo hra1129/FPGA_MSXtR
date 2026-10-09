@@ -84,7 +84,7 @@ module cz80 (
 	output			inte		,
 	output			stop		,
 	output			indexed_opcode_fetch,
-	output [15:0] p_sp,
+	output	[15:0]	p_sp				,
 	output	[15:0]	p_pc				//	debug
 );
 

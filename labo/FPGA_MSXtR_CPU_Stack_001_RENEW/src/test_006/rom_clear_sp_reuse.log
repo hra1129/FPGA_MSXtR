@@ -1,0 +1,317 @@
+# vsim -c -t 1ps -l rom_clear_sp_reuse.log -wlf rom_clear_sp_reuse.wlf tb "+cache_sp_reuse" -do "run.do" 
+# Start time: 07:45:58 on Oct 10,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.fpga_msxtr_cpu_stack
+# Loading work.Gowin_PLL
+# Loading work.vdp_logger
+# Loading work.vdp_logger_sram
+# Loading work.ip_spi
+# Loading work.spi
+# Loading work.cmcu_inst
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.s2026
+# Loading work.s2026_cpu_select
+# Loading work.s2026_register
+# Loading work.msx_bus_mux
+# Loading work.msx_slot
+# Loading work.address_decode
+# Loading work.dos_mapper
+# Loading work.fdc8566
+# Loading work.secondary_slot
+# Loading work.ip_kanji_rom
+# Loading work.ppi
+# Loading work.memory_mapper
+# Loading work.r800_cache
+# Loading work.ssram
+# Loading work.rtc
+# Loading work.pause_led
+# Loading work.system_flag
+# Loading work.dummy_ssg
+# Loading work.ssram_test_model
+# Loading work.r800_cache_ram
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_controller_spi'.  Expected 53, found 52.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_dut/u_controller_spi File: ../FPGA_MSXtR_CPU_Stack.v Line: 577
+# ** Warning: (vsim-3722) ../FPGA_MSXtR_CPU_Stack.v(577): [TFMPC] - Missing connection for port 'vdp_log_read_a'.
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_z80'.  Expected 27, found 26.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_dut/u_z80 File: ../FPGA_MSXtR_CPU_Stack.v Line: 673
+# ** Warning: (vsim-3722) ../FPGA_MSXtR_CPU_Stack.v(673): [TFMPC] - Missing connection for port 'debug_sp'.
+# do run.do
+# /tb
+# [CACHE_VALID_CLEAR] cycles=64
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] Write: addr=0x03cb1 data=0x00
+# [SWITCH] owner=1 Z80_PC=001c R800_PC=0000 SP=ffff time=466077000
+# [SRAM Model] Write: addr=0x01fff data=0x08
+# [SRAM Model] Write: addr=0x01ffe data=0x08
+# [SRAM Model] Write: addr=0x01ffd data=0x00
+# [SRAM Model] Write: addr=0x01ffc data=0x7c
+# [SRAM Model] Read complete: addr=0x02000 data=0x00
+# [SRAM Model] Write: addr=0x01ffd data=0x00
+# [SRAM Model] Write: addr=0x01ffc data=0x00
+# [SRAM Model] Write: addr=0x01ffb data=0x00
+# [SRAM Model] Write: addr=0x01ffa data=0x00
+# [SRAM Model] Write: addr=0x01ff9 data=0x00
+# [SRAM Model] Write: addr=0x01ff8 data=0x00
+# [SRAM Model] Write: addr=0x01ff7 data=0x00
+# [SRAM Model] Write: addr=0x01ff6 data=0x7c
+# [SRAM Model] Write: addr=0x01ff5 data=0x00
+# [SRAM Model] Write: addr=0x01ff4 data=0x00
+# [SRAM Model] Write: addr=0x01ff3 data=0x00
+# [SRAM Model] Write: addr=0x01ff2 data=0x00
+# [SRAM Model] Write: addr=0x01ff1 data=0x00
+# [SRAM Model] Write: addr=0x01ff0 data=0x00
+# [SRAM Model] Write: addr=0x01fef data=0x00
+# [SRAM Model] Write: addr=0x01fee data=0x00
+# [SRAM Model] Write: addr=0x01fed data=0x00
+# [SRAM Model] Write: addr=0x01fec data=0x00
+# [SRAM Model] Write: addr=0x01feb data=0xff
+# [SRAM Model] Write: addr=0x01fea data=0xff
+# [SRAM Model] Write: addr=0x01fe9 data=0x00
+# [SRAM Model] Write: addr=0x01fe8 data=0x69
+# [SRAM Model] Write: addr=0x03ffd data=0xe8
+# [SRAM Model] Write: addr=0x03ffe data=0xdf
+# [SRAM Model] Read complete: addr=0x03cb8 data=0x00
+# [SRAM Model] Write: addr=0x03cb1 data=0x02
+# [RESTORE] owner=1 PC=04b9 SP=dfe8 AF=407c time=522834000
+# [SWITCH] owner=0 Z80_PC=001c R800_PC=04b9 SP=f000 time=524720000
+# [CACHE_VALID_CLEAR] cycles=64
+# [SRAM Model] Write: addr=0x0306b data=0x10
+# [SRAM Model] Write: addr=0x0306a data=0x2d
+# [SRAM Model] Write: addr=0x03069 data=0x02
+# [SRAM Model] Write: addr=0x03068 data=0x44
+# [SRAM Model] Read complete: addr=0x03069 data=0x02
+# [SRAM Model] Read complete: addr=0x0306a data=0x2d
+# [SRAM Model] Write: addr=0x03069 data=0x9a
+# [SRAM Model] Write: addr=0x03068 data=0xbc
+# [SRAM Model] Write: addr=0x03067 data=0x56
+# [SRAM Model] Write: addr=0x03066 data=0x78
+# [SRAM Model] Write: addr=0x03065 data=0x12
+# [SRAM Model] Write: addr=0x03064 data=0x34
+# [SRAM Model] Write: addr=0x03063 data=0x02
+# [SRAM Model] Write: addr=0x03062 data=0x44
+# [SRAM Model] Write: addr=0x03061 data=0x34
+# [SRAM Model] Write: addr=0x03060 data=0x56
+# [SRAM Model] Write: addr=0x0305f data=0x78
+# [SRAM Model] Write: addr=0x0305e data=0x9a
+# [SRAM Model] Write: addr=0x0305d data=0xab
+# [SRAM Model] Write: addr=0x0305c data=0xcd
+# [SRAM Model] Write: addr=0x0305b data=0x67
+# [SRAM Model] Write: addr=0x0305a data=0x89
+# [SRAM Model] Write: addr=0x03059 data=0x23
+# [SRAM Model] Write: addr=0x03058 data=0x45
+# [SRAM Model] Write: addr=0x03057 data=0xa7
+# [SRAM Model] Write: addr=0x03056 data=0x44
+# [SRAM Model] Write: addr=0x03055 data=0x5a
+# [SRAM Model] Write: addr=0x03054 data=0x00
+# [SRAM Model] Write: addr=0x03ffd data=0x54
+# [SRAM Model] Write: addr=0x03ffe data=0xf0
+# [SRAM Model] Read complete: addr=0x03cb2 data=0x00
+# [SRAM Model] Write: addr=0x03cb1 data=0x00
+# [RESTORE] owner=0 PC=04b9 SP=f054 AF=6000 time=708236000
+# [SWITCH] owner=1 Z80_PC=04b7 R800_PC=04b9 SP=dfe8 time=712473000
+# [RESTORE] owner=1 PC=04b9 SP=dfe8 AF=406a time=712473000
+# [RESTORE] owner=1 PC=04ba SP=dfe8 AF=406a time=714079000
+# [RESTORE] owner=1 PC=04bb SP=dfe8 AF=406a time=714242000
+# [RESTORE] owner=1 PC=04bc SP=dfe8 AF=406a time=714405000
+# [RESTORE] owner=1 PC=04bd SP=dfe8 AF=406a time=714568000
+# [RESTORE] owner=1 PC=04be SP=dfe8 AF=406a time=714731000
+# [RESTORE] owner=1 PC=04bf SP=dfe8 AF=406a time=714871000
+# [STACK_LINE_FILL] address=03ff8 count=1
+# [SRAM Model] Read complete: addr=0x04000 data=0x00
+# [RESTORE] owner=1 PC=04c0 SP=f054 AF=406a time=716104000
+# [SRAM Model] Read complete: addr=0x03058 data=0x45
+# [RESTORE] owner=1 PC=04c1 SP=f056 AF=5a00 time=718851000
+# [RESTORE] owner=1 PC=04c2 SP=f056 AF=5a00 time=719014000
+# [RESTORE] owner=1 PC=04c3 SP=f056 AF=5a00 time=719201000
+# [RESTORE] owner=1 PC=04c4 SP=f058 AF=a744 time=719783000
+# [SRAM Model] Read complete: addr=0x03060 data=0x56
+# [RESTORE] owner=1 PC=04c5 SP=f05a AF=a744 time=721040000
+# [RESTORE] owner=1 PC=04c6 SP=f05c AF=a744 time=721622000
+# [RESTORE] owner=1 PC=04c7 SP=f05e AF=a744 time=722204000
+# [RESTORE] owner=1 PC=04c8 SP=f05e AF=a744 time=722367000
+# [RESTORE] owner=1 PC=04c9 SP=f05e AF=0069 time=724020000
+# [RESTORE] owner=1 PC=04ca SP=f05e AF=0069 time=724183000
+# [RESTORE] owner=1 PC=04cb SP=f060 AF=0069 time=724765000
+# [RESTORE] owner=1 PC=04cc SP=f060 AF=0069 time=724928000
+# [SRAM Model] Read complete: addr=0x03068 data=0xbc
+# [RESTORE] owner=1 PC=04cd SP=f062 AF=0069 time=726185000
+# [RESTORE] owner=1 PC=04ce SP=f064 AF=0244 time=726767000
+# [RESTORE] owner=1 PC=04cf SP=f066 AF=0244 time=727349000
+# [RESTORE] owner=1 PC=04d0 SP=f068 AF=0244 time=727931000
+# [SRAM Model] Read complete: addr=0x03070 data=0x00
+# [RESTORE] owner=1 PC=04d1 SP=f06a AF=0244 time=730678000
+# [RETURN] phase=0 owner=1 PC=1100 SP=f06c AF=0244
+# [REGISTERS] BC/DE/HL/BC'/DE'/HL'/IX/IY/AF'/I=123456789abc23456789abcd3456789aa7445a
+# [SRAM Model] Write: addr=0x0306b data=0x11
+# [SRAM Model] Write: addr=0x0306a data=0x2d
+# [SRAM Model] Write: addr=0x03069 data=0x00
+# [SRAM Model] Write: addr=0x03068 data=0x44
+# [SRAM Model] Write: addr=0x03069 data=0x9a
+# [SRAM Model] Write: addr=0x03068 data=0xbc
+# [SRAM Model] Write: addr=0x03067 data=0x56
+# [SRAM Model] Write: addr=0x03066 data=0x78
+# [SRAM Model] Write: addr=0x03065 data=0x12
+# [SRAM Model] Write: addr=0x03064 data=0x34
+# [SRAM Model] Write: addr=0x03063 data=0x00
+# [SRAM Model] Write: addr=0x03062 data=0x44
+# [SRAM Model] Write: addr=0x03061 data=0x34
+# [SRAM Model] Write: addr=0x03060 data=0x56
+# [SRAM Model] Write: addr=0x0305f data=0x78
+# [SRAM Model] Write: addr=0x0305e data=0x9a
+# [SRAM Model] Write: addr=0x0305d data=0xab
+# [SRAM Model] Write: addr=0x0305c data=0xcd
+# [SRAM Model] Write: addr=0x0305b data=0x67
+# [SRAM Model] Write: addr=0x0305a data=0x89
+# [SRAM Model] Write: addr=0x03059 data=0x23
+# [SRAM Model] Write: addr=0x03058 data=0x45
+# [SRAM Model] Write: addr=0x03057 data=0xa7
+# [SRAM Model] Write: addr=0x03056 data=0x44
+# [SRAM Model] Write: addr=0x03055 data=0x5a
+# [SRAM Model] Write: addr=0x03054 data=0x00
+# [SRAM Model] Write: addr=0x03ffd data=0x54
+# [SRAM Model] Write: addr=0x03ffe data=0xf0
+# [SRAM Model] Read complete: addr=0x03cb8 data=0x00
+# [SRAM Model] Write: addr=0x03cb1 data=0x02
+# [RESTORE] owner=1 PC=04b9 SP=f054 AF=0054 time=795093000
+# [SWITCH] owner=0 Z80_PC=04b7 R800_PC=04b9 SP=f054 time=796979000
+# [CACHE_VALID_CLEAR] cycles=64
+# [RESTORE] owner=0 PC=04b9 SP=f054 AF=6002 time=799307000
+# [RESTORE] owner=0 PC=04ba SP=f054 AF=6042 time=803218000
+# [RESTORE] owner=0 PC=04bb SP=f054 AF=6042 time=804615000
+# [RESTORE] owner=0 PC=04bc SP=f054 AF=6042 time=806012000
+# [RESTORE] owner=0 PC=04bd SP=f054 AF=6042 time=807409000
+# [RESTORE] owner=0 PC=04be SP=f054 AF=6042 time=808526000
+# [RESTORE] owner=0 PC=04bf SP=f054 AF=6042 time=809364000
+# [SRAM Model] Read complete: addr=0x03ffe data=0xf0
+# [SRAM Model] Read complete: addr=0x03fff data=0x00
+# [RESTORE] owner=0 PC=04c0 SP=f054 AF=6042 time=812158000
+# [SRAM Model] Read complete: addr=0x03055 data=0x5a
+# [SRAM Model] Read complete: addr=0x03056 data=0x44
+# [RESTORE] owner=0 PC=04c1 SP=f056 AF=5a00 time=815231000
+# [RESTORE] owner=0 PC=04c2 SP=f056 AF=5a00 time=816627000
+# [RESTORE] owner=0 PC=04c3 SP=f056 AF=5a00 time=818304000
+# [SRAM Model] Read complete: addr=0x03057 data=0xa7
+# [SRAM Model] Read complete: addr=0x03058 data=0x45
+# [RESTORE] owner=0 PC=04c4 SP=f058 AF=a744 time=821377000
+# [SRAM Model] Read complete: addr=0x03059 data=0x23
+# [SRAM Model] Read complete: addr=0x0305a data=0x89
+# [RESTORE] owner=0 PC=04c5 SP=f05a AF=a744 time=824450000
+# [SRAM Model] Read complete: addr=0x0305b data=0x67
+# [SRAM Model] Read complete: addr=0x0305c data=0xcd
+# [RESTORE] owner=0 PC=04c6 SP=f05c AF=a744 time=827523000
+# [SRAM Model] Read complete: addr=0x0305d data=0xab
+# [SRAM Model] Read complete: addr=0x0305e data=0x9a
+# [RESTORE] owner=0 PC=04c7 SP=f05e AF=a744 time=830595000
+# [RESTORE] owner=0 PC=04c8 SP=f05e AF=a744 time=831992000
+# [RESTORE] owner=0 PC=04c9 SP=f05e AF=5a00 time=833389000
+# [RESTORE] owner=0 PC=04ca SP=f05e AF=5a00 time=834786000
+# [SRAM Model] Read complete: addr=0x0305f data=0x78
+# [SRAM Model] Read complete: addr=0x03060 data=0x56
+# [RESTORE] owner=0 PC=04cb SP=f060 AF=5a00 time=837859000
+# [RESTORE] owner=0 PC=04cc SP=f060 AF=5a00 time=839256000
+# [SRAM Model] Read complete: addr=0x03061 data=0x34
+# [SRAM Model] Read complete: addr=0x03062 data=0x44
+# [RESTORE] owner=0 PC=04cd SP=f062 AF=5a00 time=842329000
+# [SRAM Model] Read complete: addr=0x03063 data=0x00
+# [SRAM Model] Read complete: addr=0x03064 data=0x34
+# [RESTORE] owner=0 PC=04ce SP=f064 AF=0044 time=845402000
+# [SRAM Model] Read complete: addr=0x03065 data=0x12
+# [SRAM Model] Read complete: addr=0x03066 data=0x78
+# [RESTORE] owner=0 PC=04cf SP=f066 AF=0044 time=848475000
+# [SRAM Model] Read complete: addr=0x03067 data=0x56
+# [SRAM Model] Read complete: addr=0x03068 data=0xbc
+# [RESTORE] owner=0 PC=04d0 SP=f068 AF=0044 time=851547000
+# [SRAM Model] Read complete: addr=0x03069 data=0x9a
+# [SRAM Model] Read complete: addr=0x0306a data=0x2d
+# [RESTORE] owner=0 PC=04d1 SP=f06a AF=0044 time=854620000
+# [SRAM Model] Read complete: addr=0x0306b data=0x11
+# [SRAM Model] Read complete: addr=0x0306c data=0x00
+# [RETURN] phase=1 owner=0 PC=1200 SP=f06c AF=0044
+# [REGISTERS] BC/DE/HL/BC'/DE'/HL'/IX/IY/AF'/I=123456789abc23456789abcd3456789aa7445a
+# [SRAM Model] Write: addr=0x0308f data=0x12
+# [SRAM Model] Write: addr=0x0308e data=0x2d
+# [SRAM Model] Write: addr=0x0308d data=0x02
+# [SRAM Model] Write: addr=0x0308c data=0x44
+# [SRAM Model] Read complete: addr=0x0308d data=0x02
+# [SRAM Model] Read complete: addr=0x0308e data=0x2d
+# [SRAM Model] Write: addr=0x0308d data=0x9a
+# [SRAM Model] Write: addr=0x0308c data=0xbc
+# [SRAM Model] Write: addr=0x0308b data=0x56
+# [SRAM Model] Write: addr=0x0308a data=0x78
+# [SRAM Model] Write: addr=0x03089 data=0x12
+# [SRAM Model] Write: addr=0x03088 data=0x34
+# [SRAM Model] Write: addr=0x03087 data=0x02
+# [SRAM Model] Write: addr=0x03086 data=0x44
+# [SRAM Model] Write: addr=0x03085 data=0x34
+# [SRAM Model] Write: addr=0x03084 data=0x56
+# [SRAM Model] Write: addr=0x03083 data=0x78
+# [SRAM Model] Write: addr=0x03082 data=0x9a
+# [SRAM Model] Write: addr=0x03081 data=0xab
+# [SRAM Model] Write: addr=0x03080 data=0xcd
+# [SRAM Model] Write: addr=0x0307f data=0x67
+# [SRAM Model] Write: addr=0x0307e data=0x89
+# [SRAM Model] Write: addr=0x0307d data=0x23
+# [SRAM Model] Write: addr=0x0307c data=0x45
+# [SRAM Model] Write: addr=0x0307b data=0xa7
+# [SRAM Model] Write: addr=0x0307a data=0x44
+# [SRAM Model] Write: addr=0x03079 data=0x5a
+# [SRAM Model] Write: addr=0x03078 data=0x00
+# [SRAM Model] Write: addr=0x03ffd data=0x78
+# [SRAM Model] Write: addr=0x03ffe data=0xf0
+# [SRAM Model] Read complete: addr=0x03cb2 data=0x00
+# [SRAM Model] Write: addr=0x03cb1 data=0x00
+# [RESTORE] owner=0 PC=04b9 SP=f078 AF=6000 time=1041792000
+# [SWITCH] owner=1 Z80_PC=04b7 R800_PC=04b9 SP=f054 time=1046029000
+# [RESTORE] owner=1 PC=04b9 SP=f054 AF=0042 time=1046029000
+# [RESTORE] owner=1 PC=04ba SP=f054 AF=0042 time=1047635000
+# [RESTORE] owner=1 PC=04bb SP=f054 AF=0042 time=1047798000
+# [RESTORE] owner=1 PC=04bc SP=f054 AF=0042 time=1047961000
+# [RESTORE] owner=1 PC=04bd SP=f054 AF=0042 time=1048124000
+# [RESTORE] owner=1 PC=04be SP=f054 AF=0042 time=1048287000
+# [RESTORE] owner=1 PC=04bf SP=f054 AF=0042 time=1048426000
+# [STACK_LINE_FILL] address=03ff8 count=2
+# [SRAM Model] Read complete: addr=0x04000 data=0x00
+# [RESTORE] owner=1 PC=04c0 SP=f078 AF=0042 time=1049660000
+# [SRAM Model] Read complete: addr=0x03080 data=0xcd
+# [RESTORE] owner=1 PC=04c1 SP=f07a AF=5a00 time=1052407000
+# [RESTORE] owner=1 PC=04c2 SP=f07a AF=5a00 time=1052570000
+# [RESTORE] owner=1 PC=04c3 SP=f07a AF=5a00 time=1052757000
+# [RESTORE] owner=1 PC=04c4 SP=f07c AF=a744 time=1053339000
+# [RESTORE] owner=1 PC=04c5 SP=f07e AF=a744 time=1053921000
+# [RESTORE] owner=1 PC=04c6 SP=f080 AF=a744 time=1054503000
+# [SRAM Model] Read complete: addr=0x03088 data=0x34
+# [RESTORE] owner=1 PC=04c7 SP=f082 AF=a744 time=1055760000
+# [RESTORE] owner=1 PC=04c8 SP=f082 AF=a744 time=1055923000
+# [RESTORE] owner=1 PC=04c9 SP=f082 AF=5a00 time=1057575000
+# [RESTORE] owner=1 PC=04ca SP=f082 AF=5a00 time=1057738000
+# [RESTORE] owner=1 PC=04cb SP=f084 AF=5a00 time=1058320000
+# [RESTORE] owner=1 PC=04cc SP=f084 AF=5a00 time=1058483000
+# [RESTORE] owner=1 PC=04cd SP=f086 AF=5a00 time=1059065000
+# [RESTORE] owner=1 PC=04ce SP=f088 AF=0244 time=1059647000
+# [SRAM Model] Read complete: addr=0x03090 data=0x00
+# [RESTORE] owner=1 PC=04cf SP=f08a AF=0244 time=1060905000
+# [RESTORE] owner=1 PC=04d0 SP=f08c AF=0244 time=1061487000
+# [RESTORE] owner=1 PC=04d1 SP=f08e AF=0244 time=1063558000
+# [RETURN] phase=2 owner=1 PC=1300 SP=f090 AF=0244
+# [REGISTERS] BC/DE/HL/BC'/DE'/HL'/IX/IY/AF'/I=123456789abc23456789abcd3456789aa7445a
+# [REQUESTS] CPU=6 stops=6 Pico=1 stops=1
+# PASS: R800->Z80 startup history, SP F054->F078 and two stack-line SRAM refills
+# ** Note: $finish    : tb.sv(321)
+#    Time: 1068773160 ps  Iteration: 1  Instance: /tb
+# Break in Module tb at tb.sv line 321
+# End time: 07:46:01 on Oct 10,2026, Elapsed time: 0:00:03
+# Errors: 0, Warnings: 4

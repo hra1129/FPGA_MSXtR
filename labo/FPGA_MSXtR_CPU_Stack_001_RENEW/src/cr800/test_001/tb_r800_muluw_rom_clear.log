@@ -1,0 +1,14 @@
+# vsim -c -lib work_rom_clear -t 1ps -l tb_r800_muluw_rom_clear.log tb_r800_muluw -do "run -all; quit -f" 
+# Start time: 07:46:09 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom_clear.tb_r800_muluw
+# Loading work_rom_clear.cr800
+# Loading work_rom_clear.cr800_mcode
+# Loading work_rom_clear.cr800_alu
+# Loading work_rom_clear.cr800_registers
+# run -all
+# PASS: R800 MULUW BC/DE/HL/SP products and flags
+# ** Note: $finish    : tb.sv(824)
+#    Time: 1375 ns  Iteration: 2  Instance: /tb_r800_muluw
+# End time: 07:46:09 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0

@@ -430,12 +430,15 @@ module tb_rom_cache;
 	reg [2:0] fill_index = 3'd0;
 	reg [7:0] fill_data = 8'd0;
 	wire [7:0] fill_requested_data;
+	wire cache_ready;
 	integer byte_index;
+	integer clear_row;
 
 	always #5 clk = ~clk;
 
 	r800_rom_cache u_cache (
 		.clk(clk), .reset_n(reset_n), .invalidate(invalidate),
+		.cache_ready(cache_ready),
 		.lookup(lookup), .miss_start(miss_start), .address(address),
 		.hit(hit), .hit_data(hit_data), .fill_byte(fill_byte),
 		.fill_index(fill_index), .fill_data(fill_data),
@@ -444,23 +447,47 @@ module tb_rom_cache;
 
 	task automatic request_lookup( input [18:0] requested_address );
 		begin
-			@( negedge clk );
+			wait( cache_ready === 1'b1 );
+			@( posedge clk ); #1;
 			address = requested_address;
 			lookup = 1'b1;
-			@( negedge clk );
+			@( posedge clk ); #1;
 			lookup = 1'b0;
 			#1;
 		end
 	endtask
 
+	task automatic check_clear_sweep;
+		integer clear_cycles;
+		begin
+			clear_cycles = 0;
+			while( u_cache.ff_valid_clear_active ) begin
+				if( cache_ready !== 1'b0 || hit !== 1'b0 ) $fatal(1, "ROM cache exposed data while clearing");
+				if( u_cache.ff_valid_clear_row !== clear_cycles[7:0] ) $fatal(1, "ROM clear row order mismatch");
+				@( posedge clk ); #1;
+				clear_cycles = clear_cycles + 1;
+			end
+			if( clear_cycles != 256 ) $fatal(1, "ROM valid clear took %0d cycles", clear_cycles);
+			for( clear_row = 0; clear_row < 256; clear_row = clear_row + 1 ) begin
+				if( u_cache.ff_valid[clear_row] !== 4'd0 || u_cache.ff_plru[clear_row] !== 3'd0 ) $fatal(1, "ROM clear missed row %0d", clear_row);
+			end
+			$display("PASS: ROM valid/PLRU clear wrote all 256 sets in 256 clocks");
+		end
+	endtask
+
 	initial begin
 		repeat(3) @( posedge clk );
-		@( negedge clk );
+		#1;
+		for( clear_row = 0; clear_row < 256; clear_row = clear_row + 1 ) begin
+			u_cache.ff_valid[clear_row] = 4'hF;
+			u_cache.ff_plru[clear_row] = 3'h7;
+		end
 		reset_n = 1'b1;
+		check_clear_sweep();
 		request_lookup(19'h00123);
 		if( hit !== 1'b0 ) $fatal(1, "ROM cache cold lookup hit");
 		miss_start = 1'b1;
-		@( negedge clk );
+		@( posedge clk ); #1;
 		miss_start = 1'b0;
 		for( byte_index = 0; byte_index < 8; byte_index = byte_index + 1 ) begin
 			fill_index = byte_index[2:0];
@@ -469,7 +496,7 @@ module tb_rom_cache;
 			if( byte_index == 7 && fill_requested_data !== 8'hA3 ) begin
 				$fatal(1, "ROM cache miss returned %h", fill_requested_data);
 			end
-			@( negedge clk );
+			@( posedge clk ); #1;
 		end
 		fill_byte = 1'b0;
 		request_lookup(19'h00123);
@@ -479,7 +506,7 @@ module tb_rom_cache;
 		request_lookup(19'h10123);
 		if( hit !== 1'b0 ) $fatal(1, "ROM bank tag aliased with lower 15-bit address");
 		miss_start = 1'b1;
-		@( negedge clk );
+		@( posedge clk ); #1;
 		miss_start = 1'b0;
 		for( byte_index = 0; byte_index < 8; byte_index = byte_index + 1 ) begin
 			fill_index = byte_index[2:0];
@@ -488,7 +515,7 @@ module tb_rom_cache;
 			if( byte_index == 7 && fill_requested_data !== 8'hB3 ) begin
 				$fatal(1, "Second ROM bank fill returned %h", fill_requested_data);
 			end
-			@( negedge clk );
+			@( posedge clk ); #1;
 		end
 		fill_byte = 1'b0;
 		request_lookup(19'h00123);
@@ -496,7 +523,11 @@ module tb_rom_cache;
 		request_lookup(19'h10123);
 		if( hit !== 1'b1 || hit_data !== 8'hB3 ) $fatal(1, "Second ROM bank hit data=%h", hit_data);
 		invalidate = 1'b1;
-		@( negedge clk );
+		@( posedge clk ); #1;
+		check_clear_sweep();
+		repeat(12) @( posedge clk );
+		#1;
+		if( u_cache.ff_valid_clear_active !== 1'b0 || cache_ready !== 1'b0 ) $fatal(1, "Held invalidate restarted ROM clear or enabled access");
 		invalidate = 1'b0;
 		request_lookup(19'h00123);
 		if( hit !== 1'b0 ) $fatal(1, "ROM cache not invalidated after CPU switch");

@@ -134,11 +134,7 @@ module fpga_msxtr_cpu_stack (
 	wire			w_r800_bus_rdata_en;
 	wire	[2:0]	w_r800_t_state;
 	wire	[15:0]	w_r800_pc;
-	wire [15:0] w_z80_sp;
-	wire [15:0] w_r800_sp;
-	wire w_debug_sp_clear;
-	reg [15:0] ff_z80_saved_sp;
-	reg [15:0] ff_r800_restored_sp;
+	wire	[15:0]	w_r800_sp;
 	wire			w_processor_mode;
 	wire	[255:0]	w_debug_signal;
 	wire			w_performance_start_cs;
@@ -171,7 +167,6 @@ module fpga_msxtr_cpu_stack (
 	wire	[15:0]	w_bus_address;
 	wire	[7:0]	w_bus_rdata;
 	wire			w_bus_rdata_en;
-	wire	[2:0]	w_bus_t_state;
 
 	wire			w_mcu_io;
 	wire			w_mcu_write;
@@ -202,6 +197,7 @@ module fpga_msxtr_cpu_stack (
 	wire [7:0] w_srom_buffer_rdata;
 	wire w_srom_done;
 	wire [7:0] w_srom_status;
+	wire [1:0] w_slot1_rom_mode;
 
 	wire	[3:0]	w_keyboard_matrix_row;
 	wire	[7:0]	w_keyboard_matrix;
@@ -419,28 +415,12 @@ module fpga_msxtr_cpu_stack (
 		end
 	end
 
-	always @(posedge clk42m) begin
-		if( !w_msx_reset_n || !ff_spi_reset_n || w_debug_sp_clear ) begin
-			ff_z80_saved_sp <= 16'h5a5a;
-			ff_r800_restored_sp <= 16'h5a5a;
-		end
-		else begin
-			if( w_cpu_sel == 2'b00 && w_z80_pc == 16'h0488 ) begin
-				ff_z80_saved_sp <= w_z80_sp;
-			end
-			if( w_cpu_sel == 2'b01 && w_r800_pc == 16'h04bf ) begin
-				ff_r800_restored_sp <= w_r800_sp;
-			end
-		end
-	end
-
-	//	SPI 0Ah: PC, slot registers, system flags, bus addresses, CPU state, mode count, latched SP.
+	//	SPI 0Ah: PC, slot registers, system flags, bus addresses and CPU state.
 	assign w_debug_signal = {
 			w_r800_cache_fill_wait,
 			w_r800_cache_misses,
 			w_r800_cache_hits,
-			ff_r800_restored_sp,
-			ff_z80_saved_sp,
+			32'd0,
 			ff_processor_mode_change_count,
 			4'd0, ff_r800_reset_n, ff_z80_reset_n, w_msx_pause, w_processor_mode,
 			w_r800_bus_address,
@@ -630,11 +610,9 @@ module fpga_msxtr_cpu_stack (
 		.keyboard_update_count			( w_keyboard_update_count			),
 		.debug_signal					( w_debug_signal					),
 		.performance_signal				( w_r800_performance_signal	),
-		.debug_sp_clear					( w_debug_sp_clear					),
 		.vdp_log_count					( w_vdp_log_count					), 
 		.vdp_log_read_request			( w_vdp_log_read_request			),
 		.vdp_log_read_valid				( w_vdp_log_read_valid				), 
-		.vdp_log_read_a					( w_vdp_log_read_a					),
 		.vdp_log_read_d					( w_vdp_log_read_d					), 
 		.vdp_log_read_pc				( w_vdp_log_read_pc					), 
 		.vdp_log_consume				( w_vdp_log_consume					),
@@ -647,7 +625,8 @@ module fpga_msxtr_cpu_stack (
 		.srom_buffer_wdata(w_srom_buffer_wdata),
 		.srom_buffer_rdata(w_srom_buffer_rdata),
 		.srom_done(w_srom_done),
-		.srom_status(w_srom_status)
+		.srom_status(w_srom_status),
+		.slot1_rom_mode(w_slot1_rom_mode)
 	);
 
 	cmcu_inst u_cmcu_inst (
@@ -717,7 +696,6 @@ module fpga_msxtr_cpu_stack (
 		.bus_rdata						( w_z80_bus_rdata					),
 		.bus_rdata_en					( w_z80_bus_rdata_en				),
 		.pc								( w_z80_pc							),
-		.debug_sp						( w_z80_sp							),
 		.int_ack						( 									)
 	);
 
@@ -911,6 +889,7 @@ module fpga_msxtr_cpu_stack (
 		.slot_secondary0				( w_secondary_slot0					),
 		.slot_secondary3				( w_secondary_slot3					),
 		.dos_bank						( w_dos_bank						),
+		.slot1_rom_mode				( w_slot1_rom_mode			),
 		.cpu_rom0_cs					( w_cpu_rom0_cs						),
 		.cpu_slot12_cs					( w_cpu_slot12_cs					),
 		.cpu_flash_cs					( w_cpu_flash_cs					)
@@ -1073,18 +1052,18 @@ module fpga_msxtr_cpu_stack (
 	ip_kanji_rom u_kanji_rom (
 		.reset							( ~ff_spi_reset_n					),
 		.clk							( clk42m							),
-		.kanji_reset(~ff_slot_reset_n),
-		.pico_owned(w_cpu_sel[1]),
-		.pico_request(w_srom_request),
-		.pico_operation(w_srom_operation),
-		.pico_address(w_srom_address),
-		.pico_length(w_srom_length),
-		.pico_buffer_write(w_srom_buffer_write),
-		.pico_buffer_index(w_srom_buffer_index),
-		.pico_buffer_wdata(w_srom_buffer_wdata),
-		.pico_buffer_rdata(w_srom_buffer_rdata),
-		.pico_done(w_srom_done),
-		.pico_status(w_srom_status),
+		.kanji_reset					( ~ff_slot_reset_n					),
+		.pico_owned						( w_cpu_sel[1]						),
+		.pico_request					( w_srom_request					),
+		.pico_operation					( w_srom_operation					),
+		.pico_address					( w_srom_address					),
+		.pico_length					( w_srom_length						),
+		.pico_buffer_write				( w_srom_buffer_write				),
+		.pico_buffer_index				( w_srom_buffer_index				),
+		.pico_buffer_wdata				( w_srom_buffer_wdata				),
+		.pico_buffer_rdata				( w_srom_buffer_rdata				),
+		.pico_done						( w_srom_done						),
+		.pico_status					( w_srom_status						),
 		.bus_cs							( w_device_kanji_rom_cs				),
 		.bus_address					( w_device_address[1:0]				),
 		.bus_write						( w_device_write					),

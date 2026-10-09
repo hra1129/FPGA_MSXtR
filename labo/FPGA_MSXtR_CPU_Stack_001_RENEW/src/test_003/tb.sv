@@ -467,6 +467,8 @@ module tb ();
 		end
 	endtask
 
+	`include "rom_timing.vh"
+
 	initial begin
 		reg [7:0] debug_data [0:32];
 		reg [15:0] z80_pc_before_pico;
@@ -498,6 +500,10 @@ module tb ();
 		slot_busdir = 1'b1;
 		srom_miso = 1'b0;
 		uart_rx = 1'b1;
+
+		if( $test$plusargs("rom_timing") ) begin
+			run_rom_timing();
+		end
 
 		#( 3000 );
 		$display( "[SETUP] Enable BootROM" );

@@ -1,0 +1,59 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dC:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/msx_slot/test_001
+vmsx_slot
+Z1 !s110 1791580604
+!i10b 1
+!s100 C0C6Z7ECNTR:FdT[57n303
+Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
+I;=;eai@f5LAj9GPLWjPXU2
+Z3 VDg1SIo80bB@j0V0VzS_@n1
+R0
+w1791497343
+8../msx_slot.v
+F../msx_slot.v
+!i122 0
+L0 34 563
+Z4 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z5 !s108 1791580604.000000
+!s107 tb.sv|../msx_slot.v|
+Z6 !s90 -work|work_rom0_isolation|../msx_slot.v|tb.sv|
+!i113 1
+Z7 o-work work_rom0_isolation
+Z8 tCvgOpt 0
+vtb
+DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+R1
+!i10b 1
+!s100 EI7L1mACH`g5RR=0Ve2XV1
+R2
+IIz]FTb2A@]O0B1UA6e]:>1
+R3
+S1
+R0
+w1791580574
+8tb.sv
+Ftb.sv
+!i122 0
+L0 7 904
+R4
+r1
+!s85 0
+31
+R5
+Z9 !s107 tb.sv|../msx_slot.v|
+R6
+!i113 1
+R7
+R8

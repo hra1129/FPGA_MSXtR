@@ -1,0 +1,17 @@
+# vsim -c -lib work_rom_timing_20261010 -t 1ps -l tb_r800_rom_fetch_timing_20261010.log tb_r800_rom_fetch -do "run -all; quit -f" 
+# Start time: 06:33:44 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom_timing_20261010.tb_r800_rom_fetch
+# Loading work_rom_timing_20261010.cr800_inst
+# Loading work_rom_timing_20261010.r800_rom_cache
+# Loading work_rom_timing_20261010.cr800
+# Loading work_rom_timing_20261010.cr800_mcode
+# Loading work_rom_timing_20261010.cr800_alu
+# Loading work_rom_timing_20261010.cr800_registers
+# Loading work_rom_timing_20261010.r800_cache_ram
+# run -all
+# PASS: R800 executes ROM using 70ns reads on misses and no external reads on hits
+# ** Note: $finish    : tb.sv(557)
+#    Time: 5623120 ps  Iteration: 0  Instance: /tb_r800_rom_fetch
+# End time: 06:33:44 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0

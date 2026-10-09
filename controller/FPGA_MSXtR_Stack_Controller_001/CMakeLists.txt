@@ -19,6 +19,7 @@ add_executable(fpga_msxtr_controller
     fpga_config.c
     keyboard.c
     mode_switch.c
+    dipsw.c
     sdcard.c
 	flashrom.c
 	debugger.c

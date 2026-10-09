@@ -77,7 +77,6 @@ module ip_spi (
 	input	[7:0]	vdp_log_read_d,
 	input	[15:0]	vdp_log_read_pc,
 	output			vdp_log_consume,
-	output debug_sp_clear,
 	output srom_request,
 	output [1:0] srom_operation,
 	output [23:0] srom_address,
@@ -87,7 +86,8 @@ module ip_spi (
 	output [7:0] srom_buffer_wdata,
 	input [7:0] srom_buffer_rdata,
 	input srom_done,
-	input [7:0] srom_status
+	input [7:0] srom_status,
+	output [1:0] slot1_rom_mode
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -135,7 +135,9 @@ module ip_spi (
 	localparam [5:0] ST_SROM_WAIT = 6'd33;
 	localparam [5:0] ST_SROM_PAYLOAD = 6'd34;
 	localparam [5:0] ST_SROM_FETCH = 6'd35;
+	localparam [5:0] ST_SLOT1_ROM_MODE = 6'd36;
 	reg [5:0] ff_state;
+	reg [1:0] ff_slot1_rom_mode;
 	reg [1:0] ff_srom_operation;
 	reg [23:0] ff_srom_address;
 	reg [8:0] ff_srom_length;
@@ -159,6 +161,7 @@ module ip_spi (
 		ff_state == ST_SROM_DATA && spi_rdata_en && cpu_sel[1] && !srom_status[0] && ff_srom_rejection == 8'd0;
 	assign srom_buffer_index = ff_srom_index;
 	assign srom_buffer_wdata = spi_rdata;
+	assign slot1_rom_mode = ff_slot1_rom_mode;
 	reg		[15:0]	ff_bus_address;
 	reg		[7:0]	ff_bus_wdata;
 	reg				ff_bus_io;
@@ -186,7 +189,6 @@ module ip_spi (
 	reg				ff_flashrom_access;
 	reg				ff_slot_wait_n;
 	reg				ff_spi_intr_req;
-	assign debug_sp_clear = reset_n & ~spi_cs_n & ~ff_spi_cs_n & (ff_state == ST_COMMAND) & spi_rdata_en & (spi_rdata == 8'h14);
 	assign vdp_log_read_request = reset_n & ~spi_cs_n & ~ff_spi_cs_n & (ff_state == ST_LOG_REQUEST);
 	assign vdp_log_consume = reset_n & ~spi_cs_n & ~ff_spi_cs_n & (ff_state == ST_LOG_PC_H) & ~ff_spi_valid & spi_ready;
 
@@ -216,6 +218,7 @@ module ip_spi (
 	always @( posedge clk ) begin
 		if( !reset_n ) begin
 			ff_state					<= ST_IDLE;
+			ff_slot1_rom_mode			<= 2'b00;
 			ff_bus_address				<= 16'd0;
 			ff_bus_wdata				<= 8'd0;
 			ff_bus_io					<= 1'b0;
@@ -492,11 +495,6 @@ module ip_spi (
 						ff_spi_valid <= 1'b1;
 						ff_spi_write <= 1'b1;
 					end
-					8'h14: begin
-						ff_bus_write <= 1'b1;
-						ff_spi_intr_req <= 1'b1;
-						ff_state <= ST_IDLE;
-					end
 					8'h15, 8'h16: begin
 						ff_srom_rejection <= !cpu_sel[1] ? 8'd2 : srom_status[0] ? 8'd6 : 8'd0;
 						ff_bus_write <= 1'b0;
@@ -519,6 +517,12 @@ module ip_spi (
 						ff_spi_valid <= 1'b1;
 						ff_spi_write <= 1'b1;
 						ff_state <= ST_SEND;
+					end
+					8'h19: begin
+						ff_bus_write <= 1'b1;
+						ff_state <= ST_SLOT1_ROM_MODE;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
 					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command
@@ -611,6 +615,13 @@ module ip_spi (
 					ff_pico_change_target	<= spi_rdata[0];
 					ff_pico_change_req <= spi_rdata[0] || (!srom_status[0] && srom_status[7:1] == 7'd0);
 					ff_state				<= ST_BUS_OWNER_WAIT;
+				end
+			end
+			ST_SLOT1_ROM_MODE: begin
+				if( spi_rdata_en ) begin
+					ff_slot1_rom_mode <= spi_rdata[0] ? spi_rdata[1:0] : 2'b00;
+					ff_spi_intr_req <= 1'b1;
+					ff_state <= ST_IDLE;
 				end
 			end
 			ST_SROM_ADDR_L: begin

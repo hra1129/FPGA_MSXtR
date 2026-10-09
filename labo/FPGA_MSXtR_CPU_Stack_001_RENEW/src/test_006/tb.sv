@@ -11,7 +11,6 @@ module tb;
 	wire mcu_miso;
 	reg [7:0] spi_received;
 	reg [7:0] debug_bytes [0:32];
-	integer sp_clear_count = 0;
 	wire [3:0] sram_sio;
 	wire sram_sclk;
 	wire [3:0] sram_ce_n;
@@ -241,10 +240,6 @@ module tb;
 			$display("[STACK_LINE_FILL] address=%05h count=%0d", u_dut.w_cache_ssram_address, stack_line_fill_count);
 		end
 		previous_stack_line_fill = stack_line_fill;
-		if( u_dut.w_debug_sp_clear ) begin
-			sp_clear_count = sp_clear_count + 1;
-			if( u_dut.w_mcu_valid ) $fatal(1, "SP clear issued a memory bus request");
-		end
 		#0.001;
 		if( !previous_cpu_request && u_dut.u_s2026.u_cpu_select.cpu_change_req ) cpu_request_count = cpu_request_count + 1;
 		if( !previous_cpu_changing && u_dut.u_s2026.u_cpu_select.ff_state0 ) cpu_stop_count = cpu_stop_count + 1;
@@ -272,8 +267,6 @@ module tb;
 				if( u_dut.w_cpu_sel !== expected_owner ) $fatal(1, "BIOS returned on wrong CPU");
 				if( active_sp !== (cache_sp_reuse ? (phase == 2 ? 16'hf090 : 16'hf06c) : 16'hf000) ) $fatal(1, "Restored SP mismatch in phase %0d: %04h", phase, active_sp);
 				if( cache_sp_reuse && (phase == 0 || phase == 2) ) begin
-					if( u_dut.ff_z80_saved_sp !== (phase == 0 ? 16'hf054 : 16'hf078) ) $fatal(1, "Saved SP latch mismatch in phase %0d: %04h", phase, u_dut.ff_z80_saved_sp);
-					if( u_dut.ff_r800_restored_sp !== (phase == 0 ? 16'hf054 : 16'hf078) ) $fatal(1, "Restored SP latch mismatch in phase %0d: %04h", phase, u_dut.ff_r800_restored_sp);
 					if( u_sram0.mem[19'h03ffd] !== (phase == 0 ? 8'h54 : 8'h78) || u_sram0.mem[19'h03ffe] !== 8'hf0 ) $fatal(1, "SSRAM SP bytes mismatch in phase %0d: %02h %02h", phase, u_sram0.mem[19'h03ffd], u_sram0.mem[19'h03ffe]);
 				end
 				if( active_a !== (expected_owner[0] ? 8'h02 : 8'h00) || active_f !== 8'h44 ) $fatal(1, "Restored AF mismatch");
@@ -294,7 +287,6 @@ module tb;
 		make_rom();
 		repeat(15000) @(posedge u_dut.clk42m);
 		spi_command(8'h0c);
-		if( {u_dut.ff_r800_restored_sp, u_dut.ff_z80_saved_sp} !== 32'h5a5a5a5a ) $fatal(1, "SP reset marker mismatch");
 		@(posedge u_dut.clk42m); mcu_cs_n = 0;
 		repeat(10) @(posedge u_dut.clk42m);
 		spi_byte(8'h10); spi_byte(8'h00);
@@ -311,7 +303,6 @@ module tb;
 		if( cache_sp_reuse ) $display("PASS: R800->Z80 startup history, SP F054->F078 and two stack-line SRAM refills");
 		else $display("PASS: %0d alternating BIOS CPU switches and one same-CPU call; all registers restored", owner_change_count);
 		if( !cache_sp_reuse ) begin
-			if( u_dut.ff_z80_saved_sp !== 16'hefe8 || u_dut.ff_r800_restored_sp !== 16'hefe8 ) $fatal(1, "SP latch mismatch: Z80=%04h R800=%04h", u_dut.ff_z80_saved_sp, u_dut.ff_r800_restored_sp);
 			@(posedge u_dut.clk42m);
 			mcu_cs_n = 0;
 			repeat(10) @(posedge u_dut.clk42m);
@@ -323,11 +314,8 @@ module tb;
 			@(posedge u_dut.clk42m);
 			mcu_cs_n = 1;
 			repeat(10) @(posedge u_dut.clk42m);
-			if( {debug_bytes[19], debug_bytes[18], debug_bytes[17], debug_bytes[16]} !== 32'hefe8efe8 || debug_bytes[32] !== 8'ha5 ) $fatal(1, "SP debug SPI payload mismatch");
-			if( u_dut.ff_z80_saved_sp !== 16'hefe8 || u_dut.ff_r800_restored_sp !== 16'hefe8 ) $fatal(1, "Debug read changed SP capture");
-			spi_command(8'h14);
-			if( sp_clear_count != 1 || {u_dut.ff_r800_restored_sp, u_dut.ff_z80_saved_sp} !== 32'h5a5a5a5a ) $fatal(1, "SPI SP clear mismatch");
-			$display("PASS: SP capture EFE8/EFE8, 33-byte debug SPI, reset and clear to 5A5A without bus requests");
+			if( {debug_bytes[19], debug_bytes[18], debug_bytes[17], debug_bytes[16]} !== 32'd0 || debug_bytes[32] !== 8'ha5 ) $fatal(1, "Reserved debug SPI bytes or link marker mismatch");
+			$display("PASS: 33-byte debug SPI payload and A5 link marker");
 		end
 		test_passed = 1;
 		$finish;

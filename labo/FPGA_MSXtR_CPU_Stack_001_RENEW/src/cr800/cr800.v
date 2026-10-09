@@ -83,7 +83,7 @@ module cr800 (
 	output			intcycle_n	,
 	output			inte		,
 	output			stop		,
-	output [15:0] p_sp,
+	output	[15:0]	p_sp				,
 	output	[15:0]	p_pc				//	debug
 );
 
