@@ -2135,3 +2135,27 @@ ROM cache巡回クリア修正後、ユーザーがDOS ROMを復元した構成�
 Flashイメージは消去前に1～524288byteのサイズを確認する。各byteの書込み後readback照合は既存処理を使用する。READMEに新メニュー、更新先、ExtROMファイル名を反映した。
 
 WSL buildで`make -j`成功。エディタはmainファイルでPico SDK includePath未解決を報告するが、実コンパイル/リンクは成功している。実機の新メニュー操作・ROM1書込み確認は未実施。FPGA RTLとGOWIN設定には変更なし。
+
+### 実機確認: ROM1の128KB ASCII16KメガROM
+
+ユーザーがROM1へ128KBのASCII16KメガROMイメージを書き込み、正常動作を確認した。これによりROM1書込みとASCII16K mapper経由の実機動作を確認できた。全メニュー項目の実機検査、ASCII8Kイメージや他タイトルの互換性まで確認したものではない。
+
+## 2026-10-10 朝 作業終了・帰宅後の再開点
+
+外出のため今朝の作業はここで中断する。帰宅後はPicoの機能整備を続ける。次に追加する具体的な機能は、再開時にユーザーと確認する。
+
+### 今朝の到達点
+
+- ROM1 mapper追加によるROM0/RAMの選択への影響を既存TBのR800 4,608ケースで検査し、全体PASS=111/FAIL=0。
+- test_003 BootROM方式で実top/msx_slot/ROM cacheを接続するタイミング検査を追加。ROM0 cache補充・hit、ROM1のZ80速度read、ROM1からROM0への復帰がASCII8K/16KともPASS。波形と表示スクリプトを保存した。
+- 合成netlistでROM cache ff_validのBSRAM化とゼロ書込み欠落を確認し、valid/PLRUの256clock巡回クリアと完了待ちへ修正。SerialSRAM cacheの64clockクリア回路は維持した。
+- R800の全9 test tops、BIOS CPU切替・全レジスタ復元、FFFDh stack-line再取得の回帰がPASS。修正後実機ではDOSありBASIC起動、ロゴのライン単位スクロール、0180h呼出しが復帰した。
+- この時点でユーザーがGitHubへcommit/pushを実施した。その後、Pico-localメニューを1行1項目のCPU debug/BIOS update/ExtROM update/KanjiROM updateへ整理した。
+- BIOSはROM0だけ、ExtROMは `/bios/extrom.rom` をROM1へ、漢字は既存SerialROMだけの更新に分離。WSL `make -j`成功、UF2生成済み。ROM1へ128KB ASCII16Kイメージを書き込んだ実機動作も確認した。
+
+### 引継ぎ事項
+
+- MENUはkeyboard forwardingだけを切り替え、更新処理中だけ一時的にPicoへバス所有権を移す。CPU debugではownerを変更しない。
+- 今朝の起動暴走/DOS初期化停止はROM cacheクリア修正後の実機で再現していない。R800の定量benchmark、長時間動作、修正後netlistのゼロ書込み経路の再確認は未報告。
+- 今回の128KB ASCII16K以外のイメージ互換性、ASCII8K実機動作、Pico各更新項目の全組合せ確認は残る。
+- GOWIN EDAは必ずユーザーが実行する。こちらでは合成条件・SDCを変更せず、今回の終了処理は履歴追記のみ。追加コード変更・テスト・commit/pushは行わない。
