@@ -1,0 +1,53 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps -l r18_dram_events.log tb -do "run -all; quit -f" 
+# Start time: 23:11:08 on Oct 14,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.vdp
+# Loading work.vdp_cpu_interface
+# Loading work.vdp_timing_control
+# Loading work.vdp_timing_control_ssg
+# Loading work.vdp_timing_control_screen_mode
+# Loading work.vdp_timing_control_sprite
+# Loading work.vdp_sprite_select_visible_planes
+# Loading work.vdp_sprite_info_collect
+# Loading work.vdp_sprite_makeup_pixel
+# Loading work.vdp_sprite_divide_table
+# Loading work.vdp_command
+# Loading work.vdp_command_cache
+# Loading work.vdp_vram_interface
+# Loading work.vdp_color_palette
+# Loading work.vdp_color_palette_ram
+# Loading work.vdp_upscan
+# Loading work.vdp_upscan_line_buffer
+# Loading work.vdp_video_out
+# Loading work.vdp_video_double_buffer
+# Loading work.vdp_video_ram_line_buffer
+# Loading work.vdp_video_out_bilinear
+# run -all
+# One physical line = 5472 clk85m = 1368 clk21m; R18 sweep -7 through +8
+# CAPTURE adjust=-7 R18H=0000000f v_count=56
+# CAPTURE adjust=-6 R18H=0000000e v_count=56
+# CAPTURE adjust=-5 R18H=0000000d v_count=56
+# CAPTURE adjust=-4 R18H=0000000c v_count=56
+# CAPTURE adjust=-3 R18H=0000000b v_count=56
+# CAPTURE adjust=-2 R18H=0000000a v_count=56
+# CAPTURE adjust=-1 R18H=00000009 v_count=56
+# CAPTURE adjust=0 R18H=00000008 v_count=56
+# CAPTURE adjust=1 R18H=00000007 v_count=56
+# CAPTURE adjust=2 R18H=00000006 v_count=56
+# CAPTURE adjust=3 R18H=00000005 v_count=56
+# CAPTURE adjust=4 R18H=00000004 v_count=56
+# CAPTURE adjust=5 R18H=00000003 v_count=56
+# CAPTURE adjust=6 R18H=00000002 v_count=56
+# CAPTURE adjust=7 R18H=00000001 v_count=56
+# CAPTURE adjust=8 R18H=00000000 v_count=56
+# PASS: captured 16 R#18 values
+# PASS: captured 1312 VDP DRAM requests and 16 refresh pulses
+# ** Note: $finish    : tb.sv(194)
+#    Time: 29562856577 ps  Iteration: 0  Instance: /tb
+# End time: 23:12:12 on Oct 14,2026, Elapsed time: 0:01:04
+# Errors: 0, Warnings: 0
