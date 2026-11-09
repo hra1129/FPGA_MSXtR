@@ -1,7 +1,11 @@
 ﻿Designator,Footprint,Quantity,Value,LCSC Part #
+"_3, _2, ",,3,,
 "C1, C10, C11, C2, C3, C4, C5, C6, C7, C8, C9",0402,11,0.1uF,C1525
 C12,1210,1,100uF,C49066
-"R1, R2, R3",0805,3,4.7K,C26022
-"R4, R5, R6",0805,3,3.3K,C26010
+J5,PinHeader_2x20_P2.54mm_Vertical,1,MSX_EXBUS_B,
+J6,PinHeader_2x20_P2.54mm_Vertical,1,MSX_EXBUS_A,
+"R1, R2, R3",0805,3,4.7K,
+"R4, R5, R6, R7, R8",0805,5,3.3K,
+"U1, U2",MSX SLOT,2,~,
 "U3, U4, U5, U6, U7",SSOP-24_5.3x8.2mm_P0.65mm,5,~,C19197
-U8,SO-14_3.9x8.65mm_P1.27mm,1,~,C40481
+U8,SO-14_3.9x8.65mm_P1.27mm,1,~,
