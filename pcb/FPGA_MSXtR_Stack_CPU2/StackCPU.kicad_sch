@@ -3904,10 +3904,10 @@
 						)
 					)
 				)
-				(pin no_connect line
+				(pin output line
 					(at 38.1 -1.27 180)
 					(length 2.54)
-					(name "未使用"
+					(name "SLOT_OE2_N"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -9000,10 +9000,6 @@
 		(uuid "078baed3-c275-4aaa-beb4-e077c767afb2")
 	)
 	(no_connect
-		(at 288.29 140.97)
-		(uuid "12bd32af-26da-40c1-a402-90fd5102533f")
-	)
-	(no_connect
 		(at 309.88 151.13)
 		(uuid "197027b7-2166-4882-986f-181cbabbd074")
 	)
@@ -9080,6 +9076,10 @@
 		(uuid "a31f46ad-32e0-49ee-bd25-60554ec14ec9")
 	)
 	(no_connect
+		(at 288.29 140.97)
+		(uuid "a3e82320-af8b-41c3-885e-44a4cecf63e1")
+	)
+	(no_connect
 		(at 129.54 255.27)
 		(uuid "a3ea3475-402c-41db-9ece-6c601a658adb")
 	)
@@ -9100,6 +9100,10 @@
 		(uuid "c536a9ff-8cb3-4bc8-81ab-756277c02f23")
 	)
 	(no_connect
+		(at 227.33 143.51)
+		(uuid "c704126e-87ca-4600-ae00-517eca67eebb")
+	)
+	(no_connect
 		(at 71.12 137.16)
 		(uuid "c89f31ba-389f-44d0-93a5-6415099de26e")
 	)
@@ -9116,16 +9120,8 @@
 		(uuid "ce540ef9-7e0d-4cd0-bcc1-6e1b657928c2")
 	)
 	(no_connect
-		(at 309.88 140.97)
-		(uuid "d8168640-de44-4ea8-9a62-1da85b8b6f10")
-	)
-	(no_connect
 		(at 227.33 125.73)
 		(uuid "ddaf4d8a-112d-4a5a-b948-59003ec24db1")
-	)
-	(no_connect
-		(at 227.33 143.51)
-		(uuid "dedfbf38-8148-423c-a3d6-6190faeb9ea7")
 	)
 	(no_connect
 		(at 309.88 146.05)
@@ -10470,6 +10466,16 @@
 			(type default)
 		)
 		(uuid "3e481a99-9cad-4b15-97aa-4e37bd7de687")
+	)
+	(wire
+		(pts
+			(xy 304.8 140.97) (xy 309.88 140.97)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3e7d124c-67e6-4aee-8105-70f196124648")
 	)
 	(wire
 		(pts
@@ -12203,16 +12209,6 @@
 	)
 	(wire
 		(pts
-			(xy 309.88 140.97) (xy 304.8 140.97)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9db57e98-601c-4037-87f8-0d643d6e35eb")
-	)
-	(wire
-		(pts
 			(xy 58.42 170.18) (xy 71.12 170.18)
 		)
 		(stroke
@@ -13733,6 +13729,16 @@
 	)
 	(wire
 		(pts
+			(xy 163.83 149.86) (xy 147.32 149.86)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f459cb19-3b3d-40d9-acf2-1a61b0fff954")
+	)
+	(wire
+		(pts
 			(xy 383.54 133.35) (xy 383.54 132.08)
 		)
 		(stroke
@@ -14088,6 +14094,28 @@
 		(uuid "08307a35-4ad9-4942-8e2e-76f177cc02b1")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 180.7852 147.32 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "SLOT_OE2_N"
+		(shape output)
+		(at 163.83 149.86 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "08bdfe0c-3f44-4e3c-9455-413f0e5bfb83")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 178.3056 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18383,6 +18411,28 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "SLOT_OE2_N"
+		(shape input)
+		(at 309.88 140.97 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "e6ce101f-6a39-47f9-b1b8-f144520304a6")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 324.3556 140.97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
 				(hide yes)
 			)
 		)

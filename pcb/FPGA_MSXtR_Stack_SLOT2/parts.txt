@@ -1,0 +1,19 @@
+Part#                            Maker           Name                 JLCPCB Part #
+C1, C3, C5-C12: 0.1uF            -               0402                 C1525             https://jlcpcb.com/partdetail/1877-CL05B104KO5NNNC/C1525
+C2: 15pF                         -               0805                 C63339            https://jlcpcb.com/partdetail/64402-0805CG150J500NT/C63339
+C4: 100uF                        -               1210                 C49066            https://jlcpcb.com/partdetail/50074-CL32A107MQVNNNE/C49066
+D1-D4: LED(RED)                  -               0805                 C84256            https://jlcpcb.com/partdetail/85425-NCD0805R1/C84256
+J1: Pin Header                   -               -                    -
+J2, J4: Pin Header               -               -                    -
+J3: Pin Socket                   -               -                    -
+Q1-Q3: NMOS FET                  -               PMV130ENEAR          C2589             https://jlcpcb.com/partdetail/InfineonTechnologies-IRLML2502TRPBF/C2589
+R1-R8, R13-R18: 4.7k             -               0805                 C104350           https://jlcpcb.com/partdetail/RALEC-RTT05472JTP/C104350
+R9-R12, R19, R21: 3.3k           -               0805                 C26010            https://jlcpcb.com/partdetail/26753-0805W8F3301T5E/C26010
+R20: 10k                         -               0805                 C17414            https://jlcpcb.com/partdetail/18102-0805W8F1002T5E/C17414
+R24-R27: 470                     -               0805                 C17710            https://jlcpcb.com/partdetail/18398-0805W8F4700T5E/C17710
+SW1, SW2:                        -               -                    -
+U1, U9: TangPrimer25K Connector  HRS(Hirose)     DF40C-60DS-0.4V(51)  C597938           https://jlcpcb.com/partdetail/HRS_Hirose-DF40C_60DS_0_4V_51/C597938
+U2: MSX Cartridge Edge           -               -                    -                 -
+U3: 28.63636MHz Clock            Shenzhen SCTF   S3D28.636360B20F30T  C2901579          https://jlcpcb.com/partdetail/3151392-SX3M2863636M20F30TNN/C2901579
+U4-U7: Level Shifter             TI              SN74LVC8T245DBR      C19197            https://jlcpcb.com/partdetail/TexasInstruments-SN74LVC8T245DBR/C19197
+U8: SRAM 4Mbit                   Microchip Tech  23AA04M-I/SN         C27585175         https://jlcpcb.com/partdetail/MicrochipTech-23AA04M_ISN/C27585175
