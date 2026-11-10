@@ -734,6 +734,12 @@
           "label": "note",
           "name": "note",
           "show": true
+        },
+        {
+          "group_by": false,
+          "label": "Link",
+          "name": "Link",
+          "show": false
         }
       ],
       "filter_string": "",
