@@ -1,0 +1,25 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps tb -do "add list -notrigtime /tb/mcu_cs_n /tb/mcu_intr /tb/u_dut/w_bus_ctrl_valid /tb/u_dut/w_bus_ctrl_ready /tb/u_dut/w_device_valid /tb/u_dut/w_device_ready /tb/u_dut/u_msx_slot/u_decode/w_rom_sel /tb/u_dut/u_msx_slot/u_decode/w_internal_sel; run 15000; quit -f" 
+# Start time: 20:39:39 on Aug 28,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.fpga_msxtr_cpu_stack
+# Loading work.Gowin_PLL
+# Loading work.ip_spi
+# Loading work.spi
+# Loading work.msx_slot
+# Loading work.msx_slot_decode
+# Loading work.bootrom
+# Loading work.rom
+# Loading work.ip_ram
+# Loading work.SP
+# add list -notrigtime /tb/mcu_cs_n /tb/mcu_intr /tb/u_dut/w_bus_ctrl_valid /tb/u_dut/w_bus_ctrl_ready /tb/u_dut/w_device_valid /tb/u_dut/w_device_ready /tb/u_dut/u_msx_slot/u_decode/w_rom_sel /tb/u_dut/u_msx_slot/u_decode/w_internal_sel
+# Unrecognized option: "-notrigtime" ignored.
+# Usage: ?-win <w>? ?-r? ?-depth <d>? ?-allowconstants? ?-in? ?-out? ?-inout? ?-internal? ?-ports? ?-<radix>? ?-notrig|-trig? ?-flush? ?-width <n>? ?-label <str>? [<item_name>|<pattern>|<bus_spec>]+
+#  run 15000
+#  quit -f
+# End time: 20:39:40 on Aug 28,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0

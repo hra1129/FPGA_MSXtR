@@ -1,0 +1,560 @@
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\test_004\gowin_pll.v 
+-- Compiling module Gowin_PLL
+
+Top level modules:
+	Gowin_PLL
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\spi\spi.v ..\spi\ip_spi.v ..\cmcu\cmcu.v ..\msx_bus_mux\msx_bus_mux.v 
+-- Compiling module spi
+-- Compiling module ip_spi
+-- Compiling module cmcu_inst
+-- Compiling module msx_bus_mux
+
+Top level modules:
+	ip_spi
+	cmcu_inst
+	msx_bus_mux
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\vdp_logger\vdp_logger.v 
+-- Compiling module vdp_logger
+-- Compiling module vdp_logger_sram
+
+Top level modules:
+	vdp_logger
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\dummy_ssg\dummy_ssg.v ..\pause_led\pause_led.v ..\msx_slot\msx_slot_decode.v ..\msx_slot\msx_slot.v 
+-- Compiling module dummy_ssg
+-- Compiling module pause_led
+-- Compiling module msx_slot_decode
+-- Compiling module msx_slot
+
+Top level modules:
+	dummy_ssg
+	pause_led
+	msx_slot_decode
+	msx_slot
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\address_decode\address_decode.v ..\dos_mapper\dos_mapper.v ..\memory_mapper\memory_mapper.v ..\secondary_slot\secondary_slot.v 
+-- Compiling module address_decode
+-- Compiling module dos_mapper
+-- Compiling module memory_mapper
+-- Compiling module secondary_slot
+
+Top level modules:
+	address_decode
+	dos_mapper
+	memory_mapper
+	secondary_slot
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\ssram\ssram.v ..\ssram\ssram_test_model.v 
+-- Compiling module ssram
+-- Compiling module ssram_test_model
+
+Top level modules:
+	ssram
+	ssram_test_model
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\test_004\bootrom\ram.v 
+-- Compiling module ip_ram
+-- Compiling module SP
+
+Top level modules:
+	ip_ram
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog "+incdir+..\test_004\bootrom" ..\test_004\bootrom\rom.v ..\test_004\bootrom\bootrom.v 
+-- Compiling module rom
+-- Compiling module bootrom
+
+Top level modules:
+	bootrom
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\ppi\ppi.v ..\rtc\rtc.v ..\system_flag\system_flag.v 
+-- Compiling module ppi
+-- Compiling module rtc
+-- Compiling module system_flag
+
+Top level modules:
+	ppi
+	rtc
+	system_flag
+End time: 18:54:58 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:58 on Oct 06,2026
+vlog ..\cz80\cz80_alu.v ..\cz80\cz80_mcode.v ..\cz80\cz80_reg.v ..\cz80\cz80.v ..\cz80\cz80_inst.v 
+-- Compiling module cz80_alu
+-- Compiling module cz80_mcode
+-- Compiling module cz80_registers
+-- Compiling module cz80
+-- Compiling module cz80_inst
+
+Top level modules:
+	cz80_inst
+End time: 18:54:59 on Oct 06,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:59 on Oct 06,2026
+vlog ..\cr800\cr800_alu.v ..\cr800\cr800_mcode.v ..\cr800\cr800_reg.v ..\cr800\cr800.v ..\cr800\cr800_inst.v 
+-- Compiling module cr800_alu
+-- Compiling module cr800_mcode
+-- Compiling module cr800_registers
+-- Compiling module cr800
+-- Compiling module cr800_inst
+
+Top level modules:
+	cr800_inst
+End time: 18:54:59 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:59 on Oct 06,2026
+vlog ..\cr800\r800_cache.v ..\cr800\r800_cache_ram.v ..\cr800\r800_rom_cache.v 
+-- Compiling module r800_cache
+-- Compiling module r800_cache_ram
+-- Compiling module r800_rom_cache
+
+Top level modules:
+	r800_cache
+	r800_rom_cache
+End time: 18:54:59 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:59 on Oct 06,2026
+vlog ..\s2026\s2026_register.v ..\s2026\s2026_cpu_select.v ..\s2026\s2026.v 
+-- Compiling module s2026_register
+-- Compiling module s2026_cpu_select
+-- Compiling module s2026
+
+Top level modules:
+	s2026
+End time: 18:54:59 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 18:54:59 on Oct 06,2026
+vlog ..\FPGA_MSXtR_CPU_Stack.v tb.sv 
+-- Compiling module fpga_msxtr_cpu_stack
+-- Compiling module tb
+
+Top level modules:
+	tb
+End time: 18:54:59 on Oct 06,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps -l log.txt -wlf test_005.wlf tb -do "run.do" 
+# Start time: 18:55:00 on Oct 06,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.fpga_msxtr_cpu_stack
+# Loading work.Gowin_PLL
+# Loading work.vdp_logger
+# Loading work.vdp_logger_sram
+# Loading work.ip_spi
+# Loading work.spi
+# Loading work.cmcu_inst
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.s2026
+# Loading work.s2026_cpu_select
+# Loading work.s2026_register
+# Loading work.msx_bus_mux
+# Loading work.msx_slot
+# Loading work.address_decode
+# Loading work.dos_mapper
+# Loading work.secondary_slot
+# Loading work.ppi
+# Loading work.memory_mapper
+# Loading work.r800_cache
+# Loading work.ssram
+# Loading work.rtc
+# Loading work.pause_led
+# Loading work.system_flag
+# Loading work.dummy_ssg
+# Loading work.ssram_test_model
+# Loading work.r800_cache_ram
+# do run.do
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [EXEC] SLOT#0-0 FlashROM base=1000 time=448664000
+# [SRAM Model] Write: addr=0x03eff data=0x12
+# [SRAM Model] Write: addr=0x03efe data=0x35
+# [SRAM Model] Read complete: addr=0x03eff data=0x12
+# [SRAM Model] Read complete: addr=0x03f00 data=0x00
+# [BIT_READ] SLOT#0-0 FlashROM instruction=1023 IY=1100 PC=1027 time=501626000
+# [EXEC] SLOT#1 base=4000 time=508726000
+# [SRAM Model] Write: addr=0x03eff data=0x12
+# [SRAM Model] Write: addr=0x03efe data=0x35
+# [SRAM Model] Read complete: addr=0x03eff data=0x12
+# [SRAM Model] Read complete: addr=0x03f00 data=0x00
+# [BIT_READ] SLOT#1 instruction=4023 IY=4100 PC=4027 time=561688000
+# [EXEC] SLOT#2 base=8000 time=568789000
+# [SRAM Model] Write: addr=0x03eff data=0x12
+# [SRAM Model] Write: addr=0x03efe data=0x35
+# [SRAM Model] Read complete: addr=0x03eff data=0x12
+# [SRAM Model] Read complete: addr=0x03f00 data=0x00
+# [BIT_READ] SLOT#2 instruction=8023 IY=8100 PC=8027 time=621751000
+# [SRAM Model] Write: addr=0x00100 data=0x3a
+# [SRAM Model] Write: addr=0x00101 data=0x00
+# [SRAM Model] Write: addr=0x00102 data=0xc2
+# [SRAM Model] Write: addr=0x00103 data=0xfe
+# [SRAM Model] Write: addr=0x00104 data=0x57
+# [SRAM Model] Write: addr=0x00105 data=0xc2
+# [SRAM Model] Write: addr=0x00106 data=0x30
+# [SRAM Model] Write: addr=0x00107 data=0x00
+# [SRAM Model] Write: addr=0x00108 data=0x3e
+# [SRAM Model] Write: addr=0x00109 data=0x5a
+# [SRAM Model] Write: addr=0x0010a data=0x32
+# [SRAM Model] Write: addr=0x0010b data=0x00
+# [SRAM Model] Write: addr=0x0010c data=0xc3
+# [SRAM Model] Write: addr=0x0010d data=0xdb
+# [SRAM Model] Write: addr=0x0010e data=0xa8
+# [SRAM Model] Write: addr=0x0010f data=0xfe
+# [SRAM Model] Write: addr=0x00110 data=0xe4
+# [SRAM Model] Write: addr=0x00111 data=0xc2
+# [SRAM Model] Write: addr=0x00112 data=0x30
+# [SRAM Model] Write: addr=0x00113 data=0x00
+# [SRAM Model] Write: addr=0x00114 data=0xd3
+# [SRAM Model] Write: addr=0x00115 data=0x98
+# [SRAM Model] Write: addr=0x00116 data=0x21
+# [SRAM Model] Write: addr=0x00117 data=0x34
+# [SRAM Model] Write: addr=0x00118 data=0x12
+# [SRAM Model] Write: addr=0x00119 data=0x01
+# [SRAM Model] Write: addr=0x0011a data=0x01
+# [SRAM Model] Write: addr=0x0011b data=0x00
+# [SRAM Model] Write: addr=0x0011c data=0x09
+# [SRAM Model] Write: addr=0x0011d data=0xe5
+# [SRAM Model] Write: addr=0x0011e data=0xd1
+# [SRAM Model] Write: addr=0x0011f data=0xfd
+# [SRAM Model] Write: addr=0x00120 data=0x21
+# [SRAM Model] Write: addr=0x00121 data=0x00
+# [SRAM Model] Write: addr=0x00122 data=0xc2
+# [SRAM Model] Write: addr=0x00123 data=0xfd
+# [SRAM Model] Write: addr=0x00124 data=0xcb
+# [SRAM Model] Write: addr=0x00125 data=0x00
+# [SRAM Model] Write: addr=0x00126 data=0x56
+# [SRAM Model] Write: addr=0x00127 data=0xca
+# [SRAM Model] Write: addr=0x00128 data=0x30
+# [SRAM Model] Write: addr=0x00129 data=0x00
+# [SRAM Model] Write: addr=0x0012a data=0xc3
+# [SRAM Model] Write: addr=0x0012b data=0x40
+# [SRAM Model] Write: addr=0x0012c data=0x00
+# [SRAM Model] Write: addr=0x0012d data=0x00
+# [SRAM Model] Write: addr=0x0012e data=0x00
+# [SRAM Model] Write: addr=0x0012f data=0x00
+# [SRAM Model] Write: addr=0x00130 data=0x00
+# [SRAM Model] Write: addr=0x00131 data=0x00
+# [SRAM Model] Write: addr=0x00132 data=0x00
+# [SRAM Model] Write: addr=0x00133 data=0x00
+# [SRAM Model] Write: addr=0x00134 data=0x00
+# [SRAM Model] Write: addr=0x00135 data=0x00
+# [SRAM Model] Write: addr=0x00136 data=0x00
+# [SRAM Model] Write: addr=0x00137 data=0x00
+# [SRAM Model] Write: addr=0x00138 data=0x00
+# [SRAM Model] Write: addr=0x00139 data=0x00
+# [SRAM Model] Write: addr=0x0013a data=0x00
+# [SRAM Model] Write: addr=0x0013b data=0x00
+# [SRAM Model] Write: addr=0x0013c data=0x00
+# [SRAM Model] Write: addr=0x0013d data=0x00
+# [SRAM Model] Write: addr=0x0013e data=0x00
+# [SRAM Model] Write: addr=0x0013f data=0x00
+# [SRAM Model] Write: addr=0x00140 data=0x00
+# [SRAM Model] Write: addr=0x00141 data=0x00
+# [SRAM Model] Write: addr=0x00142 data=0x00
+# [SRAM Model] Write: addr=0x00143 data=0x00
+# [SRAM Model] Write: addr=0x00144 data=0x00
+# [SRAM Model] Write: addr=0x00145 data=0x00
+# [SRAM Model] Write: addr=0x00146 data=0x00
+# [SRAM Model] Write: addr=0x00147 data=0x00
+# [SRAM Model] Write: addr=0x00148 data=0x00
+# [SRAM Model] Write: addr=0x00149 data=0x00
+# [SRAM Model] Write: addr=0x0014a data=0x00
+# [SRAM Model] Write: addr=0x0014b data=0x00
+# [SRAM Model] Write: addr=0x0014c data=0x00
+# [SRAM Model] Write: addr=0x0014d data=0x00
+# [SRAM Model] Write: addr=0x0014e data=0x00
+# [SRAM Model] Write: addr=0x0014f data=0x00
+# [SRAM Model] Write: addr=0x00150 data=0x00
+# [SRAM Model] Write: addr=0x00151 data=0x00
+# [SRAM Model] Write: addr=0x00152 data=0x00
+# [SRAM Model] Write: addr=0x00153 data=0x00
+# [SRAM Model] Write: addr=0x00154 data=0x00
+# [SRAM Model] Write: addr=0x00155 data=0x00
+# [SRAM Model] Write: addr=0x00156 data=0x00
+# [SRAM Model] Write: addr=0x00157 data=0x00
+# [SRAM Model] Write: addr=0x00158 data=0x00
+# [SRAM Model] Write: addr=0x00159 data=0x00
+# [SRAM Model] Write: addr=0x0015a data=0x00
+# [SRAM Model] Write: addr=0x0015b data=0x00
+# [SRAM Model] Write: addr=0x0015c data=0x00
+# [SRAM Model] Write: addr=0x0015d data=0x00
+# [SRAM Model] Write: addr=0x0015e data=0x00
+# [SRAM Model] Write: addr=0x0015f data=0x00
+# [SRAM Model] Write: addr=0x00160 data=0x00
+# [SRAM Model] Write: addr=0x00161 data=0x00
+# [SRAM Model] Write: addr=0x00162 data=0x00
+# [SRAM Model] Write: addr=0x00163 data=0x00
+# [SRAM Model] Write: addr=0x00164 data=0x00
+# [SRAM Model] Write: addr=0x00165 data=0x00
+# [SRAM Model] Write: addr=0x00166 data=0x00
+# [SRAM Model] Write: addr=0x00167 data=0x00
+# [SRAM Model] Write: addr=0x00168 data=0x00
+# [SRAM Model] Write: addr=0x00169 data=0x00
+# [SRAM Model] Write: addr=0x0016a data=0x00
+# [SRAM Model] Write: addr=0x0016b data=0x00
+# [SRAM Model] Write: addr=0x0016c data=0x00
+# [SRAM Model] Write: addr=0x0016d data=0x00
+# [SRAM Model] Write: addr=0x0016e data=0x00
+# [SRAM Model] Write: addr=0x0016f data=0x00
+# [SRAM Model] Write: addr=0x00170 data=0x00
+# [SRAM Model] Write: addr=0x00171 data=0x00
+# [SRAM Model] Write: addr=0x00172 data=0x00
+# [SRAM Model] Write: addr=0x00173 data=0x00
+# [SRAM Model] Write: addr=0x00174 data=0x00
+# [SRAM Model] Write: addr=0x00175 data=0x00
+# [SRAM Model] Write: addr=0x00176 data=0x00
+# [SRAM Model] Write: addr=0x00177 data=0x00
+# [SRAM Model] Write: addr=0x00178 data=0x00
+# [SRAM Model] Write: addr=0x00179 data=0x00
+# [SRAM Model] Write: addr=0x0017a data=0x00
+# [SRAM Model] Write: addr=0x0017b data=0x00
+# [SRAM Model] Write: addr=0x0017c data=0x00
+# [SRAM Model] Write: addr=0x0017d data=0x00
+# [SRAM Model] Write: addr=0x0017e data=0x00
+# [SRAM Model] Write: addr=0x0017f data=0x00
+# [SRAM Model] Write: addr=0x00180 data=0x00
+# [SRAM Model] Write: addr=0x00181 data=0x00
+# [SRAM Model] Write: addr=0x00182 data=0x00
+# [SRAM Model] Write: addr=0x00183 data=0x00
+# [SRAM Model] Write: addr=0x00184 data=0x00
+# [SRAM Model] Write: addr=0x00185 data=0x00
+# [SRAM Model] Write: addr=0x00186 data=0x00
+# [SRAM Model] Write: addr=0x00187 data=0x00
+# [SRAM Model] Write: addr=0x00188 data=0x00
+# [SRAM Model] Write: addr=0x00189 data=0x00
+# [SRAM Model] Write: addr=0x0018a data=0x00
+# [SRAM Model] Write: addr=0x0018b data=0x00
+# [SRAM Model] Write: addr=0x0018c data=0x00
+# [SRAM Model] Write: addr=0x0018d data=0x00
+# [SRAM Model] Write: addr=0x0018e data=0x00
+# [SRAM Model] Write: addr=0x0018f data=0x00
+# [SRAM Model] Write: addr=0x00190 data=0x00
+# [SRAM Model] Write: addr=0x00191 data=0x00
+# [SRAM Model] Write: addr=0x00192 data=0x00
+# [SRAM Model] Write: addr=0x00193 data=0x00
+# [SRAM Model] Write: addr=0x00194 data=0x00
+# [SRAM Model] Write: addr=0x00195 data=0x00
+# [SRAM Model] Write: addr=0x00196 data=0x00
+# [SRAM Model] Write: addr=0x00197 data=0x00
+# [SRAM Model] Write: addr=0x00198 data=0x00
+# [SRAM Model] Write: addr=0x00199 data=0x00
+# [SRAM Model] Write: addr=0x0019a data=0x00
+# [SRAM Model] Write: addr=0x0019b data=0x00
+# [SRAM Model] Write: addr=0x0019c data=0x00
+# [SRAM Model] Write: addr=0x0019d data=0x00
+# [SRAM Model] Write: addr=0x0019e data=0x00
+# [SRAM Model] Write: addr=0x0019f data=0x00
+# [SRAM Model] Write: addr=0x001a0 data=0x00
+# [SRAM Model] Write: addr=0x001a1 data=0x00
+# [SRAM Model] Write: addr=0x001a2 data=0x00
+# [SRAM Model] Write: addr=0x001a3 data=0x00
+# [SRAM Model] Write: addr=0x001a4 data=0x00
+# [SRAM Model] Write: addr=0x001a5 data=0x00
+# [SRAM Model] Write: addr=0x001a6 data=0x00
+# [SRAM Model] Write: addr=0x001a7 data=0x00
+# [SRAM Model] Write: addr=0x001a8 data=0x00
+# [SRAM Model] Write: addr=0x001a9 data=0x00
+# [SRAM Model] Write: addr=0x001aa data=0x00
+# [SRAM Model] Write: addr=0x001ab data=0x00
+# [SRAM Model] Write: addr=0x001ac data=0x00
+# [SRAM Model] Write: addr=0x001ad data=0x00
+# [SRAM Model] Write: addr=0x001ae data=0x00
+# [SRAM Model] Write: addr=0x001af data=0x00
+# [SRAM Model] Write: addr=0x001b0 data=0x00
+# [SRAM Model] Write: addr=0x001b1 data=0x00
+# [SRAM Model] Write: addr=0x001b2 data=0x00
+# [SRAM Model] Write: addr=0x001b3 data=0x00
+# [SRAM Model] Write: addr=0x001b4 data=0x00
+# [SRAM Model] Write: addr=0x001b5 data=0x00
+# [SRAM Model] Write: addr=0x001b6 data=0x00
+# [SRAM Model] Write: addr=0x001b7 data=0x00
+# [SRAM Model] Write: addr=0x001b8 data=0x00
+# [SRAM Model] Write: addr=0x001b9 data=0x00
+# [SRAM Model] Write: addr=0x001ba data=0x00
+# [SRAM Model] Write: addr=0x001bb data=0x00
+# [SRAM Model] Write: addr=0x001bc data=0x00
+# [SRAM Model] Write: addr=0x001bd data=0x00
+# [SRAM Model] Write: addr=0x001be data=0x00
+# [SRAM Model] Write: addr=0x001bf data=0x00
+# [SRAM Model] Write: addr=0x001c0 data=0x00
+# [SRAM Model] Write: addr=0x001c1 data=0x00
+# [SRAM Model] Write: addr=0x001c2 data=0x00
+# [SRAM Model] Write: addr=0x001c3 data=0x00
+# [SRAM Model] Write: addr=0x001c4 data=0x00
+# [SRAM Model] Write: addr=0x001c5 data=0x00
+# [SRAM Model] Write: addr=0x001c6 data=0x00
+# [SRAM Model] Write: addr=0x001c7 data=0x00
+# [SRAM Model] Write: addr=0x001c8 data=0x00
+# [SRAM Model] Write: addr=0x001c9 data=0x00
+# [SRAM Model] Write: addr=0x001ca data=0x00
+# [SRAM Model] Write: addr=0x001cb data=0x00
+# [SRAM Model] Write: addr=0x001cc data=0x00
+# [SRAM Model] Write: addr=0x001cd data=0x00
+# [SRAM Model] Write: addr=0x001ce data=0x00
+# [SRAM Model] Write: addr=0x001cf data=0x00
+# [SRAM Model] Write: addr=0x001d0 data=0x00
+# [SRAM Model] Write: addr=0x001d1 data=0x00
+# [SRAM Model] Write: addr=0x001d2 data=0x00
+# [SRAM Model] Write: addr=0x001d3 data=0x00
+# [SRAM Model] Write: addr=0x001d4 data=0x00
+# [SRAM Model] Write: addr=0x001d5 data=0x00
+# [SRAM Model] Write: addr=0x001d6 data=0x00
+# [SRAM Model] Write: addr=0x001d7 data=0x00
+# [SRAM Model] Write: addr=0x001d8 data=0x00
+# [SRAM Model] Write: addr=0x001d9 data=0x00
+# [SRAM Model] Write: addr=0x001da data=0x00
+# [SRAM Model] Write: addr=0x001db data=0x00
+# [SRAM Model] Write: addr=0x001dc data=0x00
+# [SRAM Model] Write: addr=0x001dd data=0x00
+# [SRAM Model] Write: addr=0x001de data=0x00
+# [SRAM Model] Write: addr=0x001df data=0x00
+# [SRAM Model] Write: addr=0x001e0 data=0x00
+# [SRAM Model] Write: addr=0x001e1 data=0x00
+# [SRAM Model] Write: addr=0x001e2 data=0x00
+# [SRAM Model] Write: addr=0x001e3 data=0x00
+# [SRAM Model] Write: addr=0x001e4 data=0x00
+# [SRAM Model] Write: addr=0x001e5 data=0x00
+# [SRAM Model] Write: addr=0x001e6 data=0x00
+# [SRAM Model] Write: addr=0x001e7 data=0x00
+# [SRAM Model] Write: addr=0x001e8 data=0x00
+# [SRAM Model] Write: addr=0x001e9 data=0x00
+# [SRAM Model] Write: addr=0x001ea data=0x00
+# [SRAM Model] Write: addr=0x001eb data=0x00
+# [SRAM Model] Write: addr=0x001ec data=0x00
+# [SRAM Model] Write: addr=0x001ed data=0x00
+# [SRAM Model] Write: addr=0x001ee data=0x00
+# [SRAM Model] Write: addr=0x001ef data=0x00
+# [SRAM Model] Write: addr=0x001f0 data=0x00
+# [SRAM Model] Write: addr=0x001f1 data=0x00
+# [SRAM Model] Write: addr=0x001f2 data=0x00
+# [SRAM Model] Write: addr=0x001f3 data=0x00
+# [SRAM Model] Write: addr=0x001f4 data=0x00
+# [SRAM Model] Write: addr=0x001f5 data=0x00
+# [SRAM Model] Write: addr=0x001f6 data=0x00
+# [SRAM Model] Write: addr=0x001f7 data=0x00
+# [SRAM Model] Write: addr=0x001f8 data=0x00
+# [SRAM Model] Write: addr=0x001f9 data=0x00
+# [SRAM Model] Write: addr=0x001fa data=0x00
+# [SRAM Model] Write: addr=0x001fb data=0x00
+# [SRAM Model] Write: addr=0x001fc data=0x00
+# [SRAM Model] Write: addr=0x001fd data=0x00
+# [SRAM Model] Write: addr=0x001fe data=0x00
+# [SRAM Model] Write: addr=0x001ff data=0x00
+# [SRAM Model] Write: addr=0x00200 data=0x57
+# [EXEC] SLOT#3-0 SerialSRAM base=c100 time=2291043000
+# [SRAM Model] Read complete: addr=0x00101 data=0x00
+# [SRAM Model] Read complete: addr=0x00102 data=0xc2
+# [SRAM Model] Read complete: addr=0x00103 data=0xfe
+# [SRAM Model] Read complete: addr=0x00201 data=0x00
+# [SRAM Model] Read complete: addr=0x00104 data=0x57
+# [SRAM Model] Read complete: addr=0x00105 data=0xc2
+# [SRAM Model] Read complete: addr=0x00106 data=0x30
+# [SRAM Model] Read complete: addr=0x00107 data=0x00
+# [SRAM Model] Read complete: addr=0x00108 data=0x3e
+# [SRAM Model] Read complete: addr=0x00109 data=0x5a
+# [SRAM Model] Read complete: addr=0x0010a data=0x32
+# [SRAM Model] Read complete: addr=0x0010b data=0x00
+# [SRAM Model] Read complete: addr=0x0010c data=0xc3
+# [SRAM Model] Read complete: addr=0x0010d data=0xdb
+# [SRAM Model] Write: addr=0x00300 data=0x5a
+# [SRAM Model] Read complete: addr=0x0010e data=0xa8
+# [SRAM Model] Read complete: addr=0x0010f data=0xfe
+# [SRAM Model] Read complete: addr=0x00110 data=0xe4
+# [SRAM Model] Read complete: addr=0x00111 data=0xc2
+# [SRAM Model] Read complete: addr=0x00112 data=0x30
+# [SRAM Model] Read complete: addr=0x00113 data=0x00
+# [SRAM Model] Read complete: addr=0x00114 data=0xd3
+# [SRAM Model] Read complete: addr=0x00115 data=0x98
+# [SRAM Model] Read complete: addr=0x00116 data=0x21
+# [SRAM Model] Read complete: addr=0x00117 data=0x34
+# [SRAM Model] Read complete: addr=0x00118 data=0x12
+# [SRAM Model] Read complete: addr=0x00119 data=0x01
+# [SRAM Model] Read complete: addr=0x0011a data=0x01
+# [SRAM Model] Read complete: addr=0x0011b data=0x00
+# [SRAM Model] Read complete: addr=0x0011c data=0x09
+# [SRAM Model] Read complete: addr=0x0011d data=0xe5
+# [SRAM Model] Read complete: addr=0x0011e data=0xd1
+# [SRAM Model] Write: addr=0x03eff data=0x12
+# [SRAM Model] Write: addr=0x03efe data=0x35
+# [SRAM Model] Read complete: addr=0x0011f data=0xfd
+# [SRAM Model] Read complete: addr=0x03eff data=0x12
+# [SRAM Model] Read complete: addr=0x03f00 data=0x00
+# [SRAM Model] Read complete: addr=0x00120 data=0x21
+# [SRAM Model] Read complete: addr=0x00121 data=0x00
+# [SRAM Model] Read complete: addr=0x00122 data=0xc2
+# [SRAM Model] Read complete: addr=0x00123 data=0xfd
+# [SRAM Model] Read complete: addr=0x00124 data=0xcb
+# [SRAM Model] Read complete: addr=0x00125 data=0x00
+# [SRAM Model] Read complete: addr=0x00126 data=0x56
+# [SRAM Model] Read complete: addr=0x00127 data=0xca
+# [BIT_READ] SLOT#3-0 SerialSRAM instruction=c123 IY=c200 PC=c127 time=2344005000
+# [SRAM Model] Read complete: addr=0x00201 data=0x00
+# [SRAM Model] Read complete: addr=0x00128 data=0x30
+# [SRAM Model] Read complete: addr=0x00129 data=0x00
+# [SRAM Model] Read complete: addr=0x0012a data=0xc3
+# [SRAM Model] Read complete: addr=0x0012b data=0x40
+# [SRAM Model] Read complete: addr=0x0012c data=0x00
+# [SRAM Model] Read complete: addr=0x0012d data=0x00
+# SLOT#0-0 FlashROM M1=20 READ=2 WRITE=1 IO_READ=29 IO_WRITE=1 INTERNAL=84 REFRESH=380
+# SLOT#1 M1=20 READ=2 WRITE=1 IO_READ=29 IO_WRITE=1 INTERNAL=84 REFRESH=380
+# SLOT#2 M1=20 READ=2 WRITE=1 IO_READ=29 IO_WRITE=1 INTERNAL=84 REFRESH=380
+# SLOT#3-0 SerialSRAM M1=20 READ=2 WRITE=1 IO_READ=29 IO_WRITE=1 INTERNAL=84 REFRESH=380
+# VDP logger phase 0 OUT at 1014 captured PC=1016
+# VDP logger phase 1 OUT at 4014 captured PC=4016
+# VDP logger phase 2 OUT at 8014 captured PC=8016
+# VDP logger phase 3 OUT at c114 captured PC=c116
+# VDP logger captured four CPU writes to port 98h with data E4h
+# Read direction one-clock release checks=94
+# PASS: test_005 slot access coverage and bus safety
+# ** Note: $finish    : tb.sv(447)
+#    Time: 2356459800 ps  Iteration: 1  Instance: /tb
+# Break in Module tb at tb.sv line 447
+# End time: 18:55:09 on Oct 06,2026, Elapsed time: 0:00:09
+# Errors: 0, Warnings: 0

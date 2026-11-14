@@ -1,0 +1,16 @@
+# vsim -c -t 1ps -l spi_log.txt -wlf debugger_spi.wlf tb_spi -do "set test_root /tb_spi; do ../../test_006/run.do" 
+# Start time: 22:12:07 on Oct 04,2026
+# Loading sv_std.std
+# Loading work.tb_spi
+# Loading work.r800_debugger
+# Loading work.ip_spi
+# Loading work.spi
+# set test_root /tb_spi
+# /tb_spi
+#  do ../../test_006/run.do
+# PASS: 70MHz event SPI empty, 16-byte records, abort retention, re-arm, 128 records
+# ** Note: $finish    : tb.sv(232)
+#    Time: 697202080 ps  Iteration: 0  Instance: /tb_spi
+# Break in Module tb_spi at tb.sv line 232
+# End time: 22:12:07 on Oct 04,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0

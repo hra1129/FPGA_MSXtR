@@ -1,0 +1,1331 @@
+// -----------------------------------------------------------------------------
+//	FPGA_MSXtR_CPU_Stack2.v
+//	Copyright (C)2026 Takayuki Hara (HRA!)
+//	
+//	 Permission is hereby granted, free of charge, to any person obtaining a 
+//	copy of this software and associated documentation files (the "Software"), 
+//	to deal in the Software without restriction, including without limitation 
+//	the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+//	and/or sell copies of the Software, and to permit persons to whom the 
+//	Software is furnished to do so, subject to the following conditions:
+//	
+//	The above copyright notice and this permission notice shall be included in 
+//	all copies or substantial portions of the Software.
+//	
+//	The Software is provided "as is", without warranty of any kind, express or 
+//	implied, including but not limited to the warranties of merchantability, 
+//	fitness for a particular purpose and noninfringement. In no event shall the 
+//	authors or copyright holders be liable for any claim, damages or other 
+//	liability, whether in an action of contract, tort or otherwise, arising 
+//	from, out of or in connection with the Software or the use or other dealings 
+//	in the Software.
+// -----------------------------------------------------------------------------
+
+module fpga_msxtr_cpu_stack2 (
+	input			clk_28m,				//	H5	28.63636MHz MSX clock
+	input			clk_50m,				//	E2	50.00000MHz (on board)
+	//	MCU Connection
+	input			mcu_cs_n,				//	J2
+	input			mcu_sclk,				//	H1
+	input			mcu_mosi,				//	G4
+	output			mcu_miso,				//	H4
+	output			mcu_intr,				//	H2
+	//	SRAM (VTI7064, single chip)
+	output			sram_ce_n,				//	C2
+	output			sram_sclk,				//	F2
+	inout	[3:0]	sram_sio,				//	[3:0] B2,E1,A1,F1
+	//	slot
+	output			slot_m1_n,				//	L4
+	output			slot_oe_n,				//	F7
+	output			slot_oe2_n,				//	K6
+	output			slot_sltsl1_n,			//	K2
+	output			slot_sltsl2_n,			//	J4
+	output			slot_clock_n,			//	L6
+	output			slot_cs1_n,				//	L2
+	output			slot_cs2_n,				//	L1
+	output			slot_cs12_n,			//	K1
+	output	[15:0]	slot_a,					//	[15: 8] E3,G8,F5,H7,J5,L5,F6,G7
+											//	[ 7: 0] K5,H8,G10,G11,H10,H11,J10,J11
+	output	[18:13]	slot_ma,				//	[18:13] B10,B11,C10,C11,D10,D11
+	input			slot_int_n,				//	G1
+	input			slot_wait_n,			//	G2
+	output			slot_reset_n,			//	K8
+	input			slot_busdir,			//	L3
+	output			slot_data_dir,			//	G5
+	output			slot_wr_n,				//	K9
+	output			slot_rd_n,				//	J8
+	output			slot_rom0_ce_n,			//	E10
+	output			slot_rom1_ce_n,			//	A11
+	output			slot_rfsh_n,			//	K4
+	output			slot_iorq_n,			//	J1
+	output			slot_merq_n,			//	L9
+	inout	[7:0]	slot_d,					//	[7:0] L11,K11,K10,L10,L8,L7,J7,K7
+	//	high-speed bus (unused in this version, tied to HiZ)
+	output			hs_clk,					//	D1
+	output			hs_cs_n,				//	A10
+	inout	[3:0]	hs_sio,					//	[3:0] C1,B1,A2,A3
+	input			hs_ready,				//	E11
+	//	config ROM
+	output			flash_spi_clk,			//	E7
+	output			flash_spi_cs_n,			//	E6
+	inout	[3:0]	flash_spi_io,			//	[3:0] E4,D5,E5,D6
+	//	UART
+	output			uart_tx,				//	C3
+	input			uart_rx					//	B3
+);
+	//	Config flash is 64Mbit = 8MB (confirmed). The kanji ROM image
+	//	is stored in the last 256KB of the flash.
+	localparam [23:0] FLASH_SIZE = 24'h800000;
+	localparam [23:0] KANJI_BASE = FLASH_SIZE - 24'h040000;	//	= 24'h7C0000
+
+	wire			clk42m;
+	wire			clk215m;
+	reg		[2:0]	ff_reset_n = 3'b000;
+	wire			w_msx_reset_n;
+	reg				ff_slot_oe2_n = 1'b1;
+
+	reg				ff_clock_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	reg				ff_slot_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_z80_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_r800_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_spi_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_s2026_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	reg				ff_extio_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	reg				ff_config_rom_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
+	reg				ff_ext_rom_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	`ifdef TEST_BOOTROM
+	reg				ff_bootrom_reset_n = 1'b0;
+	`endif
+	reg				ff_ppi_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_mapper_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	reg				ff_ssram_reset_n = 1'b0;				/* synthesis syn_preserve = 1 */
+	reg				ff_rtc_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_system_flag_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
+	reg				ff_pause_led_reset_n = 1'b0;			/* synthesis syn_preserve = 1 */
+	reg				ff_uart_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+	reg				ff_ssg_reset_n = 1'b0;					/* synthesis syn_preserve = 1 */
+
+	reg		[3:0]	ff_3_579m = 4'd0;
+	wire			w_3_579m;
+	reg		[3:0]	ff_21m = 4'd0;
+	wire			w_21m;
+	reg		[21:0]	ff_counter;
+	reg		[1:0]	ff_button_d0;
+	reg		[1:0]	ff_button_d1;
+
+	wire			w_z80_bus_m1;
+	wire			w_z80_bus_io;
+	wire			w_z80_bus_write;
+	wire			w_z80_bus_valid;
+	wire			w_z80_bus_ready;
+	wire	[15:0]	w_z80_bus_address;
+	wire	[7:0]	w_z80_bus_wdata;
+	wire	[7:0]	w_z80_bus_rdata;
+	wire			w_z80_bus_rdata_en;
+	wire	[2:0]	w_z80_t_state;
+	wire	[15:0]	w_z80_pc;			//	debug
+
+	wire			w_r800_bus_m1;
+	wire			w_r800_bus_io;
+	wire			w_r800_bus_write;
+	wire			w_r800_bus_valid;
+	wire			w_r800_bus_ready;
+	wire	[15:0]	w_r800_bus_address;
+	wire	[7:0]	w_r800_bus_wdata;
+	wire	[7:0]	w_r800_bus_rdata;
+	wire			w_r800_bus_rdata_en;
+	wire	[2:0]	w_r800_t_state;
+	wire	[15:0]	w_r800_pc;
+	wire	[15:0]	w_r800_sp;
+	wire			w_processor_mode;
+	wire	[255:0]	w_debug_signal;
+	wire			w_performance_start_cs;
+	wire			w_performance_stop_cs;
+	wire			w_r800_performance_start;
+	wire			w_r800_performance_stop;
+	wire	[223:0]	w_r800_performance_signal;
+	wire	[31:0]	w_r800_cache_hits;
+	wire	[31:0]	w_r800_cache_misses;
+	wire	[31:0]	w_r800_cache_fill_wait;
+	wire	[1:0]	w_cpu_sel;
+	wire			w_z80_run_req;
+	wire			w_z80_run_ack;
+	wire			w_r800_run_req;
+	wire			w_r800_cache_ready;
+	wire			w_r800_core_run_req = w_r800_run_req && w_r800_cache_ready;
+	wire			w_r800_run_ack;
+	wire			w_pico_run_req;
+	wire			w_pico_run_ack;
+	wire			w_pico_change_req;
+	wire			w_pico_change_target;
+	reg				ff_processor_mode_d;
+	reg		[7:0]	ff_processor_mode_change_count;
+	wire			w_bus_m1;
+	wire			w_bus_io;
+	wire			w_bus_write;
+	wire			w_bus_valid;
+	wire			w_bus_ready;
+	wire	[7:0]	w_bus_wdata;
+	wire	[15:0]	w_bus_address;
+	wire	[7:0]	w_bus_rdata;
+	wire			w_bus_rdata_en;
+
+	wire			w_mcu_io;
+	wire			w_mcu_write;
+	wire			w_mcu_valid;
+	wire			w_mcu_ready;
+	wire	[7:0]	w_mcu_wdata;
+	wire	[19:0]	w_mcu_address;
+	wire			w_mcu_flash_en;
+	wire	[7:0]	w_mcu_rdata;
+	wire			w_mcu_rdata_en;
+
+	wire			w_pico_bus_io;
+	wire			w_pico_bus_write;
+	wire			w_pico_bus_flash_en;
+	wire			w_pico_bus_valid;
+	wire			w_pico_bus_ready;
+	wire	[7:0]	w_pico_bus_wdata;
+	wire	[19:0]	w_pico_bus_address;
+	wire	[7:0]	w_pico_bus_rdata;
+	wire			w_pico_bus_rdata_en;
+	wire w_srom_request;
+	wire [1:0] w_srom_operation;
+	wire [23:0] w_srom_address;
+	wire [8:0] w_srom_length;
+	wire w_srom_buffer_write;
+	wire [7:0] w_srom_buffer_index;
+	wire [7:0] w_srom_buffer_wdata;
+	wire [7:0] w_srom_buffer_rdata;
+	wire w_srom_done;
+	wire [7:0] w_srom_status;
+	wire [1:0] w_slot1_rom_mode;
+
+	wire	[3:0]	w_keyboard_matrix_row;
+	wire	[7:0]	w_keyboard_matrix;
+	wire			w_keyboard_matrix_valid;
+	wire	[7:0]	w_keyboard_update_count;
+	wire	[3:0]	w_ppi_debug_keyboard_matrix_row;
+	wire	[7:0]	w_ppi_debug_keyboard_matrix_data;
+	wire	[7:0]	w_ppi_debug_keyboard_update_count;
+	wire	[7:0]	w_ppi_debug_keyboard_read_count;
+	wire	[7:0]	w_debug_f3;
+	wire	[7:0]	w_debug_f4;
+	wire	[7:0]	w_debug_f5;
+	wire			w_mux_bus_io;
+	wire			w_mux_bus_write;
+	wire			w_mux_bus_valid;
+	wire			w_mux_bus_ready;
+	wire	[7:0]	w_mux_bus_wdata;
+	wire	[15:0]	w_mux_bus_address;
+	wire	[7:0]	w_mux_bus_rdata;
+	wire			w_mux_bus_rdata_en;
+
+	wire			w_bus_bootrom_cs;
+	wire	[7:0]	w_bus_bootrom_rdata;
+	wire			w_bus_bootrom_rdata_en;
+	wire			w_bus_bootrom_ready;
+
+	wire			w_bus_ppi_cs;
+	wire	[7:0]	w_bus_ppi_rdata;
+	wire			w_bus_ppi_rdata_en;
+	wire			w_bus_ppi_ready;
+	wire	[7:0]	w_primary_slot;
+	wire			w_one_bit_sound;
+
+	wire			w_bus_uart_cs;
+	wire	[7:0]	w_bus_uart_rdata;
+	wire			w_bus_uart_rdata_en;
+	wire			w_bus_uart_ready;
+
+	wire			w_bus_extio_cs;
+	wire	[7:0]	w_bus_extio_rdata;
+	wire			w_bus_extio_rdata_en;
+	wire			w_bus_extio_ready;
+
+	wire			w_bus_crom_cs;
+	wire			w_bus_crom_address;
+	wire			w_bus_crom_write;
+	wire			w_bus_crom_valid;
+	wire	[7:0]	w_bus_crom_wdata;
+	wire	[7:0]	w_bus_crom_rdata;
+	wire			w_bus_crom_rdata_en;
+	wire			w_bus_crom_ready;
+
+	//	SLTSL0/SLTSL3 pins are abolished on Stack2; the internal decode
+	//	outputs of msx_slot are kept and left unconnected here.
+	wire			w_slot_sltsl0_n;
+	wire			w_slot_sltsl3_n;
+	//	Full 19-bit ROM address (same value as the former slot_a[18:0]),
+	//	reconstructed from slot_ma + slot_a for the R800 core.
+	wire	[18:0]	w_slot_a_full;
+
+	wire			w_bus_erom_cs;
+	wire	[7:0]	w_bus_erom_rdata;
+	wire			w_bus_erom_rdata_en;
+	wire			w_bus_erom_ready;
+
+	wire			w_z80_active;
+	wire			w_r800_active;
+
+	wire	[7:0]	w_secondary_slot0;
+	wire	[7:0]	w_secondary_slot3;
+
+	wire	[15:0]	w_device_address;
+	wire			w_device_io;
+	wire			w_device_write;
+	wire			w_device_flash_direct;
+	wire			w_device_valid;
+	wire			w_device_valid_peripheral;
+	wire			w_device_ready;
+	wire			w_peripheral_ready;
+	wire	[7:0]	w_device_wdata;
+	wire	[7:0]	w_device_rdata;
+	wire	[7:0]	w_peripheral_rdata;
+	wire			w_device_rdata_en;
+	wire			w_peripheral_rdata_en;
+
+	wire			w_device_bootrom_cs;
+	wire			w_device_bootrom_ready;
+	wire	[7:0]	w_device_bootrom_rdata;
+	wire			w_device_bootrom_rdata_en;
+
+	wire			w_device_ppi_cs;
+	wire			w_device_ppi_ready;
+	wire	[7:0]	w_device_ppi_rdata;
+	wire			w_device_ppi_rdata_en;
+
+	wire			w_device_s2026_cs;
+	wire			w_device_s2026_ready;
+	wire	[7:0]	w_device_s2026_rdata;
+	wire			w_device_s2026_rdata_en;
+
+	wire			w_device_secondary_cs;
+	wire			w_device_secondary_ready;
+	wire	[7:0]	w_device_secondary_rdata;
+	wire			w_device_secondary_rdata_en;
+
+	wire			w_device_mapper_cs;
+	wire			w_device_mapper_ready;
+	wire	[7:0]	w_device_mapper_rdata;
+	wire			w_device_mapper_rdata_en;
+	wire	[6:0]	w_mapper_segment;				//	SRAM address [20:14]
+	wire			w_device_dos_mapper_cs;
+	wire			w_device_dos_mapper_ready;
+	wire	[7:0]	w_device_dos_mapper_rdata;
+	wire			w_device_dos_mapper_rdata_en;
+	wire	[1:0]	w_dos_bank;
+	wire			w_dos_status_read;
+	wire			w_dos_rdfdc_n;
+	wire			w_dos_wrfdc_n;
+	wire	[3:0]	w_dos_fdc_address;
+	wire			w_dos_fdc_interrupt;
+
+	wire			w_device_rtc_cs;
+	wire			w_device_rtc_ready;
+	wire	[7:0]	w_device_rtc_rdata;
+	wire			w_device_rtc_rdata_en;
+
+	wire			w_device_pause_led_cs;
+	wire			w_device_pause_led_ready;
+	wire	[7:0]	w_device_pause_led_rdata;
+	wire			w_device_pause_led_rdata_en;
+
+	wire			w_device_system_flag_cs;
+	wire			w_device_system_flag_ready;
+	wire	[7:0]	w_device_system_flag_rdata;
+	wire			w_device_system_flag_rdata_en;
+	wire			w_device_kanji_rom_cs;
+	wire			w_device_kanji_rom_ready;
+	wire	[7:0]	w_device_kanji_rom_rdata;
+	wire			w_device_kanji_rom_rdata_en;
+	wire			w_kanji1_en;
+	wire			w_kanji2_en;
+
+	wire			w_device_ssg_cs;
+	wire			w_device_ssg_ready;
+	wire	[7:0]	w_device_ssg_rdata;
+	wire			w_device_ssg_rdata_en;
+
+	wire			w_device_ssram_cs;
+	wire			w_device_ssram_active;
+	wire			w_device_ssram_ready;
+	wire	[7:0]	w_device_ssram_rdata;
+	wire			w_device_ssram_rdata_en;
+	wire			w_ssram_startup_busy;
+	wire	[20:0]	w_ssram_address;				//	{ mapper_segment, device_address[13:0] }
+	wire			w_cache_ssram_cs;
+	wire			w_cache_ssram_write;
+	wire			w_cache_ssram_valid;
+	wire	[20:0]	w_cache_ssram_address;
+	wire	[7:0]	w_cache_ssram_wdata;
+	wire			w_cache_ssram_ready;
+	wire	[7:0]	w_cache_ssram_rdata;
+	wire			w_cache_ssram_rdata_en;
+	wire			w_cache_ssram_burst;
+	wire	[63:0]	w_cache_ssram_burst_rdata;
+	wire			w_cache_ssram_burst_rdata_en;
+	wire			w_slot3_0_selected;
+	wire	[1:0]	w_access_primary_slot;
+	wire	[1:0]	w_access_secondary_slot3;
+
+	wire			w_bootrom_en;
+	wire	[19:0]	w_flashrom_address;
+	wire			w_flashrom_en;
+	wire			w_msx_pause;
+
+	wire			w_r800_led;
+	wire			w_pause_led;
+	wire			w_caps_led;
+	wire			w_kana_led;
+
+	wire			w_z80_slot_int_n;
+	wire			w_z80_slot_d_oe;
+	wire			w_z80_slot_wait_n;
+	wire			w_r800_slot_d_oe;
+	wire			w_z80_slot_m1_n;
+	wire			w_pico_slot_d_oe;
+	wire			w_z80_slot_merq_n;
+	wire			w_z80_slot_iorq_n;
+	wire			w_z80_slot_rd_n;
+	wire			w_z80_slot_wr_n;
+	wire			w_z80_slot_rfsh_n;
+	wire	[19:0]	w_z80_slot_address;
+	wire	[7:0]	w_z80_slot_rdata;
+
+	wire			w_r800_slot_int_n;
+	wire			w_r800_slot_wait_n;
+	wire			w_r800_slot_m1_n;
+	wire			w_r800_slot_merq_n;
+	wire			w_r800_slot_iorq_n;
+	wire			w_r800_slot_rd_n;
+	wire			w_r800_slot_wr_n;
+	wire			w_r800_slot_rfsh_n;
+	wire	[19:0]	w_r800_slot_address;
+	wire	[7:0]	w_r800_slot_rdata;
+	wire			w_r800_slot_flash_en;
+
+	wire			w_pico_slot_int_n;
+	wire			w_pico_slot_wait_n;
+	wire			w_pico_slot_m1_n;
+	wire			w_pico_slot_merq_n;
+	wire			w_pico_slot_iorq_n;
+	wire			w_pico_slot_rd_n;
+	wire			w_pico_slot_wr_n;
+	wire			w_pico_slot_rfsh_n;
+	wire	[19:0]	w_pico_slot_address;
+	wire	[7:0]	w_pico_slot_rdata;
+
+	always @( posedge clk42m ) begin
+		if( !ff_s2026_reset_n ) begin
+			ff_processor_mode_d <= 1'b1;
+			ff_processor_mode_change_count <= 8'd0;
+		end
+		else begin
+			ff_processor_mode_d <= w_processor_mode;
+			if( ff_processor_mode_d != w_processor_mode ) begin
+				ff_processor_mode_change_count <= ff_processor_mode_change_count + 8'd1;
+			end
+		end
+	end
+
+	//	SPI 0Ah: PC, slot registers, system flags, bus addresses and CPU state.
+	assign w_debug_signal = {
+			w_r800_cache_fill_wait,
+			w_r800_cache_misses,
+			w_r800_cache_hits,
+			32'd0,
+			ff_processor_mode_change_count,
+			4'd0, ff_r800_reset_n, ff_z80_reset_n, w_msx_pause, w_processor_mode,
+			w_r800_bus_address,
+			w_z80_bus_address,
+			w_r800_pc,
+			w_debug_f5,
+			w_debug_f4,
+			w_debug_f3,
+			w_secondary_slot3,
+			w_secondary_slot0,
+			w_primary_slot,
+			w_z80_pc
+		};
+
+	// --------------------------------------------------------------------
+	//	clock
+	// --------------------------------------------------------------------
+    Gowin_PLL u_pll (
+        .clkin							( clk_28m							),		//	 28.63636MHz
+		.clkout0						( clk215m							),		//	214.7727MHz
+        .clkout1						( clk42m							),		//	 42.95454MHz
+        .mdclk							( clk_50m							) 		//	 50.00000MHz
+	);
+
+	// --------------------------------------------------------------------
+	//	42.95454MHz を 12分周して 3.579545MHz 周期のパルス(w_3_579m)を生成
+	// --------------------------------------------------------------------
+	reg			ff_slot_clock_n;
+
+	always @( posedge clk42m ) begin
+		if( !ff_clock_reset_n ) begin
+			ff_3_579m <= 4'd0;
+		end
+		else if( w_3_579m ) begin
+			ff_3_579m <= 4'd0;
+		end
+		else begin
+			ff_3_579m <= ff_3_579m + 4'd1;
+		end
+	end
+
+	assign w_3_579m	= (ff_3_579m == 4'd11) ? 1'b1: 1'b0;
+
+	always @( posedge clk42m ) begin
+		if( !ff_clock_reset_n ) begin
+			ff_slot_clock_n <= 1'b0;
+		end
+		else begin
+			//	cz80コアが出す信号と合わせて反転のタイミングを決定している
+			if( ff_3_579m == 4'd7 ) begin
+				ff_slot_clock_n <= 1'b1;
+			end
+			else if( ff_3_579m == 4'd1 ) begin
+				ff_slot_clock_n <= 1'b0;
+			end
+		end
+	end
+
+	// --------------------------------------------------------------------
+	//	42.95454MHz を 2分周して 21.47727MHz 周期のパルス(w_21m)を生成
+	// --------------------------------------------------------------------
+	always @( posedge clk42m ) begin
+		if( !ff_clock_reset_n ) begin
+			ff_21m <= 2'd0;
+		end
+		else if( w_21m ) begin
+			ff_21m <= 2'd0;
+		end
+		else begin
+			ff_21m <= ff_21m + 2'd1;
+		end
+	end
+
+	assign w_21m	= (ff_21m == 2'd3) ? 1'b1 : 1'b0;
+
+	// --------------------------------------------------------------------
+	//	Reset
+	// --------------------------------------------------------------------
+	always @( posedge clk42m ) begin
+		ff_reset_n <= { ff_reset_n[1:0], 1'b1 };
+	end
+
+	//	slot_oe2_n: released to L once the initial reset sequence has
+	//	completed (ff_reset_n[2] = 1), and held L afterwards.
+	always @( posedge clk42m ) begin
+		if( ff_reset_n[2] ) begin
+			ff_slot_oe2_n <= 1'b0;
+		end
+	end
+
+	assign slot_oe2_n		= ff_slot_oe2_n;
+	assign w_slot_a_full	= { slot_ma, slot_a[12:0] };
+
+	//	high-speed bus is not used in this version: outputs stay HiZ.
+	assign hs_clk			= 1'bz;
+	assign hs_cs_n			= 1'bz;
+	assign hs_sio			= 4'bzzzz;
+
+	always @( posedge clk42m ) begin
+		if( !ff_reset_n[2] ) begin
+			ff_spi_reset_n <= 1'b0;
+		end
+		else begin
+			ff_spi_reset_n <= 1'b1;
+		end
+	end
+
+	always @( posedge clk42m ) begin
+		ff_clock_reset_n		<= w_msx_reset_n;
+		ff_s2026_reset_n		<= w_msx_reset_n;
+		ff_slot_reset_n			<= w_msx_reset_n;
+//		ff_extio_reset_n		<= 1'b0;
+//		ff_config_rom_reset_n	<= 1'b0;
+//		ff_ext_rom_reset_n		<= 1'b0;
+		ff_ssg_reset_n			<= w_msx_reset_n;
+	`ifdef TEST_BOOTROM
+		ff_bootrom_reset_n		<= w_msx_reset_n;
+	`endif
+		ff_ppi_reset_n			<= w_msx_reset_n;
+		ff_mapper_reset_n		<= w_msx_reset_n;
+		ff_ssram_reset_n		<= w_msx_reset_n;
+		ff_rtc_reset_n			<= w_msx_reset_n;
+		ff_system_flag_reset_n	<= w_msx_reset_n;
+		ff_pause_led_reset_n	<= w_msx_reset_n;
+//		ff_uart_reset_n			<= 1'b0;
+	end
+
+	always @( posedge clk42m ) begin
+		if( w_ssram_startup_busy ) begin
+			ff_z80_reset_n			<= 1'b0;
+			ff_r800_reset_n			<= 1'b0;
+		end
+		else begin
+			ff_z80_reset_n			<= w_msx_reset_n;
+			ff_r800_reset_n			<= w_msx_reset_n;
+		end
+	end
+
+	// --------------------------------------------------------------------
+	//	Controller connection
+	// --------------------------------------------------------------------
+	wire [11:0] w_vdp_log_count;
+	wire w_vdp_log_read_request;
+	wire w_vdp_log_read_valid;
+	wire [7:0] w_vdp_log_read_a;
+	wire [7:0] w_vdp_log_read_d;
+	wire [15:0] w_vdp_log_read_pc;
+	wire w_vdp_log_consume;
+
+	vdp_logger u_vdp_logger (
+		.reset_n						( w_msx_reset_n & ff_spi_reset_n	), 
+		.clk							( clk42m							),
+		.cpu_active						( ~w_cpu_sel[1]						), 
+		.io_n							( slot_iorq_n						), 
+		.m1_n							( slot_m1_n							),
+		.rd_n							( slot_rd_n							), 
+		.wr_n							( slot_wr_n							), 
+		.address						( slot_a[7:0]						), 
+		.data							( slot_d							),
+		.pc								( w_cpu_sel[0] ? w_r800_pc : w_z80_pc),
+		.count							( w_vdp_log_count					), 
+		.read_request					( w_vdp_log_read_request			),
+		.read_valid						( w_vdp_log_read_valid				), 
+		.read_a							( w_vdp_log_read_a					),
+		.read_d							( w_vdp_log_read_d					), 
+		.read_pc						( w_vdp_log_read_pc					), 
+		.consume						( w_vdp_log_consume					)
+	);
+
+	ip_spi u_controller_spi (
+		.reset_n						( ff_spi_reset_n					),
+		.clk							( clk42m							),
+		.clk_serial						( clk215m							),
+		.bus_io							( w_mcu_io							),
+		.bus_write						( w_mcu_write						),
+		.bus_valid						( w_mcu_valid						),
+		.bus_ready						( w_mcu_ready						),
+		.bus_wdata						( w_mcu_wdata						),
+		.bus_address					( w_mcu_address						),
+		.bus_flash_en					( w_mcu_flash_en					),
+		.bus_rdata						( w_mcu_rdata						),
+		.bus_rdata_en					( w_mcu_rdata_en					),
+		.spi_cs_n						( mcu_cs_n							),
+		.spi_clk						( mcu_sclk							),
+		.spi_mosi						( mcu_mosi							),
+		.spi_miso						( mcu_miso							),
+		.spi_intr						( mcu_intr							),
+		.slot_wait_n					( slot_wait_n						),
+		.ssram_startup_busy				( w_ssram_startup_busy				),
+		.cpu_sel						( w_cpu_sel							),
+		.msx_reset_n					( w_msx_reset_n						),
+		.msx_pause						( w_msx_pause						),
+		.r800_led						( w_r800_led						),
+		.pause_led						( w_pause_led						),
+		.caps_led						( w_caps_led						),
+		.kana_led						( w_kana_led						),
+		.bootrom_en						( w_bootrom_en						),
+		.pico_change_req				( w_pico_change_req					),
+		.pico_change_target				( w_pico_change_target				),
+		.keyboard_matrix_row			( w_keyboard_matrix_row				),
+		.keyboard_matrix				( w_keyboard_matrix					),
+		.keyboard_matrix_valid			( w_keyboard_matrix_valid			),
+		.keyboard_update_count			( w_keyboard_update_count			),
+		.debug_signal					( w_debug_signal					),
+		.performance_signal				( w_r800_performance_signal	),
+		.vdp_log_count					( w_vdp_log_count					), 
+		.vdp_log_read_request			( w_vdp_log_read_request			),
+		.vdp_log_read_valid				( w_vdp_log_read_valid				), 
+		.vdp_log_read_d					( w_vdp_log_read_d					), 
+		.vdp_log_read_pc				( w_vdp_log_read_pc					), 
+		.vdp_log_consume				( w_vdp_log_consume					),
+		.srom_request(w_srom_request),
+		.srom_operation(w_srom_operation),
+		.srom_address(w_srom_address),
+		.srom_length(w_srom_length),
+		.srom_buffer_write(w_srom_buffer_write),
+		.srom_buffer_index(w_srom_buffer_index),
+		.srom_buffer_wdata(w_srom_buffer_wdata),
+		.srom_buffer_rdata(w_srom_buffer_rdata),
+		.srom_done(w_srom_done),
+		.srom_status(w_srom_status),
+		.slot1_rom_mode(w_slot1_rom_mode)
+	);
+
+	cmcu_inst u_cmcu_inst (
+		.reset_n						( ff_spi_reset_n					),	//	42.95454MHz (master clock) : 3.579545MHz x 12
+		.clk							( clk42m							),
+		.state_count					( ff_3_579m							),	//	0..11
+		.mcu_io							( w_mcu_io							),
+		.mcu_write						( w_mcu_write						),
+		.mcu_address					( w_mcu_address						),
+		.mcu_flash_en					( w_mcu_flash_en					),
+		.mcu_valid						( w_mcu_valid						),
+		.mcu_ready						( w_mcu_ready						),
+		.mcu_wdata						( w_mcu_wdata						),
+		.mcu_rdata						( w_mcu_rdata						),
+		.mcu_rdata_en					( w_mcu_rdata_en					),
+		.wait_n							( w_pico_slot_wait_n				),
+		.m1_n							( w_pico_slot_m1_n					),
+		.merq_n							( w_pico_slot_merq_n				),
+		.iorq_n							( w_pico_slot_iorq_n				),
+		.rd_n							( w_pico_slot_rd_n					),
+		.wr_n							( w_pico_slot_wr_n					),
+		.slot_d_oe						( w_pico_slot_d_oe					),
+		.rfsh_n							( w_pico_slot_rfsh_n				),
+		.run_req						( w_pico_run_req					),
+		.run_ack						( w_pico_run_ack					),
+		.slot_d							( slot_d							),
+		.bus_io							( w_pico_bus_io						),
+		.bus_write						( w_pico_bus_write					),
+		.bus_valid						( w_pico_bus_valid					),
+		.bus_ready						( w_pico_bus_ready					),
+		.bus_flash_en					( w_pico_bus_flash_en				),
+		.bus_address					( w_pico_bus_address				),
+		.bus_wdata						( w_pico_bus_wdata					),
+		.bus_rdata						( w_pico_bus_rdata					),
+		.bus_rdata_en					( w_pico_bus_rdata_en				)
+	);
+	assign w_kana_led = 1'b0;
+
+	// --------------------------------------------------------------------
+	//	Z80 core
+	// --------------------------------------------------------------------
+
+	//	Legasy compatible CPU core
+	cz80_inst u_z80 (
+		.reset_n						( ff_z80_reset_n					),
+		.clk							( clk42m							),
+		.state_count					( ff_3_579m							),
+		.int_n							( w_z80_slot_int_n					),
+		.nmi_n							( 1'b1								),
+		.wait_n							( w_z80_slot_wait_n					),
+		.m1_n							( w_z80_slot_m1_n					),
+		.merq_n							( w_z80_slot_merq_n					),
+		.iorq_n							( w_z80_slot_iorq_n					),
+		.rd_n							( w_z80_slot_rd_n					),
+		.wr_n							( w_z80_slot_wr_n					),
+		.slot_d_oe						( w_z80_slot_d_oe					),
+		.rfsh_n							( w_z80_slot_rfsh_n					),
+		.run_req						( w_z80_run_req						),
+		.run_ack						( w_z80_run_ack						),
+		.slot_d							( slot_d							),
+		.bus_io							( w_z80_bus_io						),
+		.bus_write						( w_z80_bus_write					),
+		.bus_valid						( w_z80_bus_valid					),
+		.bus_ready						( w_z80_bus_ready					),
+		.bus_address					( w_z80_bus_address					),
+		.bus_wdata						( w_z80_bus_wdata					),
+		.bus_rdata						( w_z80_bus_rdata					),
+		.bus_rdata_en					( w_z80_bus_rdata_en				),
+		.pc								( w_z80_pc							),
+		.int_ack						( 									)
+	);
+
+	//	Highspeed CPU core
+	wire			w_cpu_slot12_cs;
+	wire			w_cpu_rom0_cs;
+	wire			w_cpu_flash_cs;
+
+	cr800_inst u_r800 (
+		.reset_n						( ff_r800_reset_n					),
+		.clk							( clk42m							),
+		.state_count					( ff_3_579m							),
+		.int_n							( w_r800_slot_int_n					),
+		.nmi_n							( 1'b1								),
+		.wait_n							( w_r800_slot_wait_n				),
+		.m1_n							( w_r800_slot_m1_n					),
+		.merq_n							( w_r800_slot_merq_n				),
+		.iorq_n							( w_r800_slot_iorq_n				),
+		.rd_n							( w_r800_slot_rd_n					),
+		.wr_n							( w_r800_slot_wr_n					),
+		.slot_d_oe						( w_r800_slot_d_oe					),
+		.rfsh_n							( w_r800_slot_rfsh_n				),
+		.run_req						( w_r800_core_run_req				),
+		.run_ack						( w_r800_run_ack					),
+		.slot_d							( slot_d							),
+		.flash_cs						( w_cpu_flash_cs					),
+		.rom0_cs						( w_cpu_rom0_cs && !w_device_bootrom_cs ),
+		.rom0_address					( w_slot_a_full						),
+		.slot12_cs						( w_cpu_slot12_cs					),
+		.ssram_access					( w_device_ssram_active				),
+		.bus_io							( w_r800_bus_io						),
+		.bus_write						( w_r800_bus_write					),
+		.bus_valid						( w_r800_bus_valid					),
+		.bus_ready						( w_r800_bus_ready					),
+		.bus_address					( w_r800_bus_address				),
+		.bus_wdata						( w_r800_bus_wdata					),
+		.bus_rdata						( w_r800_bus_rdata					),
+		.bus_rdata_en					( w_r800_bus_rdata_en				),
+		.performance_start				( w_r800_performance_start			),
+		.performance_stop				( w_r800_performance_stop			),
+		.performance_signal				( w_r800_performance_signal			),
+		.pc								( w_r800_pc							),		//	debug
+		.debug_sp						( w_r800_sp				    		),
+		.int_ack						( 									)		//	debug
+	);
+
+	// --------------------------------------------------------------------
+	//	CPU selector
+	// --------------------------------------------------------------------
+	s2026 u_s2026 (
+		.sys_reset_n					( ff_spi_reset_n					),
+		.msx_reset_n					( ff_s2026_reset_n					),
+		.clk							( clk42m							),
+		.cpu_pause						( w_msx_pause						),
+		.z80_run_req					( w_z80_run_req						),
+		.z80_run_ack					( w_z80_run_ack						),
+		.r800_run_req					( w_r800_run_req					),
+		.r800_run_ack					( w_r800_run_ack					),
+		.pico_run_req					( w_pico_run_req					),
+		.pico_run_ack					( w_pico_run_ack					),
+		.pico_change_req				( w_pico_change_req					),
+		.pico_change_target				( w_pico_change_target				),
+		.bus_cs							( w_device_s2026_cs					),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_s2026_ready				),
+		.bus_wdata						( w_device_wdata					),
+		.bus_address					( w_device_address[1:0]				),
+		.bus_rdata						( w_device_s2026_rdata				),
+		.bus_rdata_en					( w_device_s2026_rdata_en			),
+		.z80_active						( w_z80_active						),
+		.r800_active					( w_r800_active						),
+		.processor_mode					( w_processor_mode					),		//	0: Z80, 1: R800
+		.cpu_sel						( w_cpu_sel							)
+	);
+
+	// --------------------------------------------------------------------
+	//	MSX Slot signal controller
+	// --------------------------------------------------------------------
+	msx_bus_mux u_msx_bus_mux (
+		.reset_n						( ff_spi_reset_n					),
+		.clk							( clk42m							),
+		.cpu_sel						( w_cpu_sel							),
+		.pico_bus_address				( w_pico_bus_address				),
+		.pico_bus_io					( w_pico_bus_io						),
+		.pico_bus_write					( w_pico_bus_write					),
+		.pico_bus_valid					( w_pico_bus_valid					),
+		.pico_bus_ready					( w_pico_bus_ready					),
+		.pico_bus_wdata					( w_pico_bus_wdata					),
+		.pico_bus_rdata					( w_pico_bus_rdata					),
+		.pico_bus_rdata_en				( w_pico_bus_rdata_en				),
+		.z80_bus_address				( w_z80_bus_address					),
+		.z80_bus_io						( w_z80_bus_io						),
+		.z80_bus_write					( w_z80_bus_write					),
+		.z80_bus_valid					( w_z80_bus_valid					),
+		.z80_bus_ready					( w_z80_bus_ready					),
+		.z80_bus_wdata					( w_z80_bus_wdata					),
+		.z80_bus_rdata					( w_z80_bus_rdata					),
+		.z80_bus_rdata_en				( w_z80_bus_rdata_en				),
+		.r800_bus_address				( w_r800_bus_address				),
+		.r800_bus_io					( w_r800_bus_io						),
+		.r800_bus_write					( w_r800_bus_write					),
+		.r800_bus_valid					( w_r800_bus_valid					),
+		.r800_bus_ready					( w_r800_bus_ready					),
+		.r800_bus_wdata					( w_r800_bus_wdata					),
+		.r800_bus_rdata					( w_r800_bus_rdata					),
+		.r800_bus_rdata_en				( w_r800_bus_rdata_en				),
+		.device_address					( w_device_address					),
+		.device_io						( w_device_io						),
+		.device_write					( w_device_write					),
+		.device_valid					( w_device_valid					),
+		.device_ready					( w_device_ready					),
+		.device_wdata					( w_device_wdata					),
+		.device_rdata					( w_device_rdata					),
+		.device_rdata_en				( w_device_rdata_en					)
+	);
+
+	msx_slot u_msx_slot (
+		.reset_n						( ff_slot_reset_n					),
+		.clk							( clk42m							),
+		.sel							( w_cpu_sel							),
+		.msx_clock						( ff_slot_clock_n					),
+		.z80_int_n						( w_z80_slot_int_n					),
+		.z80_wait_n						( w_z80_slot_wait_n					),
+		.z80_m1_n						( w_z80_slot_m1_n					),
+		.z80_merq_n						( w_z80_slot_merq_n					),
+		.z80_iorq_n						( w_z80_slot_iorq_n					),
+		.z80_rd_n						( w_z80_slot_rd_n					),
+		.z80_wr_n						( w_z80_slot_wr_n					),
+		.z80_slot_d_oe					( w_z80_slot_d_oe					),
+		.z80_rfsh_n						( w_z80_slot_rfsh_n					),
+		.z80_address					( w_z80_bus_address					),
+		.z80_wdata						( w_z80_bus_wdata					),
+		.z80_rdata						( w_z80_slot_rdata					),
+		.z80_bus_io						( w_z80_bus_io						),
+		.z80_bus_write					( w_z80_bus_write					),
+		.r800_int_n						( w_r800_slot_int_n					),
+		.r800_wait_n					( w_r800_slot_wait_n				),
+		.r800_m1_n						( w_r800_slot_m1_n					),
+		.r800_merq_n					( w_r800_slot_merq_n				),
+		.r800_iorq_n					( w_r800_slot_iorq_n				),
+		.r800_rd_n						( w_r800_slot_rd_n					),
+		.r800_wr_n						( w_r800_slot_wr_n					),
+		.r800_slot_d_oe					( w_r800_slot_d_oe					),
+		.r800_rfsh_n					( w_r800_slot_rfsh_n				),
+		.r800_address					( w_r800_bus_address				),
+		.r800_wdata						( w_r800_bus_wdata					),
+		.r800_rdata						( w_r800_slot_rdata					),
+		.r800_bus_io					( w_r800_bus_io						),
+		.r800_bus_write					( w_r800_bus_write					),
+		.pico_int_n						( w_pico_slot_int_n					),
+		.pico_wait_n					( w_pico_slot_wait_n				),
+		.pico_m1_n						( w_pico_slot_m1_n					),
+		.pico_merq_n					( w_pico_slot_merq_n				),
+		.pico_iorq_n					( w_pico_slot_iorq_n				),
+		.pico_rd_n						( w_pico_slot_rd_n					),
+		.pico_wr_n						( w_pico_slot_wr_n					),
+		.pico_slot_d_oe					( w_pico_slot_d_oe					),
+		.pico_rfsh_n					( w_pico_slot_rfsh_n				),
+		.pico_address					( w_pico_bus_address				),
+		.pico_wdata						( w_pico_bus_wdata					),
+		.pico_rdata						( w_pico_slot_rdata					),
+		.pico_flash_en					( w_pico_bus_flash_en				),
+		.pico_bus_io					( w_pico_bus_io						),
+		.pico_bus_write					( w_pico_bus_write					),
+		.slot_m1_n						( slot_m1_n							),
+		.slot_oe_n						( slot_oe_n							),
+		.slot_clock_n					( slot_clock_n						),
+		.slot_sltsl0_n					( w_slot_sltsl0_n					),
+		.slot_sltsl1_n					( slot_sltsl1_n						),
+		.slot_sltsl2_n					( slot_sltsl2_n						),
+		.slot_sltsl3_n					( w_slot_sltsl3_n					),
+		.slot_cs1_n						( slot_cs1_n						),
+		.slot_cs2_n						( slot_cs2_n						),
+		.slot_cs12_n					( slot_cs12_n						),
+		.slot_a							( slot_a							),
+		.slot_ma						( slot_ma							),
+		.slot_int_n						( slot_int_n && !w_dos_fdc_interrupt	),
+		.slot_wait_n					( slot_wait_n						),
+		.slot_reset_n					( slot_reset_n						),
+		.slot_busdir					( slot_busdir						),
+		.slot_data_dir					( slot_data_dir						),
+		.slot_wr_n						( slot_wr_n							),
+		.slot_rd_n						( slot_rd_n							),
+		.slot_rom0_ce_n					( slot_rom0_ce_n					),
+		.slot_rom1_ce_n					( slot_rom1_ce_n					),
+		.slot_rfsh_n					( slot_rfsh_n						),
+		.slot_iorq_n					( slot_iorq_n						),
+		.slot_merq_n					( slot_merq_n						),
+		.slot_d							( slot_d							),
+		.slot_primary					( w_primary_slot					),
+		.slot_secondary0				( w_secondary_slot0					),
+		.slot_secondary3				( w_secondary_slot3					),
+		.dos_bank						( w_dos_bank						),
+		.slot1_rom_mode				( w_slot1_rom_mode			),
+		.cpu_rom0_cs					( w_cpu_rom0_cs						),
+		.cpu_slot12_cs					( w_cpu_slot12_cs					),
+		.cpu_flash_cs					( w_cpu_flash_cs					)
+	);
+
+	assign w_device_flash_direct		= w_cpu_sel[1] & w_pico_bus_flash_en;
+	assign w_device_valid_peripheral	= w_device_valid & ~w_device_flash_direct;
+	assign w_r800_performance_start		= w_performance_start_cs && w_device_valid_peripheral && (w_cpu_sel == 2'b01);
+	assign w_r800_performance_stop		= w_performance_stop_cs && w_device_valid_peripheral && (w_cpu_sel == 2'b01);
+	assign w_device_ready				= w_device_flash_direct ? 1'b1 : w_peripheral_ready;
+	assign w_device_rdata				= w_peripheral_rdata;
+	assign w_device_rdata_en			= w_device_flash_direct ? 1'b0 : w_peripheral_rdata_en;
+
+	// --------------------------------------------------------------------
+	//	device_* bus address decoder
+	// --------------------------------------------------------------------
+	address_decode u_address_decode (
+		.device_address					( w_device_address					),
+		.device_io						( w_device_io						),
+		.device_write					( w_device_write					),
+	`ifdef TEST_BOOTROM
+		.bootrom_en						( w_bootrom_en						),
+	`else
+		.bootrom_en						( 1'b0								),
+	`endif
+		.primary_slot					( w_primary_slot					),
+		.secondary_slot3				( w_secondary_slot3					),
+		.device_ppi_rdata				( w_device_ppi_rdata				),
+		.device_ppi_rdata_en			( w_device_ppi_rdata_en				),
+		.device_ppi_ready				( w_device_ppi_ready				),
+		.device_mapper_rdata			( w_device_mapper_rdata				),
+		.device_mapper_rdata_en			( w_device_mapper_rdata_en			),
+		.device_mapper_ready			( w_device_mapper_ready				),
+		.device_dos_mapper_rdata		( w_device_dos_mapper_rdata			),
+		.device_dos_mapper_rdata_en		( w_device_dos_mapper_rdata_en		),
+		.device_dos_mapper_ready		( w_device_dos_mapper_ready			),
+		.device_secondary_rdata			( w_device_secondary_rdata			),
+		.device_secondary_rdata_en		( w_device_secondary_rdata_en		),
+		.device_secondary_ready			( w_device_secondary_ready			),
+		.device_ssram_rdata				( w_device_ssram_rdata				),
+		.device_ssram_rdata_en			( w_device_ssram_rdata_en			),
+		.device_ssram_ready				( w_device_ssram_ready				),
+		.device_rtc_rdata				( w_device_rtc_rdata				),
+		.device_rtc_rdata_en			( w_device_rtc_rdata_en				),
+		.device_rtc_ready				( w_device_rtc_ready				),
+		.device_ssg_rdata				( w_device_ssg_rdata				),
+		.device_ssg_rdata_en			( w_device_ssg_rdata_en				),
+		.device_ssg_ready				( w_device_ssg_ready				),
+		.device_kanji_rom_rdata			( w_device_kanji_rom_rdata			),
+		.device_kanji_rom_rdata_en		( w_device_kanji_rom_rdata_en		),
+		.device_kanji_rom_ready			( w_device_kanji_rom_ready			),
+		.device_system_flag_rdata		( w_device_system_flag_rdata		),
+		.device_system_flag_rdata_en	( w_device_system_flag_rdata_en		),
+		.device_system_flag_ready		( w_device_system_flag_ready		),
+		.device_pause_led_rdata			( w_device_pause_led_rdata			),
+		.device_pause_led_rdata_en		( w_device_pause_led_rdata_en		),
+		.device_pause_led_ready			( w_device_pause_led_ready			),
+	`ifdef TEST_BOOTROM
+		.device_bootrom_rdata			( w_device_bootrom_rdata			),
+		.device_bootrom_rdata_en		( w_device_bootrom_rdata_en			),
+		.device_bootrom_ready			( w_device_bootrom_ready			),
+	`else
+		.device_bootrom_rdata			( 8'h00								),
+		.device_bootrom_rdata_en		( 1'b0								),
+		.device_bootrom_ready			( 1'b0								),
+	`endif
+		.device_s2026_rdata				( w_device_s2026_rdata				),
+		.device_s2026_rdata_en			( w_device_s2026_rdata_en			),
+		.device_s2026_ready				( w_device_s2026_ready				),
+		.bootrom_cs						( w_device_bootrom_cs				),
+		.ppi_cs							( w_device_ppi_cs					),
+		.memory_mapper_cs				( w_device_mapper_cs				),
+		.dos_mapper_cs					( w_device_dos_mapper_cs			),
+		.ssram_cs						( w_device_ssram_cs					),
+		.rtc_cs							( w_device_rtc_cs					),
+		.ssg_cs							( w_device_ssg_cs					),
+		.kanji_rom_cs					( w_device_kanji_rom_cs				),
+		.system_flag_cs					( w_device_system_flag_cs			),
+		.pause_led_cs					( w_device_pause_led_cs				),
+		.s2026_cs						( w_device_s2026_cs					),
+		.performance_start_cs			( w_performance_start_cs			),
+		.performance_stop_cs			( w_performance_stop_cs				),
+		.access_primary_slot			( w_access_primary_slot				),
+		.access_secondary_slot3			( w_access_secondary_slot3			),
+		.slot3_0_selected				( w_slot3_0_selected				),
+		.secondary_cs					( w_device_secondary_cs				),
+		.ssram_active					( w_device_ssram_active				),
+		.device_rdata					( w_peripheral_rdata				),
+		.device_rdata_en				( w_peripheral_rdata_en				),
+		.device_ready					( w_peripheral_ready				)
+	);
+
+	// --------------------------------------------------------------------
+	//	MSX-DOS2 mapper and FDC address decode
+	// --------------------------------------------------------------------
+	dos_mapper u_dos_mapper (
+		.reset_n						( ff_slot_reset_n					),
+		.clk							( clk42m							),
+		.bus_cs							( w_device_dos_mapper_cs			),
+		.bus_address					( w_device_address					),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_wdata						( w_device_wdata					),
+		.bus_ready						( w_device_dos_mapper_ready			),
+		.bus_rdata						( w_device_dos_mapper_rdata			),
+		.bus_rdata_en					( w_device_dos_mapper_rdata_en		),
+		.dos_bank						( w_dos_bank						),
+		.status_read					( w_dos_status_read					),
+		.rdfdc_n						( w_dos_rdfdc_n						),
+		.wrfdc_n						( w_dos_wrfdc_n						),
+		.fdc_address					( w_dos_fdc_address					),
+		.fdc_interrupt					( w_dos_fdc_interrupt				)
+	);
+
+	// --------------------------------------------------------------------
+	//	Secondary slot
+	// --------------------------------------------------------------------
+	secondary_slot u_secondary_slot (
+		.clk							( clk42m							),
+		.reset_n						( ff_slot_reset_n					),
+		.bus_cs							( w_device_secondary_cs				),
+		.bus_write						( w_device_write					),
+		.bus_wdata						( w_device_wdata					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_secondary_ready			),
+		.bus_rdata						( w_device_secondary_rdata			),
+		.bus_rdata_en					( w_device_secondary_rdata_en		),
+		.primary_slot					( w_primary_slot					),
+		.secondary_slot0				( w_secondary_slot0					),
+		.secondary_slot3				( w_secondary_slot3					)
+	);
+
+	// --------------------------------------------------------------------
+	//	config SPI ROM
+	//	Accessed only by u_kanji_rom as bus master in this version
+	//	(the I/O 40h CPU path via extio is future work).
+	//	The reset follows ff_spi_reset_n (same as u_kanji_rom) so the
+	//	kanji master can access the flash regardless of the MSX reset
+	//	state, e.g. during Pico ownership.
+	//	Flash pin mapping is the same as the Y8960 Cartridge design.
+	// --------------------------------------------------------------------
+	ip_spi_rom u_config_rom (
+		.reset							( ~ff_spi_reset_n					),
+		.clk							( clk42m							),
+		.clk_serial						( clk215m							),
+		.bus_cs							( w_bus_crom_cs						),
+		.bus_address					( w_bus_crom_address				),
+		.bus_write						( w_bus_crom_write					),
+		.bus_valid						( w_bus_crom_valid					),
+		.bus_ready						( w_bus_crom_ready					),
+		.bus_wdata						( w_bus_crom_wdata					),
+		.bus_rdata						( w_bus_crom_rdata					),
+		.bus_rdata_en					( w_bus_crom_rdata_en				),
+		.srom0_cs_n						( flash_spi_cs_n					),
+		.srom1_cs_n						( 									),
+		.srom_clk						( flash_spi_clk						),
+		.srom_hold_n					( flash_spi_io[3]					),
+		.srom_wp_n						( flash_spi_io[2]					),
+		.srom_do						( flash_spi_io[1]					),
+		.srom_di						( flash_spi_io[0]					)
+	);
+
+	// --------------------------------------------------------------------
+	//	Kanji ROM (in the Config flash, via u_config_rom)
+	// --------------------------------------------------------------------
+	ip_kanji_rom #(
+		.KANJI_BASE						( KANJI_BASE						)
+	) u_kanji_rom (
+		.reset							( ~ff_spi_reset_n					),
+		.clk							( clk42m							),
+		.kanji_reset					( ~ff_slot_reset_n					),
+		.pico_owned						( w_cpu_sel[1]						),
+		.pico_request					( w_srom_request					),
+		.pico_operation					( w_srom_operation					),
+		.pico_address					( w_srom_address					),
+		.pico_length					( w_srom_length						),
+		.pico_buffer_write				( w_srom_buffer_write				),
+		.pico_buffer_index				( w_srom_buffer_index				),
+		.pico_buffer_wdata				( w_srom_buffer_wdata				),
+		.pico_buffer_rdata				( w_srom_buffer_rdata				),
+		.pico_done						( w_srom_done						),
+		.pico_status					( w_srom_status						),
+		.bus_cs							( w_device_kanji_rom_cs				),
+		.bus_address					( w_device_address[1:0]				),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_kanji_rom_ready			),
+		.bus_wdata						( w_device_wdata					),
+		.bus_rdata						( w_device_kanji_rom_rdata			),
+		.bus_rdata_en					( w_device_kanji_rom_rdata_en		),
+		.kanji1_en						( w_kanji1_en						),
+		.kanji2_en						( w_kanji2_en						),
+		.crom_cs						( w_bus_crom_cs						),
+		.crom_address					( w_bus_crom_address				),
+		.crom_write						( w_bus_crom_write					),
+		.crom_valid						( w_bus_crom_valid					),
+		.crom_ready						( w_bus_crom_ready					),
+		.crom_wdata						( w_bus_crom_wdata					),
+		.crom_rdata						( w_bus_crom_rdata					),
+		.crom_rdata_en					( w_bus_crom_rdata_en				)
+	);
+
+	// --------------------------------------------------------------------
+	//	BOOT ROM
+	// --------------------------------------------------------------------
+	`ifdef TEST_BOOTROM
+	bootrom u_bootrom (
+		.reset_n						( ff_bootrom_reset_n				),
+		.clk							( clk42m							),
+		.bootrom_cs						( w_device_bootrom_cs				),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_wdata						( w_device_wdata					),
+		.bus_address					( w_device_address					),
+		.bus_rdata						( w_device_bootrom_rdata			),
+		.bus_rdata_en					( w_device_bootrom_rdata_en			),
+		.bus_ready						( w_device_bootrom_ready			)
+	);
+	`endif
+	// --------------------------------------------------------------------
+	//	PPI
+	// --------------------------------------------------------------------
+	ppi u_ppi (
+		.clk							( clk42m							),
+		.reset_n						( ff_ppi_reset_n					),
+		.bus_cs							( w_device_ppi_cs					),
+		.bus_address					( w_device_address[1:0]				),
+		.bus_write						( w_device_write					),
+		.bus_wdata						( w_device_wdata					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_ppi_ready				),
+		.bus_rdata						( w_device_ppi_rdata				),
+		.bus_rdata_en					( w_device_ppi_rdata_en				),
+		.primary_slot					( w_primary_slot					),
+		.keyboard_caps_led				( w_caps_led						),
+		.one_bit_sound					( w_one_bit_sound					),
+		.keyboard_matrix_row			( w_keyboard_matrix_row				),
+		.keyboard_matrix				( w_keyboard_matrix					),
+		.keyboard_matrix_valid			( w_keyboard_matrix_valid			),
+		.debug_keyboard_matrix_row		( w_ppi_debug_keyboard_matrix_row	),
+		.debug_keyboard_matrix_data		( w_ppi_debug_keyboard_matrix_data	),
+		.debug_keyboard_update_count	( w_ppi_debug_keyboard_update_count	),
+		.debug_keyboard_read_count		( w_ppi_debug_keyboard_read_count	)
+	);
+
+	// --------------------------------------------------------------------
+	//	Memory mapper (I/O port FCh-FFh)
+	// --------------------------------------------------------------------
+	memory_mapper u_memory_mapper (
+		.clk							( clk42m							),
+		.reset_n						( ff_mapper_reset_n					),
+		.bus_cs							( w_device_mapper_cs				),
+		.bus_address					( w_device_address[1:0]				),
+		.bus_write						( w_device_write					),
+		.bus_wdata						( w_device_wdata					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_mapper_ready				),
+		.bus_rdata						( w_device_mapper_rdata				),
+		.bus_rdata_en					( w_device_mapper_rdata_en			),
+		.page							( w_device_address[15:14]			),
+		.mapper_segment					( w_mapper_segment					)
+	);
+
+	// --------------------------------------------------------------------
+	//	Serial SRAM (memory access page1-3, address mapped by memory_mapper)
+	// --------------------------------------------------------------------
+	assign w_ssram_address	= { w_mapper_segment, w_device_address[13:0] };
+
+	r800_cache u_r800_cache (
+		.reset_n						( ff_ssram_reset_n					),
+		.clk							( clk42m							),
+		.r800_active					( w_cpu_sel == 2'b01				),
+		.cache_ready					( w_r800_cache_ready				),
+		.bus_cs							( w_device_ssram_active				),
+		.bus_address					( w_ssram_address					),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_wdata						( w_device_wdata					),
+		.bus_ready						( w_device_ssram_ready				),
+		.bus_rdata						( w_device_ssram_rdata				),
+		.bus_rdata_en					( w_device_ssram_rdata_en			),
+		.sram_cs						( w_cache_ssram_cs					),
+		.sram_address					( w_cache_ssram_address				),
+		.sram_write						( w_cache_ssram_write				),
+		.sram_valid						( w_cache_ssram_valid				),
+		.sram_wdata						( w_cache_ssram_wdata				),
+		.sram_ready						( w_cache_ssram_ready				),
+		.sram_rdata						( w_cache_ssram_rdata				),
+		.sram_rdata_en					( w_cache_ssram_rdata_en			),
+		.sram_burst						( w_cache_ssram_burst				),
+		.sram_burst_rdata				( w_cache_ssram_burst_rdata			),
+		.sram_burst_rdata_en			( w_cache_ssram_burst_rdata_en		),
+		.debug_hit_count				( w_r800_cache_hits					),
+		.debug_miss_count				( w_r800_cache_misses				),
+		.debug_fill_wait_cycles			( w_r800_cache_fill_wait			)
+	);
+
+	ssram u_ssram (
+		.n_reset						( ff_ssram_reset_n					),
+		.clk							( clk42m							),
+		.clk_serial						( clk215m							),
+		.bus_cs							( w_cache_ssram_cs					),
+		.bus_address					( w_cache_ssram_address				),
+		.bus_write						( w_cache_ssram_write				),
+		.bus_valid						( w_cache_ssram_valid				),
+		.bus_wdata						( w_cache_ssram_wdata				),
+		.bus_ready						( w_cache_ssram_ready				),
+		.bus_rdata						( w_cache_ssram_rdata				),
+		.bus_rdata_en					( w_cache_ssram_rdata_en			),
+		.bus_burst						( w_cache_ssram_burst				),
+		.bus_burst_rdata				( w_cache_ssram_burst_rdata			),
+		.bus_burst_rdata_en				( w_cache_ssram_burst_rdata_en		),
+		.startup_busy					( w_ssram_startup_busy				),
+		.sram_sclk						( sram_sclk							),
+		.sram_ce_n						( sram_ce_n							),
+		.sram_sio						( sram_sio							)
+	);
+
+	// --------------------------------------------------------------------
+	//	RTC (MSX2 CLOCK-IC, I/O B4h-B5h)
+	// --------------------------------------------------------------------
+	rtc u_rtc (
+		.clk							( clk42m							),
+		.reset_n						( ff_rtc_reset_n					),
+		.enable							( w_3_579m							),
+		.bus_cs							( w_device_rtc_cs					),
+		.bus_write						( w_device_write					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_rtc_ready				),
+		.bus_address					( w_device_address[0]				),
+		.bus_wdata						( w_device_wdata					),
+		.bus_rdata						( w_device_rtc_rdata				),
+		.bus_rdata_en					( w_device_rtc_rdata_en				)
+	);
+
+	// --------------------------------------------------------------------
+	//	Pause LED (I/O A7h)
+	// --------------------------------------------------------------------
+	pause_led u_pause_led (
+		.clk							( clk42m							),
+		.reset_n						( ff_pause_led_reset_n				),
+		.bus_cs							( w_device_pause_led_cs				),
+		.bus_write						( w_device_write					),
+		.bus_wdata						( w_device_wdata					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_pause_led_ready			),
+		.bus_rdata						( w_device_pause_led_rdata			),
+		.bus_rdata_en					( w_device_pause_led_rdata_en		),
+		.msx_pause						( w_msx_pause						),
+		.r800_led						( w_r800_led						),
+		.pause_led						( w_pause_led						)
+	);
+
+	// --------------------------------------------------------------------
+	//	System flag latches (I/O F3h-F5h, F5h bit0/1: Kanji JIS1/JIS2 enable)
+	// --------------------------------------------------------------------
+	system_flag u_system_flag (
+		.clk							( clk42m							),
+		.reset_n						( ff_system_flag_reset_n			),
+		.bus_cs							( w_device_system_flag_cs			),
+		.bus_address					( w_device_address[1:0]				),
+		.bus_write						( w_device_write					),
+		.bus_wdata						( w_device_wdata					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_system_flag_ready		),
+		.bus_rdata						( w_device_system_flag_rdata		),
+		.bus_rdata_en					( w_device_system_flag_rdata_en 	),
+		.kanji1_en						( w_kanji1_en						),
+		.kanji2_en						( w_kanji2_en						),
+		.debug_f3						( w_debug_f3						),
+		.debug_f4						( w_debug_f4						),
+		.debug_f5						( w_debug_f5						)
+	);
+
+	// --------------------------------------------------------------------
+	//	SSG
+	// --------------------------------------------------------------------
+	dummy_ssg u_ssg (
+		.clk							( clk42m							),
+		.reset_n						( ff_ssg_reset_n					),
+		.bus_cs							( w_device_ssg_cs					),
+		.bus_address					( w_device_address[1:0]				),
+		.bus_write						( w_device_write					),
+		.bus_wdata						( w_device_wdata					),
+		.bus_valid						( w_device_valid_peripheral			),
+		.bus_ready						( w_device_ssg_ready				),
+		.bus_rdata						( w_device_ssg_rdata				),
+		.bus_rdata_en					( w_device_ssg_rdata_en				)
+	);
+
+//	// --------------------------------------------------------------------
+//	//	UART
+//	// --------------------------------------------------------------------
+//	uart u_uart (
+//		.reset_n						( ff_uart_reset_n					),
+//		.clk							( clk42m							),
+//		.clk_uart						( clk27m							),
+//		.bus_uart_cs					( w_bus_uart_cs						),
+//		.bus_valid						( w_bus_valid						),
+//		.bus_write						( w_bus_write						),
+//		.bus_ready						( w_bus_uart_ready					),
+//		.bus_wdata						( w_bus_wdata						),
+//		.bus_rdata						( w_bus_uart_rdata					),
+//		.bus_rdata_en					( w_bus_uart_rdata_en				),
+//		.uart_tx						( uart_tx							),
+//		.button							( ff_button_d1						)
+//	);
+endmodule

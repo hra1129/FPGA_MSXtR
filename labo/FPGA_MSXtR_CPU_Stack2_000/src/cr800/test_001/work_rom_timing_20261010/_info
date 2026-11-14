@@ -1,0 +1,466 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dC:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack_001_RENEW/src/cr800/test_001
+vcr800
+Z1 !s110 1791581622
+!i10b 1
+!s100 ED_GT7af40WBQ[EcPDEJK0
+Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IFHeS:QLK3b]kPOX_VI<jQ1
+Z3 VDg1SIo80bB@j0V0VzS_@n1
+R0
+Z4 w1791546247
+8../cr800.v
+F../cr800.v
+!i122 0
+L0 63 1044
+Z5 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z6 !s108 1791581622.000000
+!s107 tb.sv|../../ssram/ssram_test_model.v|../../ssram/ssram.v|../r800_rom_cache.v|../r800_cache.v|../r800_cache_ram.v|../cr800_inst.v|../cr800.v|../cr800_reg.v|../cr800_mcode.v|../cr800_alu.v|
+Z7 !s90 -work|work_rom_timing_20261010|../cr800_alu.v|../cr800_mcode.v|../cr800_reg.v|../cr800.v|../cr800_inst.v|../r800_cache_ram.v|../r800_cache.v|../r800_rom_cache.v|../../ssram/ssram.v|../../ssram/ssram_test_model.v|tb.sv|
+!i113 1
+Z8 o-work work_rom_timing_20261010
+Z9 tCvgOpt 0
+vcr800_alu
+R1
+!i10b 1
+!s100 FIh_;n@DY_WEn:L1zN2FT2
+R2
+I12PPSKbSmzWdC6b]1[KQ?0
+R3
+R0
+w1791377433
+8../cr800_alu.v
+F../cr800_alu.v
+!i122 0
+L0 63 314
+R5
+r1
+!s85 0
+31
+R6
+Z10 !s107 tb.sv|../../ssram/ssram_test_model.v|../../ssram/ssram.v|../r800_rom_cache.v|../r800_cache.v|../r800_cache_ram.v|../cr800_inst.v|../cr800.v|../cr800_reg.v|../cr800_mcode.v|../cr800_alu.v|
+R7
+!i113 1
+R8
+R9
+vcr800_inst
+R1
+!i10b 1
+!s100 Kl?6k_dc^jaze]^d>_KW72
+R2
+IhMf5A]z<jMmPR:^eDS<zL2
+R3
+R0
+R4
+8../cr800_inst.v
+F../cr800_inst.v
+!i122 0
+L0 63 754
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vcr800_mcode
+R1
+!i10b 1
+!s100 m?gLY9h<kVOY^:ZS4LnBC3
+R2
+IYkI[VVdVFQ<Q5JEIQUdmc0
+R3
+R0
+w1773057165
+8../cr800_mcode.v
+F../cr800_mcode.v
+!i122 0
+L0 63 2700
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vcr800_registers
+R1
+!i10b 1
+!s100 829?6FkT2eE>oICOa9oZE2
+R2
+I:cSL6>GoQnWmO]>Sa<VNT2
+R3
+R0
+w1791366594
+8../cr800_reg.v
+F../cr800_reg.v
+!i122 0
+L0 55 129
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vr800_cache
+R1
+!i10b 1
+!s100 I3LaCT[64PG3hPjCij4a42
+R2
+I_8nKLgJdWMDj77a_o5GjT2
+R3
+R0
+w1791234922
+8../r800_cache.v
+F../r800_cache.v
+!i122 0
+L0 34 288
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vr800_cache_ram
+R1
+!i10b 1
+!s100 TediORe4D3YbUZ3g_;<1B3
+R2
+Ib^e]AUQbGNRB5H[D9ZeZ<3
+R3
+R0
+w1790765778
+8../r800_cache_ram.v
+F../r800_cache_ram.v
+!i122 0
+L0 1 26
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vr800_rom_cache
+R1
+!i10b 1
+!s100 O;bel@en[j[gfdCbIAi2l0
+R2
+IneNGog9m1Yn[akB4aCSLN0
+R3
+R0
+w1791323004
+8../r800_rom_cache.v
+F../r800_rom_cache.v
+!i122 0
+L0 1 114
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vssram
+R1
+!i10b 1
+!s100 TbZYP<Z8I;D?UaB;CQMm<1
+R2
+IFDXnXm=jHfa<C=WZW9XBL0
+R3
+R0
+w1791122251
+8../../ssram/ssram.v
+F../../ssram/ssram.v
+!i122 0
+L0 34 674
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vssram_test_model
+R1
+!i10b 1
+!s100 ^Ca8GTc5;?N[J7>dA;:Li2
+R2
+IP>9_9;gicFH7l7ZA>aL_T3
+R3
+R0
+w1790772458
+8../../ssram/ssram_test_model.v
+F../../ssram/ssram_test_model.v
+!i122 0
+L0 29 179
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb
+Z11 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+R1
+!i10b 1
+!s100 7kHlJY:Vf42lX;J?f@`mZ2
+R2
+IfVT=SoPQ<fKl7e:K5E=ZH0
+R3
+S1
+R0
+Z12 w1791377408
+Z13 8tb.sv
+Z14 Ftb.sv
+!i122 0
+L0 3 187
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb_cache_ssram_burst
+R11
+R1
+!i10b 1
+!s100 cX7nAJ2nkmNX27iKnZ7AH0
+R2
+IJjI<9lWJZ@b5P7UOLDW@n2
+R3
+S1
+R0
+R12
+R13
+R14
+!i122 0
+L0 326 93
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb_r800_compat_differences
+R11
+R1
+!i10b 1
+!s100 ^j77TS5n8fiMDc2o_O]P^2
+R2
+I_DzLP4QceoO_Ld;dCmP452
+R3
+S1
+R0
+R12
+R13
+R14
+!i122 0
+L0 802 90
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb_r800_mulub
+R11
+R1
+!i10b 1
+!s100 6HN5XQJJcgD`F_aB9^@F10
+R2
+IgjfM0no7;?Y1D2IJzglQ61
+R3
+S1
+R0
+R12
+R13
+R14
+!i122 0
+L0 561 117
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb_r800_muluw
+R11
+R1
+!i10b 1
+!s100 SFn`^XTzhcc3C8h4@3MJg2
+R2
+IiJ5b=TCAL_aMABSk1VFY_3
+R3
+S1
+R0
+R12
+R13
+R14
+!i122 0
+L0 679 122
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb_r800_rom_fetch
+R11
+R1
+!i10b 1
+!s100 >F`=;_zD]Ji_HiJS9oNL<0
+R2
+Ioh^:EZj0[Ufg@?9Lj@aFk1
+R3
+S1
+R0
+R12
+R13
+R14
+!i122 0
+L0 510 50
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb_r800_wait
+R11
+R1
+!i10b 1
+!s100 1VLge0foD4=PbZ?i1E2XW1
+R2
+I;e@M2cD[==n3Cm>]NKD5D0
+R3
+S1
+R0
+R12
+R13
+R14
+!i122 0
+L0 191 48
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb_rom_cache
+R11
+R1
+!i10b 1
+!s100 C_QgJT6TMZ4BWalTDzRD[3
+R2
+IHYhPK4eVNK6E88XG8AfjS2
+R3
+S1
+R0
+R12
+R13
+R14
+!i122 0
+L0 420 89
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtb_ssram_burst
+R11
+R1
+!i10b 1
+!s100 R;RJLYY8`UkHa[=MPRQzo1
+R2
+IV2:MOc8FE1CQm?3T0g9Sz0
+R3
+S1
+R0
+R12
+R13
+R14
+!i122 0
+L0 240 85
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9

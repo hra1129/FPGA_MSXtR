@@ -1,0 +1,14 @@
+# vsim -c -lib work_rom_clear -t 1ps -l tb_ssram_burst_rom_clear.log tb_ssram_burst -do "run -all; quit -f" 
+# Start time: 07:46:06 on Oct 10,2026
+# Loading sv_std.std
+# Loading work_rom_clear.tb_ssram_burst
+# Loading work_rom_clear.ssram
+# Loading work_rom_clear.ssram_test_model
+# run -all
+# [SRAM Model] EQIO command (0x38) received. Entering Quad I/O mode.
+# [SRAM Model] Read complete: addr=0x01008 data=0x00
+# PASS: one 8-byte SSRAM transaction and subsequent single-byte read
+# ** Note: $finish    : tb.sv(322)
+#    Time: 77651440 ps  Iteration: 0  Instance: /tb_ssram_burst
+# End time: 07:46:06 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0

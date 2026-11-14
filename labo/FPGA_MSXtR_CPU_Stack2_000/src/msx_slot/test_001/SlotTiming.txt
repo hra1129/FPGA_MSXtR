@@ -1,0 +1,34 @@
+	Slot clock	-	2	clk	
+	T-Cycle half	-	6	clk	
+					
+メモリサイクル					
+	/MREQ fall	T1	12	clk	
+	/MERQ rise	T3	12	clk	
+	/SLTSL fall	T2	1	clk	
+	/SLTSL rise	T4	1	clk	
+	/CS fall	T2	2	clk	※ read時のみ
+	/CS rise	T4	2	clk	※ read時のみ
+	/WR fall	T2	12	clk	※ write時のみ
+	/WR rise	T3	11	clk	※ write時のみ
+	/RD fall	T2	1	clk	※ read時のみ
+	/RD rise	T3	12	clk	※ read時のみ
+					
+I/Oサイクル					
+	/IOREQ fall	T2	6	clk	
+	/IOREQ rise	T3	12	clk	
+	/WR fall	T2	5	clk	※ write時のみ
+	/WR rise	T3	11	clk	※ write時のみ
+	/RD fall	T2	6	clk	※ read時のみ
+	/RD rise	T3	12	clk	※ read時のみ
+					
+M1サイクル（readのみ）					
+	/MREQ fall	T1	12	clk	
+	/MERQ rise	T3	6	clk	
+	/SLTSL fall	T2	1	clk	
+	/SLTSL rise	T3	7	clk	
+	/CS fall	T2	2	clk	
+	/CS rise	T3	8	clk	
+	/RD fall	T2	1	clk	
+	/RD rise	T3	6	clk	
+	/RFSH fall	T4	2	clk	
+	/RFSH rise	T5	8	clk	

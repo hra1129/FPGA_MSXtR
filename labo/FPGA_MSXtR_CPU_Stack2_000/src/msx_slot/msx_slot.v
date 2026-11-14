@@ -1,0 +1,605 @@
+// -----------------------------------------------------------------------------
+// msx_slot.v
+// MSX cartridge slot timing controller
+// Revision 1.00
+//
+// Copyright (c) 2026 Takayuki Hara.
+// All rights reserved.
+//
+// Redistribution and use of this source code or any derivative works, are
+// permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice,
+//    this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Redistributions may not be sold, nor may they be used in a commercial
+//    product or activity without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+// TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// ----------------------------------------------------------------------------
+
+module msx_slot #(
+	parameter	[17:0]	c_refresh_timeout	= 18'd42954		//	約1ms(42.95454MHz基準)。シミュレーション高速化用にオーバーライド可
+) (
+	input			reset_n,
+	input			clk,					//	42.95454MHz
+	//	Select signal
+	input	[1:0]	sel,					//	0: Z80, 1: R800, 2/3: Pico
+	input			msx_clock,
+	//	Z80 Interface
+	output			z80_int_n,
+	output			z80_wait_n,
+	input			z80_m1_n,
+	input			z80_merq_n,
+	input			z80_iorq_n,
+	input			z80_rd_n,
+	input			z80_wr_n,
+	input			z80_slot_d_oe,
+	input			z80_rfsh_n,
+	input	[15:0]	z80_address,
+	input	[7:0]	z80_wdata,
+	output	[7:0]	z80_rdata,
+	input			z80_bus_io,
+	input			z80_bus_write,
+	//	R800 Interface
+	output			r800_int_n,
+	output			r800_wait_n,
+	input			r800_m1_n,
+	input			r800_merq_n,
+	input			r800_iorq_n,
+	input			r800_rd_n,
+	input			r800_wr_n,
+	input			r800_slot_d_oe,
+	input			r800_rfsh_n,
+	input	[15:0]	r800_address,
+	input	[7:0]	r800_wdata,
+	output	[7:0]	r800_rdata,
+	input			r800_bus_io,
+	input			r800_bus_write,
+	//	Pico Interface
+	output			pico_int_n,
+	output			pico_wait_n,
+	input			pico_m1_n,
+	input			pico_merq_n,
+	input			pico_iorq_n,
+	input			pico_rd_n,
+	input			pico_wr_n,
+	input			pico_slot_d_oe,
+	input			pico_rfsh_n,
+	input	[19:0]	pico_address,
+	input	[7:0]	pico_wdata,
+	output	[7:0]	pico_rdata,
+	input			pico_flash_en,
+	input			pico_bus_io,
+	input			pico_bus_write,
+	//	MSX slot interface
+	output			slot_m1_n,
+	output			slot_oe_n,
+	output			slot_clock_n,
+	output			slot_sltsl0_n,
+	output			slot_sltsl1_n,
+	output			slot_sltsl2_n,
+	output			slot_sltsl3_n,
+	output			slot_cs1_n,
+	output			slot_cs2_n,
+	output			slot_cs12_n,
+	output	[15:0]	slot_a,
+	output	[18:13]	slot_ma,
+	input			slot_int_n,
+	input			slot_wait_n,
+	output			slot_reset_n,
+	input			slot_busdir,
+	output			slot_data_dir,
+	output			slot_wr_n,
+	output			slot_rd_n,
+	output			slot_rom0_ce_n,
+	output			slot_rom1_ce_n,
+	output			slot_rfsh_n,
+	output			slot_iorq_n,
+	output			slot_merq_n,
+	inout	[7:0]	slot_d,
+	//	Slot information
+	input	[7:0]	slot_primary,
+	input	[7:0]	slot_secondary0,
+	input	[7:0]	slot_secondary3,
+	input	[1:0]	dos_bank,
+	input	[1:0]	slot1_rom_mode,
+	output			cpu_rom0_cs,
+	output			cpu_slot12_cs,		//	1: 選択中CPUのアドレスが SLOT#1/#2 (メモリアクセス判定用)
+	output			cpu_flash_cs		//	1: 選択中CPUのアドレスがオンボードFlashROM (1clk遅延のデコード結果)
+	);
+	wire			w_slot_wr_n;
+	wire			w_slot_d_oe;
+	wire			w_slot_rd_n;
+	wire			w_slot_merq_n;
+	wire	[7:0]	w_slot_d;
+	wire	[19:0]	w_slot_address;
+	wire			w_bus_io;
+	wire			w_bus_write;
+	wire			w_flash_en;
+	wire			w_external_read_allowed;
+	wire			w_external_memory_read;
+	reg				ff_external_memory_read;
+
+	assign slot_clock_n		= msx_clock;
+	assign slot_oe_n		= 1'b0;
+	assign slot_m1_n		= sel[1] ? pico_m1_n		: (sel[0] ? r800_m1_n		: z80_m1_n);
+	assign slot_iorq_n		= sel[1] ? pico_iorq_n		: (sel[0] ? r800_iorq_n		: z80_iorq_n);
+	assign slot_rfsh_n		= sel[1] ? pico_rfsh_n		: (sel[0] ? r800_rfsh_n		: z80_rfsh_n);
+	assign w_slot_merq_n	= sel[1] ? pico_merq_n		: (sel[0] ? r800_merq_n		: z80_merq_n);
+	assign w_slot_wr_n		= sel[1] ? pico_wr_n		: (sel[0] ? r800_wr_n		: z80_wr_n);
+	assign w_slot_d_oe		= sel[1] ? pico_slot_d_oe	: (sel[0] ? r800_slot_d_oe	: z80_slot_d_oe);
+	assign w_slot_rd_n		= sel[1] ? pico_rd_n		: (sel[0] ? r800_rd_n		: z80_rd_n);
+	assign w_slot_d			= sel[1] ? pico_wdata		: (sel[0] ? r800_wdata		: z80_wdata);
+	assign w_bus_io			= sel[1] ? pico_bus_io		: (sel[0] ? r800_bus_io		: z80_bus_io);
+	assign w_bus_write		= sel[1] ? pico_bus_write	: (sel[0] ? r800_bus_write	: z80_bus_write);
+	assign w_flash_en		= sel[1] ? pico_flash_en	: 1'b0;
+	assign w_slot_address	= sel[1] ? pico_address		: (sel[0] ? { 4'd0, r800_address }	: { 4'd0, z80_address });
+	assign slot_merq_n		= w_slot_merq_n;
+	assign slot_wr_n		= w_slot_wr_n;
+	assign slot_rd_n		= w_slot_rd_n;
+	assign slot_data_dir	= ~(w_external_read_allowed & (w_external_memory_read | ff_external_memory_read));		//	1: CPU Stack -> Cartridge Slot Stack, 0: Cartridge Slot Stack -> CPU Stack
+	assign slot_d			= w_slot_d_oe ? w_slot_d : 8'bz;
+	assign z80_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
+	assign r800_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
+	assign pico_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
+	assign z80_int_n		= slot_int_n;
+	assign r800_int_n		= slot_int_n;
+	assign pico_int_n		= slot_int_n;
+	assign z80_wait_n		= slot_wait_n;
+	assign r800_wait_n		= slot_wait_n;
+	assign pico_wait_n		= slot_wait_n;
+	assign slot_reset_n		= reset_n;
+
+	// ---------------------------------------------------------
+	//	Address decoder
+	// ---------------------------------------------------------
+	wire	[1:0]	w_page;
+	wire	[1:0]	w_primary_slot;
+	wire	[1:0]	w_secondary_slot0;
+	wire	[1:0]	w_secondary_slot3;
+	wire	[1:0]	w_secondary_slot;
+	reg	[7:0]	ff_ascii8_bank0;
+	reg	[7:0]	ff_ascii8_bank1;
+	reg	[7:0]	ff_ascii8_bank2;
+	reg	[7:0]	ff_ascii8_bank3;
+	reg	[7:0]	ff_ascii16_bank0;
+	reg	[7:0]	ff_ascii16_bank1;
+	reg		[18:0]	ff_slot_a;
+	reg		[2:0]	ff_slot_cpu_a;
+	reg				ff_slot_sltsl0_n;
+	reg				ff_slot_sltsl1_n;
+	reg				ff_slot_sltsl2_n;
+	reg				ff_slot_sltsl3_n;
+	reg				ff_slot_rom0_ce_n;
+	reg				ff_slot_rom1_ce_n;
+	reg				ff_slot_cs1_n;
+	reg				ff_slot_cs2_n;
+	reg				ff_slot_cs12_n;
+
+	assign w_page			= w_slot_address[15:14];
+	assign w_primary_slot	= ( w_page == 2'd0 ) ? slot_primary[1:0] :
+							  ( w_page == 2'd1 ) ? slot_primary[3:2] :
+							  ( w_page == 2'd2 ) ? slot_primary[5:4] : slot_primary[7:6];
+	assign w_secondary_slot0= ( w_page == 2'd0 ) ? slot_secondary0[1:0] :
+							  ( w_page == 2'd1 ) ? slot_secondary0[3:2] :
+							  ( w_page == 2'd2 ) ? slot_secondary0[5:4] : slot_secondary0[7:6];
+	assign w_secondary_slot3= ( w_page == 2'd0 ) ? slot_secondary3[1:0] :
+							  ( w_page == 2'd1 ) ? slot_secondary3[3:2] :
+							  ( w_page == 2'd2 ) ? slot_secondary3[5:4] : slot_secondary3[7:6];
+	assign w_secondary_slot	= ( w_primary_slot == 2'd0 ) ? w_secondary_slot0 : w_secondary_slot3;
+	assign w_external_read_allowed = ~w_bus_io & slot_iorq_n & ~w_bus_write & w_slot_wr_n & ~w_slot_d_oe & ~w_flash_en &
+		((w_primary_slot == 2'd2) || (w_primary_slot == 2'd1 && !slot1_rom_mode[0]));
+	assign w_external_memory_read = ~w_slot_merq_n & w_external_read_allowed;
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_external_memory_read <= 1'b0;
+		end
+		else begin
+			ff_external_memory_read <= w_external_memory_read;
+		end
+	end
+
+	assign cpu_slot12_cs	= ( w_primary_slot == 2'd1 ) || ( w_primary_slot == 2'd2 );
+	assign cpu_rom0_cs		= !ff_slot_rom0_ce_n;
+	assign cpu_flash_cs		= ~( ff_slot_rom0_ce_n & ff_slot_rom1_ce_n );
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_ascii8_bank0 <= 8'd0;
+			ff_ascii8_bank1 <= 8'd0;
+			ff_ascii8_bank2 <= 8'd0;
+			ff_ascii8_bank3 <= 8'd0;
+			ff_ascii16_bank0 <= 8'd0;
+			ff_ascii16_bank1 <= 8'd0;
+		end
+		else if( !w_bus_io && w_bus_write && w_primary_slot == 2'd1 && slot1_rom_mode[0] ) begin
+			case( slot1_rom_mode )
+			2'b01: begin
+				case( w_slot_address[15:11] )
+				5'b01100: ff_ascii8_bank0 <= w_slot_d;
+				5'b01101: ff_ascii8_bank1 <= w_slot_d;
+				5'b01110: ff_ascii8_bank2 <= w_slot_d;
+				5'b01111: ff_ascii8_bank3 <= w_slot_d;
+				default: begin
+				end
+				endcase
+			end
+			2'b11: begin
+				case( w_slot_address[15:11] )
+				5'b01100: ff_ascii16_bank0 <= w_slot_d;
+				5'b01110: ff_ascii16_bank1 <= w_slot_d;
+				default: begin
+				end
+				endcase
+			end
+			default: begin
+			end
+			endcase
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_slot_a			<= 19'd0;
+			ff_slot_cpu_a		<= 3'd0;
+			ff_slot_rom0_ce_n	<= 1'b1;
+			ff_slot_rom1_ce_n	<= 1'b1;
+			ff_slot_sltsl0_n	<= 1'b1;
+			ff_slot_sltsl1_n	<= 1'b1;
+			ff_slot_sltsl2_n	<= 1'b1;
+			ff_slot_sltsl3_n	<= 1'b1;
+			ff_slot_cs1_n		<= 1'b1;
+			ff_slot_cs2_n		<= 1'b1;
+			ff_slot_cs12_n		<= 1'b1;
+		end
+		else begin
+			// Z80 A15-A13 passthrough, registered with the same timing as ff_slot_a.
+			ff_slot_cpu_a		<= w_slot_address[15:13];
+			if( w_flash_en ) begin
+				ff_slot_a			<= w_slot_address[18:0];
+				ff_slot_rom0_ce_n	<= ~slot_rfsh_n | w_slot_address[19];
+				ff_slot_rom1_ce_n	<= ~slot_rfsh_n | ~w_slot_address[19];
+				ff_slot_sltsl0_n	<= 1'b1;
+				ff_slot_sltsl1_n	<= 1'b1;
+				ff_slot_sltsl2_n	<= 1'b1;
+				ff_slot_sltsl3_n	<= 1'b1;
+				ff_slot_cs1_n		<= 1'b1;
+				ff_slot_cs2_n		<= 1'b1;
+				ff_slot_cs12_n		<= 1'b1;
+			end
+			else if( !w_bus_io && w_primary_slot == 2'd0 ) begin
+				case( {w_secondary_slot, w_page} )
+				{ 2'd0, 2'd0 }: begin
+					//	SLOT#0-0 page#0: MAIN-ROM (lower)
+					ff_slot_a				<= { 3'd0, 2'b00, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd0, 2'd1 }: begin
+					//	SLOT#0-0 page#1: MAIN-ROM (upper)
+					ff_slot_a				<= { 3'd0, 2'b01, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n	<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd1, 2'd0 }: begin
+					//	SLOT#0-1 page#0: Option-ROM0
+					ff_slot_a				<= { 3'd0, 2'b10, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd1, 2'd1 }: begin
+					//	SLOT#0-1 page#1: Option-ROM1
+					ff_slot_a				<= { 3'd0, 2'b11, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n	<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd2, 2'd0 }: begin
+					//	SLOT#0-2 page#0: Option-ROM2
+					ff_slot_a				<= { 3'd1, 2'b00, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd2, 2'd1 }: begin
+					//	SLOT#0-2 page#1: MSX-MUSIC
+					ff_slot_a				<= { 3'd1, 2'b01, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd3, 2'd0 }: begin
+					//	SLOT#0-3 page#0: Option-ROM3
+					ff_slot_a				<= { 3'd1, 2'b10, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd3, 2'd1 }: begin
+					//	SLOT#0-3 page#1: Boot Logo
+					ff_slot_a				<= { 3'd1, 2'b11, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				default: begin
+					ff_slot_a				<= w_slot_address[18:0];
+					ff_slot_rom0_ce_n		<= 1'b1;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				endcase
+			end
+			else if( !w_bus_io && w_primary_slot == 2'd1 && slot1_rom_mode[0] ) begin
+				ff_slot_a				<= w_slot_address[18:0];
+				ff_slot_rom0_ce_n		<= 1'b1;
+				ff_slot_rom1_ce_n		<= 1'b1;
+				ff_slot_sltsl0_n		<= 1'b1;
+				ff_slot_sltsl1_n		<= 1'b1;
+				ff_slot_sltsl2_n		<= 1'b1;
+				ff_slot_sltsl3_n		<= 1'b1;
+				ff_slot_cs1_n			<= 1'b1;
+				ff_slot_cs2_n			<= 1'b1;
+				ff_slot_cs12_n			<= 1'b1;
+				if( !w_bus_write ) begin
+					case( slot1_rom_mode )
+					2'b01: begin
+						case( w_slot_address[15:13] )
+						3'b010: begin
+							ff_slot_a <= {ff_ascii8_bank0[5:0], w_slot_address[12:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						3'b011: begin
+							ff_slot_a <= {ff_ascii8_bank1[5:0], w_slot_address[12:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						3'b100: begin
+							ff_slot_a <= {ff_ascii8_bank2[5:0], w_slot_address[12:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						3'b101: begin
+							ff_slot_a <= {ff_ascii8_bank3[5:0], w_slot_address[12:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						default: begin
+						end
+						endcase
+					end
+					2'b11: begin
+						case( w_page )
+						2'd1: begin
+							ff_slot_a <= {ff_ascii16_bank0[4:0], w_slot_address[13:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						2'd2: begin
+							ff_slot_a <= {ff_ascii16_bank1[4:0], w_slot_address[13:0]};
+							ff_slot_rom1_ce_n <= ~slot_rfsh_n;
+						end
+						default: begin
+						end
+						endcase
+					end
+					default: begin
+					end
+					endcase
+				end
+			end
+			else if( !w_bus_io && w_primary_slot == 2'd1 ) begin
+				ff_slot_a				<= w_slot_address[18:0];
+				ff_slot_rom0_ce_n		<= 1'b1;
+				ff_slot_rom1_ce_n		<= 1'b1;
+				ff_slot_sltsl0_n		<= 1'b1;
+				ff_slot_sltsl1_n		<= 1'b0;
+				ff_slot_sltsl2_n		<= 1'b1;
+				ff_slot_sltsl3_n		<= 1'b1;
+				ff_slot_cs1_n			<= (w_page == 2'd1) ? 1'b0 : 1'b1;
+				ff_slot_cs2_n			<= (w_page == 2'd2) ? 1'b0 : 1'b1;
+				ff_slot_cs12_n			<= (w_page == 2'd1 || w_page == 2'd2) ? 1'b0 : 1'b1;
+			end
+			else if( w_primary_slot == 2'd2 ) begin
+				ff_slot_a				<= w_slot_address[18:0];
+				ff_slot_rom0_ce_n		<= 1'b1;
+				ff_slot_rom1_ce_n		<= 1'b1;
+				ff_slot_sltsl0_n		<= 1'b1;
+				ff_slot_sltsl1_n		<= 1'b1;
+				ff_slot_sltsl2_n		<= 1'b0;
+				ff_slot_sltsl3_n		<= 1'b1;
+				ff_slot_cs1_n			<= (w_page == 2'd1) ? 1'b0 : 1'b1;
+				ff_slot_cs2_n			<= (w_page == 2'd2) ? 1'b0 : 1'b1;
+				ff_slot_cs12_n			<= (w_page == 2'd1 || w_page == 2'd2) ? 1'b0 : 1'b1;
+			end
+			else if( w_primary_slot == 2'd3 ) begin
+				case( {w_secondary_slot, w_page} )
+				{ 2'd1, 2'd0 }: begin
+					//	SLOT#3-1 page#0: EXT-ROM
+					ff_slot_a				<= { 3'd2, 2'b00, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd1, 2'd1 }: begin
+					//	SLOT#3-1 page#1: KanjiDriver (Lower)
+					ff_slot_a				<= { 3'd2, 2'b01, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n	<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd1, 2'd2 }: begin
+					//	SLOT#3-1 page#2: KanjiDriver (Upper)
+					ff_slot_a				<= { 3'd2, 2'b10, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd1, 2'd3 }: begin
+					//	SLOT#3-1 page#3: Option-ROM4
+					ff_slot_a				<= { 3'd2, 2'b11, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n		<= ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				{ 2'd2, 2'd1 }: begin
+					//	SLOT#3-2 page#1: MSX-DOS2
+					ff_slot_a				<= { 3'd3, dos_bank, w_slot_address[13:0] };
+					ff_slot_rom0_ce_n	<= ((w_slot_address[13:0] >= 14'h3FF1) && (w_slot_address[13:0] <= 14'h3FFB)) ? 1'b1 : ~slot_rfsh_n;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				default: begin
+					ff_slot_a				<= w_slot_address[18:0];
+					ff_slot_rom0_ce_n		<= 1'b1;
+					ff_slot_rom1_ce_n		<= 1'b1;
+					ff_slot_sltsl0_n		<= 1'b1;
+					ff_slot_sltsl1_n		<= 1'b1;
+					ff_slot_sltsl2_n		<= 1'b1;
+					ff_slot_sltsl3_n		<= 1'b1;
+					ff_slot_cs1_n			<= 1'b1;
+					ff_slot_cs2_n			<= 1'b1;
+					ff_slot_cs12_n			<= 1'b1;
+				end
+				endcase
+			end
+			else if( w_bus_io && w_bus_write ) begin
+				ff_slot_a			<= w_slot_address[18:0];
+				ff_slot_rom0_ce_n	<= 1'b1;
+				ff_slot_rom1_ce_n	<= 1'b1;
+				ff_slot_sltsl0_n	<= 1'b1;
+				ff_slot_sltsl1_n	<= 1'b1;
+				ff_slot_sltsl2_n	<= 1'b1;
+				ff_slot_sltsl3_n	<= 1'b1;
+				ff_slot_cs1_n		<= 1'b1;
+				ff_slot_cs2_n		<= 1'b1;
+				ff_slot_cs12_n		<= 1'b1;
+			end
+			else begin
+				ff_slot_a			<= w_slot_address[18:0];
+				ff_slot_rom0_ce_n	<= 1'b1;
+				ff_slot_rom1_ce_n	<= 1'b1;
+				ff_slot_sltsl0_n	<= 1'b1;
+				ff_slot_sltsl1_n	<= 1'b1;
+				ff_slot_sltsl2_n	<= 1'b1;
+				ff_slot_sltsl3_n	<= 1'b1;
+				ff_slot_cs1_n		<= 1'b1;
+				ff_slot_cs2_n		<= 1'b1;
+				ff_slot_cs12_n		<= 1'b1;
+			end
+		end
+	end
+
+	// Stack2: slot_a[15:13] carries the Z80 address A15-A13 directly,
+	// and the ROM address bits [18:13] (formerly shared with A15-A13)
+	// are driven onto the dedicated slot_ma pins instead.
+	assign slot_a				= { ff_slot_cpu_a, ff_slot_a[12:0] };
+	assign slot_ma				= ff_slot_a[18:13];
+	assign slot_rom0_ce_n		= w_flash_en ? ff_slot_rom0_ce_n : (w_slot_merq_n | ff_slot_rom0_ce_n);
+	assign slot_rom1_ce_n		= ((w_flash_en || slot1_rom_mode[0]) ? w_slot_merq_n : slot_iorq_n) | ff_slot_rom1_ce_n;
+	assign slot_sltsl0_n		= w_slot_merq_n | ff_slot_sltsl0_n;
+	assign slot_sltsl1_n		= w_slot_merq_n | ff_slot_sltsl1_n;
+	assign slot_sltsl2_n		= w_slot_merq_n | ff_slot_sltsl2_n;
+	assign slot_sltsl3_n		= w_slot_merq_n | ff_slot_sltsl3_n;
+	assign slot_cs1_n			= w_slot_merq_n | ff_slot_cs1_n;
+	assign slot_cs2_n			= w_slot_merq_n | ff_slot_cs2_n;
+	assign slot_cs12_n			= w_slot_merq_n | ff_slot_cs12_n;
+endmodule

@@ -1,0 +1,51 @@
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+Start time: 22:12:05 on Oct 04,2026
+vlog ..\r800_debugger.v ..\..\spi\spi.v ..\..\spi\ip_spi.v tb.sv 
+-- Compiling module r800_debugger
+-- Compiling module spi
+-- Compiling module ip_spi
+-- Compiling module tb
+-- Compiling module tb_spi
+
+Top level modules:
+	tb
+	tb_spi
+End time: 22:12:05 on Oct 04,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps -l log.txt -wlf debugger.wlf tb -do "..\..\test_006\run.do" 
+# Start time: 22:12:05 on Oct 04,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.r800_debugger
+# do {..\..\test_006\run.do}
+# /tb
+# PASS: entry return, SP/AF/HL, memory events, owner change, RET freeze, re-arm, capacity
+# ** Note: $finish    : tb.sv(125)
+#    Time: 12191 ns  Iteration: 0  Instance: /tb
+# Break in Module tb at tb.sv line 125
+# End time: 22:12:06 on Oct 04,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c -t 1ps -l spi_log.txt -wlf debugger_spi.wlf tb_spi -do "set test_root /tb_spi; do ../../test_006/run.do" 
+# Start time: 22:12:07 on Oct 04,2026
+# Loading sv_std.std
+# Loading work.tb_spi
+# Loading work.r800_debugger
+# Loading work.ip_spi
+# Loading work.spi
+# set test_root /tb_spi
+# /tb_spi
+#  do ../../test_006/run.do
+# PASS: 70MHz event SPI empty, 16-byte records, abort retention, re-arm, 128 records
+# ** Note: $finish    : tb.sv(232)
+#    Time: 697202080 ps  Iteration: 0  Instance: /tb_spi
+# Break in Module tb_spi at tb.sv line 232
+# End time: 22:12:07 on Oct 04,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
