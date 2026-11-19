@@ -24,17 +24,16 @@
         <File path="src/cz80/cz80_inst.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_mcode.v" type="file.verilog" enable="1"/>
         <File path="src/cz80/cz80_reg.v" type="file.verilog" enable="1"/>
-        <File path="src/dummy_ssg/dummy_ssg.v" type="file.verilog" enable="1"/>
-        <File path="src/fdc8566/fdc8566.v" type="file.verilog" enable="1"/>
         <File path="src/dos_mapper/dos_mapper.v" type="file.verilog" enable="1"/>
+        <File path="src/dummy_ssg/dummy_ssg.v" type="file.verilog" enable="1"/>
         <File path="src/extio/extio.v" type="file.verilog" enable="1"/>
+        <File path="src/fdc8566/fdc8566.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1"/>
         <File path="src/kanji_rom/ip_kanji_rom.v" type="file.verilog" enable="1"/>
         <File path="src/memory_mapper/memory_mapper.v" type="file.verilog" enable="1"/>
         <File path="src/msx_bus_mux/msx_bus_mux.v" type="file.verilog" enable="1"/>
         <File path="src/msx_slot/msx_slot.v" type="file.verilog" enable="1"/>
-        <File path="src/msx_slot/msx_slot_decode.v" type="file.verilog" enable="1"/>
         <File path="src/pause_led/pause_led.v" type="file.verilog" enable="1"/>
         <File path="src/pll_init.v" type="file.verilog" enable="1"/>
         <File path="src/ppi/ppi.v" type="file.verilog" enable="1"/>

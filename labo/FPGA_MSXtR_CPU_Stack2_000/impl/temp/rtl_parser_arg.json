@@ -1,0 +1,184 @@
+{
+    "Device": "GW5A-25A",
+    "Files": [
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/FPGA_MSXtR_CPU_Stack2.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/address_decode/address_decode.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/bootrom/bootrom.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/bootrom/ram.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/bootrom/rom.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cmcu/cmcu.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cr800/cr800.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cr800/cr800_alu.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cr800/cr800_inst.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cr800/cr800_mcode.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cr800/cr800_reg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cr800/r800_cache.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cr800/r800_cache_ram.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cr800/r800_rom_cache.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cz80/cz80.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cz80/cz80_alu.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cz80/cz80_inst.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cz80/cz80_mcode.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/cz80/cz80_reg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/dummy_ssg/dummy_ssg.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/fdc8566/fdc8566.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/dos_mapper/dos_mapper.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/extio/extio.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/gowin_pll/gowin_pll.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/gowin_pll/gowin_pll_mod.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/kanji_rom/ip_kanji_rom.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/memory_mapper/memory_mapper.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/msx_bus_mux/msx_bus_mux.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/msx_slot/msx_slot.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/pause_led/pause_led.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/pll_init.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/ppi/ppi.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/rtc/rtc.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/s2026/s2026.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/s2026/s2026_cpu_select.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/s2026/s2026_register.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/secondary_slot/secondary_slot.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/spi/ip_spi.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/spi/spi.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/spi_rom/ip_spi_rom.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/ssram/ssram.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/system_flag/system_flag.v",
+            "Type": "verilog"
+        },
+        {
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/vdp_logger/vdp_logger.v",
+            "Type": "verilog"
+        }
+    ],
+    "IncludePath": [
+    ],
+    "LoopLimit": 2000,
+    "ResultFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/impl/temp/rtl_parser.result",
+    "Top": "fpga_msxtr_cpu_stack2",
+    "VerilogStd": "verilog_2001",
+    "VhdlStd": "vhdl_93"
+}
