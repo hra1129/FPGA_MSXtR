@@ -87,7 +87,12 @@ module ip_spi (
 	input [7:0] srom_buffer_rdata,
 	input srom_done,
 	input [7:0] srom_status,
-	output [1:0] slot1_rom_mode
+	output [1:0] slot1_rom_mode,
+	output	[9:0]	slot_trace_read_index,
+	input	[127:0]	slot_trace_signal,
+	output			slot_trace_control_write,
+	output	[7:0]	slot_trace_control,
+	output	[7:0]	slot_trace_trigger_value
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -136,6 +141,21 @@ module ip_spi (
 	localparam [5:0] ST_SROM_PAYLOAD = 6'd34;
 	localparam [5:0] ST_SROM_FETCH = 6'd35;
 	localparam [5:0] ST_SLOT1_ROM_MODE = 6'd36;
+	localparam [5:0] ST_TRACE_ARG0 = 6'd37;
+	localparam [5:0] ST_TRACE_ARG1 = 6'd38;
+	localparam [5:0] ST_TRACE_WAIT = 6'd39;
+	localparam [5:0] ST_TRACE_H = 6'd40;
+	localparam [4:0] TRACE_SIGNAL_BYTES = 5'd17;	//	slot trace 16byte + 0xA5 marker
+	reg				ff_trace_read;
+	reg		[7:0]	ff_trace_arg0;
+	reg		[9:0]	ff_trace_read_index;
+	reg		[7:0]	ff_trace_control;
+	reg		[7:0]	ff_trace_trigger_value;
+	reg				ff_trace_control_toggle;
+	reg				ff_trace_control_toggle_d;
+	reg		[2:0]	ff_trace_wait;
+	reg		[127:0]	ff_trace_signal;
+	reg		[4:0]	ff_trace_byte_index;
 	reg [5:0] ff_state;
 	reg [1:0] ff_slot1_rom_mode;
 	reg [1:0] ff_srom_operation;
@@ -162,6 +182,10 @@ module ip_spi (
 	assign srom_buffer_index = ff_srom_index;
 	assign srom_buffer_wdata = spi_rdata;
 	assign slot1_rom_mode = ff_slot1_rom_mode;
+	assign slot_trace_read_index = ff_trace_read_index;
+	assign slot_trace_control_write = ff_trace_control_toggle ^ ff_trace_control_toggle_d;
+	assign slot_trace_control = ff_trace_control;
+	assign slot_trace_trigger_value = ff_trace_trigger_value;
 	reg		[15:0]	ff_bus_address;
 	reg		[7:0]	ff_bus_wdata;
 	reg				ff_bus_io;
@@ -255,6 +279,15 @@ module ip_spi (
 			ff_srom_index <= 8'd0;
 			ff_srom_delay <= 2'd0;
 			ff_srom_rejection <= 8'd0;
+			ff_trace_read <= 1'b0;
+			ff_trace_arg0 <= 8'd0;
+			ff_trace_read_index <= 10'd0;
+			ff_trace_control <= 8'h02;
+			ff_trace_trigger_value <= 8'h22;
+			ff_trace_control_toggle <= 1'b0;
+			ff_trace_wait <= 3'd0;
+			ff_trace_signal <= 128'd0;
+			ff_trace_byte_index <= 5'd0;
 		end
 		//	spi_cs_n解除は異常時のリカバリを兼ねるため、どのステートより優先して ST_IDLE へ戻す
 		else if( ff_spi_cs_n ) begin
@@ -344,6 +377,8 @@ module ip_spi (
 			//   0Fh, dummy x PERF_SIGNAL_BYTES   ... R800 performance snapshot, A5h marker
 			//   10h, owner                         ... Bus owner select (0: CPU, 1: SPI/Pico)
 			//   11h, matrix[0..11]                 ... Keyboard matrix update
+			//   1Ah, idx_l, idx_h, dummy x TRACE_SIGNAL_BYTES ... Slot trace read (after spi_intr, last byte 0xA5)
+			//   1Bh, control, trigger_value        ... Slot trace control (spi_intr on completion)
 			//   FFh                               ... presence check
 			ST_COMMAND: begin
 				if( spi_rdata_en ) begin
@@ -524,6 +559,14 @@ module ip_spi (
 						ff_spi_valid <= 1'b1;
 						ff_spi_write <= 1'b0;
 					end
+					8'h1a, 8'h1b: begin
+						//	1Ah: 送信準備完了で spi_intr, 1Bh: 制御完了で spi_intr
+						ff_bus_write <= (spi_rdata == 8'h1b);
+						ff_trace_read <= (spi_rdata == 8'h1a);
+						ff_state <= ST_TRACE_ARG0;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
+					end
 					8'hff: begin
 						//	presence check --> just keep receiving the next command
 						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
@@ -622,6 +665,58 @@ module ip_spi (
 					ff_slot1_rom_mode <= spi_rdata[0] ? spi_rdata[1:0] : 2'b00;
 					ff_spi_intr_req <= 1'b1;
 					ff_state <= ST_IDLE;
+				end
+			end
+			ST_TRACE_ARG0: begin
+				if( spi_rdata_en ) begin
+					ff_trace_arg0 <= spi_rdata;
+					ff_state <= ST_TRACE_ARG1;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b0;
+				end
+			end
+			ST_TRACE_ARG1: begin
+				if( spi_rdata_en ) begin
+					if( ff_trace_read ) begin
+						ff_trace_read_index <= { spi_rdata[1:0], ff_trace_arg0 };
+						ff_trace_wait <= 3'd7;
+						ff_state <= ST_TRACE_WAIT;
+					end
+					else begin
+						ff_trace_control <= ff_trace_arg0;
+						ff_trace_trigger_value <= spi_rdata;
+						ff_trace_control_toggle <= ~ff_trace_control_toggle;
+						ff_spi_intr_req <= 1'b1;
+						ff_state <= ST_IDLE;
+					end
+				end
+			end
+			ST_TRACE_WAIT: begin
+				//	slot_trace の BSRAM 読み出しレイテンシ待ち
+				if( ff_trace_wait == 3'd0 ) begin
+					ff_trace_signal <= slot_trace_signal;
+					ff_spi_wdata <= slot_trace_signal[7:0];
+					ff_trace_byte_index <= 5'd1;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_state <= ST_TRACE_H;
+				end
+				else begin
+					ff_trace_wait <= ff_trace_wait - 3'd1;
+				end
+			end
+			ST_TRACE_H: begin
+				if( spi_ready ) begin
+					if( ff_trace_byte_index == (TRACE_SIGNAL_BYTES - 5'd1) ) begin
+						ff_spi_wdata <= DEBUG_SIGNAL_PATTERN;
+						ff_state <= ST_SEND;
+					end
+					else begin
+						ff_spi_wdata <= ff_trace_signal[ff_trace_byte_index * 8 +: 8];
+						ff_trace_byte_index <= ff_trace_byte_index + 5'd1;
+					end
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
 				end
 			end
 			ST_SROM_ADDR_L: begin
@@ -874,6 +969,15 @@ module ip_spi (
 		else begin
 			ff_keyboard_matrix_valid <= ff_keyboard_update_toggle ^ ff_keyboard_update_toggle_d;
 			ff_keyboard_update_toggle_d <= ff_keyboard_update_toggle;
+		end
+	end
+
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_trace_control_toggle_d <= 1'b0;
+		end
+		else begin
+			ff_trace_control_toggle_d <= ff_trace_control_toggle;
 		end
 	end
 

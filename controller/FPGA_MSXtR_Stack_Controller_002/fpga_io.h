@@ -118,4 +118,40 @@ bool fpga_get_r800_performance( fpga_r800_performance_t *performance );
 #define FPGA_VDP_LOG_RECORD_SIZE 4
 uint16_t fpga_get_vdp_log( uint8_t records[FPGA_VDP_LOG_CAPACITY * FPGA_VDP_LOG_RECORD_SIZE] );
 
+//	SPIコマンド1Ah/1Bh: スロットレジスタ書き込みトレース (A8h/FFFFh/CPU切替/MSXリセット)
+#define FPGA_SLOT_TRACE_CAPACITY		1024
+#define FPGA_SLOT_TRACE_EV_PRIMARY		1
+#define FPGA_SLOT_TRACE_EV_SECONDARY0	2
+#define FPGA_SLOT_TRACE_EV_SECONDARY3	3
+#define FPGA_SLOT_TRACE_EV_CPU_SEL		4
+#define FPGA_SLOT_TRACE_EV_RESET_ON		5
+#define FPGA_SLOT_TRACE_EV_RESET_OFF	6
+#define FPGA_SLOT_TRACE_EV_MAPPER		7
+#define FPGA_SLOT_TRACE_CTRL_CLEAR		(1 << 0)
+#define FPGA_SLOT_TRACE_CTRL_TRIGGER	(1 << 1)
+#define FPGA_SLOT_TRACE_CTRL_MAPPER		(1 << 2)
+#define FPGA_SLOT_TRACE_CTRL_HOLD		(1 << 3)
+#define FPGA_SLOT_TRACE_FLAG_TRIGGER	(1 << 0)
+#define FPGA_SLOT_TRACE_FLAG_MAPPER		(1 << 1)
+#define FPGA_SLOT_TRACE_FLAG_HOLD		(1 << 2)
+#define FPGA_SLOT_TRACE_FLAG_TRIGGERED	(1 << 3)
+#define FPGA_SLOT_TRACE_FLAG_FROZEN		(1 << 4)
+
+typedef struct {
+	uint32_t	timestamp_us;		//	24bit wrap
+	uint16_t	pc;
+	uint8_t		new_value;
+	uint8_t		old_value;
+	uint8_t		type;				//	FPGA_SLOT_TRACE_EV_*
+	uint8_t		cpu_sel;			//	0: Z80, 1: R800, 2/3: Pico
+	uint16_t	count;				//	記録件数
+	uint16_t	trigger_index;		//	トリガー記録の位置 (FLAG_TRIGGERED 時のみ有効)
+	uint8_t		flags;				//	FPGA_SLOT_TRACE_FLAG_*
+	uint8_t		trigger_value;
+	uint8_t		link_pattern;
+} fpga_slot_trace_t;
+
+bool fpga_slot_trace_read( uint16_t index, fpga_slot_trace_t *trace );
+bool fpga_slot_trace_control( uint8_t control, uint8_t trigger_value );
+
 #endif

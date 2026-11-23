@@ -613,3 +613,211 @@ void test_mapper_ram( void ) {
 		printf( "MapperRAM test: %lu mismatches.\r\n", (unsigned long)total_errors );
 	}
 }
+
+// ---------------------------------------------------------
+static void select_page1_slot( uint8_t primary_slot, uint8_t secondary_slot,
+							   uint8_t primary_backup, uint8_t secondary0_backup,
+							   uint8_t secondary3_backup ) {
+	uint8_t primary;
+	uint8_t secondary;
+	uint8_t secondary_backup;
+
+	primary = (primary_backup & 0xF3) | (primary_slot << 2);
+	if( primary_slot == 0 || primary_slot == 3 ) {
+		primary = (primary & 0x3F) | (primary_slot << 6);
+		fpga_outport( 0xA8, primary );
+		secondary_backup = (primary_slot == 0) ? secondary0_backup : secondary3_backup;
+		secondary = (secondary_backup & 0xF3) | (secondary_slot << 2);
+		fpga_poke( 0xFFFF, secondary );
+	}
+	else {
+		fpga_outport( 0xA8, primary );
+	}
+}
+
+static void restore_koei_slot_map( uint8_t primary_backup,
+									uint8_t secondary0_backup,
+									uint8_t secondary3_backup ) {
+	fpga_outport( 0xA8, 0x00 );
+	fpga_poke( 0xFFFF, secondary0_backup );
+	fpga_outport( 0xA8, 0xFF );
+	fpga_poke( 0xFFFF, secondary3_backup );
+	fpga_outport( 0xA8, primary_backup );
+}
+
+void test_koei_slot_ram( void ) {
+	static const uint8_t slot_order[] = { 0, 1, 2, 3 };
+	uint8_t primary_backup;
+	uint8_t secondary0_backup;
+	uint8_t secondary3_backup;
+	uint8_t mapper_segment3;
+	uint8_t data[16];
+	uint8_t original;
+	uint8_t read55;
+	uint8_t readaa;
+	uint8_t first_ram_slot = 0xFF;
+	uint8_t slot;
+	uint8_t primary;
+	uint8_t secondary3_page3;
+	int secondary_slot;
+	size_t index;
+	bool matches;
+
+	printf( "KOEI slot/RAM diagnostic start\r\n" );
+	primary_backup = fpga_inport( 0xA8 );
+	fpga_outport( 0xA8, 0x00 );
+	secondary0_backup = fpga_peek( 0xFFFF ) ^ 0xFF;
+	fpga_outport( 0xA8, 0xFF );
+	secondary3_backup = fpga_peek( 0xFFFF ) ^ 0xFF;
+	fpga_outport( 0xA8, primary_backup );
+	mapper_segment3 = fpga_inport( 0xFF );
+
+	printf( "-- Current map: A8=%02X SSL0=%02X SSL3=%02X mapper#3=%02X\r\n",
+			primary_backup, secondary0_backup, secondary3_backup, mapper_segment3 );
+	printf( "-- E3A0-E3AF through current page3 mapping:" );
+	for( index = 0; index < sizeof(data); index++ ) {
+		data[index] = fpga_peek( (uint16_t)(0xE3A0 + index) );
+		printf( " %02X", data[index] );
+	}
+	printf( "\r\n" );
+
+	primary = (primary_backup & 0x3F) | 0xC0;
+	fpga_outport( 0xA8, primary );
+	secondary3_page3 = secondary3_backup & 0x3F;
+	fpga_poke( 0xFFFF, secondary3_page3 );
+	printf( "-- E3A0-E3AF through SLOT#3-0, mapper segment#3=%02X:", mapper_segment3 );
+	for( index = 0; index < sizeof(data); index++ ) {
+		data[index] = fpga_peek( (uint16_t)(0xE3A0 + index) );
+		printf( " %02X", data[index] );
+	}
+	printf( "\r\n" );
+	restore_koei_slot_map( primary_backup, secondary0_backup, secondary3_backup );
+
+	printf( "-- RAM probe at 4000h (55h/AAh), ROM writes ignored; original byte restored\r\n" );
+	for( index = 0; index < sizeof(slot_order); index++ ) {
+		slot = slot_order[index];
+		secondary_slot = (slot == 0 || slot == 3) ? 4 : 1;
+		for( int subslot = 0; subslot < secondary_slot; subslot++ ) {
+			select_page1_slot( slot, (uint8_t)subslot, primary_backup,
+							   secondary0_backup, secondary3_backup );
+			original = fpga_peek( 0x4000 );
+			fpga_poke( 0x4000, 0x55 );
+			read55 = fpga_peek( 0x4000 );
+			fpga_poke( 0x4000, 0xAA );
+			readaa = fpga_peek( 0x4000 );
+			fpga_poke( 0x4000, original );
+			matches = read55 == 0x55 && readaa == 0xAA;
+			printf( "SLOT#%u", slot );
+			if( slot == 0 || slot == 3 ) {
+				printf( "-%u", subslot );
+			}
+			printf( ": original=%02X 55->%02X AA->%02X %s\r\n",
+					original, read55, readaa, matches ? "RAM candidate" : "not RAM" );
+			if( matches && first_ram_slot == 0xFF ) {
+				first_ram_slot = (uint8_t)((slot << 4) | subslot);
+			}
+		}
+	}
+	restore_koei_slot_map( primary_backup, secondary0_backup, secondary3_backup );
+
+	if( first_ram_slot == 0xFF ) {
+		printf( "Game-style first RAM match: none\r\n" );
+	}
+	else if( (first_ram_slot >> 4) == 1 || (first_ram_slot >> 4) == 2 ) {
+		printf( "Game-style first RAM match: SLOT#%u\r\n", first_ram_slot >> 4 );
+	}
+	else {
+		printf( "Game-style first RAM match: SLOT#%u-%u\r\n",
+				first_ram_slot >> 4, first_ram_slot & 0x0F );
+	}
+	printf( "KOEI slot/RAM diagnostic end; slot selectors restored\r\n" );
+}
+
+// ---------------------------------------------------------
+static const char *slot_trace_type_name( uint8_t type ) {
+	switch( type ) {
+	case FPGA_SLOT_TRACE_EV_PRIMARY:		return "A8h  ";
+	case FPGA_SLOT_TRACE_EV_SECONDARY0:		return "SSL0 ";
+	case FPGA_SLOT_TRACE_EV_SECONDARY3:		return "SSL3 ";
+	case FPGA_SLOT_TRACE_EV_CPU_SEL:		return "CPU  ";
+	case FPGA_SLOT_TRACE_EV_RESET_ON:		return "RST+ ";
+	case FPGA_SLOT_TRACE_EV_RESET_OFF:		return "RST- ";
+	case FPGA_SLOT_TRACE_EV_MAPPER:			return "MAP  ";
+	default:								return "???  ";
+	}
+}
+
+static const char *slot_trace_cpu_name( uint8_t cpu_sel ) {
+	if( cpu_sel == 0 ) {
+		return "Z80 ";
+	}
+	else if( cpu_sel == 1 ) {
+		return "R800";
+	}
+	return "Pico";
+}
+
+void dump_slot_trace( void ) {
+	fpga_slot_trace_t trace;
+	uint8_t control;
+	uint16_t count;
+	uint16_t trigger_index;
+	uint8_t flags;
+	bool triggered;
+
+	if( !fpga_slot_trace_read( 0, &trace ) ) {
+		printf( "Slot trace: SPI read failed (link=%02X)\r\n", trace.link_pattern );
+		return;
+	}
+	//	ダンプ中に新規記録が入らないよう hold する (hold は解除しない)
+	control = FPGA_SLOT_TRACE_CTRL_HOLD;
+	if( trace.flags & FPGA_SLOT_TRACE_FLAG_TRIGGER ) {
+		control |= FPGA_SLOT_TRACE_CTRL_TRIGGER;
+	}
+	if( trace.flags & FPGA_SLOT_TRACE_FLAG_MAPPER ) {
+		control |= FPGA_SLOT_TRACE_CTRL_MAPPER;
+	}
+	fpga_slot_trace_control( control, trace.trigger_value );
+	if( !fpga_slot_trace_read( 0, &trace ) ) {
+		printf( "Slot trace: SPI read failed (link=%02X)\r\n", trace.link_pattern );
+		return;
+	}
+
+	count = trace.count;
+	trigger_index = trace.trigger_index;
+	flags = trace.flags;
+	triggered = (flags & FPGA_SLOT_TRACE_FLAG_TRIGGERED) != 0;
+	printf( "Slot trace dump: count=%u trig=%s value=%02X mapper=%s triggered=%s",
+			count,
+			(flags & FPGA_SLOT_TRACE_FLAG_TRIGGER) ? "on" : "off",
+			trace.trigger_value,
+			(flags & FPGA_SLOT_TRACE_FLAG_MAPPER) ? "on" : "off",
+			triggered ? "yes" : "no" );
+	if( triggered ) {
+		printf( " trigger_index=%u", trigger_index );
+	}
+	printf( " frozen=%s\r\n", (flags & FPGA_SLOT_TRACE_FLAG_FROZEN) ? "yes" : "no" );
+	printf( " idx  time[us] CPU  PC   type  old->new\r\n" );
+
+	for( uint16_t i = 0; i < count; i++ ) {
+		if( !fpga_slot_trace_read( i, &trace ) ) {
+			printf( "%4u: SPI read failed (link=%02X)\r\n", i, trace.link_pattern );
+			break;
+		}
+		printf( "%4u: %8lu %s %04X %s %02X->%02X%s\r\n",
+				i, (unsigned long)trace.timestamp_us,
+				slot_trace_cpu_name( trace.cpu_sel ), trace.pc,
+				slot_trace_type_name( trace.type ),
+				trace.old_value, trace.new_value,
+				(triggered && i == trigger_index) ? "  <== TRIGGER" : "" );
+	}
+	printf( "Slot trace dump end (hold kept; press 9 to clear and re-arm)\r\n" );
+}
+
+void arm_slot_trace( void ) {
+	if( !fpga_slot_trace_control( FPGA_SLOT_TRACE_CTRL_CLEAR | FPGA_SLOT_TRACE_CTRL_TRIGGER, 0x22 ) ) {
+		printf( "Slot trace: control failed\r\n" );
+		return;
+	}
+	printf( "Slot trace cleared and armed (trigger A8h=22h)\r\n" );
+}

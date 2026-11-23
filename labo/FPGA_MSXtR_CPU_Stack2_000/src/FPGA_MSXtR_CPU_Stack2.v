@@ -604,6 +604,36 @@ module fpga_msxtr_cpu_stack2 (
 		.consume						( w_vdp_log_consume					)
 	);
 
+	// --------------------------------------------------------------------
+	//	Slot register write tracer (debug)
+	// --------------------------------------------------------------------
+	wire	[9:0]	w_slot_trace_read_index;
+	wire	[127:0]	w_slot_trace_signal;
+	wire			w_slot_trace_control_write;
+	wire	[7:0]	w_slot_trace_control;
+	wire	[7:0]	w_slot_trace_trigger_value;
+
+	slot_trace u_slot_trace (
+		.reset_n						( ff_spi_reset_n					),
+		.clk							( clk42m							),
+		.msx_reset_n					( w_msx_reset_n						),
+		.cpu_sel						( w_cpu_sel							),
+		.pc								( w_cpu_sel[0] ? w_r800_pc : w_z80_pc),
+		.ppi_write						( w_device_ppi_cs && w_device_valid_peripheral && w_device_write && (w_device_address[1:0] == 2'd0) ),
+		.secondary_write				( w_device_secondary_cs && w_device_valid_peripheral && w_device_write ),
+		.mapper_write					( w_device_mapper_cs && w_device_valid_peripheral && w_device_write ),
+		.io_address						( w_device_address[7:0]				),
+		.wdata							( w_device_wdata					),
+		.primary_slot					( w_primary_slot					),
+		.secondary_slot0				( w_secondary_slot0					),
+		.secondary_slot3				( w_secondary_slot3					),
+		.control_write					( w_slot_trace_control_write		),
+		.control						( w_slot_trace_control				),
+		.trigger_value					( w_slot_trace_trigger_value		),
+		.read_index						( w_slot_trace_read_index			),
+		.read_signal					( w_slot_trace_signal				)
+	);
+
 	ip_spi u_controller_spi (
 		.reset_n						( ff_spi_reset_n					),
 		.clk							( clk42m							),
@@ -656,7 +686,12 @@ module fpga_msxtr_cpu_stack2 (
 		.srom_buffer_rdata(w_srom_buffer_rdata),
 		.srom_done(w_srom_done),
 		.srom_status(w_srom_status),
-		.slot1_rom_mode(w_slot1_rom_mode)
+		.slot1_rom_mode(w_slot1_rom_mode),
+		.slot_trace_read_index			( w_slot_trace_read_index			),
+		.slot_trace_signal				( w_slot_trace_signal				),
+		.slot_trace_control_write		( w_slot_trace_control_write		),
+		.slot_trace_control				( w_slot_trace_control				),
+		.slot_trace_trigger_value		( w_slot_trace_trigger_value		)
 	);
 
 	cmcu_inst u_cmcu_inst (

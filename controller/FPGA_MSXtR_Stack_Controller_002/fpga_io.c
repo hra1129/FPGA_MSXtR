@@ -795,3 +795,68 @@ bool fpga_get_r800_performance( fpga_r800_performance_t *performance ) {
 
 	return performance->link_pattern == 0xA5;
 }
+
+// ---------------------------------------------------------
+//	1Ah, idx_l, idx_h → spi_intr → 17byte (entry 8byte, status 8byte, A5h)
+bool fpga_slot_trace_read( uint16_t index, fpga_slot_trace_t *trace ) {
+	uint8_t header[3];
+	uint8_t dummy = 0x00;
+	uint8_t data[17];
+
+	header[0] = 0x1A;
+	header[1] = (uint8_t)( index & 0xFF );
+	header[2] = (uint8_t)( (index >> 8) & 0x03 );
+	gpio_put( SPI0_CSN_PIN, 0 );
+	for( int i = 0; i < 3; i++ ) {
+		spi_write_blocking( SPI0_PORT, &header[i], 1 );
+		sleep_us( 1 );
+	}
+	if( !fpga_wait_intr( 50 ) ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		sleep_us( 10 );
+		trace->link_pattern = 0x00;
+		return false;
+	}
+	for( int i = 0; i < 17; i++ ) {
+		spi_write_read_blocking( SPI0_PORT, &dummy, &data[i], 1 );
+		sleep_us( 1 );
+	}
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+
+	trace->type				= data[0] >> 4;
+	trace->cpu_sel			= (data[0] >> 2) & 0x03;
+	trace->old_value		= data[1];
+	trace->new_value		= data[2];
+	trace->pc				= (uint16_t)data[3] | ((uint16_t)data[4] << 8);
+	trace->timestamp_us		= (uint32_t)data[5] | ((uint32_t)data[6] << 8) | ((uint32_t)data[7] << 16);
+	trace->count			= (uint16_t)data[8] | ((uint16_t)data[9] << 8);
+	trace->trigger_index	= (uint16_t)data[10] | ((uint16_t)data[11] << 8);
+	trace->flags			= data[12];
+	trace->trigger_value	= data[13];
+	trace->link_pattern		= data[16];
+	return trace->link_pattern == 0xA5;
+}
+
+// ---------------------------------------------------------
+//	1Bh, control, trigger_value → spi_intr
+bool fpga_slot_trace_control( uint8_t control, uint8_t trigger_value ) {
+	uint8_t data[3];
+
+	data[0] = 0x1B;
+	data[1] = control;
+	data[2] = trigger_value;
+	gpio_put( SPI0_CSN_PIN, 0 );
+	for( int i = 0; i < 3; i++ ) {
+		spi_write_blocking( SPI0_PORT, &data[i], 1 );
+		sleep_us( 1 );
+	}
+	if( !fpga_wait_intr( 50 ) ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		sleep_us( 10 );
+		return false;
+	}
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+	return true;
+}

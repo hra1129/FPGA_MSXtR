@@ -298,6 +298,9 @@ static void print_local_key_menu( void ) {
 	printf( "4: KanjiROM update\r\n" );
 	printf( "5: KanjiROM glyph test\r\n" );
 	printf( "6: MapperRAM test\r\n" );
+	printf( "7: KOEI slot/RAM diagnostic\r\n" );
+	printf( "8: Slot trace dump\r\n" );
+	printf( "9: Slot trace clear/re-arm\r\n" );
 	printf( "0: Help\r\n" );
 }
 
@@ -356,6 +359,9 @@ int main(void) {
 			else if( key_press( 0, 4 ) ) run_with_pico_bus( write_kanji_rom_image );
 			else if( key_press( 0, 5 ) ) run_with_pico_bus( test_kanji_rom_glyph );
 			else if( key_press( 0, 6 ) ) run_with_pico_bus( test_mapper_ram );
+			else if( key_press( 0, 7 ) ) run_with_pico_bus( test_koei_slot_ram );
+			else if( key_press( 1, 0 ) ) dump_slot_trace();
+			else if( key_press( 1, 1 ) ) arm_slot_trace();
 		}
 		else {
 			if( key_press( 0, 3 ) ) dump_fpga_debug_signal();

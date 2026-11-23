@@ -16,7 +16,7 @@ MENUキーはkeyboard matrixの転送先だけを切り替える。CPU/Picoの�
 
 - 起動時にMENUを押していなければkeyboard forwardingを有効にする。起動時にMENUを押していればPico-local modeで起動する。
 - 実行中のMENUでkeyboard forwardingとPico-local modeを切り替える。Pico-localへ切り替える際は、FPGAへ全キーreleaseを送る。
-- Pico-local modeでは以下の操作メニューを1行1項目で表示する。2/3/4キーの更新処理は、実行中だけPicoへバス所有権を移し、終了後CPUへ戻す。
+- Pico-local modeでは以下の操作メニューを1行1項目で表示する。2/3/4キーの更新処理と5/6/7キーの診断は、実行中だけPicoへバス所有権を移し、終了後CPUへ戻す。
 - 1キーのCPU debug表示はSPI診断読出しだけを行い、所有権を切り替えない。keyboard forwarding中の3キーdebug表示と7キーVDP log切替は従来どおり。
 - command完了後にCPU所有権へ戻せなかった場合はPico所有を維持し、エラーを表示する。SerialROMが未照合の場合もCPU復帰を拒否する。
 
@@ -26,9 +26,30 @@ MENUキーはkeyboard matrixの転送先だけを切り替える。CPU/Picoの�
 3: ExtROM update
 4: KanjiROM update
 5: KanjiROM glyph test
+6: MapperRAM test
+7: KOEI slot/RAM diagnostic
+8: Slot trace dump
+9: Slot trace clear/re-arm
 ```
 
 Pico-local modeで5キーを押すと、JIS1 `3441h` (漢) のD8=`A1h`/D9=`16h`に対応するSerialROM物理アドレス`0B420h`から32byteを読み、OpenMSXの漢字ROM配列と同じく先頭8byte/次の8byteを上半分の左右byte、その次の8byte/最後の8byteを下半分の左右byteとして、各8bitの0/1表記で16行表示する。この診断はPicoのSerialROM直接readを使用するため、CPUのD8h/D9hアクセス待ちや`msx_slot`のタイミングは経由しない。ROM内容・アドレスの確認用であり、CPU read timeoutの合否判定には使わない。
+
+Pico-local modeで7キーを押すと、現在のpage3でE3A0h-E3AFhを読み、続けてpage3をSLOT#3-0に切り替えて同じ領域を読み出す。その後、ゲームと同じ順序で各スロットの4000hに55h/AAhを書いて読み戻し、最初にRAMと判定されるスロットを表示する。テスト後はスロット選択状態を復元し、4000hには読み出した元の値を書き戻す。
+
+## スロットトレース (8/9キー, SPI 1Ah/1Bh)
+
+FPGA (`labo/FPGA_MSXtR_CPU_Stack2_000/src/slot_trace/slot_trace.v`) は、A8h書き込み、SLOT#0/#3のFFFFh書き込み、CPU切替、MSXリセットON/OFFを1024件のリングバッファに記録する。ログはSPIリセットでのみ消え、MSXリセットでは消えない。8/9キーはSPIアクセスだけでバス所有権は切り替えない (切り替えるとCPU切替イベントが記録されるため)。
+
+- 起動時はトリガ有効、トリガ値 `A8h=22h`。トリガ成立後64件記録して凍結する。
+- 8キー: hold (記録停止) を立てて、最古から全件を `idx time[us] CPU PC type old->new` で表示する。トリガ行には `<== TRIGGER` を付ける。holdはダンプ後も維持する。
+- 9キー: ログをクリアし、トリガ `A8h=22h` で再アームする。
+- type: `A8h`=primary slot、`SSL0`/`SSL3`=FFFFh書き込み (old=書込前の値)、`CPU`=cpu_sel変化 (0:Z80 1:R800 2/3:Pico)、`RST+`/`RST-`=MSXリセットON/OFF、`MAP`=マッパー書込 (old=I/Oポート、既定では記録しない)。
+- timestampは約1µs単位の24bitカウンタ (約16.7秒で一周)。PCはその時点の選択CPUのPC。
+
+| コマンド | 引数 | 応答 |
+|---|---|---|
+| 1Ah | idx_l, idx_h(bit1:0) | spi_intr後17byte: entry 8byte (LE: [7:4]type [3:2]cpu_sel / old / new / PC / timestamp 24bit), count 2byte, trigger index 2byte, flags (bit0 trig_en, bit1 mapper_en, bit2 hold, bit3 triggered, bit4 frozen), trigger value, 予備2byte, A5h |
+| 1Bh | control, trigger value | spi_intr。control bit0 clear, bit1 trigger有効, bit2 mapper記録, bit3 hold |
 
 ## BIOS / ExtROM更新
 

@@ -42,5 +42,8 @@ void sdcard_access( void );
 void test_rtc( void );
 void test_ssram_memory( void );
 void test_mapper_ram( void );
+void test_koei_slot_ram( void );
+void dump_slot_trace( void );
+void arm_slot_trace( void );
 
 #endif // __DEBUGGER_H__

@@ -52,10 +52,12 @@ module ssram (
 	output			sram_ce_n,
 	inout	[3:0]	sram_sio
 );
-	localparam		c_state_init_w0		= 5'd0;
+	//	SCLK を止めて毎クロック進むステート (init_w0/init_gap/idle/read3) は
+	//	ff_state[4:2] == 3'b111 に集め、w_state_tick を 1 LUT で判定する (214MHz 対策)
+	localparam		c_state_init_w0		= 5'd28;
 	localparam		c_state_init_send	= 5'd1;
-	localparam		c_state_init_gap	= 5'd2;
-	localparam		c_state_idle		= 5'd9;
+	localparam		c_state_init_gap	= 5'd29;
+	localparam		c_state_idle		= 5'd30;
 	localparam		c_state_start		= 5'd10;
 	localparam		c_state_cmd			= 5'd11;
 	localparam		c_state_address0	= 5'd12;
@@ -66,7 +68,7 @@ module ssram (
 	localparam		c_state_address5	= 5'd17;
 	localparam		c_state_write0		= 5'd18;
 	localparam		c_state_write1		= 5'd19;
-	localparam		c_state_write_hold	= 5'd30;
+	localparam		c_state_write_hold	= 5'd3;
 	localparam		c_state_dummy0		= 5'd20;
 	localparam		c_state_dummy1		= 5'd21;
 	localparam		c_state_dummy2		= 5'd22;
@@ -75,8 +77,8 @@ module ssram (
 	localparam		c_state_dummy5		= 5'd25;
 	localparam		c_state_read0		= 5'd26;
 	localparam		c_state_read1		= 5'd27;
-	localparam		c_state_read2		= 5'd28;
-	localparam		c_state_read3		= 5'd29;
+	localparam		c_state_read2		= 5'd4;
+	localparam		c_state_read3		= 5'd31;
 
 	reg				ff_ready;
 	reg				ff_busy_clk;
@@ -126,6 +128,7 @@ module ssram (
 	reg		[1:0]	ff_sclk_div_count;
 	reg	[16:0]	ff_powerup_wait;
 	wire			w_req;
+	wire			w_free_state;
 	wire			w_sclk_enable;
 	reg			w_sclk_fall;
 	wire			w_state_tick;
@@ -133,8 +136,9 @@ module ssram (
 	wire	[7:0]	w_init_cmd;
 
 	assign w_req = bus_cs && bus_valid;
-	assign w_sclk_enable = (ff_state != c_state_init_w0) && (ff_state != c_state_init_gap) && (ff_state != c_state_idle) && (ff_state != c_state_read3);
-	assign w_state_tick = (ff_state == c_state_init_w0) || (ff_state == c_state_init_gap) || (ff_state == c_state_idle) || (ff_state == c_state_read3) || w_sclk_fall;
+	assign w_free_state = &ff_state[4:2];
+	assign w_sclk_enable = !w_free_state;
+	assign w_state_tick = w_free_state || w_sclk_fall;
 	assign w_powerup_wait_done = ff_powerup_wait[16];	// About 305us at 214.7727MHz clk_serial (VTI7064 tPU >= 150us).
 	// VTI7064 power-on sequence: Reset Enable (66h) -> Reset (99h) -> Enter Quad Mode (35h), all in SPI mode.
 	assign w_init_cmd = (ff_init_step == 2'd0) ? 8'h66 : (ff_init_step == 2'd1) ? 8'h99 : 8'h35;
