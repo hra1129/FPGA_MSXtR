@@ -12,27 +12,27 @@
   <Part Number>: GW5A-LV25MG121NC1/I0
   <Device>: GW5A-25
   <Device Version>: A
-  <Created Time>:Thu Nov 19 22:23:03 2026
+  <Created Time>:Mon Nov 23 16:23:11 2026
 
 
 2. PnR Details
 
   Running placement:
-    Placement Phase 0: CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
-    Placement Phase 1: CPU time = 0h 0m 0.415s, Elapsed time = 0h 0m 0.415s
-    Placement Phase 2: CPU time = 0h 0m 7s, Elapsed time = 0h 0m 7s
-    Placement Phase 3: CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
-    Total Placement: CPU time = 0h 0m 13s, Elapsed time = 0h 0m 13s
+    Placement Phase 0: CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
+    Placement Phase 1: CPU time = 0h 0m 0.49s, Elapsed time = 0h 0m 0.491s
+    Placement Phase 2: CPU time = 0h 0m 11s, Elapsed time = 0h 0m 11s
+    Placement Phase 3: CPU time = 0h 0m 5s, Elapsed time = 0h 0m 5s
+    Total Placement: CPU time = 0h 0m 20s, Elapsed time = 0h 0m 20s
  Running routing:
-    Routing Phase 0: CPU time = 0h 0m 0.007s, Elapsed time = 0h 0m 0.007s
-    Routing Phase 1: CPU time = 0h 0m 12s, Elapsed time = 0h 0m 12s
-    Routing Phase 2: CPU time = 0h 0m 0.2s, Elapsed time = 0h 0m 0.199s
+    Routing Phase 0: CPU time = 0h 0m 0.008s, Elapsed time = 0h 0m 0.008s
+    Routing Phase 1: CPU time = 0h 0m 27s, Elapsed time = 0h 0m 27s
+    Routing Phase 2: CPU time = 0h 0m 0.211s, Elapsed time = 0h 0m 0.211s
     Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
-    Total Routing: CPU time = 0h 0m 12s, Elapsed time = 0h 0m 12s
+    Total Routing: CPU time = 0h 0m 27s, Elapsed time = 0h 0m 27s
  Generate output files:
-    CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
+    CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
 
- Total Time and Memory Usage: CPU time = 0h 0m 27s, Elapsed time = 0h 0m 27s, Peak memory usage = 815MB
+ Total Time and Memory Usage: CPU time = 0h 0m 49s, Elapsed time = 0h 0m 49s, Peak memory usage = 821MB
 
 
 3. Resource Usage Summary
@@ -40,19 +40,19 @@
   --------------------------------------------------------------------------------
   Resources                   | Usage                               | Utilization
   --------------------------------------------------------------------------------
-  Logic                       | 10857/23040                         |  48%
-    --LUT,ALU,ROM16           | 10857(10065 LUT, 792 ALU, 0 ROM16)  | -
+  Logic                       | 10944/23040                         |  48%
+    --LUT,ALU,ROM16           | 10944(10151 LUT, 793 ALU, 0 ROM16)  | -
     --SSRAM(RAM16)            | 0                                   | -
-  Register                    | 5433/23280                          |  24%
+  Register                    | 5443/23280                          |  24%
     --Logic Register as Latch | 0/23040                             |  0%
-    --Logic Register as FF    | 5423/23040                          |  24%
+    --Logic Register as FF    | 5433/23040                          |  24%
     --I/O Register as Latch   | 0/240                               |  0%
     --I/O Register as FF      | 10/240                              |  5%
-  CLS                         | 7987/11520                          |  70%
-  I/O Port                    | 79/86                               |  92%
-  I/O Buf                     | 76                                  | -
+  CLS                         | 8014/11520                          |  70%
+  I/O Port                    | 72/86                               |  84%
+  I/O Buf                     | 70                                  | -
     --Input Buf               | 7                                   | -
-    --Output Buf              | 56                                  | -
+    --Output Buf              | 50                                  | -
     --Inout Buf               | 13                                  | -
   BSRAM                       | 29/56                               | 52%
     --SP                      | 12
@@ -76,10 +76,10 @@
   bank 2   | 12/12       | 100%        
   bank 3   | 4/4         | 100%        
   bank 4   | 9/11        | 82%         
-  bank 5   | 8/13        | 62%         
-  bank 6   | 10/10       | 100%        
+  bank 5   | 7/13        | 54%         
+  bank 6   | 8/10        | 80%         
   bank 7   | 16/16       | 100%        
-  bank 10  | 4/4         | 100%        
+  bank 10  | 0/4         | 0%          
   ======================================
 
 
@@ -90,7 +90,7 @@
   ------------------------------------------
   PRIMARY       | 5/8           | 63%
   LW            | 8/8           | 100%
-  GCLK_PIN      | 30/30         | 100%
+  GCLK_PIN      | 29/30         | 97%
   PLLA          | 1/6           | 17%
   ==========================================
 
@@ -101,9 +101,9 @@
   Signal         | Global Clock   | Location
   -------------------------------------------
   clk_50m_d      | PRIMARY        |  TR TL
-  ff_ssg_reset_n | PRIMARY        |  BL
+  ff_ssg_reset_n | PRIMARY        |  TL
   ff_ssram_reset_n| PRIMARY        |  TL BL
-  clk215m        | PRIMARY        |  TR TL BR BL
+  clk215m        | PRIMARY        |  TL BR BL
   clk42m         | PRIMARY        |  TR TL BR BL
   ff_spi_reset_n | LW             |  -
   slot_reset_n_d | LW             |  -
@@ -111,7 +111,7 @@
   ff_z80_reset_n | LW             |  -
   ff_r800_reset_n| LW             |  -
   u_vdp_logger/n489_4| LW             |  -
-  u_r800/n4071_6 | LW             |  -
+  u_r800/n4071_4 | LW             |  -
   u_dos_mapper/u_fdc8566/n148_4| LW             |  -
   ===========================================
 
@@ -129,7 +129,6 @@ mcu_mosi         | -         | G4/3          | Y          | in    | IOB89[A] | G
 slot_int_n       | -         | G1/2          | Y          | in    | IOR24[B] | -               | LVTTL33    | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 slot_wait_n      | -         | G2/2          | Y          | in    | IOR24[A] | -               | LVTTL33    | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 slot_busdir      | -         | L3/2          | Y          | in    | IOR31[B] | GCLKC_4/RPLL1_C_FB1 | LVTTL33    | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
-hs_ready         | -         | E11/6         | Y          | in    | IOL3[A]  | GCLKT_14/LPLL0_T_IN2 | LVTTL33    | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus0         
 uart_rx          | -         | B3/4          | Y          | in    | IOB56[A] | -               | LVTTL33    | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 mcu_miso         | -         | H4/3          | Y          | out   | IOB89[B] | GCLKC_7         | LVTTL33    | 8     | UP        | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 mcu_intr         | -         | H2/3          | Y          | out   | IOB91[B] | GCLKC_6A        | LVTTL33    | 8     | DOWN      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
@@ -175,8 +174,6 @@ slot_rom1_ce_n   | -         | A11/6         | Y          | out   | IOL14[A] | L
 slot_rfsh_n      | -         | K4/2          | Y          | out   | IOR22[B] | -               | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 slot_iorq_n      | -         | J1/2          | Y          | out   | IOR33[A] | GCLKT_5/RPLL1_T_IN1 | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 slot_merq_n      | -         | L9/0          | Y          | out   | IOT31[A] | -               | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus0         
-hs_clk           | -         | D1/5          | Y          | out   | IOB14[B] | CLKHOLD_N/SSI3  | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
-hs_cs_n          | -         | A10/6         | Y          | out   | IOL14[B] | -               | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus0         
 flash_spi_clk    | -         | E7/4          | Y          | out   | IOB62[A] | CCLK            | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 flash_spi_cs_n   | -         | E6/4          | Y          | out   | IOB37[B] | MCS_N/CSO_B     | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 uart_tx          | -         | C3/4          | Y          | out   | IOB56[B] | -               | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
@@ -192,10 +189,6 @@ slot_d[4]        | -         | L10/7         | Y          | io    | IOT15[A] | -
 slot_d[5]        | -         | K10/7         | Y          | io    | IOT15[B] | -               | LVTTL33    | 8     | UP        | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus0         
 slot_d[6]        | -         | K11/7         | Y          | io    | IOT11[A] | -               | LVTTL33    | 8     | UP        | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus0         
 slot_d[7]        | -         | L11/7         | Y          | io    | IOT11[B] | -               | LVTTL33    | 8     | UP        | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus0         
-hs_sio[0]        | -         | A3/10         | Y          | io    | IOR1[B]  | TDI             | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
-hs_sio[1]        | -         | A2/10         | Y          | io    | IOR3[B]  | TDO             | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
-hs_sio[2]        | -         | B1/10         | Y          | io    | IOR3[A]  | TMS             | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
-hs_sio[3]        | -         | C1/10         | Y          | io    | IOR1[A]  | TCK             | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | -            
 flash_spi_io[0]  | -         | D6/4          | Y          | io    | IOB58[B] | MOSI/MI0/CSI_B  | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 flash_spi_io[1]  | -         | E5/4          | Y          | io    | IOB58[A] | D00/DIN/MISO/MI1 | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
 flash_spi_io[2]  | -         | D5/4          | Y          | io    | IOB54[A] | GCLKT_11B/D01/MI2 | LVTTL33    | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3        | MEDIUM        | NONE          | bus1         
@@ -252,7 +245,7 @@ A3_B10B/5 | -                | in    | IOB10[B] | D04/SI/SSI0     | LVCMOS33 | O
 E2/5     | clk_50m          | in    | IOB12[A] | GCLKT_10B/D07/SSPI_WPN/SSI2 | LVTTL33  | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 E1/5     | sram_sio[2]      | io    | IOB12[B] | GCLKC_10B/RDWR_B/LPLL1_C_IN1 | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 C1_B14A/5 | -                | in    | IOB14[A] | SSPI_CLK        | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
-D1/5     | hs_clk           | out   | IOB14[B] | CLKHOLD_N/SSI3  | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
+D1/5     | -                | in    | IOB14[B] | CLKHOLD_N/SSI3  | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 A1/5     | sram_sio[1]      | io    | IOB24[A] | -               | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 F2/5     | sram_sclk        | out   | IOB26[A] | GCLKT_9B        | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 F1/5     | sram_sio[0]      | io    | IOB26[B] | GCLKC_9B        | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
@@ -273,7 +266,7 @@ H4/3     | mcu_miso         | out   | IOB89[B] | GCLKC_7         | LVTTL33  | 8 
 H1/3     | mcu_sclk         | in    | IOB91[A] | GCLKT_6A        | LVTTL33  | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 H2/3     | mcu_intr         | out   | IOB91[B] | GCLKC_6A        | LVTTL33  | 8     | DOWN      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-E11/6    | hs_ready         | in    | IOL3[A]  | GCLKT_14/LPLL0_T_IN2 | LVTTL33  | OFF   | NONE      | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
+E11/6    | -                | in    | IOL3[A]  | GCLKT_14/LPLL0_T_IN2 | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 E10/6    | slot_rom0_ce_n   | out   | IOL3[B]  | GCLKC_14/LPLL0_C_FB0 | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 C11/6    | slot_ma[15]      | out   | IOL5[A]  | GCLKT_13/LPLL0_T_IN1 | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 C10/6    | slot_ma[16]      | out   | IOL5[B]  | GCLKC_13/LPLL0_C_FB1 | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
@@ -282,12 +275,12 @@ D10/6    | slot_ma[14]      | out   | IOL9[B]  | -               | LVTTL33  | 8 
 B11/6    | slot_ma[17]      | out   | IOL12[A] | -               | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 B10/6    | slot_ma[18]      | out   | IOL12[B] | -               | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 A11/6    | slot_rom1_ce_n   | out   | IOL14[A] | LPLL1_T_IN0     | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
-A10/6    | hs_cs_n          | out   | IOL14[B] | -               | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
+A10/6    | -                | in    | IOL14[B] | -               | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus0         
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-C1/10    | hs_sio[3]        | out   | IOR1[A]  | TCK             | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
-A3/10    | hs_sio[0]        | out   | IOR1[B]  | TDI             | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
-B1/10    | hs_sio[2]        | out   | IOR3[A]  | TMS             | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
-A2/10    | hs_sio[1]        | out   | IOR3[B]  | TDO             | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
+C1/10    | -                | in    | IOR1[A]  | TCK             | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
+A3/10    | -                | in    | IOR1[B]  | TDI             | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
+B1/10    | -                | in    | IOR3[A]  | TMS             | LVCMOS33 | OFF   | UP        | OFF       | ON         | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
+A2/10    | -                | out   | IOR3[B]  | TDO             | LVCMOS33 | 8     | UP        | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | -            
 L2/2     | slot_cs1_n       | out   | IOR18[A] | -               | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 L1/2     | slot_cs2_n       | out   | IOR18[B] | -               | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         
 K1/2     | slot_cs12_n      | out   | IOR20[A] | -               | LVTTL33  | 8     | NONE      | OFF       | OFF        | OFF        | OFF        | OFF             | OFF           | 3.3   | MEDIUM        | NONE          | bus1         

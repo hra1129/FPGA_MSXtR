@@ -61,10 +61,10 @@ module fpga_msxtr_cpu_stack2 (
 	output			slot_merq_n,			//	L9
 	inout	[7:0]	slot_d,					//	[7:0] L11,K11,K10,L10,L8,L7,J7,K7
 	//	high-speed bus (unused in this version, tied to HiZ)
-	output			hs_clk,					//	D1
-	output			hs_cs_n,				//	A10
-	inout	[3:0]	hs_sio,					//	[3:0] C1,B1,A2,A3
-	input			hs_ready,				//	E11
+//	output			hs_clk,					//	D1
+//	output			hs_cs_n,				//	A10
+//	inout	[3:0]	hs_sio,					//	[3:0] C1,B1,A2,A3
+//	input			hs_ready,				//	E11
 	//	config ROM
 	output			flash_spi_clk,			//	E7
 	output			flash_spi_cs_n,			//	E6
@@ -529,9 +529,9 @@ module fpga_msxtr_cpu_stack2 (
 	assign w_slot_a_full	= { slot_ma, slot_a[12:0] };
 
 	//	high-speed bus is not used in this version: outputs stay HiZ.
-	assign hs_clk			= 1'bz;
-	assign hs_cs_n			= 1'bz;
-	assign hs_sio			= 4'bzzzz;
+//	assign hs_clk			= 1'bz;
+//	assign hs_cs_n			= 1'bz;
+//	assign hs_sio			= 4'bzzzz;
 
 	always @( posedge clk42m ) begin
 		if( !ff_reset_n[2] ) begin

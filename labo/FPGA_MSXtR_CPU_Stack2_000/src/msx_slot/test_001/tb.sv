@@ -444,10 +444,21 @@ module tb;
 		check( slot_data_dir == 1'b0, "slot_data_dir is 0 on read" );
 		check( z80_rdata == 8'hA5, "z80_rdata received slot_d (0xA5)" );
 
+		z80_merq_n = 1'b1;
+		z80_iorq_n = 1'b0;
 		z80_bus_io = 1'b1;
+		slot_d_driver = 8'h5A;
+		@( posedge clk ); #1;
+		check( slot_data_dir == 1'b0, "slot_data_dir is 0 on I/O read" );
+		check( z80_rdata == 8'h5A, "z80_rdata received slot_d on I/O read (0x5A)" );
+		z80_iorq_n = 1'b1;
+		z80_rd_n = 1'b1;
 		#1;
-		check( slot_data_dir == 1'b1, "slot_data_dir is 1 on I/O read" );
+		check( slot_data_dir == 1'b1, "I/O read direction is released as soon as /IORQ and /RD rise" );
+		@( posedge clk ); #1;
+		check( slot_data_dir == 1'b1, "I/O read direction stays released on the next clock" );
 		z80_bus_io = 1'b0;
+		z80_merq_n = 1'b0;
 
 		// Test write direction
 		z80_rd_n = 1'b1;

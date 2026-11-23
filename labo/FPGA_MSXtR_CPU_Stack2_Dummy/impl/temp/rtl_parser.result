@@ -1,0 +1,20 @@
+[
+    {
+        "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_Dummy/src/FPGA_MSXtR_CPU_Stack2.v",
+        "InstLine": 32,
+        "InstName": "fpga_msxtr_cpu_stack2",
+        "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_Dummy/src/FPGA_MSXtR_CPU_Stack2.v",
+        "ModuleLine": 32,
+        "ModuleName": "fpga_msxtr_cpu_stack2",
+        "SubInsts": [
+            {
+                "InstFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_Dummy/src/FPGA_MSXtR_CPU_Stack2.v",
+                "InstLine": 58,
+                "InstName": "u_eraser",
+                "ModuleFile": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_Dummy/src/config_rom_eraser/ip_config_rom_eraser.v",
+                "ModuleLine": 36,
+                "ModuleName": "ip_config_rom_eraser"
+            }
+        ]
+    }
+]

@@ -1,0 +1,25 @@
+// FPGA_MSXtR CPU Stack2 - pin constraints
+// TangPrimer25K (GW5A-LV25MG121NC1/I0)
+// Pin assignment: pins_stack2.txt (TangPrimer25K(CPU))
+// flash_spi_* (config flash dedicated pins) and clk_50m are carried over
+// from the CPU Stack design.
+
+IO_LOC "clk_50m" E2;
+IO_PORT "clk_50m" IO_TYPE=LVTTL33 PULL_MODE=NONE BANK_VCCIO=3.3;
+IO_LOC "dummy_sig" L4;
+IO_PORT "dummy_sig" IO_TYPE=LVTTL33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "uart_tx" C3;
+IO_PORT "uart_tx" IO_TYPE=LVTTL33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+// ---- config flash (dedicated MSPI pins, "Use MSPI as regular IO") ----
+IO_LOC "flash_spi_cs_n" E6;
+IO_PORT "flash_spi_cs_n" IO_TYPE=LVTTL33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "flash_spi_clk" E7;
+IO_PORT "flash_spi_clk" IO_TYPE=LVTTL33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "flash_spi_io[3]" E4;
+IO_PORT "flash_spi_io[3]" IO_TYPE=LVTTL33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "flash_spi_io[2]" D5;
+IO_PORT "flash_spi_io[2]" IO_TYPE=LVTTL33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "flash_spi_io[1]" E5;
+IO_PORT "flash_spi_io[1]" IO_TYPE=LVTTL33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+IO_LOC "flash_spi_io[0]" D6;
+IO_PORT "flash_spi_io[0]" IO_TYPE=LVTTL33 PULL_MODE=NONE DRIVE=8 BANK_VCCIO=3.3;

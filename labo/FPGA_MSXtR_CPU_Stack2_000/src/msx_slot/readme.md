@@ -97,8 +97,9 @@ MSX カートリッジスロットのタイミングを生成するコントロ�
 
 - `slot_oe_n` は常時 0 固定(常にバッファ出力イネーブル)。
 - `slot_reset_n` は `reset_n` をそのまま出力。
-- 試作Cartridge Slot StackではI/Oカートリッジを暫定的に非対応とし、`slot_data_dir` は writeアクセス中および
-  I/Oアクセス中に 1(CPU Stack→Cartridge Slot Stack)となる。メモリread時のみカートリッジ側からCPU Stackへ返す。
+- `slot_data_dir` は write アクセス中に 1(CPU Stack→Cartridge Slot Stack)となる。カートリッジ側から CPU Stack へ返す(0)のは次の場合。
+  - Slot1/Slot2 のメモリread。終了後 1clk は方向を保持し、カートリッジ側の出力解除を待つ。
+  - I/O read(ポート番号を問わず、物理 `/IORQ` と `/RD` が Low の期間のみ。終了後の保持は無し)。内蔵 I/O デバイスは `bus_rdata_en` で先に応答するため、CPU はその値を使う。`/BUSDIR` は参照しない。
 - `slot_d` は write アクセス中のみ `ff_req_wdata_215m` を駆動し、それ以外は `8'hzz`(ハイインピーダンス)。
 - `int_n` は `slot_int_n` を、そのまま出力する。
 

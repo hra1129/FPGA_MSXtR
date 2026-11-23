@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module name="fpga_msxtr_cpu_stack2" Register="34" Alu="30" Lut="6" T_Register="504(34)" T_Alu="61(30)" T_Lut="1441(6)">
+ <SubModule name="u_eraser" Register="470" Alu="31" Lut="1435" T_Register="470(470)" T_Alu="31(31)" T_Lut="1435(1435)"/>
+</Module>

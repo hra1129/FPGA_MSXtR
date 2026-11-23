@@ -48,6 +48,12 @@
 // 2021/02/25  t.hara
 //   Implement the CR bit of the reset register (reg_index=15).
 //   Removed the circuit that resets the one-second counter every time the time is updated.
+// 2026/09/14  KdL
+//   Deterministic valid cold start: 1980-01-01, Tuesday, 00:00:00.
+//   Fixed noon calendar carry in 12-hour mode.
+//   Read 12/24 mode directly from its register.
+//   Honor Timer EN and preserve pending second carry.
+//   Keep the LFSR running during RTC register writes.
 // ============================================================================
 
 module rtc (
@@ -75,6 +81,8 @@ module rtc (
 	// PreScaler by LFSR algorithm
 	reg		[21:0]	ff_1sec_cnt		= 22'd0;
 	wire			w_lfsr_d0;
+	reg				ff_1sec_pending	= 1'b0;
+	wire			w_1sec_tick;
 
 	// register ff
 	reg		[3:0]	reg_index			= 4'd0;
@@ -82,11 +90,11 @@ module rtc (
 	reg		[6:0]	reg_sec			= 7'd0;			// 'h00 ... 'h59
 	reg		[6:0]	reg_min			= 7'd0;			// 'h00 ... 'h59
 	reg		[5:0]	reg_hou			= 6'd0;			// 'h00 ... 'h23
-	reg		[2:0]	reg_wee			= 3'd0;			// 'h0	... 'h6
-	reg		[5:0]	reg_day			= 6'd0;			// 'h01 ... 'h31
-	reg		[4:0]	reg_mon			= 5'd0;			// 'h01 ... 'h12
+	reg		[2:0]	reg_wee			= 3'd2;			// 'h0	... 'h6
+	reg		[5:0]	reg_day			= 6'd1;			// 'h01 ... 'h31
+	reg		[4:0]	reg_mon			= 5'd1;			// 'h01 ... 'h12
 	reg		[7:0]	reg_yea			= 8'd0;			// 'h00 ... 'h99
-	reg				reg_1224		= 1'b0;			// 1'b0 = 12hour mode, 1'b1 = 24hour mode
+	reg				reg_1224		= 1'b1;			// 1'b0 = 12hour mode, 1'b1 = 24hour mode
 	reg		[1:0]	reg_leap		= 2'b0;			// 2'b00 leap year, 2'b01 ... 2'b11 other year
 
 	// RAM
@@ -116,6 +124,7 @@ module rtc (
 					( { reg_mode[1:0], reg_index } == 6'h0A && bus_address == 1'b1 ) ? { 7'b1111000	, reg_mon[4]	} :
 					( { reg_mode[1:0], reg_index } == 6'h0B && bus_address == 1'b1 ) ? { 4'b1111	, reg_yea[3:0]	} :
 					( { reg_mode[1:0], reg_index } == 6'h0C && bus_address == 1'b1 ) ? { 4'b1111	, reg_yea[7:4]	} :
+					( { reg_mode[1:0], reg_index } == 6'h1A && bus_address == 1'b1 ) ? { 7'b1111000	, reg_1224		} :
 					( { reg_mode[1:0], reg_index } == 6'h1B && bus_address == 1'b1 ) ? { 6'b111100	, reg_leap		} :
 					(                                          bus_address == 1'b1 ) ? { 4'b1111	, ff_memory_rdata	} : 8'hFF;
 
@@ -135,8 +144,20 @@ module rtc (
 	// RTC register write
 	// -------------------------------------------------------------
 	assign w_lfsr_d0 = ~(ff_1sec_cnt[21] ^ ff_1sec_cnt[20]);
+	assign w_1sec_tick = enable && (ff_1sec_cnt == c_1sec_cnt0);
 
 	always @( posedge clk ) begin
+		// Keep the original LFSR running during I/O writes and Timer EN=0.
+		if( enable ) begin
+			if( ff_1sec_cnt != c_1sec_cnt0 ) begin
+				ff_1sec_cnt <= { ff_1sec_cnt[20:0], w_lfsr_d0 };
+			end
+			else begin
+				ff_1sec_cnt <= 22'd0;
+				ff_1sec_pending <= 1'b1;
+			end
+		end
+
 		if( w_write == 1'b1 && bus_address == 1'b0 ) begin
 			// register pointer
 			reg_index <= bus_wdata[3:0];
@@ -179,95 +200,96 @@ module rtc (
 			else if( reg_index == 4'd15 ) begin
 				if( bus_wdata[1] == 1'b1 ) begin
 					ff_1sec_cnt <= 22'd0;
+					ff_1sec_pending <= 1'b0;
 				end
 			end
 		end
-		else if( enable ) begin
-
-			if( ff_1sec_cnt != c_1sec_cnt0 ) begin
-				ff_1sec_cnt <= { ff_1sec_cnt[20:0], w_lfsr_d0 };
+		else if( reg_mode[3] && (w_1sec_tick || ff_1sec_pending) ) begin
+			// Consume one carry; a coincident write holds it instead.
+			ff_1sec_pending <= 1'b0;
+			if( reg_sec[3:0] != 4'h9 ) begin
+				reg_sec[3:0] <= reg_sec[3:0] + 4'h1;
 			end
 			else begin
-				ff_1sec_cnt <= 22'd0;
-				if( reg_sec[3:0] != 4'h9 ) begin
-					reg_sec[3:0] <= reg_sec[3:0] + 4'h1;
+				reg_sec[3:0] <= 4'h0;
+				if( reg_sec[6:4] != 3'h5 ) begin
+					reg_sec[6:4] <= reg_sec[6:4] + 3'h1;
 				end
 				else begin
-					reg_sec[3:0] <= 4'h0;
-					if( reg_sec[6:4] != 3'h5 ) begin
-						reg_sec[6:4] <= reg_sec[6:4] + 3'h1;
+					reg_sec[6:4] <= 3'h0;
+					if( reg_min[3:0] != 4'h9 ) begin
+						reg_min[3:0] <= reg_min[3:0] + 4'h1;
 					end
 					else begin
-						reg_sec[6:4] <= 3'h0;
-						if( reg_min[3:0] != 4'h9 ) begin
-							reg_min[3:0] <= reg_min[3:0] + 4'h1;
+						reg_min[3:0] <= 4'h0;
+						if( reg_min[6:4] != 3'h5 ) begin
+							reg_min[6:4] <= reg_min[6:4] + 3'h1;
 						end
 						else begin
-							reg_min[3:0] <= 4'h0;
-							if( reg_min[6:4] != 3'h5 ) begin
-								reg_min[6:4] <= reg_min[6:4] + 3'h1;
+							reg_min[6:4] <= 3'h0;
+							if( reg_hou[3:0] == 4'h9 ) begin
+								reg_hou[3:0] <= 4'h0;
+								reg_hou[5:4] <= reg_hou[5:4] + 2'h1;
+							end
+							else if( ( {reg_1224, reg_hou[4:0] } != 6'b010001) &&
+									 ( {reg_1224, reg_hou[5:0] } != 7'b1100011) ) begin
+								reg_hou[3:0] <= reg_hou[3:0] + 4'h1;
+							end
+							else if( reg_1224 == 1'b0 && reg_hou == 6'h11 ) begin
+								// 12-hour AM -> PM is noon, not a new day.
+								reg_hou[4:0]	<= 5'h0;
+								reg_hou[5]		<= 1'b1;
 							end
 							else begin
-								reg_min[6:4] <= 3'h0;
-								if( reg_hou[3:0] == 4'h9 ) begin
-									reg_hou[3:0] <= 4'h0;
-									reg_hou[5:4] <= reg_hou[5:4] + 2'h1;
-								end
-								else if( ( {reg_1224, reg_hou[4:0] } != 6'b010001) &&
-										 ( {reg_1224, reg_hou[5:0] } != 7'b1100011) ) begin
-									reg_hou[3:0] <= reg_hou[3:0] + 4'h1;
+								reg_hou[4:0]	<= 5'h0;
+								reg_hou[5]		<= ~reg_hou[5];
+
+								if( reg_wee[2:0] != 3'h6 ) begin
+									reg_wee[2:0] <= reg_wee[2:0] + 3'h1;
 								end
 								else begin
-									reg_hou[4:0]	<= 5'h0;
-									reg_hou[5]		<= ~reg_hou[5];
+									reg_wee[2:0] <= 3'h0;
+								end
 
-									if( reg_wee[2:0] != 3'h6 ) begin
-										reg_wee[2:0] <= reg_wee[2:0] + 3'h1;
+								if( (reg_mon == 5'h2  && reg_day == 6'h28 && reg_leap != 2'h0) ||
+									(reg_mon == 5'h2  && reg_day == 6'h29) ||
+									(reg_mon == 5'h4  && reg_day == 6'h30) ||
+									(reg_mon == 5'h6  && reg_day == 6'h30) ||
+									(reg_mon == 5'h9  && reg_day == 6'h30) ||
+									(reg_mon == 5'h11 && reg_day == 6'h30) ||
+									(					 reg_day == 6'h31) ) begin
+									reg_day[5:0] <= 6'h1;
+
+									if( reg_mon[3:0] == 4'h9 ) begin
+										reg_mon[4:0] <= 5'h10;
+									end
+									else if( reg_mon[4:0] != 5'h12 ) begin
+										reg_mon[3:0] <= reg_mon[3:0] + 4'h1;
 									end
 									else begin
-										reg_wee[2:0] <= 3'h0;
-									end
-
-									if( (reg_mon == 5'h2  && reg_day == 6'h28 && reg_leap != 2'h0) ||
-										(reg_mon == 5'h2  && reg_day == 6'h29) ||
-										(reg_mon == 5'h4  && reg_day == 6'h30) ||
-										(reg_mon == 5'h6  && reg_day == 6'h30) ||
-										(reg_mon == 5'h9  && reg_day == 6'h30) ||
-										(reg_mon == 5'h11 && reg_day == 6'h30) ||
-										(					 reg_day == 6'h31) ) begin
-										reg_day[5:0] <= 6'h1;
-
-										if( reg_mon[3:0] == 4'h9 ) begin
-											reg_mon[4:0] <= 5'h10;
-										end
-										else if( reg_mon[4:0] != 5'h12 ) begin
-											reg_mon[3:0] <= reg_mon[3:0] + 4'h1;
+										reg_mon[4:0] <= 5'h1;
+										reg_leap[1:0] <= reg_leap[1:0] + 2'h1;
+										if( reg_yea[3:0] != 4'h9 ) begin
+											reg_yea[3:0] <= reg_yea[3:0] + 4'h1;
 										end
 										else begin
-											reg_mon[4:0] <= 5'h1;
-											reg_leap[1:0] <= reg_leap[1:0] + 2'h1;
-											if( reg_yea[3:0] != 4'h9 ) begin
-												reg_yea[3:0] <= reg_yea[3:0] + 4'h1;
+											reg_yea[3:0] <= 4'h0;
+											if( reg_yea[7:4] != 4'h9 ) begin
+												reg_yea[7:4] <= reg_yea[7:4] + 4'h1;
 											end
 											else begin
-												reg_yea[3:0] <= 4'h0;
-												if( reg_yea[7:4] != 4'h9 ) begin
-													reg_yea[7:4] <= reg_yea[7:4] + 4'h1;
-												end
-												else begin
-													reg_yea[7:4] <= 4'h0;
-												end
+												reg_yea[7:4] <= 4'h0;
 											end
 										end
 									end
+								end
 
-									else if( reg_day[3:0] != 4'h9 ) begin
-										reg_day[3:0] <= reg_day[3:0] + 4'h1;
-									end
-									else begin
-										reg_day[3:0] <= 4'h0;
-										reg_day[5:4] <= reg_day[5:4] + 2'h1;
-									end
+								else if( reg_day[3:0] != 4'h9 ) begin
+									reg_day[3:0] <= reg_day[3:0] + 4'h1;
+								end
+								else begin
+									reg_day[3:0] <= 4'h0;
+									reg_day[5:4] <= reg_day[5:4] + 2'h1;
 								end
 							end
 						end

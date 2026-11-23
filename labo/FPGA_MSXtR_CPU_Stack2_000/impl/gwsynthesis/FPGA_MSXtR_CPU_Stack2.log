@@ -22,10 +22,10 @@ Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\lab
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cz80\cz80_inst.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cz80\cz80_mcode.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cz80\cz80_reg.v'
-Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\dummy_ssg\dummy_ssg.v'
-Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\fdc8566\fdc8566.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\dos_mapper\dos_mapper.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\dummy_ssg\dummy_ssg.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\extio\extio.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\fdc8566\fdc8566.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\gowin_pll\gowin_pll.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\gowin_pll\gowin_pll_mod.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\kanji_rom\ip_kanji_rom.v'
@@ -111,8 +111,8 @@ Compiling module 'r800_cache_ram'("C:\Users\hra\Documents\github\HRA_product\FPG
 Extracting RAM for identifier 'memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache_ram.v":12)
 WARN  (EX3791) : Expression size 16 truncated to fit in target size 4("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache.v":181)
 Compiling module 'ssram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\ssram\ssram.v":34)
-Compiling module 'rtc'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\rtc\rtc.v":53)
-Extracting RAM for identifier 'ff_memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\rtc\rtc.v":93)
+Compiling module 'rtc'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\rtc\rtc.v":59)
+Extracting RAM for identifier 'ff_memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\rtc\rtc.v":101)
 Compiling module 'pause_led'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\pause_led\pause_led.v":38)
 Compiling module 'system_flag'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\system_flag\system_flag.v":44)
 Compiling module 'dummy_ssg'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\dummy_ssg\dummy_ssg.v":34)
@@ -128,7 +128,6 @@ NOTE  (EX0101) : Current top module is "fpga_msxtr_cpu_stack2"
 WARN  (EX0211) : The output port "uart_tx" of module "fpga_msxtr_cpu_stack2" has no driver, assigning undriven bits to Z, simulation mismatch possible("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\FPGA_MSXtR_CPU_Stack2.v":73)
 [5%] Running netlist conversion ...
 WARN  (CV0016) : Input slot_busdir is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\FPGA_MSXtR_CPU_Stack2.v":53)
-WARN  (CV0016) : Input hs_ready is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\FPGA_MSXtR_CPU_Stack2.v":67)
 WARN  (CV0016) : Input uart_rx is unused("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\FPGA_MSXtR_CPU_Stack2.v":74)
 Running device independent optimization ...
 [10%] Optimizing Phase 0 completed

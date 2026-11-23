@@ -294,7 +294,8 @@ module tb;
 				$fatal(1, "Cartridge-side bus contention at address=%05h", slot_a);
 			if( !slot_rd_n && !slot_wr_n ) $fatal(1, "/RD and /WR overlap");
 			if( cpu_drive && !slot_data_dir ) $fatal(1, "CPU data enabled in read direction");
-			if( !slot_iorq_n && !slot_data_dir ) $fatal(1, "I/O cycle direction violates board workaround: PC=%04h address=%05h bus_io=%b bus_write=%b cpu_oe=%b", u_dut.w_z80_pc, slot_a, u_dut.u_msx_slot.w_bus_io, u_dut.u_msx_slot.w_bus_write, cpu_drive);
+			if( !slot_iorq_n && slot_rd_n && !slot_data_dir ) $fatal(1, "I/O cycle without /RD uses read direction: PC=%04h address=%05h bus_io=%b bus_write=%b cpu_oe=%b", u_dut.w_z80_pc, slot_a, u_dut.u_msx_slot.w_bus_io, u_dut.u_msx_slot.w_bus_write, cpu_drive);
+			if( !slot_iorq_n && !slot_rd_n && slot_data_dir ) $fatal(1, "I/O read does not use cartridge-to-CPU direction: PC=%04h address=%05h", u_dut.w_z80_pc, slot_a);
 			if( !slot_rom1_ce_n ) $fatal(1, "Unexpected ROM1 selection");
 			if( !slot_rfsh_n && slot_a !== {3'd0, u_dut.u_z80.ff_refresh_address} )
 				$fatal(1, "Slot refresh address mismatch: expected %04h, got %05h", u_dut.u_z80.ff_refresh_address, slot_a);

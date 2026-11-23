@@ -133,6 +133,8 @@ module msx_slot #(
 	wire			w_external_read_allowed;
 	wire			w_external_memory_read;
 	reg				ff_external_memory_read;
+	wire			w_external_io_read_allowed;
+	wire			w_external_io_read;
 
 	assign slot_clock_n		= msx_clock;
 	assign slot_oe_n		= 1'b0;
@@ -151,7 +153,8 @@ module msx_slot #(
 	assign slot_merq_n		= w_slot_merq_n;
 	assign slot_wr_n		= w_slot_wr_n;
 	assign slot_rd_n		= w_slot_rd_n;
-	assign slot_data_dir	= ~(w_external_read_allowed & (w_external_memory_read | ff_external_memory_read));		//	1: CPU Stack -> Cartridge Slot Stack, 0: Cartridge Slot Stack -> CPU Stack
+	assign slot_data_dir	= ~( (w_external_read_allowed & (w_external_memory_read | ff_external_memory_read)) |
+								 w_external_io_read );		//	1: CPU Stack -> Cartridge Slot Stack, 0: Cartridge Slot Stack -> CPU Stack
 	assign slot_d			= w_slot_d_oe ? w_slot_d : 8'bz;
 	assign z80_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
 	assign r800_rdata		= w_slot_rd_n ? 8'hFF	: slot_d;
@@ -213,6 +216,12 @@ module msx_slot #(
 			ff_external_memory_read <= w_external_memory_read;
 		end
 	end
+
+	//	I/O read: ポート番号に関係なく、物理 /IORQ と /RD が Low の期間だけ Cartridge Slot Stack -> CPU Stack 方向にする。
+	//	内蔵 I/O デバイスは bus_rdata_en で先に応答するため、CPU は slot_d を取り込まない。
+	//	終了後の方向保持は行わない (/IORQ または /RD が High になった時点で CPU Stack -> Cartridge Slot Stack 方向へ戻る)。
+	assign w_external_io_read_allowed = ~w_bus_write & w_slot_wr_n & ~w_slot_d_oe & ~w_flash_en;
+	assign w_external_io_read = ~slot_iorq_n & ~w_slot_rd_n & w_external_io_read_allowed;
 
 	assign cpu_slot12_cs	= ( w_primary_slot == 2'd1 ) || ( w_primary_slot == 2'd2 );
 	assign cpu_rom0_cs		= !ff_slot_rom0_ce_n;

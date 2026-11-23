@@ -2159,3 +2159,71 @@ WSL buildで`make -j`成功。エディタはmainファイルでPico SDK include
 - 今朝の起動暴走/DOS初期化停止はROM cacheクリア修正後の実機で再現していない。R800の定量benchmark、長時間動作、修正後netlistのゼロ書込み経路の再確認は未報告。
 - 今回の128KB ASCII16K以外のイメージ互換性、ASCII8K実機動作、Pico各更新項目の全組合せ確認は残る。
 - GOWIN EDAは必ずユーザーが実行する。こちらでは合成条件・SDCを変更せず、今回の終了処理は履歴追記のみ。追加コード変更・テスト・commit/pushは行わない。
+
+## 2026-11-19 GOWIN EDAビルドエラー (PA2024: I/O数超過) の原因調査
+
+### 症状
+
+GOWIN EDAでのビルドが配置配線 (PnR) で次のエラーにより停止した。
+
+```
+ERROR (PA2024) : The number(104) of ports exceeds the resource limit 85 regular I/Os and 1 RECONFIG_N I/Os of current device.
+```
+
+### 原因
+
+- 合成ログで `Current top module is "msx_slot_decode"` となっており、本来のtop `fpga_msxtr_cpu_stack2` ではなく `msx_slot_decode` がtopとして合成されていた。
+- process configの `TopModule` が空欄で、GOWINがtopを自動判定していた。
+- `src/msx_slot/msx_slot_decode.v` はプロジェクトに登録されていたが、どこからもインスタンス化されていない。そのため未参照モジュールが2つ存在し、`msx_slot_decode` がtopに選ばれた。
+- `msx_slot_decode` の全ポート (104本) が外部I/O扱いとなり、GW5A-25A (MG121) の85本を超えた。
+
+### 対処 (ユーザーが実施)
+
+- Synthesize設定のTop Module/Entityに `fpga_msxtr_cpu_stack2` を指定した。
+- 未使用の `msx_slot_decode.v` をプロジェクト (`FPGA_MSXtR_CPU_Stack2.gprj`) から外した。
+
+### 引継ぎ事項
+
+- 対処後の再ビルド (合成・PnR) の成否、および実機確認の結果は未記録。次回の再開時に確認する。
+- 合成ログに警告 `Undeclared symbol 'mc', assumed default net type 'wire'` (`src/cr800/cr800.v:951`) が出ている。意図しない暗黙wireの可能性があるため、要確認。
+- 今回こちらで行ったのは調査と履歴追記のみ。RTL変更・テスト・commit/pushは行っていない。GOWIN EDAは必ずユーザーが実行する。
+
+## 2026-11-20〜22 Controller_002作成・Rev.2 CPU BoardでのI2Cキーボード確認・V9968未起動
+
+### Controller_002 のビルド環境 (11-20)
+
+- `controller/FPGA_MSXtR_Stack_Controller_001` をコピーして `FPGA_MSXtR_Stack_Controller_002` を作成。以後はこちらで作業する。
+- コピーされた `build` に001の絶対パスが残っていたため削除し、WSLで再構成した (ターゲットは Pico 2)。
+  `cmake -S . -B build -DPICO_BOARD=pico2 -DPICO_SDK_PATH=/mnt/c/Users/hra/Documents/github/OTHERS/pico-sdk`
+- WSLには `PICO_SDK_PATH` が設定されていない。SDKパスはCMakeCacheに保存済みなので、通常は `build` で `make -j` のみでよい。
+- readme.md のボード指定を `pico2_w` から `pico2` へ修正。
+
+### Rev.2 CPU Board (pcb/FPGA_MSXtR_Stack_CPU2) でキーボード接続時にターミナルが無表示 (11-20〜21)
+
+**結論: 故障ではなかった。** USBキーボード→I2Cブリッジを接続すると MENU 非押下と判定され、キーボード転送モードで起動する。このモードはメニューを出さない仕様で、USB CDCは端末接続前の起動メッセージを捨てるため、何も出ないように見えていた。MENU キーを押すとメニューが出て、BIOS書込み・漢字ROM書込み・漢字ROM読出しテストが全て動作した。
+
+- ブリッジ未接続時は I2C が NACK で即エラー戻りとなり、マトリクスが初期値 0x00 (全キー押下) のまま → MENU 押下判定でメニューが出ていた (意図した動作ではなく偶然)。
+- Rev.2 基板の確認結果: I2C は GP20=SDA / GP21=SCL でファームと一致。R7/R8 (3.3kΩ→+3V3) のプルアップが追加された (旧基板は無し)。Grove J1 は 1=SCL, 2=SDA, 3=+5V, 4=GND で、旧基板 (1=SDA, 2=SCL, 3=+3V3) から変更。配線長は約56mm で旧基板 (約62mm) とほぼ同じ。
+- ユーザー側の対応: SCL/SDAクロスケーブルに交換。ブリッジ (Pico2) は Grove の 5V から給電するよう改造。バスの High は 3.3V。ブリッジ側のプルアップ抵抗は撤去済み (撤去前後どちらでも結果は同じ)。
+- 参考: Pico の VBUS (pad40) が基板の +5V に直結されている。次回改版ではダイオード経由で VSYS へ給電する構成を検討。
+
+### Controller_002 の変更内容 (11-21)
+
+- keyboard.c: I2C通信に 5ms タイムアウトを追加。失敗時はキーマトリクスを更新しない。タイムアウト時や線がLowの時は SCL 9クロック + STOP でバスを復帰する。`keyboard_init()` にピン番号とボーレートの引数を追加。
+- diag_log.c/h を追加: 起動時から RAM にログをため、USB 端末の接続後にまとめて出す仕組み。既定は無効で、`cmake -DDIAG_LOG_ENABLE=1 ..` で有効化する (戻すときは `=0`)。
+- 診断ログの実機結果: 起動262msでI2C初回成功、20秒間で約1,900回成功・エラー0、バス復帰0。
+- 現在の build は診断ログ無効 (`DIAG_LOG_ENABLE=OFF`) でビルド済み。ログ無効版は、ビルド成功のみで実機未確認。
+
+### V9968 カートリッジを装着しても起動しない (11-22、未対応)
+
+- BIOS 書込み後、カートリッジスロットに V9968 を装着したが起動しない。
+- 原因候補: `src/msx_slot/msx_slot.v` の `w_external_read_allowed` の条件に `~w_bus_io & slot_iorq_n` が含まれている。このため I/Oリードでは `slot_data_dir` がカートリッジ→CPU 側に切り替わらず、カートリッジスロットからの I/O リードがブロックされている。V9968 は VDP ポート (98h〜9Bh 等) のリードが必要なので、この部分を解除する必要がある。
+- 次回作業:
+  - I/Oリード時にもカートリッジ方向へ切り替える条件を検討する。内部デバイスが応答するポートを除外する必要がある。
+  - 内部 I/O デバイスとの競合と、Slot Stack D6 故障の際に入れた方向制御の経緯 (2026-10-03 の項) を確認する。
+  - 変更後は msx_slot/test_001 で回帰を確認する。GOWIN EDA でのビルドはユーザーが実施。
+
+### 引継ぎ事項
+
+- 今回こちらで変更したのは Controller_002 のファームと readme、本履歴のみ。FPGA RTL は未変更。commit/push は行っていない。
+- `cr800.v:951` の未宣言 `mc` (暗黙wire) の警告確認は、引き続き残っている。

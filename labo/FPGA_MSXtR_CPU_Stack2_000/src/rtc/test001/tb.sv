@@ -158,6 +158,20 @@ module tb ();
 		repeat( 5 ) @( posedge clk );
 
 		// ================================================================
+		//	TEST000: Cold start value (1980-01-01, Tuesday, 00:00:00, 24h)
+		// ================================================================
+		$display( "<<TEST000>> Cold start value" );
+
+		rtc_reg_read_check( 4'd6, 8'hF2 );		// Tuesday
+		rtc_reg_read_check( 4'd7, 8'hF1 );		// day low = 1
+		rtc_reg_read_check( 4'd8, 8'hF0 );		// day high = 0
+		rtc_reg_read_check( 4'd9, 8'hF1 );		// month low = 1
+		rtc_reg_read_check( 4'd10, 8'hF0 );	// month high = 0
+		rtc_reg_write( 4'd13, 8'h09 );
+		rtc_reg_read_check( 4'd10, 8'hF1 );	// 24h mode (read from reg_1224)
+		rtc_reg_write( 4'd13, 8'h08 );
+
+		// ================================================================
 		//	TEST001: Mode register write/read
 		// ================================================================
 		$display( "<<TEST001>> Mode register write/read" );
@@ -429,6 +443,86 @@ module tb ();
 		rtc_reg_read_check( 4'd1, 8'hF0 );		// sec high = 0
 		rtc_reg_read_check( 4'd2, 8'hF0 );		// min low = 0
 		rtc_reg_read_check( 4'd3, 8'hF0 );		// min high = 0
+
+		// ================================================================
+		//	TEST010: 12-hour mode noon carry (AM 11:59:59 -> PM 00:00:00)
+		// ================================================================
+		$display( "<<TEST010>> 12-hour mode noon carry" );
+
+		enable = 1'b0;
+		rtc_reg_write( 4'd13, 8'h09 );
+		rtc_reg_write( 4'd10, 8'h00 );		// 12h mode
+		rtc_reg_write( 4'd13, 8'h08 );
+		rtc_reg_write( 4'd0, 8'h09 );
+		rtc_reg_write( 4'd1, 8'h05 );		// sec = 59
+		rtc_reg_write( 4'd2, 8'h09 );
+		rtc_reg_write( 4'd3, 8'h05 );		// min = 59
+		rtc_reg_write( 4'd4, 8'h01 );
+		rtc_reg_write( 4'd5, 8'h01 );		// hou = AM 11
+		rtc_reg_write( 4'd6, 8'h04 );		// Thursday
+		rtc_reg_write( 4'd7, 8'h07 );
+		rtc_reg_write( 4'd8, 8'h01 );		// day = 17
+		enable = 1'b1;
+
+		force u_rtc.ff_1sec_cnt = 22'h36CA51;
+		@( posedge clk );
+		release u_rtc.ff_1sec_cnt;
+		repeat( 10 ) @( posedge clk );
+
+		rtc_reg_read_check( 4'd4, 8'hF0 );		// hou low = 0
+		rtc_reg_read_check( 4'd5, 8'hF2 );		// PM
+		rtc_reg_read_check( 4'd6, 8'hF4 );		// Thursday (not changed)
+		rtc_reg_read_check( 4'd7, 8'hF7 );		// day = 17 (not changed)
+		rtc_reg_read_check( 4'd8, 8'hF1 );
+
+		// ================================================================
+		//	TEST011: Timer EN=0 holds the time, carry is kept as pending
+		// ================================================================
+		$display( "<<TEST011>> Timer EN=0" );
+
+		rtc_reg_write( 4'd13, 8'h00 );		// mode 0, Timer EN = 0
+		rtc_reg_write( 4'd0, 8'h03 );
+		rtc_reg_write( 4'd1, 8'h00 );		// sec = 03
+
+		force u_rtc.ff_1sec_cnt = 22'h36CA51;
+		@( posedge clk );
+		release u_rtc.ff_1sec_cnt;
+		repeat( 10 ) @( posedge clk );
+
+		rtc_reg_read_check( 4'd0, 8'hF3 );		// sec = 03 (stopped)
+
+		rtc_reg_write( 4'd13, 8'h08 );		// Timer EN = 1
+		repeat( 10 ) @( posedge clk );
+		rtc_reg_read_check( 4'd0, 8'hF4 );		// pending carry consumed: sec = 04
+
+		// ================================================================
+		//	TEST012: LFSR and second carry continue during register writes
+		// ================================================================
+		$display( "<<TEST012>> LFSR keeps running during writes" );
+
+		force u_rtc.ff_1sec_cnt = 22'h36CA51;
+		@( posedge clk );
+		release u_rtc.ff_1sec_cnt;
+
+		//	Hold an index register write across the second tick
+		bus_cs		<= 1'b1;
+		bus_write	<= 1'b1;
+		bus_address	<= 1'b0;
+		bus_wdata	<= 8'h00;
+		repeat( 5 ) @( posedge clk );
+		bus_cs		<= 1'b0;
+		bus_write	<= 1'b0;
+		@( posedge clk );
+
+		if( u_rtc.ff_1sec_cnt != 22'h36CA51 && u_rtc.ff_1sec_cnt != 22'h2D94A3 ) begin
+			$display( "[OK] Prescaler advanced during write: ff_1sec_cnt = %h", u_rtc.ff_1sec_cnt );
+		end
+		else begin
+			$display( "[NG] Prescaler stalled during write: ff_1sec_cnt = %h", u_rtc.ff_1sec_cnt );
+			err_count = err_count + 1;
+		end
+		repeat( 10 ) @( posedge clk );
+		rtc_reg_read_check( 4'd0, 8'hF5 );		// sec = 05 (carry not lost)
 
 		// ================================================================
 		//	Result

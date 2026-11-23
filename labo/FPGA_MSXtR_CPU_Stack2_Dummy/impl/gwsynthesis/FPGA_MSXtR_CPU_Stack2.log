@@ -1,0 +1,26 @@
+GowinSynthesis start
+Running parser ...
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_Dummy\src\FPGA_MSXtR_CPU_Stack2.v'
+Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_Dummy\src\config_rom_eraser\ip_config_rom_eraser.v'
+Compiling module 'fpga_msxtr_cpu_stack2'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_Dummy\src\FPGA_MSXtR_CPU_Stack2.v":32)
+Compiling module 'ip_config_rom_eraser'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_Dummy\src\config_rom_eraser\ip_config_rom_eraser.v":36)
+NOTE  (EX0101) : Current top module is "fpga_msxtr_cpu_stack2"
+[5%] Running netlist conversion ...
+Running device independent optimization ...
+[10%] Optimizing Phase 0 completed
+[15%] Optimizing Phase 1 completed
+[25%] Optimizing Phase 2 completed
+Running inference ...
+[30%] Inferring Phase 0 completed
+[40%] Inferring Phase 1 completed
+[50%] Inferring Phase 2 completed
+[55%] Inferring Phase 3 completed
+Running technical mapping ...
+[60%] Tech-Mapping Phase 0 completed
+[65%] Tech-Mapping Phase 1 completed
+[75%] Tech-Mapping Phase 2 completed
+[80%] Tech-Mapping Phase 3 completed
+[90%] Tech-Mapping Phase 4 completed
+[95%] Generate netlist file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_Dummy\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack2.vg" completed
+[100%] Generate report file "C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_Dummy\impl\gwsynthesis\FPGA_MSXtR_CPU_Stack2_syn.rpt.html" completed
+GowinSynthesis finish

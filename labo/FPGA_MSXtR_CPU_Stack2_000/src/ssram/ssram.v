@@ -96,7 +96,7 @@ module ssram (
 	reg		[20:0]	ff_address;
 	reg		[1:0]	ff_init_step;
 	reg		[2:0]	ff_init_bit;
-	reg		[3:0]	ff_init_gap_count;
+	reg		[11:0]	ff_init_gap_count;
 	reg		[7:0]	ff_wdata;
 	reg		[7:0]	ff_rdata;
 	reg				ff_rdata_en;
@@ -195,7 +195,13 @@ module ssram (
 				ff_sram_ce_n <= w_powerup_wait_done ? 1'b0 : 1'b1;
 			end
 			c_state_init_gap: begin
-				ff_sram_ce_n <= 1'b1;
+				//	Assert CE# again for the next command (99h, 35h).
+				if( ff_init_gap_count[11] && ff_init_step != 2'd2 ) begin
+					ff_sram_ce_n <= 1'b0;
+				end
+				else begin
+					ff_sram_ce_n <= 1'b1;
+				end
 			end
 			c_state_idle: begin
 				if( w_valid ) begin
@@ -309,17 +315,30 @@ module ssram (
 	end
 
 	// ---------------------------------------------------------
-	//	Data latch
+	//	Address / data latch
+	//	The request registers are stable while w_valid is high
+	//	(the next request waits for bus_ready), so no state decode is needed.
 	// ---------------------------------------------------------
 	always @( posedge clk_serial ) begin
 		if( !n_reset ) begin
 			ff_wdata	<= 8'd0;
+			ff_address	<= 21'd0;
 		end
-		else if( (ff_state == c_state_idle) && w_valid ) begin
+		else if( w_valid ) begin
 			ff_wdata	<= ff_req_wdata_clk;
+			ff_address	<= ff_req_address_clk;
 		end
-		else if( ff_sclk_div && w_valid ) begin
-			ff_wdata	<= ff_req_wdata_clk;
+	end
+
+	// ---------------------------------------------------------
+	//	Burst read data (shift in; byte0 ends up in [7:0])
+	// ---------------------------------------------------------
+	always @( posedge clk_serial ) begin
+		if( !n_reset ) begin
+			ff_burst_serial <= 64'd0;
+		end
+		else if( w_sclk_fall && ff_burst && ff_state == c_state_read1 ) begin
+			ff_burst_serial <= { ff_rdata, ff_burst_serial[63:8] };
 		end
 	end
 
@@ -332,15 +351,13 @@ module ssram (
 			ff_ce_n		<= 1'b1;
 			ff_active	<= 1'b0;
 			ff_so		<= 4'b0000;
-			ff_address	<= 21'd0;
 			ff_init_step	<= 2'd0;
 			ff_init_bit	<= 3'd0;
-			ff_init_gap_count <= 4'd0;
+			ff_init_gap_count <= 12'd0;
 			ff_read		<= 1'b0;
 			ff_write	<= 1'b0;
 			ff_burst <= 1'b0;
 			ff_burst_index <= 3'd0;
-			ff_burst_serial <= 64'd0;
 			ff_burst_done_serial <= 1'b0;
 			ff_powerup_wait <= 17'd0;
 			ff_startup_done_serial <= 1'b0;
@@ -356,7 +373,7 @@ module ssram (
 			//	c_state_init_send drives w_init_cmd MSB first on SIO[0],
 			//	one bit per SCLK period (same timing as the old EQIO).
 			//	c_state_init_gap holds CE# high between commands
-			//	(8 clk_serial ticks, > tCPH = 1 tCLK).
+			//	(2048 clk_serial ticks = about 9.5us, > tCPH and reset recovery).
 			//
 			c_state_init_w0: begin
 				// Datasheet tPU timing: keep CE# high for at least 150us after power-up.
@@ -379,7 +396,7 @@ module ssram (
 					ff_state	<= c_state_init_gap;
 					ff_ce_n		<= 1'b1;
 					ff_so		<= 4'b0000;
-					ff_init_gap_count <= 4'd0;
+					ff_init_gap_count <= 12'd0;
 				end
 				else begin
 					ff_init_bit	<= ff_init_bit - 3'd1;
@@ -387,8 +404,8 @@ module ssram (
 				end
 			end
 			c_state_init_gap: begin
-				ff_init_gap_count <= ff_init_gap_count + 4'd1;
-				if( ff_init_gap_count == 4'd7 ) begin
+				ff_init_gap_count <= ff_init_gap_count + 12'd1;
+				if( ff_init_gap_count[11] ) begin
 					if( ff_init_step == 2'd2 ) begin
 						//	Enter Quad Mode done: initialization complete.
 						ff_state	<= c_state_idle;
@@ -414,7 +431,6 @@ module ssram (
 					ff_state	<= c_state_start;
 					ff_ce_n		<= 1'b0;
 					ff_so		<= ff_req_write_clk ? 4'd0 : 4'hE;
-					ff_address	<= ff_req_address_clk[20:0];
 					ff_write	<= ff_req_write_clk;
 					ff_burst	<= ff_req_burst_clk;
 					ff_burst_index <= 3'd0;
@@ -523,7 +539,6 @@ module ssram (
 			end
 			c_state_read1: begin
 				if( ff_burst ) begin
-					ff_burst_serial[ff_burst_index*8 +: 8] <= ff_rdata;
 					if( ff_burst_index == 3'd7 ) begin
 						ff_burst_done_serial <= ~ff_burst_done_serial;
 						ff_state <= c_state_read3;
