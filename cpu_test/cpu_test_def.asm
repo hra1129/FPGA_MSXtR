@@ -58,3 +58,5 @@ PATH_RST		:= 0x80
 PSG_ADDR		:= 0xA0
 PSG_WRITE		:= 0xA1
 PSG_READ		:= 0xA2
+ZT_ADDR			:= 0xC400		; z80test engine ( zt_*.asm, up to 0xCBFF with the CRC table )
+ZT_REC			:= 0xCC00		; z80test test record ( flag mask + 3 vectors )

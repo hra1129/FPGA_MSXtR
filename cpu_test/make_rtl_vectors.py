@@ -8,6 +8,8 @@
 #	writes:
 #	  base.hex    : 64KB memory image (stub, RST vectors, test loop at BF20h)
 #	  vectors.txt : per vector memory patches and the expected state block
+#	                ( "V tid vec npatch fmask wz length" : wz is the MEMPTR
+#	                right after the instruction under test, -1 = not checked )
 #	  names.txt   : test names (one per line, index = test id)
 #
 #	Test loop executed by the CPU under test:
@@ -24,6 +26,51 @@ import make_tests as mt
 
 LOOP_ADDR = 0xBF20
 RESTORE_ADDR = 0xBF00
+WZ_STEPS = 100000
+
+
+def expected_wz( mc, ins, length, rel, isb ):
+	# MEMPTR right after the instruction under test ( -1 : not checked )
+	mem = bytearray( mc.base )
+	mem[mt.THREAD_ADDR:mt.THREAD_ADDR + mt.THREAD_SIZE] = b'\xFF' * mt.THREAD_SIZE
+	mc.jp( mem, mt.TGT_ADDR, mc.save_t )
+	mem[mt.INS_ADDR:mt.INS_ADDR + 4] = bytes( ins )
+	mc.jp( mem, mt.INS_ADDR + length, mc.save_n )
+	if rel:
+		t = mt.INS_ADDR + length + mt.sext( ins[length - 1] )
+		mc.jp( mem, t, mc.save_t )
+	mem[mt.WIN_ADDR:mt.WIN_ADDR + mt.WIN_SIZE] = isb[mt.O_WIN:mt.O_WIN + mt.WIN_SIZE]
+	mem[mt.ISB:mt.ISB + mt.STATE_SIZE] = isb
+	m = mc.m
+	m.memory[:] = mem
+	m.pc = mc.CALLER
+	m.sp = 0xF000
+	m.iff1 = 0
+	m.iff2 = 0
+	m.set_breakpoint( mt.INS_ADDR )
+	try:
+		ev = mc.run( 200000 )
+		if m.pc != mt.INS_ADDR:
+			return -1
+		for n in range( WZ_STEPS ):
+			pc = m.pc
+			o = bytes( m.memory[pc:pc + 2] )
+			bc0 = m.bc
+			m.step_over_breakpoint()
+			if o[0] == 0xED and ( o[1] & 0xE4 ) == 0xA0:
+				if m.pc == pc:
+					# Zilog : MEMPTR of a repeating block instruction is PC + 1
+					m._StateBase__wz[:] = ( ( pc + 1 ) & 0xFFFF ).to_bytes( 2, 'little' )
+				elif ( o[1] & 0x07 ) == 0x02:
+					# INI / IND ( / last INIR / INDR ) : BC before B is decremented +/- 1
+					wz = ( bc0 + ( -1 if o[1] & 0x08 else 1 ) ) & 0xFFFF
+					m._StateBase__wz[:] = wz.to_bytes( 2, 'little' )
+			if not ( mt.INS_ADDR <= m.pc < mt.INS_ADDR + length ):
+				w = bytes( m._StateBase__wz )
+				return w[0] | ( w[1] << 8 )
+		return -1
+	finally:
+		m.clear_breakpoint( mt.INS_ADDR )
 
 
 def main():
@@ -80,6 +127,7 @@ def main():
 					s.post( isb, out )
 				if r800 and s.r800_post:
 					s.r800_post( isb, out )
+				wz = -1 if r800 else expected_wz( mc, sim_ins, ln, s.rel, isb )
 				# memory image seen by the real CPU (real instruction bytes)
 				mem = bytearray( mc.base )
 				mem[mt.THREAD_ADDR:mt.THREAD_ADDR + mt.THREAD_SIZE] = b'\xFF' * mt.THREAD_SIZE
@@ -92,12 +140,12 @@ def main():
 				mem[mt.WIN_ADDR:mt.WIN_ADDR + mt.WIN_SIZE] = isb[mt.O_WIN:mt.O_WIN + mt.WIN_SIZE]
 				mem[mt.ISB:mt.ISB + mt.STATE_SIZE] = isb
 				patches = [( a, mem[a] ) for a in range( RESTORE_ADDR, 0x10000 ) if mem[a] != base[a]]
-				fv.write( 'V %d %d %d %d\n' % ( tid, v, len( patches ), fmask ) )
+				fv.write( 'V %d %d %d %d %d %d\n' % ( tid, v, len( patches ), fmask, wz, ln ) )
 				for a, d in patches:
 					fv.write( '%04X %02X\n' % ( a, d ) )
 				fv.write( ' '.join( '%02X' % b for b in out ) + '\n' )
 				nvec_total += 1
-		fv.write( 'X 0 0 0 0\n' )
+		fv.write( 'X 0 0 0 0 0 0\n' )
 	with open( os.path.join( out_dir, 'base.hex' ), 'w' ) as fb:
 		for b in base:
 			fb.write( '%02X\n' % b )

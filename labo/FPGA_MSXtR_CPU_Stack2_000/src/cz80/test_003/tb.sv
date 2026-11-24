@@ -15,6 +15,7 @@ module tb;
 	localparam	O_PATH		= 24;
 	localparam	O_WIN		= 32;
 	localparam	RESTORE		= 16'hBF00;
+	localparam	INS_ADDR	= 16'hC300;
 	localparam	TIMEOUT		= 2_000_000;
 
 	reg				clk = 1'b0;
@@ -42,6 +43,11 @@ module tb;
 	integer			vid;
 	integer			npatch;
 	integer			fmask;
+	integer			exp_wz;
+	integer			ins_len;
+	integer			got_wz;
+	reg				wz_armed = 1'b0;
+	reg				wz_sample = 1'b0;
 	integer			i;
 	integer			a;
 	integer			d;
@@ -141,6 +147,17 @@ module tb;
 
 	//	Compare the result of the current vector and load the next one.
 	task next_vector();
+		if( vectors > 0 && exp_wz >= 0 ) begin
+			if( got_wz !== exp_wz ) begin
+				$display( "NG: %0s vec=%0d WZ expected=%04h got=%04h (in: F=%02h A=%02h B=%02h C=%02h)",
+					names[tid], vid, exp_wz, got_wz, mem[16'hE000], mem[16'hE001], mem[16'hE003], mem[16'hE002] );
+				errors = errors + 1;
+				if( last_failed_tid != tid ) begin
+					failed_tests = failed_tests + 1;
+					last_failed_tid = tid;
+				end
+			end
+		end
 		if( vectors > 0 ) begin
 			for( i = 0; i < 64; i = i + 1 ) begin
 				if( i <= O_PATH || i >= O_WIN ) begin
@@ -162,8 +179,8 @@ module tb;
 				end
 			end
 		end
-		rc = $fscanf( fv, " %c %d %d %d %d", tag, tid, vid, npatch, fmask );
-		if( rc != 5 || tag != "V" ) begin
+		rc = $fscanf( fv, " %c %d %d %d %d %d %d", tag, tid, vid, npatch, fmask, exp_wz, ins_len );
+		if( rc != 7 || tag != "V" ) begin
 			finished = 1'b1;
 		end
 		else begin
@@ -179,8 +196,29 @@ module tb;
 				expected[i] = d;
 			end
 			vectors = vectors + 1;
+			got_wz = -1;
 		end
 	endtask
+
+`ifndef R800
+	//	MEMPTR right after the instruction under test: cz80 updates WZ at T2 of
+	//	the next M1, which is the first M1 outside the instruction bytes.
+	always @( posedge clk ) begin
+		if( wz_sample ) begin
+			got_wz		<= u_cpu.u_cz80.ff_wz;
+			wz_sample	<= 1'b0;
+		end
+		if( u_cpu.u_cz80.clken && u_cpu.u_cz80.wz_update ) begin
+			if( u_cpu.u_cz80.pc == INS_ADDR && !wz_armed ) begin
+				wz_armed <= 1'b1;
+			end
+			else if( wz_armed && ( u_cpu.u_cz80.pc < INS_ADDR || u_cpu.u_cz80.pc >= INS_ADDR + ins_len ) ) begin
+				wz_armed	<= 1'b0;
+				wz_sample	<= 1'b1;
+			end
+		end
+	end
+`endif
 
 	//	Memory / I/O model (PSG register 0 is used as a read/write I/O register)
 	always @( posedge clk ) begin

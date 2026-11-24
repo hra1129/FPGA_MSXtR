@@ -13,6 +13,7 @@ import os
 import sys
 import random
 import z80
+import z80test_port
 
 HERE = os.path.dirname( os.path.abspath( __file__ ) )
 ROM_SIZE = 512 * 1024
@@ -758,6 +759,21 @@ def main():
 	alu = build_alu_catalog()
 	z80_data, z80_count = gen_suite( mc, 'z80', cat, alu )
 	r800_data, r800_count = gen_suite( mc, 'r800', cat, alu )
+	# z80test port ( Z80 : full, Q, MEMPTR / R800 : documented flags )
+	z80_data = z80_data[:-1]
+	r800_data = r800_data[:-1]
+	for v, r800 in ( ( 'full', False ), ( 'ccf', False ), ( 'memptr', False ), ( 'doc', True ) ):
+		zs = z80test_port.zt_suite( v, os.path.join( HERE, 'zt_%s.bin' % v ), runner, ZT_REC, r800=r800 )
+		d, n = zs.generate()
+		print( 'z80test %-6s: %d tests' % ( v, n ) )
+		if r800:
+			r800_data += d
+			r800_count += n
+		else:
+			z80_data += d
+			z80_count += n
+	z80_data += b'\xFF'
+	r800_data += b'\xFF'
 	hdr_size = 11
 	r800_off = RUNNER_SIZE + hdr_size + len( z80_data )
 	hdr = b'CPUT' + bytes( [z80_count & 0xFF, z80_count >> 8, r800_count & 0xFF, r800_count >> 8,

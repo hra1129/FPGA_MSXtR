@@ -31,6 +31,10 @@ OKです。
 | stub.asm | RAM (C000h) に常駐し、被テスト命令を実行してレジスタを保存するスタブ |
 | cpu_test_def.asm | 共通定数（make_tests.py からも読み込む） |
 | make_tests.py | テストデータ生成・ROM 組み立て |
+| zt_engine.asm | z80test（raxoft/z80test、MIT ライセンス）のテストエンジン idea.asm の移植 |
+| zt_full.asm / zt_ccf.asm / zt_memptr.asm / zt_doc.asm | エンジンのバリアント（ZT / Q / WZ / R800 用） |
+| z80test_port.py | z80test の tests.asm を読み込み、テストレコードと期待 CRC を生成する |
+| z80test\ | z80test の tests.asm / testmacros.asm / license.txt / readme.txt（原版のまま） |
 | build.bat | ビルド |
 | cpu_test.rom | 生成物（512KB, ASCII8K） |
 
@@ -40,8 +44,8 @@ Python 3 と、Z80 エミュレータパッケージ `z80` が必要。
     pip install z80
     build.bat
 
-1. zma で stub.asm → stub.bin、cpu_test.asm → runner.bin
-2. make_tests.py が、同じ stub.bin を Python の Z80 モデル上で実行して全テストの期待値を生成し、
+1. zma で stub.asm → stub.bin、cpu_test.asm → runner.bin、zt_*.asm → zt_*.bin
+2. make_tests.py が、同じ stub.bin / zt_*.bin を Python の Z80 モデル上で実行して全テストの期待値を生成し、
    runner.bin + テストデータを 512KB の cpu_test.rom にまとめる（生成に 1〜2 分かかる）。
 
 ## 方式
@@ -54,6 +58,31 @@ Python 3 と、Z80 エミュレータパッケージ `z80` が必要。
   全組み合わせを総当たりし、結果をチェックサム化して比較する（項目名 `ALL ...`）。
 - Z80 スイートを実行後、turbo R であれば CHGCPU で R800(ROM) モードに切り替えて R800 スイートを実行する。
   turbo R 以外では R800 スイートはスキップする。
+
+## z80test の移植（項目名 `ZT` / `Q` / `WZ`）
+既存テストの後に、z80test（https://github.com/raxoft/z80test）の全テストを実行する。
+z80test は 1 命令につき数千〜数万通りのレジスタ・フラグの組み合わせを実行し、結果を CRC-32 にまとめて比較する。
+既存テストにない次の観点を補う。
+- `ZT`  : 全レジスタ・全フラグ（X/Y を含む）。z80full 相当。SCF/CCF は NEC / ST 版の結果も可とし、
+  その場合は `=NEC` / `=ST` の注記行を出す。
+- `Q`   : 各命令の直後に CCF を実行し、Q レジスタ（直前の命令がフラグを書き換えたか）の挙動を見る。z80ccf 相当。
+- `WZ`  : 各命令の直後に BIT 0,(HL) を実行し、内部レジスタ MEMPTR(WZ) の値を F の X/Y で見る。z80memptr 相当。
+- R800 : 公開フラグのみ（z80doc 相当）。R800 で定義の異なる命令はスキップし、ADD/ADC/SBC HL の H と BIT の S/P は比較しない。
+
+実装:
+- エンジン（zt_*.bin）は type 3 レコードとして ROM に置き、C400h に転送して実行する。
+  各テスト（type 2 レコード）は、名前・期待 CRC（代替 CRC と注記ラベル付き）・テストベクタを持つ。
+- ポート FEh を使う IN/OUT 系テストは、PSG のポート（IN = A2h、OUT = A1h、R#0 = BFh）に置き換えている。
+- 期待 CRC は、同じエンジンを Python の Z80 モデル（kosarev `z80`）で実行して求める。
+  このモデルにない Zilog の挙動は、テスト対象の命令を 1 命令ずつ実行して補正している。
+  - Q: SCF/CCF の X/Y = ((Q xor F) or A)
+  - INI/IND の MEMPTR = BC ± 1
+  - 中断されたブロックリピート命令（`->NOP'` の項目）: X/Y = PC の上位バイト、INxR/OTxR の H/PV の変化、MEMPTR = PC + 1
+- 補正後の値は、原版と同じアドレス配置で実行すると、tests.asm に書かれている実機（Zilog）の CRC と一致することを確認した。
+- 次の場合は旧来の挙動も可とし、注記行を出す（エラーには数えない）。
+  - `=NOQ`: Q を持たない CPU の結果
+  - `=OLD`: 中断されたブロック命令でフラグが変化しない CPU の結果
+- NG の場合は `G:`（実測 CRC）と `E:`（期待 CRC）を表示する。CRC なので、どの組み合わせで違ったかは分からない。
 
 ## 画面
 - 1 行目: `TOT`（総テスト項目数） / `DONE`（実施済み） / `ERR`（エラー項目数）を常時表示。
@@ -78,3 +107,8 @@ Python 3 と、Z80 エミュレータパッケージ `z80` が必要。
 ## 検証状況
 - openMSX: Panasonic FS-A1GT で 3586 項目すべて ERR 0（エミュレータ上で約 5 分）。
   Panasonic FS-A1WSX で Z80 の 1802 項目が ERR 0。
+- z80test 追加後（4184 項目）の openMSX FS-A1GT: ERR 129（エミュレータ上で約 19 分）。R800 は全項目 OK。
+  NG はすべて openMSX の Z80 の簡略化によるもの。
+  - `Q` の 120 件余りと `ZT SCF/CCF` 系 4 件: openMSX は SCF/CCF の X/Y を (F or A) としている。
+  - `WZ INIR/INDR->NOP'`: openMSX はリピート中の MEMPTR を BC + 1 としている。
+  - `ZT LDIR/LDDR/INIR/INDR->NOP'` は `=OLD` の注記になる。

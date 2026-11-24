@@ -89,6 +89,8 @@ t_na			:= WORK + 0x2A
 t_frow			:= WORK + 0x2B
 t_arow			:= WORK + 0x2C
 z80_count		:= WORK + 0x2D		; 2
+zt_got			:= WORK + 0x2F		; 4 ( z80test CRC, MSB first )
+zt_ncrc			:= WORK + 0x33
 name_buf		:= WORK + 0x40		; 32
 stat_buf		:= WORK + 0x60		; 96 (32 entries)
 flist_buf		:= WORK + 0xC0		; 16
@@ -434,7 +436,17 @@ run_suite:
 			or		a, a
 			jr		z, run_suite_vector
 			cp		a, 1
+			jr		z, run_suite_alu
+			cp		a, 2
+			jr		z, run_suite_zt
+			cp		a, 3
 			jp		nz, bad_stream
+			call	zt_load
+			jr		run_suite
+run_suite_zt:
+			call	zt_run
+			jr		run_suite
+run_suite_alu:
 			call	alu_test
 			jr		run_suite
 run_suite_vector:
@@ -957,6 +969,164 @@ alu_report_end:
 			ret
 
 ; ----------------------------------------------------------------------------
+;	z80test port ( zt_engine.asm )
+; ----------------------------------------------------------------------------
+;	[03][length 16][engine image] : load the engine to ZT_ADDR and call zt_init
+zt_load:
+			call	rd_word
+			ld		b, h
+			ld		c, l
+			ld		de, ZT_ADDR
+zt_load_loop:
+			call	rd_byte
+			ld		[de], a
+			inc		de
+			dec		bc
+			ld		a, b
+			or		a, c
+			jr		nz, zt_load_loop
+			ld		hl, [ZT_ADDR + 0]
+			jp		hl
+
+;	[02][name 0][ncrc]{[crc 4 (MSB first)][label 0]}*ncrc[reclen][record]
+zt_run:
+			call	read_name
+			call	show_progress
+			call	rd_byte
+			ld		[zt_ncrc], a
+			ld		b, a
+			ld		de, stat_buf
+zt_run_crc:
+			push	bc
+			ld		b, 4
+zt_run_crc_val:
+			call	rd_byte
+			ld		[de], a
+			inc		de
+			djnz	zt_run_crc_val
+zt_run_crc_label:
+			call	rd_byte
+			ld		[de], a
+			inc		de
+			or		a, a
+			jr		nz, zt_run_crc_label
+			pop		bc
+			djnz	zt_run_crc
+			call	rd_byte
+			ld		b, a
+			ld		de, ZT_REC
+zt_run_rec:
+			call	rd_byte
+			ld		[de], a
+			inc		de
+			djnz	zt_run_rec
+			call	test_begin
+
+			xor		a, a
+			out		[PSG_ADDR], a
+			ld		a, 0xBF
+			out		[PSG_WRITE], a
+			call	zt_call
+			defb	0xED, 0x56					; im 1
+			di
+			ld		hl, zt_got
+			ld		[hl], b
+			inc		hl
+			ld		[hl], c
+			inc		hl
+			ld		[hl], d
+			inc		hl
+			ld		[hl], e
+			ld		hl, 1
+			ld		[vec_no], hl
+
+			ld		a, [zt_ncrc]
+			ld		b, a
+			ld		hl, stat_buf
+zt_run_cmp:
+			push	bc
+			ld		de, zt_got
+			ld		bc, 0x0400
+zt_run_cmp_byte:
+			ld		a, [de]
+			xor		a, [hl]
+			or		a, c
+			ld		c, a
+			inc		de
+			inc		hl
+			djnz	zt_run_cmp_byte
+			ld		a, c
+			pop		bc
+			or		a, a
+			jr		z, zt_run_match
+zt_run_cmp_skip:
+			ld		a, [hl]
+			inc		hl
+			or		a, a
+			jr		nz, zt_run_cmp_skip
+			djnz	zt_run_cmp
+			call	print_zt_ng
+			ld		hl, [err_cnt]
+			inc		hl
+			ld		[err_cnt], hl
+			jp		test_end
+
+zt_run_match:
+			ld		a, [hl]
+			or		a, a
+			jp		z, test_end
+			push	hl
+			call	lb_clear
+			ld		de, msg_indent
+			call	lb_str
+			call	lb_cpu
+			ld		de, name_buf
+			call	lb_str
+			ld		de, msg_zt_as
+			call	lb_str
+			pop		de
+			call	lb_str
+			call	emit_line
+			jp		test_end
+
+zt_call:
+			ld		hl, [ZT_ADDR + 2]
+			push	hl
+			ld		hl, ZT_REC
+			ret
+
+print_zt_ng:
+			call	lb_clear
+			ld		de, msg_ng
+			call	lb_str
+			call	lb_cpu
+			ld		de, name_buf
+			call	lb_str
+			call	emit_line
+			call	lb_clear
+			ld		de, msg_indent
+			call	lb_str
+			ld		de, msg_got
+			call	lb_str
+			ld		hl, zt_got
+			call	lb_hex32
+			ld		de, msg_exp
+			call	lb_str
+			ld		hl, stat_buf
+			call	lb_hex32
+			jp		emit_line
+
+;	input: hl = 4 bytes ( MSB first )
+lb_hex32:
+			ld		b, 4
+lb_hex32_loop:
+			ld		a, [hl]
+			call	lb_hex8
+			inc		hl
+			djnz	lb_hex32_loop
+			ret
+
+; ----------------------------------------------------------------------------
 ;	screen
 ; ----------------------------------------------------------------------------
 init_screen:
@@ -1231,6 +1401,8 @@ msg_alu_f:
 			defb	"  F:", 0
 msg_alu_a:
 			defb	" A:", 0
+msg_zt_as:
+			defb	" =", 0
 msg_summary:
 			defb	" -> NG ", 0
 msg_no_r800:

@@ -153,3 +153,68 @@ ASCII8K 512KB メガROM `cpu_test.rom` を作成した。openMSX 上での検証
 1. GOWIN EDA で再合成し、実機で cpu_test.rom を実行する。
    - Z80 のエラー数と、R800 のテストに移れるかを確認する。
 2. 残ったエラーがあれば、項目名と I/E/G の値から切り分ける。
+
+## 2026-11-24 z80test の移植
+
+実機で Z80 / R800 とも全項目 PASS したが、「魔界島」「ファミスタ」が途中で暴走する。
+そこで raxoft/z80test（MIT ライセンス）のテストを CPU_TEST に移植した。
+
+### 1. 追加したテスト
+- Z80: `ZT`（全フラグ・全レジスタ）、`Q`（Q レジスタ）、`WZ`（MEMPTR）を各 155 項目
+- R800: 公開フラグのみを 133 項目（R800 で定義の異なる命令、SLL、DD/FD NOP はスキップ）
+- 合計 4184 項目（Z80 2267 / R800 1917）、ROM 434KB
+- 実機では Z80 の実行時間が数分〜10 分程度延びる見込み
+
+### 2. 期待値の作り方
+- エンジン（idea.asm）を zt_engine.asm として ZMA 構文に移植し、C400h で実行する。
+- 期待 CRC は、同じエンジンを kosarev の Z80 モデルで実行して求める。
+- モデルにない Zilog の挙動（Q、INI/IND の MEMPTR、中断されたブロックリピート命令のフラグ）は Python 側で補正した。
+- 原版と同じ配置で実行すると、tests.asm に書かれた実機の CRC と一致することを確認した。
+
+### 3. openMSX（FS-A1GT）での結果
+- ERR 129、R800 は全項目 OK。
+- NG は openMSX の SCF/CCF（X/Y = F or A）と、INIR のリピート中の MEMPTR の簡略化によるもの。
+- ランナーの type 2 / type 3 レコードの処理、NG と注記の表示は正常に動作した。
+
+### 4. 次の作業
+1. 実機で cpu_test.rom を実行し、`ZT` / `Q` / `WZ` / R800 の NG を確認する。
+   - `ZT` と R800 の NG は、ソフトが読めるレジスタ値やフラグの違いを示す。
+   - `Q` / `WZ` のレジスタそのものはソフトから読めない。ただし、SCF/CCF 後の F の bit5/bit3（Q 由来）や、BIT n,(HL) 後の F の bit5/bit3（WZ 由来）はソフトから読める。
+   - ゲームがこれらのフラグに依存しているかは不明なので、NG が出たら影響の有無は個別に確認する。
+
+## 2026-11-24 cz80 に MEMPTR（WZ）を実装（夜）
+
+実機（cz80）で z80test 移植版を実行したところ、ERR 17。すべて `WZ` 系だった。
+- ADD HL/IX/IY,RR、ADC/SBC HL,RR
+- IN A,(N)、IN R,(C)、IN (C)、INI、IND
+- OUT (N),A、OUT (C),R、OUT (C),0、OUTI、OUTD
+- LD (BC/DE),A、LD (NN),A
+
+`Q` は全項目 `=NOQ`、`ZT SCF/CCF` は `=NEC`、`ZT ...->NOP'` は `=OLD`（注記のみで、エラーには数えない）。
+
+### 1. 原因
+- cz80（T80 ベース）には MEMPTR の実体がなく、`BIT n,(HL)` の X/Y が常に 0 になっていた。
+- 通っていた WZ 項目は、たまたま WZ の bit13/11 が 0 だっただけ。
+
+### 2. 修正（src\cz80\cz80.v）
+- `ff_wz` を追加した。命令の実行中にアクセスアドレスや読み出しデータを記録し、次の M1 の T2 で命令ごとの規則に従って WZ を更新する。
+  - LD A,(BC/DE/nn)、IN A,(n)、IN r,(C)、OUT (C),r、RLD/RRD：アクセスアドレス + 1
+  - LD (BC/DE/nn),A、OUT (n),A：{A, (アドレス + 1) の下位}
+  - LD (nn),rr / LD rr,(nn)：nn + 1
+  - ADD/ADC/SBC HL,rr：演算前の HL + 1
+  - EX (SP),HL：新しい HL
+  - JP / CALL（条件不成立を含む）：nn
+  - RET / RST / JR / DJNZ（分岐時）、割り込み：分岐先
+  - (IX/IY+d)：IX/IY+d
+  - CPI/CPD：±1、INI/IND：演算前の BC ±1、OUTI/OUTD：演算後の BC ±1
+  - ブロック命令のリピート中：PC + 1
+- `BIT n,(HL)` の X/Y を `ff_wz[11]` / `ff_wz[13]` から出すようにした。
+
+### 3. 検証
+- `make_rtl_vectors.py` で、命令の実行直後の期待 WZ もベクタに出力するようにした（kosarev モデルを 1 命令ずつ実行し、INI/IND とリピート中の値を補正）。
+- `cz80\test_003\tb.sv` で、命令の実行直後に cz80 の `ff_wz` を期待値と比較するようにした（R800 では比較しない）。
+- cz80 回帰（WZ 比較あり）、cr800 回帰ともエラー 0。
+
+### 4. 次の作業
+1. GOWIN EDA で再合成し、実機で cpu_test.rom を実行して `WZ` の NG が 0 になるか確認する。
+2. 魔界島・ファミスタの暴走が改善するか確認する。

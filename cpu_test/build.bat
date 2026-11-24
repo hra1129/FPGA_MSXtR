@@ -8,6 +8,10 @@ zma.exe stub.asm stub.bin
 if errorlevel 1 goto error
 zma.exe cpu_test.asm runner.bin
 if errorlevel 1 goto error
+for %%v in (full ccf memptr doc) do (
+	zma.exe zt_%%v.asm zt_%%v.bin
+	if errorlevel 1 goto error
+)
 python make_tests.py runner.bin stub.bin cpu_test.rom
 if errorlevel 1 goto error
 echo Build completed.

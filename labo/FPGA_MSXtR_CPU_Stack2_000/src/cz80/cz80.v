@@ -132,6 +132,19 @@ module cz80 (
 	wire			regwel;
 	reg				alternate;
 
+	//	MEMPTR (WZ): visible through X/Y flags of BIT n,(HL)
+	reg		[15:0]	ff_wz;
+	reg		[15:0]	wz_acc;				// address of the last memory/IO access of the instruction
+	reg		[15:0]	wz_io;				// address of the last I/O access of the instruction
+	reg		[15:0]	wz_rp;				// register pair on bus A in M2 (HL/IX/IY of ADD/ADC/SBC)
+	reg		[7:0]	wz_d2;				// data read in M2
+	reg		[7:0]	wz_d3;				// data read in M3
+	reg		[7:0]	wz_d4;				// data read in M4
+	reg		[15:0]	wz_ipc;				// address of the first byte of the instruction
+	reg				wz_jump;			// jump, call, return, restart or interrupt executed
+	reg				wz_xy;				// IX/IY+d address calculated
+	wire			wz_update;
+
 	// help registers
 	reg		[15:0]	tmpaddr;			// temporary address register
 	reg		[7:0]	ir;					// instruction register
@@ -650,6 +663,11 @@ module cz80 (
 				f[flag_x] <= tmpaddr[11];
 				f[flag_y] <= tmpaddr[13];
 			end
+			//	BIT b,(HL): X/Y come from the high byte of MEMPTR
+			if( alu_op_r == 4'b1001 && xy_state == 2'b00 && iset == 2'b01 && ir[2:0] == 3'd6 ) begin
+				f[flag_x] <= ff_wz[11];
+				f[flag_y] <= ff_wz[13];
+			end
 			if( i_blkio && mcycle == 3'd3 && tstate == 3'd2 ) begin
 				blkio_l <= id16[7:0];
 			end
@@ -711,6 +729,123 @@ module cz80 (
 				endcase
 				if( xybit_undoc == 1'b1 ) begin
 					ff_do <= alu_q;
+				end
+			end
+		end
+	end
+
+	// --------------------------------------------------------------------
+	//	MEMPTR (WZ)
+	//	The accesses of an instruction are recorded while it is executed,
+	//	and WZ is updated at the T2 of the next M1 cycle (when ir/iset still
+	//	hold the finished instruction).
+	// --------------------------------------------------------------------
+	assign wz_update	= ( mcycle == 3'd1 && tstate == 3'd2 && wait_n );
+
+	always @( posedge clk_n ) begin
+		if( !reset_n ) begin
+			ff_wz	<= 16'd0;
+			wz_acc	<= 16'd0;
+			wz_io	<= 16'd0;
+			wz_rp	<= 16'd0;
+			wz_d2	<= 8'd0;
+			wz_d3	<= 8'd0;
+			wz_d4	<= 8'd0;
+			wz_ipc	<= 16'd0;
+			wz_jump	<= 1'b0;
+			wz_xy	<= 1'b0;
+		end
+		else if( clken ) begin
+			if( wz_update ) begin
+				wz_jump	<= 1'b0;
+				wz_xy	<= 1'b0;
+				if( prefix == 2'b00 ) begin
+					wz_ipc <= pc;
+				end
+				if( wz_xy ) begin
+					ff_wz <= tmpaddr;
+				end
+				else if( iset == 2'b00 ) begin
+					casez( ir )
+					8'h0A, 8'h1A, 8'h3A, 8'hDB:				//	LD A,(BC/DE/nn), IN A,(n)
+						ff_wz <= wz_acc + 16'd1;
+					8'h02, 8'h12, 8'h32, 8'hD3:				//	LD (BC/DE/nn),A, OUT (n),A
+						ff_wz <= { acc, wz_acc[7:0] + 8'd1 };
+					8'h22, 8'h2A:							//	LD (nn),HL, LD HL,(nn)
+						ff_wz <= wz_acc;
+					8'b00??1001:							//	ADD HL,rr
+						ff_wz <= wz_rp + 16'd1;
+					8'hE3:									//	EX (SP),HL
+						ff_wz <= { wz_d4, wz_d2 };
+					8'hC3, 8'hCD, 8'b11???010, 8'b11???100:	//	JP (cc,)nn, CALL (cc,)nn
+						ff_wz <= { wz_d3, wz_d2 };
+					default:
+						if( wz_jump ) begin
+							ff_wz <= pc;
+						end
+					endcase
+				end
+				else if( iset == 2'b10 ) begin
+					casez( ir )
+					8'b01???000, 8'b01???001,				//	IN r,(C), OUT (C),r
+					8'h67, 8'h6F:							//	RRD, RLD
+						ff_wz <= wz_acc + 16'd1;
+					8'b01??0010, 8'b01??1010:				//	SBC HL,rr, ADC HL,rr
+						ff_wz <= wz_rp + 16'd1;
+					8'b01??0011, 8'b01??1011:				//	LD (nn),rr, LD rr,(nn)
+						ff_wz <= wz_acc;
+					8'b101??000:							//	LDI, LDD, LDIR, LDDR
+						if( pc == wz_ipc ) begin
+							ff_wz <= pc + 16'd1;
+						end
+					8'b101??001:							//	CPI, CPD, CPIR, CPDR
+						if( pc == wz_ipc ) begin
+							ff_wz <= pc + 16'd1;
+						end
+						else begin
+							ff_wz <= ir[3] ? ( ff_wz - 16'd1 ) : ( ff_wz + 16'd1 );
+						end
+					8'b101??010, 8'b101??011:				//	INI, IND, OUTI, OUTD (and repeats)
+						if( pc == wz_ipc ) begin
+							ff_wz <= pc + 16'd1;
+						end
+						else begin
+							ff_wz <= ir[3] ? ( wz_io - 16'd1 ) : ( wz_io + 16'd1 );
+						end
+					default:
+						if( wz_jump ) begin
+							ff_wz <= pc;
+						end
+					endcase
+				end
+				else if( wz_jump ) begin
+					ff_wz <= pc;
+				end
+			end
+			else begin
+				if( t_res && mcycle != 3'd1 ) begin
+					wz_acc <= ff_a;
+					if( iorq_i ) begin
+						wz_io <= ff_a;
+					end
+					if( mcycle == 3'd2 ) begin
+						wz_rp <= regbusa;
+					end
+					if( mcycle == 3'd6 ) begin
+						wz_xy <= 1'b1;
+					end
+				end
+				if( tstate == 3'd3 && mcycle == 3'd2 ) begin
+					wz_d2 <= di_reg;
+				end
+				if( tstate == 3'd3 && mcycle == 3'd3 ) begin
+					wz_d3 <= di_reg;
+				end
+				if( tstate == 3'd3 && mcycle == 3'd4 ) begin
+					wz_d4 <= di_reg;
+				end
+				if( ( mcycle != 3'd1 || tstate > 3'd2 ) && ( jump || jumpe || call || rstp || intcycle || nmicycle ) ) begin
+					wz_jump <= 1'b1;
 				end
 			end
 		end
