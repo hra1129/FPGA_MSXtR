@@ -167,6 +167,13 @@ module cz80 (
 	reg				auto_wait_t2;
 	reg				incdecz;
 
+	//	INI/IND/OUTI/OUTD (and repeats) undocumented flags
+	wire			i_blkio;
+	reg		[7:0]	blkio_l;
+	wire	[7:0]	blkio_base;
+	wire	[8:0]	blkio_k;
+	wire	[2:0]	blkio_pv;
+
 	// alu signals
 	reg		[7:0]	busb;
 	reg		[7:0]	busa;
@@ -323,6 +330,12 @@ module cz80 (
 	assign save_mux			= exchangerp ? busb: (save_alu_r ? alu_q: di_reg);
 
 	assign indexed_opcode_fetch = (iset == 2'b01) && (mcycle == 3'b111);
+
+	//	k = data + (C+-1) for INI/IND, data + L(after HL update) for OUTI/OUTD
+	assign i_blkio		= ( iset == 2'b10 && (ir & 8'hE6) == 8'hA2 );
+	assign blkio_base	= ir[0] ? blkio_l : ( ir[3] ? (regbusb[7:0] - 8'd1) : (regbusb[7:0] + 8'd1) );
+	assign blkio_k		= { 1'b0, ff_do } + { 1'b0, blkio_base };
+	assign blkio_pv		= blkio_k[2:0] ^ regbusb[10:8];
 
 	always @( posedge clk_n ) begin
 		if( !reset_n ) begin
@@ -589,6 +602,8 @@ module cz80 (
 							f[flag_h] <= 1'b0;
 							f[flag_s] <= i[7];
 							f[flag_z] <= ( i == 8'h00 );
+							f[flag_y] <= i[5];
+							f[flag_x] <= i[3];
 						end
 					2'b01:
 						begin
@@ -598,6 +613,8 @@ module cz80 (
 							f[flag_h] <= 1'b0;
 							f[flag_s] <= r[7];
 							f[flag_z] <= ( r == 8'h00 );
+							f[flag_y] <= r[5];
+							f[flag_x] <= r[3];
 						end
 					2'b10:
 						i <= acc;
@@ -623,8 +640,24 @@ module cz80 (
 					f[flag_z] <= 1'b0;
 				end
 				f[flag_s] <= di_reg[7];
+				f[flag_y] <= di_reg[5];
+				f[flag_x] <= di_reg[3];
 				f[flag_p] <= ~(di_reg[0] ^ di_reg[1] ^ di_reg[2] ^ di_reg[3] ^
 					di_reg[4] ^ di_reg[5] ^ di_reg[6] ^ di_reg[7]);
+			end
+			//	BIT b,(IX/IY+d): X/Y come from the high byte of IX/IY+d (including undocumented r != 6)
+			if( alu_op_r == 4'b1001 && xy_state != 2'b00 ) begin
+				f[flag_x] <= tmpaddr[11];
+				f[flag_y] <= tmpaddr[13];
+			end
+			if( i_blkio && mcycle == 3'd3 && tstate == 3'd2 ) begin
+				blkio_l <= id16[7:0];
+			end
+			if( i_blkio && mcycle == 3'd3 && tstate == 3'd3 ) begin
+				f[flag_n] <= ff_do[7];
+				f[flag_h] <= blkio_k[8];
+				f[flag_c] <= blkio_k[8];
+				f[flag_p] <= ~^{ regbusb[15:11], blkio_pv };
 			end
 
 			if( tstate == 1 && auto_wait_t1 == 1'b0 ) begin
@@ -734,6 +767,8 @@ module cz80 (
 			// 16 bit increment/decrement
 			( (tstate == 3'd2 || (tstate == 3'd3 && mcycle == 3'd1 && incdec_16[2])) && xy_state       == 2'd0 ) ? { alternate, incdec_16[1:0] }:
 			( (tstate == 3'd2 || (tstate == 3'd3 && mcycle == 3'd1 && incdec_16[2])) && incdec_16[1:0] == 2'd2 ) ? { xy_state[1], 2'b11 }:
+			//	DD/FD INC/DEC BC/DE: IX/IY prefix does not replace BC/DE
+			( (tstate == 3'd2 || (tstate == 3'd3 && mcycle == 3'd1)) && incdec_16[2] && !incdec_16[1] ) ? { alternate, incdec_16[1:0] }:
 			// ex hl,dl
 			( exchangedh && tstate == 3'd3 ) ? { alternate, 2'b10 }:
 			( exchangedh && tstate == 3'd4 ) ? { alternate, 2'b01 }:
@@ -835,7 +870,7 @@ module cz80 (
 			4'b1101:
 				busb <= pc[15:8];
 			4'b1110:
-				busb <= 8'h00;
+				busb <= 8'hFF;		//	OUT (C),0 outputs FFh on CMOS Z80 (T9769)
 			default:
 				busb <= 8'hXX;
 			endcase

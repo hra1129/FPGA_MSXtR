@@ -23,3 +23,5 @@ transcript
 no_os_fatfs-src
 *.d
 build
+__pycache__
+vectors.txt

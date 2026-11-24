@@ -2029,6 +2029,9 @@ module cr800_mcode (
 			case( irb )
 			8'hA1, 8'hA9, 8'hB1, 8'hB9:
 				func_preservec = ( mcycle == 3'd2 );
+			//	R800 block I/O: B-1 updates Z (and N) only, C is preserved
+			8'hA2, 8'hAA, 8'hB2, 8'hBA, 8'hA3, 8'hAB, 8'hB3, 8'hBB:
+				func_preservec = ( mcycle == 3'd1 );
 			default:
 				func_preservec = 1'b0;
 			endcase

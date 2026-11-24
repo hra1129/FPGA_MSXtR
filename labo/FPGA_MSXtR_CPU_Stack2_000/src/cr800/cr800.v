@@ -146,6 +146,7 @@ module cr800 (
 	reg				multiply_bank;
 	reg		[31:0]	multiply_product;
 	reg			multiply_commit_step;
+	wire			r800_idx_nop;
 
 	// help registers
 	reg		[15:0]	tmpaddr;			// temporary address register
@@ -339,7 +340,8 @@ module cr800 (
 	assign multiply_start = cen && !busack && !multiply_busy && mcycle == 3'd1 &&
 		tstate == 3'd2 && wait_n && iset == 2'b00 && ir == 8'hED &&
 		dinst[7:6] == 2'b11 &&
-		(((dinst[2:0] == 3'b001) && (dinst[5:3] <= 3'd3)) || (dinst[2:0] == 3'b011));
+		(((dinst[2:0] == 3'b001) && (dinst[5:3] <= 3'd3)) ||
+		 ((dinst[2:0] == 3'b011) && (dinst[5:3] == 3'd0 || dinst[5:3] == 3'd6)));
 	assign multiply_pair_address_a = (dinst[2:0] == 3'b001) ? { 1'b0, dinst[4] } : dinst[5:4];
 	assign multiply_pair_address_b = 2'd2;
 	assign multiply_byte_operand = dinst[3] ? multiply_data_a[7:0] : multiply_data_a[15:8];
@@ -350,6 +352,44 @@ module cr800 (
 	assign multiply_commit = cen && !busack && multiply_busy;
 	assign multiply_commit_final = multiply_commit &&
 		(!multiply_word || multiply_commit_step == 1'b1);
+
+	//	R800: DD/FD followed by an opcode that does not use HL/(HL) is a 2-byte NOP
+	function func_hl_affected(
+		input	[7:0]	op
+	);
+		reg		[1:0]	x;
+		reg		[2:0]	y;
+		reg		[2:0]	z;
+	begin
+		x = op[7:6];
+		y = op[5:3];
+		z = op[2:0];
+		case( x )
+		2'd0:
+			if( z == 3'd1 ) begin
+				func_hl_affected = (y[0] == 1'b1) || (y[2:1] == 2'd2);
+			end
+			else if( z == 3'd2 || z == 3'd3 ) begin
+				func_hl_affected = (y[2:1] == 2'd2);
+			end
+			else if( z == 3'd4 || z == 3'd5 || z == 3'd6 ) begin
+				func_hl_affected = (y == 3'd4 || y == 3'd5 || y == 3'd6);
+			end
+			else begin
+				func_hl_affected = 1'b0;
+			end
+		2'd1:
+			func_hl_affected = (y == 3'd4 || y == 3'd5 || y == 3'd6 || z == 3'd4 || z == 3'd5 || z == 3'd6);
+		2'd2:
+			func_hl_affected = (z == 3'd4 || z == 3'd5 || z == 3'd6);
+		default:
+			func_hl_affected = (op == 8'hE1 || op == 8'hE5 || op == 8'hE3 || op == 8'hE9 || op == 8'hF9 ||
+								op == 8'hCB || op == 8'hDD || op == 8'hED || op == 8'hFD);
+		endcase
+	end
+	endfunction
+
+	assign r800_idx_nop = (prefix == 2'b11) && (xy_state == 2'b00) && !func_hl_affected( dinst ) && (dinst != 8'h76);
 
 	always @( posedge clk_n ) begin
 		if( !reset_n ) begin
@@ -429,6 +469,9 @@ module cr800 (
 					else if( halt_ff == 1'b1 || (intcycle == 1'b1 && istatus == 2'b10) || nmicycle == 1'b1 ) begin
 						ir <= 8'h00;
 					end
+					else if( r800_idx_nop ) begin
+						ir <= 8'h00;
+					end
 					else begin
 						ir <= dinst;
 					end
@@ -436,7 +479,7 @@ module cr800 (
 					iset <= 2'b00;
 					if( prefix != 2'b00 ) begin
 						if( prefix == 2'b11 ) begin
-							if( xy_state != 2'b00 ) begin
+							if( xy_state != 2'b00 || r800_idx_nop ) begin
 								xy_state <= 2'b00;
 								xy_ind <= 1'b0;
 							end

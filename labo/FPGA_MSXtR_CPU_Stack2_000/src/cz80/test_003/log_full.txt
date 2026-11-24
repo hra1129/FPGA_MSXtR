@@ -1,0 +1,19 @@
+# vsim -c -t 1ps -l log_full.txt tb -do "run -all; quit -f" 
+# Start time: 18:27:49 on Nov 24,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.cz80_inst
+# Loading work.cz80
+# Loading work.cz80_mcode
+# Loading work.cz80_alu
+# Loading work.cz80_registers
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_cpu'.  Expected 27, found 26.
+#    Time: 0 ps  Iteration: 0  Instance: /tb/u_cpu File: tb.sv Line: 112
+# ** Warning: (vsim-3722) tb.sv(112): [TFMPC] - Missing connection for port 'debug_sp'.
+# run -all
+# RESULT: vectors=5153 errors=0 failed_tests=0
+# PASS
+# ** Note: $finish    : tb.sv(265)
+#    Time: 999796626840 ps  Iteration: 1  Instance: /tb
+# End time: 18:31:25 on Nov 24,2026, Elapsed time: 0:03:36
+# Errors: 0, Warnings: 2

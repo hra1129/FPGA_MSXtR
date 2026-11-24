@@ -543,10 +543,9 @@ module cr800_inst #(
 					if( ff_eng_t == 3'd1 && state_count == 4'd7 ) begin
 						ff_rd_n <= 1'b0;
 					end
-					if( ff_eng_t == 3'd2 && state_count == 4'd1 ) begin
-						ff_merq_n <= 1'b1;
-					end
 					if( ff_eng_t == 3'd3 && state_count == 4'd11 ) begin
+						//	/MREQ と /RD は slot_d のラッチと同じ T3 立ち上がりで解除 (SLTSL もここまで保持)
+						ff_merq_n <= 1'b1;
 						ff_rd_n <= 1'b1;
 					end
 					if( ff_eng_t == 3'd4 && state_count == 4'd1 ) begin

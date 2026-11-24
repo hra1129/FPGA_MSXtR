@@ -1,0 +1,226 @@
+# vsim -c -t 1ps -l log_full.txt tb -do "run -all; quit -f" 
+# Start time: 18:28:24 on Nov 24,2026
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.cr800_inst
+# Loading work.r800_rom_cache
+# Loading work.cr800
+# Loading work.cr800_mcode
+# Loading work.cr800_alu
+# Loading work.cr800_registers
+# Loading work.r800_cache_ram
+# run -all
+# NG: INI
+#  vec=0 off=0 expected=43 got=42 (in: F=45 A=1a B=01 C=a2)
+# NG: OUTI
+#  vec=0 off=0 expected=03 got=02 (in: F=0d A=55 B=07 C=a1)
+# NG: OUTI
+#  vec=1 off=0 expected=03 got=02 (in: F=4d A=3c B=02 C=a1)
+# NG: OUTI
+#  vec=2 off=0 expected=03 got=02 (in: F=93 A=31 B=07 C=a1)
+# NG: OUTD
+#  vec=1 off=0 expected=43 got=42 (in: F=09 A=0b B=01 C=a1)
+# NG: OUTD
+#  vec=2 off=0 expected=03 got=02 (in: F=dd A=1a B=03 C=a1)
+# NG: INIR
+#  vec=1 off=0 expected=43 got=42 (in: F=39 A=a8 B=07 C=a2)
+# NG: INIR
+#  vec=2 off=0 expected=43 got=42 (in: F=6f A=3d B=01 C=a2)
+# NG: OTIR
+#  vec=0 off=0 expected=43 got=42 (in: F=e3 A=07 B=07 C=a1)
+# NG: OTIR
+#  vec=1 off=0 expected=43 got=42 (in: F=49 A=18 B=03 C=a1)
+# NG: OTIR
+#  vec=2 off=0 expected=43 got=42 (in: F=e9 A=66 B=03 C=a1)
+# NG: INDR
+#  vec=0 off=0 expected=43 got=42 (in: F=e9 A=1f B=07 C=a2)
+# NG: OTDR
+#  vec=0 off=0 expected=43 got=42 (in: F=55 A=6c B=01 C=a1)
+# NG: OTDR
+#  vec=1 off=0 expected=43 got=42 (in: F=83 A=06 B=07 C=a1)
+# NG: NOP(U) EDCB
+#  vec=0 off=0 expected=c4 got=01 (in: F=e4 A=90 B=77 C=95)
+# NG: NOP(U) EDCB
+#  vec=0 off=4 expected=4b got=14 (in: F=e4 A=90 B=77 C=95)
+# NG: NOP(U) EDCB
+#  vec=0 off=5 expected=f6 got=35 (in: F=e4 A=90 B=77 C=95)
+# NG: NOP(U) EDCB
+#  vec=0 off=6 expected=a2 got=4a (in: F=e4 A=90 B=77 C=95)
+# NG: NOP(U) EDCB
+#  vec=1 off=0 expected=57 got=13 (in: F=57 A=36 B=c4 C=d9)
+# NG: NOP(U) EDCB
+#  vec=1 off=4 expected=0d got=55 (in: F=57 A=36 B=c4 C=d9)
+# NG: NOP(U) EDCB
+#  vec=1 off=5 expected=a5 got=93 (in: F=57 A=36 B=c4 C=d9)
+# NG: NOP(U) EDCB
+#  vec=1 off=6 expected=9c got=3c (in: F=57 A=36 B=c4 C=d9)
+# NG: NOP(U) EDCB
+#  vec=1 off=7 expected=bf got=db (in: F=57 A=36 B=c4 C=d9)
+# NG: NOP(U) EDD3
+#  vec=0 off=4 expected=b6 got=2a (in: F=2b A=e6 B=21 C=d2)
+# NG: NOP(U) EDD3
+#  vec=0 off=5 expected=7e got=40 (in: F=2b A=e6 B=21 C=d2)
+# NG: NOP(U) EDD3
+#  vec=0 off=6 expected=a4 got=98 (in: F=2b A=e6 B=21 C=d2)
+# NG: NOP(U) EDD3
+#  vec=0 off=7 expected=81 got=e2 (in: F=2b A=e6 B=21 C=d2)
+# NG: NOP(U) EDD3
+#  vec=1 off=0 expected=c1 got=01 (in: F=e1 A=8e B=e0 C=1e)
+# NG: NOP(U) EDD3
+#  vec=1 off=5 expected=86 got=01 (in: F=e1 A=8e B=e0 C=1e)
+# NG: NOP(U) EDD3
+#  vec=1 off=6 expected=b0 got=30 (in: F=e1 A=8e B=e0 C=1e)
+# NG: NOP(U) EDD3
+#  vec=1 off=7 expected=02 got=3a (in: F=e1 A=8e B=e0 C=1e)
+# NG: NOP(U) EDDB
+#  vec=0 off=0 expected=86 got=03 (in: F=8e A=eb B=b4 C=98)
+# NG: NOP(U) EDDB
+#  vec=0 off=4 expected=e4 got=6c (in: F=8e A=eb B=b4 C=98)
+# NG: NOP(U) EDDB
+#  vec=0 off=5 expected=1c got=15 (in: F=8e A=eb B=b4 C=98)
+# NG: NOP(U) EDDB
+#  vec=0 off=6 expected=d3 got=ec (in: F=8e A=eb B=b4 C=98)
+# NG: NOP(U) EDDB
+#  vec=0 off=7 expected=bd got=23 (in: F=8e A=eb B=b4 C=98)
+# NG: NOP(U) EDDB
+#  vec=1 off=0 expected=57 got=13 (in: F=5f A=03 B=25 C=89)
+# NG: NOP(U) EDDB
+#  vec=1 off=4 expected=79 got=54 (in: F=5f A=03 B=25 C=89)
+# NG: NOP(U) EDDB
+#  vec=1 off=5 expected=98 got=09 (in: F=5f A=03 B=25 C=89)
+# NG: NOP(U) EDDB
+#  vec=1 off=6 expected=ab got=d3 (in: F=5f A=03 B=25 C=89)
+# NG: NOP(U) EDDB
+#  vec=1 off=7 expected=0f got=ef (in: F=5f A=03 B=25 C=89)
+# NG: NOP(U) EDE3
+#  vec=0 off=0 expected=57 got=13 (in: F=7f A=68 B=83 C=d4)
+# NG: NOP(U) EDE3
+#  vec=0 off=4 expected=e0 got=75 (in: F=7f A=68 B=83 C=d4)
+# NG: NOP(U) EDE3
+#  vec=0 off=5 expected=89 got=6b (in: F=7f A=68 B=83 C=d4)
+# NG: NOP(U) EDE3
+#  vec=0 off=6 expected=dc got=10 (in: F=7f A=68 B=83 C=d4)
+# NG: NOP(U) EDE3
+#  vec=0 off=7 expected=a5 got=55 (in: F=7f A=68 B=83 C=d4)
+# NG: NOP(U) EDE3
+#  vec=1 off=0 expected=95 got=11 (in: F=95 A=e5 B=2d C=02)
+# NG: NOP(U) EDE3
+#  vec=1 off=4 expected=54 got=92 (in: F=95 A=e5 B=2d C=02)
+# NG: NOP(U) EDE3
+#  vec=1 off=5 expected=f8 got=df (in: F=95 A=e5 B=2d C=02)
+# NG: NOP(U) EDE3
+#  vec=1 off=6 expected=3d got=89 (in: F=95 A=e5 B=2d C=02)
+# NG: NOP(U) EDE3
+#  vec=1 off=7 expected=ef got=f4 (in: F=95 A=e5 B=2d C=02)
+# NG: NOP(U) EDEB
+#  vec=0 off=0 expected=00 got=01 (in: F=28 A=21 B=c7 C=72)
+# NG: NOP(U) EDEB
+#  vec=0 off=4 expected=4d got=57 (in: F=28 A=21 B=c7 C=72)
+# NG: NOP(U) EDEB
+#  vec=0 off=5 expected=33 got=01 (in: F=28 A=21 B=c7 C=72)
+# NG: NOP(U) EDEB
+#  vec=0 off=6 expected=87 got=31 (in: F=28 A=21 B=c7 C=72)
+# NG: NOP(U) EDEB
+#  vec=0 off=7 expected=12 got=43 (in: F=28 A=21 B=c7 C=72)
+# NG: NOP(U) EDEB
+#  vec=1 off=0 expected=47 got=03 (in: F=4f A=66 B=ae C=ef)
+# NG: NOP(U) EDEB
+#  vec=1 off=4 expected=03 got=5c (in: F=4f A=66 B=ae C=ef)
+# NG: NOP(U) EDEB
+#  vec=1 off=5 expected=da got=0b (in: F=4f A=66 B=ae C=ef)
+# NG: NOP(U) EDEB
+#  vec=1 off=6 expected=ee got=44 (in: F=4f A=66 B=ae C=ef)
+# NG: NOP(U) EDEB
+#  vec=1 off=7 expected=35 got=69 (in: F=4f A=66 B=ae C=ef)
+# NG: NOP(U) EDFB
+#  vec=0 off=0 expected=57 got=13 (in: F=77 A=3e B=f0 C=f5)
+# NG: NOP(U) EDFB
+#  vec=0 off=4 expected=30 got=c8 (in: F=77 A=3e B=f0 C=f5)
+# NG: NOP(U) EDFB
+#  vec=0 off=5 expected=ba got=9e (in: F=77 A=3e B=f0 C=f5)
+# NG: NOP(U) EDFB
+#  vec=0 off=6 expected=61 got=ed (in: F=77 A=3e B=f0 C=f5)
+# NG: NOP(U) EDFB
+#  vec=0 off=7 expected=c3 got=bb (in: F=77 A=3e B=f0 C=f5)
+# NG: NOP(U) EDFB
+#  vec=1 off=0 expected=c0 got=01 (in: F=c8 A=45 B=39 C=98)
+# NG: NOP(U) EDFB
+#  vec=1 off=4 expected=e2 got=2b (in: F=c8 A=45 B=39 C=98)
+# NG: NOP(U) EDFB
+#  vec=1 off=5 expected=17 got=61 (in: F=c8 A=45 B=39 C=98)
+# NG: NOP(U) EDFB
+#  vec=1 off=6 expected=91 got=cc (in: F=c8 A=45 B=39 C=98)
+# NG: NOP(U) EDFB
+#  vec=1 off=7 expected=77 got=6a (in: F=c8 A=45 B=39 C=98)
+# NG: DD 01:NOP(R800)
+#  vec=0 off=2 expected=b7 got=c3 (in: F=7b A=25 B=2f C=b7)
+# NG: DD 01:NOP(R800)
+#  vec=0 off=3 expected=2f got=4e (in: F=7b A=25 B=2f C=b7)
+# NG: DD 01:NOP(R800)
+#  vec=0 off=20 expected=0d got=0b (in: F=7b A=25 B=2f C=b7)
+# NG: DD 01:NOP(R800)
+#  vec=0 off=24 expected=00 got=b8 (in: F=7b A=25 B=2f C=b7)
+# NG: DD 01:NOP(R800)
+#  vec=0 off=43 expected=0d got=06 (in: F=7b A=25 B=2f C=b7)
+# NG: DD 01:NOP(R800)
+#  vec=0 off=44 expected=11 got=c3 (in: F=7b A=25 B=2f C=b7)
+# NG: DD 01:NOP(R800)
+#  vec=1 off=2 expected=1a got=c3 (in: F=dd A=e0 B=94 C=1a)
+# NG: DD 01:NOP(R800)
+#  vec=1 off=3 expected=94 got=4e (in: F=dd A=e0 B=94 C=1a)
+# NG: DD 01:NOP(R800)
+#  vec=1 off=20 expected=09 got=07 (in: F=dd A=e0 B=94 C=1a)
+# NG: DD 01:NOP(R800)
+#  vec=1 off=24 expected=00 got=b8 (in: F=dd A=e0 B=94 C=1a)
+# NG: DD 01:NOP(R800)
+#  vec=1 off=39 expected=05 got=06 (in: F=dd A=e0 B=94 C=1a)
+# NG: DD 01:NOP(R800)
+#  vec=1 off=40 expected=30 got=c3 (in: F=dd A=e0 B=94 C=1a)
+# NG: DD 01:NOP(R800)
+#  vec=2 off=2 expected=fd got=c3 (in: F=5d A=6e B=bd C=fd)
+# NG: DD 01:NOP(R800)
+#  vec=2 off=3 expected=bd got=4e (in: F=5d A=6e B=bd C=fd)
+# NG: DD 01:NOP(R800)
+#  vec=2 off=20 expected=08 got=06 (in: F=5d A=6e B=bd C=fd)
+# NG: DD 01:NOP(R800)
+#  vec=2 off=24 expected=00 got=b8 (in: F=5d A=6e B=bd C=fd)
+# NG: DD 01:NOP(R800)
+#  vec=2 off=38 expected=8a got=06 (in: F=5d A=6e B=bd C=fd)
+# NG: DD 01:NOP(R800)
+#  vec=2 off=39 expected=90 got=c3 (in: F=5d A=6e B=bd C=fd)
+# NG: DD 03:NOP(R800)
+#  vec=0 off=2 expected=77 got=78 (in: F=0a A=7f B=8d C=77)
+# NG: DD 03:NOP(R800)
+#  vec=1 off=2 expected=4c got=4d (in: F=f7 A=8d B=3a C=4c)
+# NG: DD 03:NOP(R800)
+#  vec=2 off=2 expected=c8 got=c9 (in: F=79 A=df B=ab C=c8)
+# NG: DD 04:NOP(R800)
+#  vec=0 off=0 expected=c5 got=81 (in: F=ed A=0b B=ee C=13)
+# NG: DD 04:NOP(R800)
+#  vec=0 off=3 expected=ee got=ef (in: F=ed A=0b B=ee C=13)
+# NG: DD 04:NOP(R800)
+#  vec=1 off=0 expected=c4 got=80 (in: F=ec A=4a B=ce C=f2)
+# NG: DD 04:NOP(R800)
+#  vec=1 off=3 expected=ce got=cf (in: F=ec A=4a B=ce C=f2)
+# NG: DD 04:NOP(R800)
+#  vec=2 off=0 expected=04 got=00 (in: F=24 A=38 B=1b C=31)
+# NG: DD 04:NOP(R800)
+#  vec=2 off=3 expected=1b got=1c (in: F=24 A=38 B=1b C=31)
+# NG: DD 05:NOP(R800)
+#  vec=0 off=0 expected=14 got=02 (in: F=3c A=5c B=5f C=1d)
+# NG: DD 05:NOP(R800)
+#  vec=0 off=3 expected=5f got=5e (in: F=3c A=5c B=5f C=1d)
+# NG: DD 05:NOP(R800)
+#  vec=1 off=3 expected=03 got=02 (in: F=0b A=75 B=03 C=f3)
+# NG: DD 05:NOP(R800)
+#  vec=2 off=0 expected=57 got=83 (in: F=5f A=bf B=c7 C=d7)
+# NG: DD 05:NOP(R800)
+#  vec=2 off=3 expected=c7 got=c6 (in: F=5f A=bf B=c7 C=d7)
+# TIMEOUT: DD 06:NOP(R800)
+#  vec=0
+# RESULT: vectors=2130 errors=104 failed_tests=17
+# FAIL
+# ** Note: $finish    : ../../cz80/test_003/tb.sv(265)
+#    Time: 111828750840 ps  Iteration: 1  Instance: /tb
+# End time: 18:29:44 on Nov 24,2026, Elapsed time: 0:01:20
+# Errors: 0, Warnings: 0
