@@ -90,7 +90,7 @@
             "Type": "verilog"
         },
         {
-            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/fdc8566/fdc8566.v",
+            "Path": "C:/Users/hra/Documents/github/HRA_product/FPGA_MSXtR/labo/FPGA_MSXtR_CPU_Stack2_000/src/disk_if/disk_if.v",
             "Type": "verilog"
         },
         {

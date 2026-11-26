@@ -154,4 +154,35 @@ typedef struct {
 bool fpga_slot_trace_read( uint16_t index, fpga_slot_trace_t *trace );
 bool fpga_slot_trace_control( uint8_t control, uint8_t trigger_value );
 
+//	SPIコマンド20h〜24h: ディスクエミュレーター (disk_if)
+#define FPGA_LED_DISK_REQ				(1 << 4)
+#define FPGA_DISK_SECTOR_SIZE			512
+#define FPGA_DISK_STATUS_BUSY			(1 << 7)
+#define FPGA_DISK_STATUS_ERROR			(1 << 6)
+#define FPGA_DISK_STATUS_CHANGED		(1 << 5)
+#define FPGA_DISK_STATUS_READY			(1 << 4)
+#define FPGA_DISK_STATUS_WPROT			(1 << 3)
+#define FPGA_DISK_CMD_READ				0x01
+#define FPGA_DISK_CMD_WRITE				0x02
+#define FPGA_DISK_RESULT_ERROR			0x80
+#define FPGA_DISK_MEDIA_READY			(1 << 0)
+#define FPGA_DISK_MEDIA_WPROT			(1 << 1)
+#define FPGA_DISK_MEDIA_CHANGED			(1 << 7)
+
+typedef struct {
+	uint8_t		status;				//	FPGA_DISK_STATUS_*
+	uint8_t		seq;
+	uint8_t		command;			//	FPGA_DISK_CMD_*
+	uint8_t		drive;
+	uint8_t		media;
+	uint32_t	sector;
+} fpga_disk_info_t;
+
+bool fpga_disk_get_request( void );
+bool fpga_disk_get_info( fpga_disk_info_t *info );
+bool fpga_disk_read_buffer( uint8_t seq, uint8_t *data );
+bool fpga_disk_write_buffer( uint8_t seq, const uint8_t *data );
+bool fpga_disk_done( uint8_t seq, uint8_t result );
+bool fpga_disk_set_media( uint8_t media );
+
 #endif

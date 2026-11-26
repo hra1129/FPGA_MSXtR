@@ -12,27 +12,27 @@
   <Part Number>: GW5A-LV25MG121NC1/I0
   <Device>: GW5A-25
   <Device Version>: A
-  <Created Time>:Wed Nov 25 05:46:08 2026
+  <Created Time>:Thu Nov 26 21:41:37 2026
 
 
 2. PnR Details
 
   Running placement:
     Placement Phase 0: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
-    Placement Phase 1: CPU time = 0h 0m 0.515s, Elapsed time = 0h 0m 0.515s
-    Placement Phase 2: CPU time = 0h 0m 14s, Elapsed time = 0h 0m 14s
-    Placement Phase 3: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
-    Total Placement: CPU time = 0h 0m 22s, Elapsed time = 0h 0m 22s
+    Placement Phase 1: CPU time = 0h 0m 0.701s, Elapsed time = 0h 0m 0.701s
+    Placement Phase 2: CPU time = 0h 0m 17s, Elapsed time = 0h 0m 17s
+    Placement Phase 3: CPU time = 0h 0m 7s, Elapsed time = 0h 0m 7s
+    Total Placement: CPU time = 0h 0m 29s, Elapsed time = 0h 0m 29s
  Running routing:
-    Routing Phase 0: CPU time = 0h 0m 0.008s, Elapsed time = 0h 0m 0.008s
-    Routing Phase 1: CPU time = 0h 0m 21s, Elapsed time = 0h 0m 21s
-    Routing Phase 2: CPU time = 0h 0m 0.188s, Elapsed time = 0h 0m 0.188s
+    Routing Phase 0: CPU time = 0h 0m 0.012s, Elapsed time = 0h 0m 0.012s
+    Routing Phase 1: CPU time = 0h 0m 16s, Elapsed time = 0h 0m 16s
+    Routing Phase 2: CPU time = 0h 0m 0.234s, Elapsed time = 0h 0m 0.234s
     Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
-    Total Routing: CPU time = 0h 0m 21s, Elapsed time = 0h 0m 21s
+    Total Routing: CPU time = 0h 0m 16s, Elapsed time = 0h 0m 16s
  Generate output files:
-    CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
+    CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
 
- Total Time and Memory Usage: CPU time = 0h 0m 45s, Elapsed time = 0h 0m 45s, Peak memory usage = 843MB
+ Total Time and Memory Usage: CPU time = 0h 0m 48s, Elapsed time = 0h 0m 48s, Peak memory usage = 811MB
 
 
 3. Resource Usage Summary
@@ -40,22 +40,22 @@
   --------------------------------------------------------------------------------
   Resources                   | Usage                               | Utilization
   --------------------------------------------------------------------------------
-  Logic                       | 13430/23040                         |  59%
-    --LUT,ALU,ROM16           | 13430(12515 LUT, 915 ALU, 0 ROM16)  | -
+  Logic                       | 13428/23040                         |  59%
+    --LUT,ALU,ROM16           | 13428(12488 LUT, 940 ALU, 0 ROM16)  | -
     --SSRAM(RAM16)            | 0                                   | -
-  Register                    | 5785/23280                          |  25%
+  Register                    | 5860/23280                          |  26%
     --Logic Register as Latch | 0/23040                             |  0%
-    --Logic Register as FF    | 5775/23040                          |  26%
+    --Logic Register as FF    | 5850/23040                          |  26%
     --I/O Register as Latch   | 0/240                               |  0%
     --I/O Register as FF      | 10/240                              |  5%
-  CLS                         | 9352/11520                          |  82%
+  CLS                         | 9424/11520                          |  82%
   I/O Port                    | 72/86                               |  84%
   I/O Buf                     | 70                                  | -
     --Input Buf               | 7                                   | -
     --Output Buf              | 50                                  | -
     --Inout Buf               | 13                                  | -
-  BSRAM                       | 33/56                               | 59%
-    --SP                      | 12
+  BSRAM                       | 34/56                               | 61%
+    --SP                      | 13
     --SPX9                    | 8
     --SDPB                    | 11
     --pROM                    | 2
@@ -102,17 +102,17 @@
   -------------------------------------------
   clk_50m_d      | PRIMARY        |  TR TL
   ff_ssg_reset_n | PRIMARY        |  TL
-  ff_ssram_reset_n| PRIMARY        |  TL BL
-  clk215m        | PRIMARY        |  TR TL BR BL
+  clk215m        | PRIMARY        |  TL BR BL
   clk42m         | PRIMARY        |  TR TL BR BL
+  u_controller_spi/ff_debug_signal_255_6| PRIMARY        |  TR TL
   ff_spi_reset_n | LW             |  -
   slot_reset_n_d | LW             |  -
   ff_ppi_reset_n | LW             |  -
+  ff_ssram_reset_n| LW             |  -
   ff_z80_reset_n | LW             |  -
   ff_r800_reset_n| LW             |  -
   u_vdp_logger/n489_4| LW             |  -
   u_r800/n4066_4 | LW             |  -
-  u_dos_mapper/u_fdc8566/n148_4| LW             |  -
   ===========================================
 
 

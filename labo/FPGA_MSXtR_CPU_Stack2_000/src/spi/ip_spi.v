@@ -92,7 +92,25 @@ module ip_spi (
 	input	[127:0]	slot_trace_signal,
 	output			slot_trace_control_write,
 	output	[7:0]	slot_trace_control,
-	output	[7:0]	slot_trace_trigger_value
+	output	[7:0]	slot_trace_trigger_value,
+	//	disk_if
+	input			disk_req,
+	input	[7:0]	disk_status,
+	input	[7:0]	disk_seq,
+	input	[7:0]	disk_cmd,
+	input	[7:0]	disk_drive,
+	input	[7:0]	disk_media,
+	input	[31:0]	disk_sector,
+	output	[8:0]	disk_buf_address,
+	output			disk_buf_write,
+	output	[7:0]	disk_buf_wdata,
+	output	[7:0]	disk_buf_seq,
+	input	[7:0]	disk_buf_rdata,
+	output			disk_done,
+	output	[7:0]	disk_done_seq,
+	output	[7:0]	disk_done_result,
+	output			disk_media_set,
+	output	[7:0]	disk_media_value
 );
 	localparam	[4:0]	ST_IDLE				 = 5'd0;
 	localparam	[4:0]	ST_COMMAND			 = 5'd1;
@@ -145,6 +163,23 @@ module ip_spi (
 	localparam [5:0] ST_TRACE_ARG1 = 6'd38;
 	localparam [5:0] ST_TRACE_WAIT = 6'd39;
 	localparam [5:0] ST_TRACE_H = 6'd40;
+	localparam [5:0] ST_DISK_INFO = 6'd41;
+	localparam [5:0] ST_DISK_SEQ = 6'd42;
+	localparam [5:0] ST_DISK_RD_ACK = 6'd43;
+	localparam [5:0] ST_DISK_RD_FETCH = 6'd44;
+	localparam [5:0] ST_DISK_RD_PAYLOAD = 6'd45;
+	localparam [5:0] ST_DISK_WR_ACK = 6'd46;
+	localparam [5:0] ST_DISK_WR_DATA = 6'd47;
+	localparam [5:0] ST_DISK_RESULT = 6'd48;
+	localparam [5:0] ST_DISK_MEDIA = 6'd49;
+	localparam [3:0] DISK_INFO_BYTES = 4'd9;		//	status, seq, cmd, drive, media, sector[31:0]
+	reg		[7:0]	ff_disk_op;
+	reg		[7:0]	ff_disk_arg_seq;
+	reg		[8:0]	ff_disk_index;
+	reg		[3:0]	ff_disk_info_index;
+	reg		[71:0]	ff_disk_info;
+	reg		[1:0]	ff_disk_delay;
+	wire			w_disk_seq_ok;
 	localparam [4:0] TRACE_SIGNAL_BYTES = 5'd17;	//	slot trace 16byte + 0xA5 marker
 	reg				ff_trace_read;
 	reg		[7:0]	ff_trace_arg0;
@@ -186,6 +221,17 @@ module ip_spi (
 	assign slot_trace_control_write = ff_trace_control_toggle ^ ff_trace_control_toggle_d;
 	assign slot_trace_control = ff_trace_control;
 	assign slot_trace_trigger_value = ff_trace_trigger_value;
+	//	disk_if: SEQ と BUSY を照合する。disk_if 側も同じ条件で受理するので、応答の 00h/01h と一致する
+	assign w_disk_seq_ok = disk_req && (disk_seq == ff_disk_arg_seq);
+	assign disk_buf_address = ff_disk_index;
+	assign disk_buf_write = reset_n && !spi_cs_n && !ff_spi_cs_n && ff_state == ST_DISK_WR_DATA && spi_rdata_en;
+	assign disk_buf_wdata = spi_rdata;
+	assign disk_buf_seq = ff_disk_arg_seq;
+	assign disk_done = reset_n && !spi_cs_n && !ff_spi_cs_n && ff_state == ST_DISK_RESULT && spi_rdata_en;
+	assign disk_done_seq = ff_disk_arg_seq;
+	assign disk_done_result = spi_rdata;
+	assign disk_media_set = reset_n && !spi_cs_n && !ff_spi_cs_n && ff_state == ST_DISK_MEDIA && spi_rdata_en;
+	assign disk_media_value = spi_rdata;
 	reg		[15:0]	ff_bus_address;
 	reg		[7:0]	ff_bus_wdata;
 	reg				ff_bus_io;
@@ -288,6 +334,12 @@ module ip_spi (
 			ff_trace_wait <= 3'd0;
 			ff_trace_signal <= 128'd0;
 			ff_trace_byte_index <= 5'd0;
+			ff_disk_op <= 8'd0;
+			ff_disk_arg_seq <= 8'd0;
+			ff_disk_index <= 9'd0;
+			ff_disk_info_index <= 4'd0;
+			ff_disk_info <= 72'd0;
+			ff_disk_delay <= 2'd0;
 		end
 		//	spi_cs_n解除は異常時のリカバリを兼ねるため、どのステートより優先して ST_IDLE へ戻す
 		else if( ff_spi_cs_n ) begin
@@ -364,7 +416,7 @@ module ip_spi (
 			//   02h, io#, (dummy byte)            ... I/O read (return data on dummy byte)
 			//   03h, addr_l, addr_h, data         ... Memory write
 			//   04h, addr_l, addr_h, (dummy byte) ... Memory read (return data on dummy byte)
-			//   05h, (dummy byte)                 ... Busy check (bit0: bus busy, bit1: slot wait, bit2: SerialSRAM startup busy)
+			//   05h, (dummy byte)                 ... Busy check (bit0: bus busy, bit1: slot wait, bit2: SerialSRAM startup busy, bit3: DISK_REQ)
 			//   06h                               ... MSX Hardware reset ON  (msx_reset_n = 0)
 			//   07h                               ... MSX Hardware reset OFF (msx_reset_n = 1)
 			//   08h                               ... MSX Hardware pause ON  (msx_pause = 1)
@@ -376,9 +428,14 @@ module ip_spi (
 			//   0Eh, addr_l, addr_m, addr_h, dummy ... FlashROM read
 			//   0Fh, dummy x PERF_SIGNAL_BYTES   ... R800 performance snapshot, A5h marker
 			//   10h, owner                         ... Bus owner select (0: CPU, 1: SPI/Pico)
-			//   11h, matrix[0..11]                 ... Keyboard matrix update
+			//   11h, matrix[0..11]                 ... Keyboard matrix update (1st response bit4: DISK_REQ)
 			//   1Ah, idx_l, idx_h, dummy x TRACE_SIGNAL_BYTES ... Slot trace read (after spi_intr, last byte 0xA5)
 			//   1Bh, control, trigger_value        ... Slot trace control (spi_intr on completion)
+			//   20h, dummy x 9                     ... Disk request info (status, seq, cmd, drive, media, sector[31:0] LE)
+			//   21h, seq, dummy(ack), dummy x 512  ... Disk buffer read  (ack 00h: accepted / 01h: rejected, data only when accepted)
+			//   22h, seq, dummy(ack), data x 512   ... Disk buffer write (ack 00h: accepted / 01h: rejected, data only when accepted)
+			//   23h, seq, result, dummy(ack)       ... Disk request done (result bit7: ERROR, bit6-0: ERRCODE)
+			//   24h, media_state                   ... Disk media state (bit0: READY, bit1: WPROT, bit7: set CHANGED, spi_intr on completion)
 			//   FFh                               ... presence check
 			ST_COMMAND: begin
 				if( spi_rdata_en ) begin
@@ -419,7 +476,7 @@ module ip_spi (
 						//	busy check --> respond immediately, no bus access involved
 						ff_state			<= ST_SEND;
 						ff_bus_write		<= 1'b1;		//	spi_intr は出さない
-						ff_spi_wdata		<= { 5'd0, ssram_startup_busy, ~ff_slot_wait_n, ff_bus_valid };
+						ff_spi_wdata		<= { 4'd0, disk_req, ssram_startup_busy, ~ff_slot_wait_n, ff_bus_valid };
 						ff_spi_valid		<= 1'b1;
 						ff_spi_write		<= 1'b1;
 					end
@@ -516,7 +573,7 @@ module ip_spi (
 					8'h11: begin
 						ff_bus_write			<= 1'b0;		//	spi_intr は 送信準備完了
 						ff_state				<= ST_KEYBOARD_SEND;
-						ff_spi_wdata			<= { 4'd0, r800_led, kana_led, caps_led, pause_led };
+						ff_spi_wdata			<= { 3'd0, disk_req, r800_led, kana_led, caps_led, pause_led };
 						ff_spi_valid			<= 1'b1;
 						ff_spi_write			<= 1'b1;
 						ff_keyboard_matrix_row	<= 4'd0;
@@ -564,6 +621,31 @@ module ip_spi (
 						ff_bus_write <= (spi_rdata == 8'h1b);
 						ff_trace_read <= (spi_rdata == 8'h1a);
 						ff_state <= ST_TRACE_ARG0;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
+					end
+					8'h20: begin
+						//	要求内容のスナップショットを 9byte 送る (byte 毎に spi_intr)
+						ff_log_active <= 1'b1;
+						ff_bus_write <= 1'b0;
+						ff_disk_info <= { disk_sector, disk_media, disk_drive, disk_cmd, disk_seq, disk_status };
+						ff_disk_info_index <= 4'd1;
+						ff_spi_wdata <= disk_status;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b1;
+						ff_state <= ST_DISK_INFO;
+					end
+					8'h21, 8'h22, 8'h23: begin
+						ff_log_active <= 1'b1;
+						ff_bus_write <= 1'b0;
+						ff_disk_op <= spi_rdata;
+						ff_state <= ST_DISK_SEQ;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
+					end
+					8'h24: begin
+						ff_bus_write <= 1'b1;
+						ff_state <= ST_DISK_MEDIA;
 						ff_spi_valid <= 1'b1;
 						ff_spi_write <= 1'b0;
 					end
@@ -816,6 +898,107 @@ module ip_spi (
 				ff_srom_delay <= ff_srom_delay + 2'd1;
 				if( ff_srom_delay == 2'd2 ) begin
 					ff_state <= ST_SROM_PAYLOAD;
+				end
+			end
+			ST_DISK_INFO: begin
+				if( spi_ready ) begin
+					ff_spi_wdata <= ff_disk_info[ff_disk_info_index * 8 +: 8];
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					if( ff_disk_info_index == (DISK_INFO_BYTES - 4'd1) ) begin
+						ff_state <= ST_SEND;
+					end
+					else begin
+						ff_disk_info_index <= ff_disk_info_index + 4'd1;
+					end
+				end
+			end
+			ST_DISK_SEQ: begin
+				if( spi_rdata_en ) begin
+					ff_disk_arg_seq <= spi_rdata;
+					if( ff_disk_op == 8'h21 ) begin
+						ff_state <= ST_DISK_RD_ACK;
+					end
+					else if( ff_disk_op == 8'h22 ) begin
+						ff_state <= ST_DISK_WR_ACK;
+					end
+					else begin
+						ff_state <= ST_DISK_RESULT;
+						ff_spi_valid <= 1'b1;
+						ff_spi_write <= 1'b0;
+					end
+				end
+			end
+			ST_DISK_RD_ACK: begin
+				ff_spi_wdata <= w_disk_seq_ok ? 8'h00 : 8'h01;
+				ff_spi_valid <= 1'b1;
+				ff_spi_write <= 1'b1;
+				ff_disk_index <= 9'd0;
+				ff_disk_delay <= 2'd0;
+				ff_state <= w_disk_seq_ok ? ST_DISK_RD_FETCH : ST_SEND;
+			end
+			ST_DISK_RD_FETCH: begin
+				//	disk_if のバッファ(同期読み出し)のレイテンシ待ち
+				ff_disk_delay <= ff_disk_delay + 2'd1;
+				if( ff_disk_delay == 2'd2 ) begin
+					ff_state <= ST_DISK_RD_PAYLOAD;
+				end
+			end
+			ST_DISK_RD_PAYLOAD: begin
+				if( spi_ready ) begin
+					ff_spi_wdata <= disk_buf_rdata;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					if( ff_disk_index == 9'd511 ) begin
+						ff_state <= ST_SEND;
+					end
+					else begin
+						ff_disk_index <= ff_disk_index + 9'd1;
+						ff_disk_delay <= 2'd0;
+						ff_state <= ST_DISK_RD_FETCH;
+					end
+				end
+			end
+			ST_DISK_WR_ACK: begin
+				ff_spi_wdata <= w_disk_seq_ok ? 8'h00 : 8'h01;
+				ff_spi_valid <= 1'b1;
+				ff_spi_write <= 1'b1;
+				ff_disk_index <= 9'd0;
+				ff_state <= w_disk_seq_ok ? ST_DISK_WR_DATA : ST_SEND;
+			end
+			ST_DISK_WR_DATA: begin
+				if( spi_rdata_en ) begin
+					//	disk_buf_write は組み合わせ回路でこのサイクルに出る
+					if( ff_disk_index == 9'd511 ) begin
+						ff_state <= ST_COMMAND;
+					end
+					else begin
+						ff_disk_index <= ff_disk_index + 9'd1;
+					end
+					ff_spi_wdata <= SPI_RX_WDATA;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b0;
+				end
+				else if( spi_ready ) begin
+					//	ACK 送信完了 --> 最初の受信を設定
+					ff_spi_wdata <= SPI_RX_WDATA;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b0;
+				end
+			end
+			ST_DISK_RESULT: begin
+				if( spi_rdata_en ) begin
+					//	disk_done は組み合わせ回路でこのサイクルに出る。disk_if も同じ条件で受理する
+					ff_spi_wdata <= w_disk_seq_ok ? 8'h00 : 8'h01;
+					ff_spi_valid <= 1'b1;
+					ff_spi_write <= 1'b1;
+					ff_state <= ST_SEND;
+				end
+			end
+			ST_DISK_MEDIA: begin
+				if( spi_rdata_en ) begin
+					ff_spi_intr_req <= 1'b1;
+					ff_state <= ST_IDLE;
 				end
 			end
 			ST_DEBUG_H: begin

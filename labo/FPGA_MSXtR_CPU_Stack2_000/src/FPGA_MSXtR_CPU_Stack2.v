@@ -315,11 +315,23 @@ module fpga_msxtr_cpu_stack2 (
 	wire	[7:0]	w_device_dos_mapper_rdata;
 	wire			w_device_dos_mapper_rdata_en;
 	wire	[1:0]	w_dos_bank;
-	wire			w_dos_status_read;
-	wire			w_dos_rdfdc_n;
-	wire			w_dos_wrfdc_n;
-	wire	[3:0]	w_dos_fdc_address;
-	wire			w_dos_fdc_interrupt;
+	wire			w_disk_req;
+	wire	[7:0]	w_disk_status;
+	wire	[7:0]	w_disk_seq;
+	wire	[7:0]	w_disk_cmd;
+	wire	[7:0]	w_disk_drive;
+	wire	[7:0]	w_disk_media;
+	wire	[31:0]	w_disk_sector;
+	wire	[8:0]	w_disk_buf_address;
+	wire			w_disk_buf_write;
+	wire	[7:0]	w_disk_buf_wdata;
+	wire	[7:0]	w_disk_buf_seq;
+	wire	[7:0]	w_disk_buf_rdata;
+	wire			w_disk_done;
+	wire	[7:0]	w_disk_done_seq;
+	wire	[7:0]	w_disk_done_result;
+	wire			w_disk_media_set;
+	wire	[7:0]	w_disk_media_value;
 
 	wire			w_device_rtc_cs;
 	wire			w_device_rtc_ready;
@@ -691,7 +703,24 @@ module fpga_msxtr_cpu_stack2 (
 		.slot_trace_signal				( w_slot_trace_signal				),
 		.slot_trace_control_write		( w_slot_trace_control_write		),
 		.slot_trace_control				( w_slot_trace_control				),
-		.slot_trace_trigger_value		( w_slot_trace_trigger_value		)
+		.slot_trace_trigger_value		( w_slot_trace_trigger_value		),
+		.disk_req						( w_disk_req						),
+		.disk_status					( w_disk_status						),
+		.disk_seq						( w_disk_seq						),
+		.disk_cmd						( w_disk_cmd						),
+		.disk_drive						( w_disk_drive						),
+		.disk_media						( w_disk_media						),
+		.disk_sector					( w_disk_sector						),
+		.disk_buf_address				( w_disk_buf_address				),
+		.disk_buf_write					( w_disk_buf_write					),
+		.disk_buf_wdata					( w_disk_buf_wdata					),
+		.disk_buf_seq					( w_disk_buf_seq					),
+		.disk_buf_rdata					( w_disk_buf_rdata					),
+		.disk_done						( w_disk_done						),
+		.disk_done_seq					( w_disk_done_seq					),
+		.disk_done_result				( w_disk_done_result				),
+		.disk_media_set					( w_disk_media_set					),
+		.disk_media_value				( w_disk_media_value				)
 	);
 
 	cmcu_inst u_cmcu_inst (
@@ -938,7 +967,7 @@ module fpga_msxtr_cpu_stack2 (
 		.slot_cs12_n					( slot_cs12_n						),
 		.slot_a							( slot_a							),
 		.slot_ma						( slot_ma							),
-		.slot_int_n						( slot_int_n && !w_dos_fdc_interrupt	),
+		.slot_int_n						( slot_int_n						),
 		.slot_wait_n					( slot_wait_n						),
 		.slot_reset_n					( slot_reset_n						),
 		.slot_busdir					( slot_busdir						),
@@ -1049,10 +1078,11 @@ module fpga_msxtr_cpu_stack2 (
 	);
 
 	// --------------------------------------------------------------------
-	//	MSX-DOS2 mapper and FDC address decode
+	//	MSX-DOS2 mapper and disk interface
 	// --------------------------------------------------------------------
 	dos_mapper u_dos_mapper (
 		.reset_n						( ff_slot_reset_n					),
+		.sys_reset_n					( ff_spi_reset_n					),
 		.clk							( clk42m							),
 		.bus_cs							( w_device_dos_mapper_cs			),
 		.bus_address					( w_device_address					),
@@ -1063,11 +1093,23 @@ module fpga_msxtr_cpu_stack2 (
 		.bus_rdata						( w_device_dos_mapper_rdata			),
 		.bus_rdata_en					( w_device_dos_mapper_rdata_en		),
 		.dos_bank						( w_dos_bank						),
-		.status_read					( w_dos_status_read					),
-		.rdfdc_n						( w_dos_rdfdc_n						),
-		.wrfdc_n						( w_dos_wrfdc_n						),
-		.fdc_address					( w_dos_fdc_address					),
-		.fdc_interrupt					( w_dos_fdc_interrupt				)
+		.disk_req						( w_disk_req						),
+		.disk_status					( w_disk_status						),
+		.disk_seq						( w_disk_seq						),
+		.disk_cmd						( w_disk_cmd						),
+		.disk_drive						( w_disk_drive						),
+		.disk_media						( w_disk_media						),
+		.disk_sector					( w_disk_sector						),
+		.disk_buf_address				( w_disk_buf_address				),
+		.disk_buf_write					( w_disk_buf_write					),
+		.disk_buf_wdata					( w_disk_buf_wdata					),
+		.disk_buf_seq					( w_disk_buf_seq					),
+		.disk_buf_rdata					( w_disk_buf_rdata					),
+		.disk_done						( w_disk_done						),
+		.disk_done_seq					( w_disk_done_seq					),
+		.disk_done_result				( w_disk_done_result				),
+		.disk_media_set					( w_disk_media_set					),
+		.disk_media_value				( w_disk_media_value				)
 	);
 
 	// --------------------------------------------------------------------

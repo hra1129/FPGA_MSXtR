@@ -24,6 +24,11 @@ spi_cs_n = L にして、次の 1byte を送ります。
 - 0Eh ... FlashROM 読み出し要求
 - 10h ... 内部バス所有者選択
 - 11h ... キーマトリクス一括更新 (12byte)
+- 20h ... ディスク要求内容の読み出し (disk_if)
+- 21h ... ディスクバッファの読み出し (disk_if)
+- 22h ... ディスクバッファへの書き込み (disk_if)
+- 23h ... ディスク要求の完了通知 (disk_if)
+- 24h ... ディスクのメディア状態の設定 (disk_if)
 - FFh ... FPGA 存在確認
 
 # FPGA I/O 書き込み要求
@@ -83,7 +88,8 @@ busy status の bit 定義:
 |bit0|FPGA内部BUSY。BUSY状態の場合は1、BUSY状態でない場合は0。|
 |bit1|MSX slot WAIT。WAIT中の場合は1、WAIT中でない場合は0。|
 |bit2|SerialSRAM起動BUSY。SerialSRAM起動中の場合は1、起動完了済みの場合は0。|
-|bit7-3|予約。0を返す。|
+|bit3|DISK_REQ。MSX のディスク要求を処理中 (disk_if の BUSY=1) の場合は1。|
+|bit7-4|予約。0を返す。|
 
 # MSX Hardware reset ON
 PicoからFPGAに対して、MSXのハードウェアリセットを要求するコマンドです。
@@ -176,6 +182,20 @@ Picoが保持しているMSXキーマトリクス12行をFPGAのPPIへ更新し�
 |...|...|...|
 |#13|行11|キーマトリクス行11のデータ|
 
+#2 の送信と同時に、FPGA は LED 状態を返す (bit0: pause, bit1: caps, bit2: kana, bit3: r800, bit4: DISK_REQ, bit7-5: 0)。
+
+# ディスクエミュレーター (20h〜24h)
+disk_if (MSX のディスクドライバーとのセクター単位の I/F) 用のコマンドです。
+バイト列と動作の詳細は [../disk_if/readme.md](../disk_if/readme.md) の §11 を参照してください。
+
+|コマンド|バイト列|
+|---|---|
+|20h|応答 9byte: STATUS, SEQ, CMD, DRIVE, MEDIA, SECTOR (32bit, 下位から)|
+|21h|SEQ を送る → 応答 00h (受理) / 01h (拒否) → 受理なら 512byte を受信|
+|22h|SEQ を送る → 応答 00h / 01h → 受理なら 512byte を送信|
+|23h|SEQ、結果 (bit7: ERROR, bit6-0: ERRCODE) を送る → 応答 00h / 01h|
+|24h|メディア状態 (bit0: READY, bit1: WPROT, bit7: CHANGED を立てる) を送る|
+
 # FPGA 存在確認
 FPGAが存在するかどうかを確認する要求です。
 
@@ -217,6 +237,8 @@ FPGAが存在するかどうかを確認する要求です。
 | `05h` Busy check | status byteをSPI送信シフタへロードした後 | status byteを受信してCSnをHにする。BUSY解除ACKではない |
 | `0Ah` Debug | 応答byteの連続送信制御に使用。通常の完了ACKではない | 規定byte数を送受信してCSnをHにする |
 | `11h` Keyboard | LED応答・キーマトリクス転送のSPI制御に使用。通常の完了ACKではない | 規定byte数を送受信してCSnをHにする |
+| `20h`-`23h` Disk | 応答byteをSPI送信シフタへロードするたびにH、そのbyteの送信完了でL (12h と同じ) | 応答byteごとに`spi_intr=H`を待って受信する。Pico→FPGAのbyteは intr を待たずに送る |
+| `24h` Disk media | メディア状態の受信完了後 | `spi_intr=H`を待ってCSnをHにする |
 | `06h`-`09h`, `0Bh`, `0Ch`, `0Dh`, `0Fh`, `FFh` | SPI応答byteの送信準備時点。書込み完了ACKではない | 規定byteを送信後、CSnをHにする |
 
 書込みコマンドのACKは、SPIシフタの送信準備ではなく、内部バスの`bus_ready`を根拠にする。

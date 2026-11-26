@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // dos_mapper.v
-// MSX-DOS2 bank register and FDC address decoder
-// Revision 1.00
+// MSX-DOS2 bank register and disk interface (disk_if)
+// Revision 1.01
 //
 // Copyright (c) 2026 Takayuki Hara.
 // All rights reserved.
@@ -31,8 +31,10 @@
 //
 // -----------------------------------------------------------------------------
 
+
 module dos_mapper (
 	input			reset_n,
+	input			sys_reset_n,
 	input			clk,
 	input			bus_cs,
 	input	[15:0]	bus_address,
@@ -43,42 +45,61 @@ module dos_mapper (
 	output	[7:0]	bus_rdata,
 	output			bus_rdata_en,
 	output	[1:0]	dos_bank,
-	output			status_read,
-	output			rdfdc_n,
-	output			wrfdc_n,
-	output	[3:0]	fdc_address,
-	output			fdc_interrupt
+	//	disk_if <-> ip_spi
+	output			disk_req,
+	output	[7:0]	disk_status,
+	output	[7:0]	disk_seq,
+	output	[7:0]	disk_cmd,
+	output	[7:0]	disk_drive,
+	output	[7:0]	disk_media,
+	output	[31:0]	disk_sector,
+	input	[8:0]	disk_buf_address,
+	input			disk_buf_write,
+	input	[7:0]	disk_buf_wdata,
+	input	[7:0]	disk_buf_seq,
+	output	[7:0]	disk_buf_rdata,
+	input			disk_done,
+	input	[7:0]	disk_done_seq,
+	input	[7:0]	disk_done_result,
+	input			disk_media_set,
+	input	[7:0]	disk_media_value
 );
 	reg		[1:0]	ff_dos_bank;
-	wire			w_status_read;
-	wire			w_fdc_access;
-	wire	[7:0]	w_fdc_rdata;
-	wire			w_fdc_rdata_en;
-	wire			w_fdc_interrupt;
+	wire			w_disk_access;
 
-	assign w_status_read	= bus_cs && bus_valid && !bus_write && (bus_address == 16'h7FF1);
-	assign w_fdc_access		= bus_cs && bus_valid && (bus_address >= 16'h7FF2) && (bus_address <= 16'h7FFB);
-	assign status_read		= w_status_read;
-	assign rdfdc_n			= !(w_fdc_access && !bus_write);
-	assign wrfdc_n			= !(w_fdc_access && bus_write);
-	assign fdc_address		= bus_address[3:0];
+	//	7FF1h-7FFBh: disk_if registers
+	assign w_disk_access	= bus_cs && (bus_address >= 16'h7FF1) && (bus_address <= 16'h7FFB);
 	assign dos_bank			= ff_dos_bank;
 	assign bus_ready		= 1'b1;
-	assign bus_rdata		= w_status_read ? 8'hFF : w_fdc_rdata;
-	assign bus_rdata_en		= w_status_read || w_fdc_rdata_en;
-	assign fdc_interrupt	= w_fdc_interrupt;
 
-	fdc8566 u_fdc8566 (
+	disk_if u_disk_if (
 		.reset_n			( reset_n			),
+		.sys_reset_n		( sys_reset_n		),
 		.clk				( clk				),
-		.bus_cs			( w_fdc_access		),
-		.bus_address		( bus_address[3:0] ),
-		.bus_write		( bus_write			),
-		.bus_valid		( bus_valid			),
+		.bus_cs				( w_disk_access		),
+		.bus_address		( bus_address[3:0]	),
+		.bus_write			( bus_write			),
+		.bus_valid			( bus_valid			),
 		.bus_wdata			( bus_wdata			),
-		.bus_rdata			( w_fdc_rdata		),
-		.bus_rdata_en		( w_fdc_rdata_en	),
-		.interrupt			( w_fdc_interrupt	)
+		.bus_rdata			( bus_rdata			),
+		.bus_rdata_en		( bus_rdata_en		),
+		.disk_req			( disk_req			),
+		.disk_status		( disk_status		),
+		.disk_seq			( disk_seq			),
+		.disk_cmd			( disk_cmd			),
+		.disk_drive			( disk_drive		),
+		.disk_media			( disk_media		),
+		.disk_sector		( disk_sector		),
+		.disk_buf_address	( disk_buf_address	),
+		.disk_buf_write		( disk_buf_write	),
+		.disk_buf_wdata		( disk_buf_wdata	),
+		.disk_buf_seq		( disk_buf_seq		),
+		.disk_buf_rdata		( disk_buf_rdata	),
+		.disk_done			( disk_done			),
+		.disk_done_seq		( disk_done_seq		),
+		.disk_done_result	( disk_done_result	),
+		.disk_media_set		( disk_media_set	),
+		.disk_media_value	( disk_media_value	)
 	);
 
 	always @( posedge clk ) begin

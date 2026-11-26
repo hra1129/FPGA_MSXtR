@@ -30,6 +30,7 @@ MENUキーはkeyboard matrixの転送先だけを切り替える。CPU/Picoの�
 7: KOEI slot/RAM diagnostic
 8: Slot trace dump
 9: Slot trace clear/re-arm
+D: Disk mode toggle (image /DSK/2DD.DSK <-> SD direct)
 ```
 
 Pico-local modeで5キーを押すと、JIS1 `3441h` (漢) のD8=`A1h`/D9=`16h`に対応するSerialROM物理アドレス`0B420h`から32byteを読み、OpenMSXの漢字ROM配列と同じく先頭8byte/次の8byteを上半分の左右byte、その次の8byte/最後の8byteを下半分の左右byteとして、各8bitの0/1表記で16行表示する。この診断はPicoのSerialROM直接readを使用するため、CPUのD8h/D9hアクセス待ちや`msx_slot`のタイミングは経由しない。ROM内容・アドレスの確認用であり、CPU read timeoutの合否判定には使わない。
@@ -50,6 +51,17 @@ FPGA (`labo/FPGA_MSXtR_CPU_Stack2_000/src/slot_trace/slot_trace.v`) は、A8h書
 |---|---|---|
 | 1Ah | idx_l, idx_h(bit1:0) | spi_intr後17byte: entry 8byte (LE: [7:4]type [3:2]cpu_sel / old / new / PC / timestamp 24bit), count 2byte, trigger index 2byte, flags (bit0 trig_en, bit1 mapper_en, bit2 hold, bit3 triggered, bit4 frozen), trigger value, 予備2byte, A5h |
 | 1Bh | control, trigger value | spi_intr。control bit0 clear, bit1 trigger有効, bit2 mapper記録, bit3 hold |
+
+## ディスクエミュレーター (Dキー, SPI 20h〜24h)
+
+FPGA の disk_if (`labo/FPGA_MSXtR_CPU_Stack2_000/src/disk_if/readme.md`) の要求を `disk_emu.c` が処理する。SD のアクセスはすべて Core 0 で行う (Core 1 はキーボードの I2C だけ)。
+
+- 起動時: SD のマウントと `/DSK/2DD.DSK` のオープンを行い、24h で READY/WPROT を設定してから MSX のリセットを解除する。
+- 要求の検知: keyboard forwarding 中は 11h の応答 bit4、Pico-local mode 中は 05h の応答 bit3 (DISK_REQ) を 2ms ごとに見る。1 なら 20h → (READ: SD から読んで 22h / WRITE: 21h で受け取って SD に書く) → 23h。
+- DSK イメージモード (起動時の既定): `/DSK/2DD.DSK` を開いたままにして `f_lseek` → `f_read` / `f_write` + `f_sync`。読み取り専用属性のファイルは WPROT=1。`/DSK/2DD.ERR` (1 セクター 1 バイト = DSKIO エラーコード) はマウント時に RAM に読む (最大 2880 セクター分)。ファイルがなければ全セクターエラーなし。flashrom の更新などで再マウントされて FIL が無効になったら、1 回だけ開き直す。
+- SD 直接モード: FatFs をアンマウントし、`disk_read` / `disk_write` で SD のセクターを直接読み書きする。先頭 (パーティションなし) または MBR の最初のパーティションのブートセクターが FAT12/16 でなければ READY=0。
+- Dキー (Pico-local mode): DISK_REQ=0 のときだけモードを切り替え、24h で CHANGED=1 を送る。
+- FatFs は pico-sdk 同梱 (tinyusb) の ffconf.h を使っており `FF_USE_FASTSEEK=0` なので、fast seek は使っていない。
 
 ## BIOS / ExtROM更新
 

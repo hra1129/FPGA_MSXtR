@@ -860,3 +860,138 @@ bool fpga_slot_trace_control( uint8_t control, uint8_t trigger_value ) {
 	sleep_us( 10 );
 	return true;
 }
+
+// ---------------------------------------------------------
+//	ディスクエミュレーター (disk_if)
+// ---------------------------------------------------------
+//	05h の応答 bit3 = DISK_REQ
+bool fpga_disk_get_request( void ) {
+	uint8_t cmd;
+	uint8_t dummy;
+	uint8_t status;
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	cmd = 0x05;
+	spi_write_blocking( SPI0_PORT, &cmd, 1 );
+	dummy = 0x00;
+	spi_write_read_blocking( SPI0_PORT, &dummy, &status, 1 );
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+	return (status & 0x08) != 0;
+}
+
+// ---------------------------------------------------------
+//	20h → STATUS, SEQ, CMD, DRIVE, MEDIA, SECTOR(4byte, LSB first)
+bool fpga_disk_get_info( fpga_disk_info_t *info ) {
+	uint8_t data[9];
+
+	if( info == NULL ) {
+		return false;
+	}
+	gpio_put( SPI0_CSN_PIN, 0 );
+	sleep_us( 1 );
+	serialrom_send_byte( 0x20 );
+	for( int i = 0; i < 9; i++ ) {
+		if( !serialrom_receive_byte( &data[i] ) ) {
+			serialrom_end();
+			return false;
+		}
+	}
+	serialrom_end();
+	info->status	= data[0];
+	info->seq		= data[1];
+	info->command	= data[2];
+	info->drive		= data[3];
+	info->media		= data[4];
+	info->sector	= (uint32_t)data[5] | ((uint32_t)data[6] << 8) | ((uint32_t)data[7] << 16) | ((uint32_t)data[8] << 24);
+	return true;
+}
+
+// ---------------------------------------------------------
+//	21h, SEQ → ACK, 512byte (MSX の WRITE 要求のデータを受け取る)
+bool fpga_disk_read_buffer( uint8_t seq, uint8_t *data ) {
+	uint8_t ack;
+
+	if( data == NULL ) {
+		return false;
+	}
+	gpio_put( SPI0_CSN_PIN, 0 );
+	sleep_us( 1 );
+	serialrom_send_byte( 0x21 );
+	serialrom_send_byte( seq );
+	if( !serialrom_receive_byte( &ack ) || ack != 0x00 ) {
+		serialrom_end();
+		return false;
+	}
+	for( int i = 0; i < FPGA_DISK_SECTOR_SIZE; i++ ) {
+		if( !serialrom_receive_byte( &data[i] ) ) {
+			serialrom_end();
+			return false;
+		}
+	}
+	serialrom_end();
+	return true;
+}
+
+// ---------------------------------------------------------
+//	22h, SEQ → ACK, ← 512byte (MSX の READ 要求のデータを渡す)
+bool fpga_disk_write_buffer( uint8_t seq, const uint8_t *data ) {
+	uint8_t ack;
+
+	if( data == NULL ) {
+		return false;
+	}
+	gpio_put( SPI0_CSN_PIN, 0 );
+	sleep_us( 1 );
+	serialrom_send_byte( 0x22 );
+	serialrom_send_byte( seq );
+	if( !serialrom_receive_byte( &ack ) || ack != 0x00 ) {
+		serialrom_end();
+		return false;
+	}
+	for( int i = 0; i < FPGA_DISK_SECTOR_SIZE; i++ ) {
+		serialrom_send_byte( data[i] );
+	}
+	serialrom_end();
+	return true;
+}
+
+// ---------------------------------------------------------
+//	23h, SEQ, result → ACK
+//	result: bit7 = ERROR, bit6-0 = ERRCODE
+bool fpga_disk_done( uint8_t seq, uint8_t result ) {
+	uint8_t ack;
+	bool accepted;
+
+	gpio_put( SPI0_CSN_PIN, 0 );
+	sleep_us( 1 );
+	serialrom_send_byte( 0x23 );
+	serialrom_send_byte( seq );
+	serialrom_send_byte( result );
+	accepted = serialrom_receive_byte( &ack ) && ack == 0x00;
+	serialrom_end();
+	return accepted;
+}
+
+// ---------------------------------------------------------
+//	24h, media → spi_intr
+//	media: bit0 = READY, bit1 = WPROT, bit7 = CHANGED を 1 にする
+bool fpga_disk_set_media( uint8_t media ) {
+	uint8_t data[2];
+
+	data[0] = 0x24;
+	data[1] = media;
+	gpio_put( SPI0_CSN_PIN, 0 );
+	for( int i = 0; i < 2; i++ ) {
+		spi_write_blocking( SPI0_PORT, &data[i], 1 );
+		sleep_us( 1 );
+	}
+	if( !fpga_wait_intr( 50 ) ) {
+		gpio_put( SPI0_CSN_PIN, 1 );
+		sleep_us( 10 );
+		return false;
+	}
+	gpio_put( SPI0_CSN_PIN, 1 );
+	sleep_us( 10 );
+	return true;
+}

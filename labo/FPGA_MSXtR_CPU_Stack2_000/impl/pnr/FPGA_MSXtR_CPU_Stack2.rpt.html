@@ -83,7 +83,7 @@ table.detail_table th.label {  min-width: 8%; width: 8%; }
 </tr>
 <tr>
 <td class="label">Created Time</td>
-<td>Wed Nov 25 05:46:08 2026
+<td>Thu Nov 26 21:41:37 2026
 </td>
 </tr>
 <tr>
@@ -98,23 +98,23 @@ table.detail_table th.label {  min-width: 8%; width: 8%; }
 <td class="label">Place & Route Process</td>
 <td>Running placement:
    Placement Phase 0: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
-   Placement Phase 1: CPU time = 0h 0m 0.515s, Elapsed time = 0h 0m 0.515s
-   Placement Phase 2: CPU time = 0h 0m 14s, Elapsed time = 0h 0m 14s
-   Placement Phase 3: CPU time = 0h 0m 4s, Elapsed time = 0h 0m 4s
-   Total Placement: CPU time = 0h 0m 22s, Elapsed time = 0h 0m 22s
+   Placement Phase 1: CPU time = 0h 0m 0.701s, Elapsed time = 0h 0m 0.701s
+   Placement Phase 2: CPU time = 0h 0m 17s, Elapsed time = 0h 0m 17s
+   Placement Phase 3: CPU time = 0h 0m 7s, Elapsed time = 0h 0m 7s
+   Total Placement: CPU time = 0h 0m 29s, Elapsed time = 0h 0m 29s
 Running routing:
-   Routing Phase 0: CPU time = 0h 0m 0.008s, Elapsed time = 0h 0m 0.008s
-   Routing Phase 1: CPU time = 0h 0m 21s, Elapsed time = 0h 0m 21s
-   Routing Phase 2: CPU time = 0h 0m 0.188s, Elapsed time = 0h 0m 0.188s
+   Routing Phase 0: CPU time = 0h 0m 0.012s, Elapsed time = 0h 0m 0.012s
+   Routing Phase 1: CPU time = 0h 0m 16s, Elapsed time = 0h 0m 16s
+   Routing Phase 2: CPU time = 0h 0m 0.234s, Elapsed time = 0h 0m 0.234s
    Routing Phase 3: CPU time = 0h 0m 0s, Elapsed time = 0h 0m 0s
-   Total Routing: CPU time = 0h 0m 21s, Elapsed time = 0h 0m 21s
+   Total Routing: CPU time = 0h 0m 16s, Elapsed time = 0h 0m 16s
 Generate output files:
-   CPU time = 0h 0m 2s, Elapsed time = 0h 0m 2s
+   CPU time = 0h 0m 3s, Elapsed time = 0h 0m 3s
 </td>
 </tr>
 <tr>
 <td class="label">Total Time and Memory Usage</td>
-<td>CPU time = 0h 0m 45s, Elapsed time = 0h 0m 45s, Peak memory usage = 843MB</td>
+<td>CPU time = 0h 0m 48s, Elapsed time = 0h 0m 48s, Peak memory usage = 811MB</td>
 </tr>
 </table>
 <br/>
@@ -129,12 +129,12 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">Logic</td>
-<td>13430/23040</td>
+<td>13428/23040</td>
 <td>59%</td>
 </tr>
 <tr>
 <td class="label">&nbsp &nbsp --LUT,ALU,ROM16</td>
-<td>13430(12515 LUT, 915 ALU, 0 ROM16)</td>
+<td>13428(12488 LUT, 940 ALU, 0 ROM16)</td>
 <td>-</td>
 </tr>
 <tr>
@@ -144,8 +144,8 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">Register</td>
-<td>5785/23280</td>
-<td>25%</td>
+<td>5860/23280</td>
+<td>26%</td>
 </tr>
 <tr>
 <td class="label">&nbsp &nbsp --Logic Register as Latch</td>
@@ -154,7 +154,7 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">&nbsp &nbsp --Logic Register as FF</td>
-<td>5775/23040</td>
+<td>5850/23040</td>
 <td>26%</td>
 </tr>
 <tr>
@@ -169,7 +169,7 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">CLS</td>
-<td>9352/11520</td>
+<td>9424/11520</td>
 <td>82%</td>
 </tr>
 <tr>
@@ -199,8 +199,8 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">BSRAM</td>
-<td>12 SP<br/>8 SPX9<br/>11 SDPB<br/>2 pROM<br/></td>
-<td>59%</td>
+<td>13 SP<br/>8 SPX9<br/>11 SDPB<br/>2 pROM<br/></td>
+<td>61%</td>
 </tr>
 <tr>
 <td class="label">DSP</td>
@@ -298,19 +298,19 @@ Generate output files:
 <td> TL</td>
 </tr>
 <tr>
-<td class="label">ff_ssram_reset_n</td>
-<td>PRIMARY</td>
-<td> TL BL</td>
-</tr>
-<tr>
 <td class="label">clk215m</td>
 <td>PRIMARY</td>
-<td> TR TL BR BL</td>
+<td> TL BR BL</td>
 </tr>
 <tr>
 <td class="label">clk42m</td>
 <td>PRIMARY</td>
 <td> TR TL BR BL</td>
+</tr>
+<tr>
+<td class="label">u_controller_spi/ff_debug_signal_255_6</td>
+<td>PRIMARY</td>
+<td> TR TL</td>
 </tr>
 <tr>
 <td class="label">ff_spi_reset_n</td>
@@ -324,6 +324,11 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">ff_ppi_reset_n</td>
+<td>LW</td>
+<td> -</td>
+</tr>
+<tr>
+<td class="label">ff_ssram_reset_n</td>
 <td>LW</td>
 <td> -</td>
 </tr>
@@ -344,11 +349,6 @@ Generate output files:
 </tr>
 <tr>
 <td class="label">u_r800/n4066_4</td>
-<td>LW</td>
-<td> -</td>
-</tr>
-<tr>
-<td class="label">u_dos_mapper/u_fdc8566/n148_4</td>
 <td>LW</td>
 <td> -</td>
 </tr>

@@ -2227,3 +2227,172 @@ ERROR (PA2024) : The number(104) of ports exceeds the resource limit 85 regular 
 
 - 今回こちらで変更したのは Controller_002 のファームと readme、本履歴のみ。FPGA RTL は未変更。commit/push は行っていない。
 - `cr800.v:951` の未宣言 `mc` (暗黙wire) の警告確認は、引き続き残っている。
+
+## 2026-11-26 朝 ディスクエミュレーター (FDC → Pico 連携) の仕様検討
+
+コードはまだ変更していない。帰宅後に実装を始める。
+
+- ユーザーと決めたもの: ERR ファイルの値、エラー時もデータを返すこと、SET ファイルの書式と `protect`、SD 直接モードの範囲 (SD 全体、FAT12/16 以外は Disk Offline)、要求の単位 (1 セクター)。
+- **まだ決まっていないもの: FPGA 側の I/F** (disk_if のレジスタ、BUSY によるハンドシェイク、SPI コマンド)。下に書いたのは案で、帰宅後にユーザーとレビューして確定させる。
+- Muse くんへのドライバー依頼は、I/F が確定してから行う。
+
+### 担当範囲
+
+- こちらの担当は FPGA 側 (disk_if と SPI コマンド) と Pico ファームウェア。
+- DOS ROM 側のディスクドライバーは、Muse くんに依頼する。FAT16 対応版の MSX-DOS2 は Muse くんが用意済みだが、ドライバー部分は FPGA の I/F が固まってから作ってもらう。
+- そのため、FPGA 側の I/F 仕様書 (レジスタマップ、手順、エラーコード) を Muse くんに渡せる形にまとめる必要がある。
+
+### 現状
+
+- `src/fdc8566/fdc8566.v` は、コマンドとリザルトのフェーズだけを真似たスタブ。データ転送はなく、READ は常にエラー (C8h) を返す。
+- Pico の 03h/04h (MSX メモリの読み書き) はバス所有権を Pico に移す (CPU を止める) ので、ディスク I/O には使わない。
+- VDP ログ (12h) やスロットトレース (1Ah) と同じく、CPU を動かしたまま FPGA 内のバッファを専用コマンドで読み書きする方式にする。
+
+### FPGA 側 I/F の案 (未確定)
+
+1〜3 はたたき台。レジスタの構成、アドレス、ハンドシェイク、コマンド番号は、レビューで変わる前提。
+
+#### 1. FPGA: fdc8566 を disk_if に置き換える (案)
+
+- dos_mapper の 7FF0h 付近にレジスタを置く (具体的なアドレスは、既存のマッパーレジスタと重ならないよう実装時に決める)。
+
+| レジスタ | 内容 |
+|---|---|
+| CMD | 読み出し / 書き込み / 状態確認 / バッファポインタのリセット |
+| DRIVE、MEDIA | ドライブ番号、メディア ID |
+| SECTOR (L/M/H) | 論理セクター番号 24bit (SD 直接モードで SD 全体を扱うため。FAT16 の上限を考えると、32bit にするかも検討する) |
+| STATUS | BUSY、ERROR、ディスク交換フラグ、エラーコード |
+| DATA | 512B バッファへの窓。アクセスごとにアドレスが 1 進む |
+
+- バッファは 512B の BSRAM で、MSX 側と SPI 側の両方から使えるデュアルポート。
+- MSX 側は STATUS をポーリングして完了を待つ (/WAIT で止めない)。タイムアウトしたら Not ready を返せるようにする。
+
+#### 2. バッファの持ち主 (BUSY フラグで決める、案)
+
+- BUSY=0 の間は MSX、BUSY=1 の間は Pico がバッファの持ち主。FPGA 側で次の 3 つを強制する。
+  - BUSY=1 の間は、MSX の DATA アクセスを無効にする (読み出しは FFh、書き込みは無視)。
+  - Pico のバッファアクセス (21h/22h) は、BUSY=1 の間だけ受け付ける。
+  - バッファポインタは、CMD を書いたときと完了通知 (23h) を受けたときに 0 へ戻す。
+- MSX が書き込むとき: ポインタをリセット → DATA に 512B を書く → DRIVE/SECTOR/MEDIA を書く → CMD=書き込み (ここで BUSY=1) → Pico が 20h、21h で読み、SD に書く → 23h で完了 (BUSY=0)。
+- MSX が読み出すとき: DRIVE/SECTOR/MEDIA を書く → CMD=読み出し (BUSY=1) → Pico が 20h で読み、SD から読んで 22h でバッファに書く → 23h で完了 (BUSY=0、ポインタ 0) → MSX が DATA から 512B を読む。
+- 要求ごとに 1 バイトの通し番号を付ける。23h でもその番号を返させ、一致しなければ FPGA は無視する。
+
+#### 3. 新しい SPI コマンド (どれもバス所有権は取らない、案)
+
+| コマンド | 内容 | 受け付ける条件 |
+|---|---|---|
+| 20h | 要求内容を読む (通し番号、CMD、DRIVE、SECTOR、MEDIA) | 常に |
+| 21h | バッファから 512B を読む (MSX の書き込み要求) | BUSY=1 |
+| 22h | バッファに 512B を書く (MSX の読み出し要求) | BUSY=1 |
+| 23h | 完了通知 (通し番号、エラーコード)。BUSY=0 にする | BUSY=1 |
+| 24h | ディスク交換フラグを立てる (モード切り替えや交換のとき) | 常に |
+
+- Pico が要求を検知する方法: まずはポーリングだけにする。キーマトリクス更新 (11h) の応答か、BUSY 確認 (05h) のステータスに「ディスク要求あり」のビットを追加し、2ms ループに乗せる。
+- `spi_intr` を CS=H の間に「要求あり」として使い、低遅延で通知する案は、ACK との兼用になるので後回しにする。
+- コマンド番号は、既存の SPI コマンドと重ならないか実装時に readme.md で確認する。
+
+### ユーザーと決定した仕様
+
+4〜7 の仕様は確定。ただし、文中のコマンド番号 (22h/23h/24h) や STATUS ビットは上の I/F 案を前提にした書き方で、I/F が確定したら合わせて直す。
+
+#### 4. エラーコード (決定)
+
+- ERR ファイルの 1 バイトの値は、DSKIO のエラーコードそのまま (0 = エラーなし)。
+  - DSKIO のコード: 0 = 書き込み禁止、2 = Not ready、4 = CRC エラー、6 = シークエラー、8 = セクターが見つからない、10 = 書き込み失敗、12 = その他。
+  - ※ 0 が「書き込み禁止」と「エラーなし」で重なっている。DSKIO の書き込み禁止は 0 なので、ERR 内の 0 は「エラーなし」とし、書き込み禁止は SET ファイルの `protect` で表す。STATUS の ERROR ビットと、エラーコードは分けて持つ。
+- 読み出しでエラーがあるときもデータは返す (22h でデータを書いてから、エラーコード付きの 23h を送る)。
+- ERR ファイルがなければ、全セクター エラーなしとする。
+
+#### 5. SET ファイル (ディスク複数枚組、決定)
+
+- ファイルの構成:
+  - `xxxx.SET`: ディスク組の情報
+  - `yyyy1.DSK` / `yyyy1.ERR`: ディスク 1 とそのエラー情報
+  - `yyyy2.DSK` / `yyyy2.ERR`: ディスク 2 とそのエラー情報
+- SET ファイルの書式:
+
+```
+title=ソフトのタイトル
+disks=ディスクの枚数
+disk1=yyyy1,protect
+disk2=yyyy2
+```
+
+- `,protect` が付いたディスクは書き込み禁止 (DSKIO の書き込みでエラー 0 を返す)。
+- 将来は Pico 側のメニューでディスク組やディスクを選べるよう拡張する可能性がある。パーサーは、知らないキーを無視するように作っておく。
+- 今回はまず `/DSK/2DD.DSK` (と `2DD.ERR`) を対象に動かし、SET ファイルの対応はその後にする。
+
+#### 6. Pico 側の動作モード (キーボード操作で切り替え。モードの範囲は決定、実装方法は案)
+
+- **DSK イメージモード**
+  - ファイルは開いたままにし、`f_lseek(セクター × 512)` のあとに `f_read` / `f_write` する。fast seek (CLMT) を使う。
+  - ERR は 1440B なので、マウントしたときに RAM へ読み込む。
+- **SD 直接モード (決定: SD カード全体を 1 ドライブとして扱う)**
+  - `disk_read` / `disk_write` で、SD のセクターを直接読み書きする。
+  - DOS 側は Muse くんの FAT16 対応 MSX-DOS2 を使う。
+  - SD が FAT12/FAT16 以外 (FAT32 など) のときは、このモードでは Disk Offline (Not ready) を返す。Pico 側でブートセクター / パーティションを見て判定する。
+  - このモードの間は FatFs をアンマウントする (FatFs のキャッシュとの食い違いでファイルシステムが壊れるのを防ぐ)。
+- モード切り替えは BUSY=0 の間だけ受け付け、切り替えたら 24h でディスク交換フラグを立てる。
+- FatFs はスレッドセーフではないので、SD アクセスは 1 つのコアにまとめる。今は core1 が SD を初期化しているので、マウントも含めて core0 に移すことを検討する。
+
+#### 7. 要求の単位 (決定)
+
+- 1 セクター単位。DOS ドライバーへの要求をそのまま Pico に伝える。
+
+### 帰宅後の作業
+
+1. 既存の SPI コマンド一覧 (readme.md) と dos_mapper のアドレスマップを確認し、上の I/F 案 (レジスタ構成とアドレス、ハンドシェイク、SPI コマンド番号) を具体化する。
+2. **I/F 案をユーザーとレビューして確定する。** ここが決まるまで 3 以降には進まない。
+3. 確定した I/F の仕様書 (MSX から見たレジスタと手順、Pico から見た SPI コマンド) を書く。これを Muse くんへのドライバー依頼に使う (依頼は確定後)。
+4. FPGA: 確定した I/F に従って `disk_if` を作り、fdc8566 と置き換える。SPI スレーブに確定したコマンドと「ディスク要求あり」の通知を追加する。
+5. ModelSim で disk_if の単体テスト (`test_xxx`) を作り、読み出し・書き込み・エラー・タイムアウト・BUSY 中の不正アクセスを確認する。
+6. Pico: ディスク要求のポーリングと処理 (DSK イメージモード、ERR の読み込み、SD 直接モード、FAT12/16 判定、モード切り替えキー) を作る。
+7. GOWIN EDA でのビルドはユーザーが実施。実機では、まず `/DSK/2DD.DSK` の読み出しから確認する。
+8. その後、SET ファイルの解析と書き込み禁止に対応する。
+## 2026-11-26 夜 ディスクエミュレーター I/F 仕様書 (ドラフト 0.1)
+
+- 朝の案を具体化し、`src/disk_if/readme.md` に仕様書を作った。Muse くん (DOS ドライバー担当) に渡す想定。第 1 部が MSX 側、第 2 部が FPGA / Pico の内部。
+- 要点: レジスタは既存の 7FF1h〜7FFBh に置く (address_decode と msx_slot は変更なし)。
+  - 7FF2h = STATUS / CMD、7FF3h = DRIVE、7FF4h = MEDIA、7FF5h〜7FF8h = SECTOR (32bit)、7FF9h = DATA、7FFAh = ERRCODE、7FFBh = IFVER (01h)。
+  - STATUS: BUSY / ERROR / CHANGED / READY / WPROT。CMD: 00h RSTPTR、01h READ、02h WRITE、10h CLRCHG、80h ABORT。
+  - SPI: 20h 要求内容の読み出し、21h / 22h バッファの読み書き (SEQ で照合)、23h 完了通知、24h メディア状態の設定。05h bit3 と 11h の応答 bit4 = DISK_REQ。
+- ユーザーのレビュー待ち。確定したら disk_if の実装と ModelSim テスト、Pico の実装に進む。
+
+## 2026-11-26 夜 disk_if の FPGA 側を実装 (仕様書 0.2)
+
+- 仕様書 0.1 を Muse くんに渡したあと、FPGA 側を実装した。
+- 新規: `src/disk_if/disk_if.v`
+  - 7FF1h〜7FFBh のレジスタと、512 バイトのバッファ (シングルポート RAM。BUSY=0 は MSX、BUSY=1 は SPI がアドレスを使う)。
+  - DATA の読み出しは RAM の同期読み出しで、1clk 遅れて `bus_rdata_en` と一緒に返す (memory_mapper と同じ方式)。
+  - READY / WPROT / SEQ は電源投入時のリセット (`ff_spi_reset_n`) でだけ初期化する。CHANGED は MSX リセットで 1。
+  - 23h の完了と MSX の ABORT が同じサイクルなら完了を優先する (Pico に返す 00h と状態を一致させるため)。
+- 変更: `src/dos_mapper/dos_mapper.v` (fdc8566 を外して disk_if を入れた。`sys_reset_n` 入力を追加。FDC 用の出力ポートは削除)。
+- 変更: `src/spi/ip_spi.v` (20h〜24h を追加。05h の bit3、11h の最初の応答の bit4 = DISK_REQ)。
+- 変更: `src/FPGA_MSXtR_CPU_Stack2.v` (disk_if の配線。`w_dos_fdc_interrupt` を INT から外した)。
+- 変更: `FPGA_MSXtR_CPU_Stack2.gprj` (fdc8566.v を disk_if.v に置き換え)。`src/test_001`〜`test_007` の run.bat も同様に置き換えた。
+- テスト: `src/disk_if/test_001` (dos_mapper + ip_spi の結合テスト) は 52 件すべて PASS。`src/test_007` (トップ全体) も変更前と同じく RESULT: OK。
+  - テストベンチの SPI は 10MHz。70MHz にするとテストベンチ側の MISO のサンプルが同期化の遅れでずれる (FPGA が出しているデータは正しい)。
+- 仕様書を 0.2 にした: §5 の CMD 書き込み時のポインタ (BUSY=0 ならどの値でも 0、BUSY=1 なら ABORT のときだけ 0) を明確化。§10 を実装に合わせた。§11 に spi_intr の扱いを追記。`src/spi/readme.md` にも 20h〜24h と DISK_REQ を追記。
+- `src/dos_mapper/test_001` は fdc8566 前提の古いテストなので、もう使えない。
+
+### 次の作業
+
+1. GOWIN EDA でのビルド (ユーザーが実施)。
+2. Pico ファーム: fpga_io にディスク用の関数を追加、DISK_REQ のポーリング、DSK イメージモード (`/DSK/2DD.DSK` と `.ERR`、sdcard.c の disk_write の実装)、SD 直接モード (FAT12/16 判定)、モード切り替えキー、起動時に 24h を送ってから MSX リセットを解除。
+3. Muse くんのドライバーと合わせて実機確認。
+## 2026-11-26 夜 (続き) GOWIN の BSRAM エラー修正と Pico ファームの実装 (仕様書 0.3)
+
+- GOWIN で `PA2122: Not support 'ff_buf_ff_buf_0_0_s'(SP) WRITE_MODE = 2'b10` が出た。disk_if のバッファが書き込みサイクルでも読み出していたため、read-before-write の SP RAM と推論されていた。読み出しを `else` 側 (書き込まないサイクルだけ) に移して WRITE_MODE=00 にした。動作は変わらない (DATA の読み出しと 21h は書き込みと同じサイクルにならない)。disk_if/test_001 は 52 件 PASS、GOWIN の合成も通った (ユーザー確認)。
+- Pico ファーム (`controller/FPGA_MSXtR_Stack_Controller_002`) を実装した。WSL の make で警告なしにビルドできた。
+  - `fpga_io.c/.h`: `fpga_disk_get_request` (05h bit3)、`fpga_disk_get_info` (20h)、`fpga_disk_read_buffer` (21h)、`fpga_disk_write_buffer` (22h)、`fpga_disk_done` (23h)、`fpga_disk_set_media` (24h)。バイトの送受信は serialrom と同じ流儀。
+  - `sdcard.c/.h`: `disk_write` を実装 (CMD24 / CMD25)。`sdcard_init_card`、`sdcard_unmount`、`sdcard_get_sector_count` を追加。
+  - 新規 `disk_emu.c/.h`: DSK イメージモード (`/DSK/2DD.DSK`、`/DSK/2DD.ERR`) と SD 直接モード (FAT12/16 判定)。f_mount のやり直しで FIL が無効になったら 1 回だけ開き直す。READY/WPROT が変わったら 24h を送り直す。
+  - `fpga_msxtr_controller.c`: SD のマウントを Core 1 から Core 0 の起動処理に移し、`disk_emu_init()` (24h) のあとで MSX リセットを解除する。11h の応答 bit4 / 05h の bit3 で要求を検知する。STM32 に送る LED 状態は bit3〜0 だけにした。Pico-local mode の D キーでモード切り替え。
+- 仕様書を 0.3 にした (§12 のみ。fast seek は使わない (SDK の ffconf.h が `FF_USE_FASTSEEK=0`)、読み取り専用属性なら WPROT=1、D キー、Core 0)。MSX から見た動作は変わらない。
+
+### 次の作業
+
+1. Pico ファームを書き込み、起動ログの `[DISK] mode=... ready=1` を確認する。
+2. Muse くんのドライバーができるまでは、BASIC から RDSLT/WRSLT で 1 セクター読むテストで確認する。
+3. 未確認の懸念: 今の DOS ROM (元の FDC 用ドライバー) は 7FF2h〜7FF5h を FDC として触るので、起動時の振る舞いが変わる可能性がある (FDC の応答待ちで止まるなど)。
+4. 将来: SET ファイル (複数枚組、protect)。

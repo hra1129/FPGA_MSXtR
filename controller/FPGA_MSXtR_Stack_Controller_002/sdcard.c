@@ -92,6 +92,27 @@ static int sd_rcvr_datablock(uint8_t *buff, uint32_t len) {
     return 1;
 }
 
+// token: 0xfe = single block, 0xfc = multi block, 0xfd = stop tran (buff 不要)
+static int sd_xmit_datablock(const uint8_t *buff, uint8_t token) {
+    uint8_t response;
+
+    if (!sd_wait_ready(500)) {
+        return 0;
+    }
+
+    (void)spi_txrx(token);
+    if (token != 0xfd) {
+        spi_write_blocking(SD_SPI, buff, 512);
+        (void)spi_txrx(0xff);
+        (void)spi_txrx(0xff);
+        response = spi_txrx(0xff);
+        if ((response & 0x1f) != 0x05) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int sd_send_cmd(uint8_t cmd, uint32_t arg) {
     uint8_t response;
     uint8_t crc = 0x01;
@@ -296,11 +317,40 @@ DRESULT disk_read(BYTE pdrv, BYTE *buff, LBA_t sector, UINT count) {
 }
 
 DRESULT disk_write(BYTE pdrv, const BYTE *buff, LBA_t sector, UINT count) {
-    (void)pdrv;
-    (void)buff;
-    (void)sector;
-    (void)count;
-    return RES_WRPRT;
+    if (pdrv != 0 || count == 0) {
+        return RES_PARERR;
+    }
+    if (g_status & STA_NOINIT) {
+        return RES_NOTRDY;
+    }
+
+    if (!(g_card_type & CT_BLOCK)) {
+        sector *= 512;
+    }
+
+    if (count == 1) {
+        if ((sd_send_cmd(24, (uint32_t)sector) == 0) && sd_xmit_datablock(buff, 0xfe)) {
+            count = 0;
+        }
+    } else {
+        if (g_card_type & (CT_SD1 | CT_SD2)) {
+            (void)sd_send_cmd(0x80 + 23, count);
+        }
+        if (sd_send_cmd(25, (uint32_t)sector) == 0) {
+            do {
+                if (!sd_xmit_datablock(buff, 0xfc)) {
+                    break;
+                }
+                buff += 512;
+            } while (--count);
+            if (!sd_xmit_datablock(NULL, 0xfd)) {
+                count = 1;
+            }
+        }
+    }
+
+    sd_deselect_card();
+    return count ? RES_ERROR : RES_OK;
 }
 
 DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void *buff) {
@@ -366,6 +416,26 @@ bool sdcard_init_and_mount(void) {
     // lcd_printf("[SD] f_mount -> %d\n", fr);
     g_mounted = (fr == FR_OK);
     return g_mounted;
+}
+
+bool sdcard_init_card(void) {
+    return (disk_initialize(0) & STA_NOINIT) == 0;
+}
+
+void sdcard_unmount(void) {
+    if (g_mounted) {
+        (void)f_unmount("");
+        g_mounted = false;
+    }
+}
+
+uint32_t sdcard_get_sector_count(void) {
+    DWORD count = 0;
+
+    if (disk_ioctl(0, GET_SECTOR_COUNT, &count) != RES_OK) {
+        return 0;
+    }
+    return (uint32_t)count;
 }
 
 void sdcard_print_root_directory(void) {

@@ -21,7 +21,7 @@ vlog -quiet ..\test_004\gowin_pll.v ..\ssram\ssram_test_model.v
 if errorlevel 1 exit /b 1
 vlog -quiet +incdir+..\bootrom ..\bootrom\bootrom.v ..\bootrom\ram.v ..\bootrom\rom.v
 if errorlevel 1 exit /b 1
-vlog -quiet ..\address_decode\address_decode.v ..\cmcu\cmcu.v ..\dos_mapper\dos_mapper.v ..\dummy_ssg\dummy_ssg.v ..\extio\extio.v ..\fdc8566\fdc8566.v
+vlog -quiet ..\address_decode\address_decode.v ..\cmcu\cmcu.v ..\dos_mapper\dos_mapper.v ..\dummy_ssg\dummy_ssg.v ..\extio\extio.v ..\disk_if\disk_if.v
 if errorlevel 1 exit /b 1
 vlog -quiet ..\cz80\cz80.v ..\cz80\cz80_alu.v ..\cz80\cz80_inst.v ..\cz80\cz80_mcode.v ..\cz80\cz80_reg.v
 if errorlevel 1 exit /b 1

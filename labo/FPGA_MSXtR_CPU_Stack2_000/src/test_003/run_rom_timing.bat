@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 if not exist work_rom_timing vlib work_rom_timing
 if errorlevel 1 exit /b 1
-vlog -work work_rom_timing gowin_pll.v ..\vdp_logger\vdp_logger.v ..\spi\spi.v ..\spi\ip_spi.v ..\cmcu\cmcu.v ..\msx_bus_mux\msx_bus_mux.v ..\dummy_ssg\dummy_ssg.v ..\pause_led\pause_led.v ..\msx_slot\msx_slot_decode.v ..\msx_slot\msx_slot.v ..\address_decode\address_decode.v ..\fdc8566\fdc8566.v ..\dos_mapper\dos_mapper.v ..\memory_mapper\memory_mapper.v ..\secondary_slot\secondary_slot.v ..\ssram\ssram.v ..\ssram\ssram_test_model.v
+vlog -work work_rom_timing gowin_pll.v ..\vdp_logger\vdp_logger.v ..\spi\spi.v ..\spi\ip_spi.v ..\cmcu\cmcu.v ..\msx_bus_mux\msx_bus_mux.v ..\dummy_ssg\dummy_ssg.v ..\pause_led\pause_led.v ..\msx_slot\msx_slot_decode.v ..\msx_slot\msx_slot.v ..\address_decode\address_decode.v ..\disk_if\disk_if.v ..\dos_mapper\dos_mapper.v ..\memory_mapper\memory_mapper.v ..\secondary_slot\secondary_slot.v ..\ssram\ssram.v ..\ssram\ssram_test_model.v
 if errorlevel 1 exit /b 1
 vlog -work work_rom_timing +incdir+bootrom bootrom\ram.v bootrom\rom.v bootrom\bootrom.v flashrom_test_model.v ..\ppi\ppi.v ..\rtc\rtc.v ..\system_flag\system_flag.v ..\kanji_rom\ip_kanji_rom.v
 if errorlevel 1 exit /b 1

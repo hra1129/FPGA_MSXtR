@@ -47,6 +47,7 @@
 #include "debugger.h"
 #include "vdp_logger.h"
 #include "diag_log.h"
+#include "disk_emu.h"
 
 // I2C (キーボードコントローラー)
 #define I2C_PORT	 i2c0
@@ -169,14 +170,9 @@ static void sample_keyboard_idle_level( void ) {
 #endif
 
 static void core1_entry(void) {
-	bool mounted;
-
 	diag_log( "[C1] start" );
 	keyboard_init( I2C_PORT, I2C_ADDR, I2C_SDA_PIN, I2C_SCL_PIN, I2C_BAUDRATE );
 	diag_log( "[C1] I2C idle level SCL=%d SDA=%d", keyboard_get_scl(), keyboard_get_sda() );
-	mounted = sdcard_init_and_mount();  // SPI1 + SDカードドライバ初期化
-	diag_log( "[C1] SD mount %s", mounted ? "OK" : "failed" );
-	(void)mounted;
 
 	while (true) {
 #if DIAG_LOG_ENABLE
@@ -236,7 +232,7 @@ static void initialization( void ) {
 		printf( "Failed to set SLOT#1 ROM mode; using physical cartridge slot.\r\n" );
 	}
 	fpga_set_bus_owner( BUS_OWNER_CPU );
-	// SPI1 は sd_init_driver() (Core 1 内) が初期化するため spi1_init() 不要
+	// SPI1 (SDカード) の初期化とマウントは disk_emu_init() (Core 0) で行う
 	memset( prev_keymatrix, 0xFF, KEYBOARD_KEY_MATRIX_SIZE );
 	memset( keymatrix, 0xFF, KEYBOARD_KEY_MATRIX_SIZE );
 	multicore_launch_core1(core1_entry);
@@ -244,6 +240,8 @@ static void initialization( void ) {
 	// fpga_io_init() を抜けてきた時点で CPU Board の FPGA の起動は完了しているが、
 	// 他のボードが起動しているかわからないので、念のため 100ms 待機する
 	sleep_ms(100);
+	// DOS が起動したときに READY が確定しているように、リセット解除前にメディア状態を設定する
+	disk_emu_init();
 	fpga_bootrom_enable( false );
 	fpga_msx_reset( false );
 	diag_log( "[C0] MSX reset released" );
@@ -265,6 +263,15 @@ static uint8_t send_keyboard_matrix( void ) {
 		}
 	}
 	return fpga_set_keyboard_matrix( matrix );
+}
+
+// ---------------------------------------------------------
+//	11h の LED 応答を受け取り、DISK_REQ を処理してから LED 部分 (bit3-0) だけを Core 1 に渡す
+static void update_led_state( uint8_t led_status ) {
+	s_fpga_led_state = led_status & (FPGA_LED_R800 | FPGA_LED_PAUSE | FPGA_LED_CAPS | FPGA_LED_KANA);
+	if( led_status & FPGA_LED_DISK_REQ ) {
+		disk_emu_service();
+	}
 }
 
 // ---------------------------------------------------------
@@ -301,7 +308,15 @@ static void print_local_key_menu( void ) {
 	printf( "7: KOEI slot/RAM diagnostic\r\n" );
 	printf( "8: Slot trace dump\r\n" );
 	printf( "9: Slot trace clear/re-arm\r\n" );
+	printf( "D: Disk mode toggle (image /DSK/2DD.DSK <-> SD direct)\r\n" );
 	printf( "0: Help\r\n" );
+}
+
+// ---------------------------------------------------------
+static void poll_disk_request( void ) {
+	if( fpga_disk_get_request() ) {
+		disk_emu_service();
+	}
 }
 
 // ---------------------------------------------------------
@@ -315,7 +330,7 @@ int main(void) {
 	s_keyboard_to_cpu = (keymatrix[11] & 0x01) != 0;
 	diag_log( "[C0] boot mode: %s (row11=%02X)", s_keyboard_to_cpu ? "keyboard forwarding" : "Pico-local menu", keymatrix[11] );
 	if( s_keyboard_to_cpu ) {
-		s_fpga_led_state = send_keyboard_matrix();
+		update_led_state( send_keyboard_matrix() );
 		printf( "Boot MSX System. Keyboard forwarding enabled.\r\n" );
 	}
 	else {
@@ -323,8 +338,9 @@ int main(void) {
 		printf( "Boot MSX System. Keyboard forwarding disabled.\r\n" );
 		print_local_key_menu();
 		memset( released_matrix, 0xFF, sizeof(released_matrix) );
-		s_fpga_led_state = fpga_set_keyboard_matrix( released_matrix );
+		update_led_state( fpga_set_keyboard_matrix( released_matrix ) );
 		while( (keymatrix[11] & 0x01) == 0 ) {
+			poll_disk_request();
 			sleep_ms( 10 );
 		}
 	}
@@ -341,12 +357,12 @@ int main(void) {
 			diag_log( "[C0] MENU -> %s", s_keyboard_to_cpu ? "keyboard forwarding" : "Pico-local menu" );
 			if( s_keyboard_to_cpu ) {
 				s_suppress_menu_until_release = true;
-				s_fpga_led_state = send_keyboard_matrix();
+				update_led_state( send_keyboard_matrix() );
 				printf( "Keyboard forwarding enabled; CPU retains bus ownership.\r\n" );
 			}
 			else {
 				memset( released_matrix, 0xFF, sizeof(released_matrix) );
-				s_fpga_led_state = fpga_set_keyboard_matrix( released_matrix );
+				update_led_state( fpga_set_keyboard_matrix( released_matrix ) );
 				printf( "Keyboard forwarding disabled; CPU retains bus ownership.\r\n" );
 				print_local_key_menu();
 			}
@@ -362,6 +378,8 @@ int main(void) {
 			else if( key_press( 0, 7 ) ) run_with_pico_bus( test_koei_slot_ram );
 			else if( key_press( 1, 0 ) ) dump_slot_trace();
 			else if( key_press( 1, 1 ) ) arm_slot_trace();
+			else if( key_press( 3, 1 ) ) disk_emu_toggle_mode();
+			poll_disk_request();
 		}
 		else {
 			if( key_press( 0, 3 ) ) dump_fpga_debug_signal();
@@ -370,7 +388,7 @@ int main(void) {
 				vdp_logger_reset();
 				printf( "VDP log %s\r\n", vdp_log_enabled ? "ON" : "OFF" );
 			}
-			s_fpga_led_state = send_keyboard_matrix();
+			update_led_state( send_keyboard_matrix() );
 			if( vdp_log_enabled && fpga_get_bus_owner() == BUS_OWNER_CPU ) poll_vdp_log();
 		}
 		memcpy( prev_keymatrix, keymatrix, KEYBOARD_KEY_MATRIX_SIZE );
