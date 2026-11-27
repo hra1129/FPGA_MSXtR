@@ -543,8 +543,9 @@ module cr800_inst #(
 					if( ff_eng_t == 3'd1 && state_count == 4'd7 ) begin
 						ff_rd_n <= 1'b0;
 					end
-					if( ff_eng_t == 3'd3 && state_count == 4'd11 ) begin
+					if( ff_eng_t == 3'd3 && state_count == 4'd11 && ff_wait_n ) begin
 						//	/MREQ と /RD は slot_d のラッチと同じ T3 立ち上がりで解除 (SLTSL もここまで保持)
+						//	外部 /WAIT 中は TW を繰り返すので、解除もラッチも行わない
 						ff_merq_n <= 1'b1;
 						ff_rd_n <= 1'b1;
 					end
@@ -720,7 +721,7 @@ module cr800_inst #(
 	assign w_slot_latch =
 		( ff_cyc_state == CY_FLASH && ff_flash_cnt == 4'd6 ) ||
 		( ff_cyc_state == CY_SLOW && (
-			(  ff_cyc_m1                && ff_eng_t == 3'd3 && state_count == 4'd11 ) ||
+			(  ff_cyc_m1                && ff_eng_t == 3'd3 && state_count == 4'd11 && ff_wait_n ) ||
 			( !ff_cyc_m1 && !ff_cyc_io  && ff_eng_t == 3'd4 && state_count == 4'd6  ) ||
 			( !ff_cyc_m1 &&  ff_cyc_io  && ff_eng_t == 3'd4 && state_count == 4'd6  ) ) );
 

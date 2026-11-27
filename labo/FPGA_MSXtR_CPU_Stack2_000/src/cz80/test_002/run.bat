@@ -21,6 +21,7 @@ vlog tb.sv
 
 vsim -c -t 1ps -wlf tb.wlf tb -do "add wave -r *; run -all; quit -f"
 vsim -c -t 1ps -wlf tb_cr800_slot_write.wlf tb_cr800_slot_write -do "add wave -r *; run -all; quit -f"
+vsim -c -t 1ps tb_cz80_slot_wait -do "run -all; quit -f"
 
 if exist transcript move transcript log.txt
 endlocal

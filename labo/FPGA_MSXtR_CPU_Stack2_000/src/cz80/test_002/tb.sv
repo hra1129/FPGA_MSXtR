@@ -334,3 +334,53 @@ module tb_cr800_slot_write;
 		$display( "PASS: %s write drives slot_d before /WR and releases it after /WR", name );
 	endtask
 endmodule
+
+module tb_cz80_slot_wait;
+	reg clk = 1'b0;
+	reg reset_n = 1'b0;
+	reg [3:0] state_count = 4'd0;
+	reg [7:0] memory [0:15];
+	reg wait_n = 1'b1;
+	reg [7:0] slot_data = 8'hFF;
+	integer access_count = 0;
+	integer rd_release_in_wait = 0;
+	wire merq_n, rd_n;
+	wire [15:0] bus_address, pc;
+	always #11.64 clk = ~clk;
+	always @( posedge clk ) begin
+		if( state_count == 4'd11 ) state_count <= 4'd0;
+		else state_count <= state_count + 4'd1;
+	end
+	always @( posedge clk ) begin
+		if( !merq_n && !rd_n ) begin
+			access_count <= access_count + 1;
+			wait_n <= !( access_count >= 1 && access_count < 40 );
+			slot_data <= ( access_count >= 40 ) ? memory[bus_address[3:0]] : 8'hFF;
+		end
+		else begin
+			access_count <= 0;
+			wait_n <= 1'b1;
+			slot_data <= 8'hFF;
+		end
+	end
+	always @( posedge rd_n ) if( reset_n && !wait_n ) rd_release_in_wait = rd_release_in_wait + 1;
+	cz80_inst u (
+		.reset_n(reset_n), .clk(clk), .state_count(state_count), .int_n(1'b1), .nmi_n(1'b1), .wait_n(wait_n),
+		.m1_n(), .merq_n(merq_n), .iorq_n(), .rd_n(rd_n), .wr_n(), .slot_d_oe(), .rfsh_n(),
+		.run_req(1'b1), .run_ack(), .slot_d(slot_data), .bus_io(), .bus_write(), .bus_valid(), .bus_ready(1'b0),
+		.bus_address(bus_address), .bus_wdata(), .bus_rdata(8'hFF), .bus_rdata_en(1'b0), .pc(pc), .debug_sp(), .int_ack()
+	);
+	initial begin
+		memory[0] = 8'h06; memory[1] = 8'h5A; memory[2] = 8'h0E; memory[3] = 8'hA5; memory[4] = 8'h18; memory[5] = 8'hFE;
+		repeat(3) @( posedge clk );
+		@( negedge clk );
+		reset_n = 1'b1;
+		#100000;
+		if( rd_release_in_wait != 0 ) $fatal(1, "/RD released while external /WAIT active: %0d times", rd_release_in_wait);
+		if( u.u_cz80.u_regs.reg_b0 !== 8'h5A || u.u_cz80.u_regs.reg_c0 !== 8'hA5 ) begin
+			$fatal(1, "slot fetch with /WAIT failed: B=%02h C=%02h PC=%04h", u.u_cz80.u_regs.reg_b0, u.u_cz80.u_regs.reg_c0, pc);
+		end
+		$display("PASS: cz80 SLOT M1/memory reads honor external /WAIT");
+		$finish;
+	end
+endmodule

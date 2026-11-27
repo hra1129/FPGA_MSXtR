@@ -99,6 +99,7 @@ module cz80_inst (
 	reg					ff_iorq_n;
 	reg					ff_wait_n;			//	外部からくる /WAIT信号
 	reg					ff_wait_n_i;		//	内部生成の /WAIT信号 for MSX
+	reg					ff_wait_n_l;		//	コアへ入れる外部 /WAIT (T-State 境界直前で確定)
 	reg ff_kanji_read_pending;
 	reg					ff_rd_n;
 	reg					ff_wr_n;
@@ -111,6 +112,7 @@ module cz80_inst (
 	wire				w_noread;
 	wire				w_write;
 	wire				w_wait_n;
+	wire				w_wait_n_next;
 	wire				w_rfsh_n;
 	wire				w_intcycle_n;
 	wire	[15:0]		w_bus_address;
@@ -253,7 +255,7 @@ module cz80_inst (
 			if(      ff_t_state_d == c_merq_m1_tstate_fall && state_count == c_merq_m1_cycle_fall ) begin
 				ff_merq_n <= 1'b0;
 			end
-			else if( w_t_state == c_merq_m1_tstate_rise && state_count == c_merq_m1_cycle_rise && !ff_new_tstate ) begin
+			else if( w_t_state == c_merq_m1_tstate_rise && state_count == c_merq_m1_cycle_rise && !ff_new_tstate && w_wait_n_next ) begin
 				ff_merq_n <= 1'b1;
 			end
 		end
@@ -338,7 +340,19 @@ module cz80_inst (
 		end
 	end
 
-	assign w_wait_n = ff_wait_n & ff_wait_n_i & ~ff_kanji_read_pending;
+	//	コアは state_count=0 で /WAIT を見るので、state_count=11 の値で確定させる。
+	//	/RD・/MREQ の解除と slot_d のラッチは、同じ値 (w_wait_n_next) で判定する。
+	always @( posedge clk ) begin
+		if( !reset_n ) begin
+			ff_wait_n_l <= 1'b1;
+		end
+		else if( state_count == 4'd11 ) begin
+			ff_wait_n_l <= ff_wait_n;
+		end
+	end
+
+	assign w_wait_n			= ff_wait_n_l & ff_wait_n_i & ~ff_kanji_read_pending;
+	assign w_wait_n_next	= ff_wait_n & ff_wait_n_i & ~ff_kanji_read_pending;
 
 	// ---------------------------------------------------------
 	//	/RD signal generation
@@ -370,7 +384,7 @@ module cz80_inst (
 			if(      w_t_state == c_rd_m1_tstate_fall && state_count == c_rd_m1_cycle_fall ) begin
 				ff_rd_n <= 1'b0;
 			end
-			else if( w_t_state == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && !ff_new_tstate ) begin
+			else if( w_t_state == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && !ff_new_tstate && w_wait_n_next ) begin
 				ff_rd_n <= 1'b1;
 			end
 		end
@@ -578,7 +592,7 @@ module cz80_inst (
 					ff_kanji_read_pending <= 1'b0;
 				end
 				else if( !ff_m1_n || w_indexed_opcode_fetch ) begin
-					if( ff_t_state_d == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && (!ff_new_tstate || w_indexed_opcode_fetch) && (!w_indexed_opcode_fetch || w_wait_n) ) begin
+					if( ff_t_state_d == c_rd_m1_tstate_rise && state_count == c_rd_m1_cycle_rise && (!ff_new_tstate || w_indexed_opcode_fetch) && w_wait_n_next ) begin
 						//	タイムアウト処理 (M1 / IX・IY+CBの末尾オペコード取得)
 						//	/RD の立ち上がりより少し早いが、T-State = 2 のタイミングで CZ80 は命令デコードを
 						//	開始するため、T-State = 2 の最後のタイミングをタイムアウトとしている

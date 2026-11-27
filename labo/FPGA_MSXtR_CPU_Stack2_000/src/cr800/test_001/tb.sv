@@ -942,3 +942,77 @@ module tb_r800_compat_differences;
 		$fatal(1, "R800 compatibility-difference test timeout");
 	end
 endmodule
+
+module tb_r800_slot_wait;
+	reg clk = 1'b0;
+	reg reset_n = 1'b0;
+	reg [3:0] state_count = 4'd0;
+	reg [7:0] memory [0:15];
+	reg wait_n = 1'b1;
+	reg [7:0] slot_data = 8'hFF;
+	integer access_count = 0;
+	integer rd_release_in_wait = 0;
+	wire m1_n;
+	wire merq_n;
+	wire rd_n;
+	wire [15:0] bus_address;
+	wire [15:0] pc;
+	localparam integer c_wait_clocks = 40;
+
+	always #11.64 clk = ~clk;
+	always @( posedge clk ) begin
+		if( state_count == 4'd11 ) state_count <= 4'd0;
+		else state_count <= state_count + 4'd1;
+	end
+
+	//	SerialSRAM 上の ROM を模した外部カートリッジ: /RD 検出後に /WAIT を出し、準備完了までデータを出さない
+	always @( posedge clk ) begin
+		if( !merq_n && !rd_n ) begin
+			access_count <= access_count + 1;
+			wait_n <= !( access_count >= 1 && access_count < c_wait_clocks );
+			slot_data <= ( access_count >= c_wait_clocks ) ? memory[bus_address[3:0]] : 8'hFF;
+		end
+		else begin
+			access_count <= 0;
+			wait_n <= 1'b1;
+			slot_data <= 8'hFF;
+		end
+	end
+	always @( posedge rd_n ) begin
+		if( reset_n && !wait_n ) rd_release_in_wait = rd_release_in_wait + 1;
+	end
+
+	cr800_inst u_r800 (
+		.reset_n(reset_n), .clk(clk), .state_count(state_count),
+		.int_n(1'b1), .nmi_n(1'b1), .wait_n(wait_n),
+		.m1_n(m1_n), .merq_n(merq_n), .iorq_n(), .rd_n(rd_n), .wr_n(),
+		.slot_d_oe(), .rfsh_n(), .run_req(1'b1), .run_ack(),
+		.slot_d(slot_data), .flash_cs(1'b0), .rom0_cs(1'b0), .rom0_address(19'd0), .slot12_cs(1'b1),
+		.ssram_access(1'b0), .bus_io(), .bus_write(),
+		.bus_valid(), .bus_ready(1'b0), .bus_address(bus_address),
+		.bus_wdata(), .bus_rdata(8'hFF), .bus_rdata_en(1'b0),
+		.performance_start(1'b0), .performance_stop(1'b0), .performance_signal(),
+		.pc(pc), .debug_sp(), .int_ack()
+	);
+
+	initial begin
+		memory[0] = 8'h06;	//	LD B,5Ah
+		memory[1] = 8'h5A;
+		memory[2] = 8'h0E;	//	LD C,A5h
+		memory[3] = 8'hA5;
+		memory[4] = 8'h18;	//	JR $
+		memory[5] = 8'hFE;
+		repeat(3) @( posedge clk );
+		@( negedge clk );
+		reset_n = 1'b1;
+		#100000;
+		if( rd_release_in_wait != 0 ) $fatal(1, "/RD released while external /WAIT active: %0d times", rd_release_in_wait);
+		if( u_r800.u_cr800.u_regs.reg_b0 !== 8'h5A || u_r800.u_cr800.u_regs.reg_c0 !== 8'hA5 ) begin
+			$fatal(1, "slot fetch with /WAIT failed: B=%02h C=%02h PC=%04h",
+				u_r800.u_cr800.u_regs.reg_b0, u_r800.u_cr800.u_regs.reg_c0, pc);
+		end
+		if( pc !== 16'h0004 && pc !== 16'h0005 && pc !== 16'h0006 ) $fatal(1, "slot fetch with /WAIT: unexpected PC=%04h", pc);
+		$display("PASS: R800 SLOT#1/#2 M1/memory reads honor external /WAIT");
+		$finish;
+	end
+endmodule

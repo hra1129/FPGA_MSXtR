@@ -2499,3 +2499,16 @@ disk2=yyyy2
 - kanji_rom/test_001 は、専用 SerialROM ピン時代のポート (srom_cs_n など) のままで、現在の ip_kanji_rom では読み込めない (今回は手を付けていない)。
 - 追記 (同日): 上記の修正を実機に入れたところ、漢字を表示するあたりでハングした。cz80_inst / cr800_inst は bus_ready=1 を見た時点で bus_valid を下げ、そのあとは bus_rdata_en だけを待つ。上記の修正では、準備が終わって S_IDLE に戻ってから bus_valid を見て読み出しを始めていたため、bus_valid がすでに下がっていて読み出しが始まらず、rdata_en が返らなかった。ff_setup_read を追加し、S_SETUP_DONE からそのまま 1 バイト目の読み出し (S_RD_A → S_CPU_RD_END) に進むように変更した。test_002 の CPU モデルも、bus_ready で bus_valid を下げるように変更した (前の修正のままだとタイムアウトで FAIL し、新しい修正では PASS)。
 - 実機確認 (同日): 幻影都市デモのメニューが正常に表示されるようになった。CALL KANJI と、Pico の KanjiROM glyph test (「漢」) も正常。
+
+## 2026-11-28 Y8960 Cartridge を挿すと CALL 命令がおかしくなる件
+
+- 症状: Y8960 Cartridge (SCC 互換マッパー、ROM は SerialSRAM 上) を挿すと、CALL KANJI / CALL MUSIC でハングする。また、CALL HOGEHOGE などの存在しない命令まで、何もせずに Ok になることがある。カートリッジを外すと正常。本物の MSX では起きない。
+- 原因: 外部スロットの M1 (オペコードフェッチ) サイクルで、カートリッジの /WAIT を守っていなかった。
+  - cr800_inst: /RD・/MREQ の解除と slot_d のラッチを、TW の終わり (eng_t=3、state_count=11) で無条件に行っていた。外部 /WAIT で TW が延びても、/RD は先に解除され、準備前のデータ (FFh など) を命令として取り込んでいた。
+  - cz80_inst も同じだった (T2 の 2 回目の state_count=11 で、無条件に /RD・/MREQ を解除し、slot_d をラッチしていた)。
+  - Y8960 は /RD を見てから SerialSRAM を読み出し、データが揃うまで /WAIT を出す。また、/RD が解除されたあとに届いたデータは捨てる。このため、オペコードがランダムに化けて、CALL 命令の処理ルーチンが暴走していた。メモリリードと I/O は、/WAIT が解けるまで T3 に進まないので問題なかった。
+- 修正:
+  - cr800_inst.v: M1 の /RD・/MREQ の解除と w_slot_latch を、ff_wait_n=1 のときだけ行う。
+  - cz80_inst.v: コアに渡す外部 /WAIT を state_count=11 で確定させる (ff_wait_n_l)。M1 の /RD・/MREQ の解除と、slot_d のタイムアウトラッチは、同じ値 (w_wait_n_next) で判定する。
+- テスト: cr800/test_001 に tb_r800_slot_wait を、cz80/test_002 に tb_cz80_slot_wait を追加した (/RD を見てから 40 クロック /WAIT を出し、その間は FFh を返すカートリッジのモデル)。修正前は、cr800 で /WAIT 中の /RD 解除が 24 回、cz80 で 27 回あり、FAIL した (cz80 は PC=0039h、つまり RST 38h に化けていた)。修正後は PASS。cr800/test_001、cr800/test_002 (19468 ベクタ)、cz80/test_002、cz80/test_003 (19352 ベクタ) は、すべて PASS。
+- 実機確認 (同日): Y8960 Cartridge を挿した状態で、CALL 命令が期待どおりに動くようになった。
