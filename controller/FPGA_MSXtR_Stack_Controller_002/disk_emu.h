@@ -35,6 +35,10 @@ typedef enum {
 //	MSX のリセットを解除する前に呼ぶこと
 void disk_emu_init( void );
 
+//	SD をマウントし直して、今のモードに入り直す (リセットボタンを離したとき用)
+//	MSX がリセット中 (DISK_REQ が来ない間) に呼ぶこと
+void disk_emu_reset( void );
+
 //	DISK_REQ=1 のときに呼ぶ。要求を 1 件処理する
 void disk_emu_service( void );
 

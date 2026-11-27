@@ -5,7 +5,7 @@ module tb;
 	reg reset_n = 1'b0;
 	reg r800_active = 1'b0;
 	reg bus_cs = 1'b1;
-	reg [20:0] bus_address = 21'd0;
+	reg [21:0] bus_address = 22'd0;
 	reg bus_write = 1'b0;
 	reg bus_valid = 1'b0;
 	reg [7:0] bus_wdata = 8'd0;
@@ -13,7 +13,7 @@ module tb;
 	wire [7:0] bus_rdata;
 	wire bus_rdata_en;
 	wire sram_cs;
-	wire [20:0] sram_address;
+	wire [21:0] sram_address;
 	wire sram_write;
 	wire sram_valid;
 	wire [7:0] sram_wdata;
@@ -27,7 +27,7 @@ module tb;
 	reg [63:0] sram_burst_rdata = 64'd0;
 	reg sram_burst_rdata_en = 1'b0;
 	reg [7:0] memory [0:16383];
-	reg [20:0] pending_address;
+	reg [21:0] pending_address;
 	reg [1:0] latency = 2'd0;
 	reg pending_read = 1'b0;
 	reg pending_burst = 1'b0;
@@ -94,7 +94,7 @@ module tb;
 		end
 	end
 
-	task automatic read_byte( input [20:0] address, input [7:0] expected );
+	task automatic read_byte( input [21:0] address, input [7:0] expected );
 		integer limit;
 		begin
 			@( negedge clk );
@@ -114,7 +114,7 @@ module tb;
 		end
 	endtask
 
-	task automatic write_byte( input [20:0] address, input [7:0] data );
+	task automatic write_byte( input [21:0] address, input [7:0] data );
 		integer limit;
 		begin
 			@( negedge clk );
@@ -140,48 +140,48 @@ module tb;
 		@( negedge clk );
 		reset_n = 1'b1;
 		r800_active = 1'b1;
-		read_byte(21'd3, 8'd3);
+		read_byte(22'd3, 8'd3);
 		if( accesses != 1 ) $fatal(1, "line fill expected one burst, got %0d", accesses);
 		if( debug_miss_count != 32'd1 || debug_hit_count != 32'd0 || debug_fill_wait_cycles == 32'd0 ) begin
 			$fatal(1, "first miss counters: hit=%0d miss=%0d wait=%0d",
 				debug_hit_count, debug_miss_count, debug_fill_wait_cycles);
 		end
-		read_byte(21'd6, 8'd6);
+		read_byte(22'd6, 8'd6);
 		if( accesses != 1 ) $fatal(1, "same-line cache hit missed");
 		if( debug_hit_count != 32'd1 || debug_miss_count != 32'd1 ) $fatal(1, "hit counter did not advance");
-		write_byte(21'd3, 8'hA5);
+		write_byte(22'd3, 8'hA5);
 		if( accesses != 2 || memory[3] != 8'hA5 ) $fatal(1, "write-through failed");
-		read_byte(21'd3, 8'hA5);
+		read_byte(22'd3, 8'hA5);
 		if( accesses != 2 ) $fatal(1, "write hit invalidated cache");
 		@( negedge clk );
 		r800_active = 1'b0;
 		repeat(2) @( posedge clk );
-		write_byte(21'd3, 8'h5A);
+		write_byte(22'd3, 8'h5A);
 		if( accesses != 3 ) $fatal(1, "Z80/Pico bypass failed");
 		@( negedge clk );
 		r800_active = 1'b1;
-		read_byte(21'd3, 8'h5A);
+		read_byte(22'd3, 8'h5A);
 		if( accesses != 4 ) $fatal(1, "cache not invalidated after owner change");
-		write_byte(21'd120, 8'hC3);
+		write_byte(22'd120, 8'hC3);
 		previous_accesses = accesses;
-		read_byte(21'd120, 8'hC3);
+		read_byte(22'd120, 8'hC3);
 		if( accesses != previous_accesses + 1 ) $fatal(1, "write miss unexpectedly allocated a line");
 		memory[2048] = 8'h21;
 		memory[4096] = 8'h42;
 		memory[6144] = 8'h63;
 		memory[8192] = 8'h84;
-		read_byte(21'd2048, 8'h21);
-		read_byte(21'd4096, 8'h42);
-		read_byte(21'd6144, 8'h63);
+		read_byte(22'd2048, 8'h21);
+		read_byte(22'd4096, 8'h42);
+		read_byte(22'd6144, 8'h63);
 		previous_accesses = accesses;
-		read_byte(21'd0, 8'd0);
-		read_byte(21'd2048, 8'h21);
-		read_byte(21'd4096, 8'h42);
-		read_byte(21'd6144, 8'h63);
+		read_byte(22'd0, 8'd0);
+		read_byte(22'd2048, 8'h21);
+		read_byte(22'd4096, 8'h42);
+		read_byte(22'd6144, 8'h63);
 		if( accesses != previous_accesses ) $fatal(1, "four-way set did not retain all lines");
-		read_byte(21'd8192, 8'h84);
+		read_byte(22'd8192, 8'h84);
 		previous_accesses = accesses;
-		read_byte(21'd8192, 8'h84);
+		read_byte(22'd8192, 8'h84);
 		if( accesses != previous_accesses ) $fatal(1, "replacement line did not hit");
 		$display("PASS: line fill, hit, write-through, bypass and invalidation");
 		$finish;
@@ -243,7 +243,7 @@ module tb_ssram_burst;
 	reg reset_n = 1'b0;
 	reg bus_valid = 1'b0;
 	reg bus_burst = 1'b0;
-	reg [20:0] bus_address = 21'd0;
+	reg [21:0] bus_address = 22'd0;
 	wire bus_ready;
 	wire [7:0] bus_rdata;
 	wire bus_rdata_en;
@@ -251,10 +251,7 @@ module tb_ssram_burst;
 	wire bus_burst_rdata_en;
 	wire startup_busy;
 	wire sram_sclk;
-	wire sram_ce0_n;
-	wire sram_ce1_n;
-	wire sram_ce2_n;
-	wire sram_ce3_n;
+	wire sram_ce_n;
 	tri [3:0] sram_sio;
 	integer burst_transfers = 0;
 	integer transfer_count_before;
@@ -262,7 +259,7 @@ module tb_ssram_burst;
 
 	always #11.64 clk = ~clk;
 	always #2.328 clk_serial = ~clk_serial;
-	always @( negedge sram_ce0_n ) burst_transfers = burst_transfers + 1;
+	always @( negedge sram_ce_n ) burst_transfers = burst_transfers + 1;
 
 	ssram u_ssram (
 		.n_reset(reset_n), .clk(clk), .clk_serial(clk_serial),
@@ -271,12 +268,11 @@ module tb_ssram_burst;
 		.bus_ready(bus_ready), .bus_rdata(bus_rdata), .bus_rdata_en(bus_rdata_en),
 		.bus_burst_rdata(bus_burst_rdata), .bus_burst_rdata_en(bus_burst_rdata_en),
 		.startup_busy(startup_busy), .sram_sclk(sram_sclk),
-		.sram_ce0_n(sram_ce0_n), .sram_ce1_n(sram_ce1_n),
-		.sram_ce2_n(sram_ce2_n), .sram_ce3_n(sram_ce3_n), .sram_sio(sram_sio)
+		.sram_ce_n(sram_ce_n), .sram_sio(sram_sio)
 	);
 
 	ssram_test_model u_chip (
-		.sclk(sram_sclk), .cs_n(sram_ce0_n), .sio(sram_sio)
+		.sclk(sram_sclk), .cs_n(sram_ce_n), .sio(sram_sio)
 	);
 
 	initial begin
@@ -311,6 +307,22 @@ module tb_ssram_burst;
 		wait( bus_ready == 1'b1 );
 		@( negedge clk );
 		bus_burst = 1'b0;
+		for( byte_index = 0; byte_index < 8; byte_index = byte_index + 1 ) begin
+			u_chip.mem[22'h201000 + byte_index] = 8'h80 + byte_index;
+		end
+		bus_burst = 1'b1;
+		bus_address = 22'h201000;
+		bus_valid = 1'b1;
+		@( negedge clk );
+		bus_valid = 1'b0;
+		@( posedge bus_burst_rdata_en );
+		#1;
+		if( bus_burst_rdata !== 64'h8786858483828180 ) begin
+			$fatal(1, "upper 2MB burst data: %h", bus_burst_rdata);
+		end
+		wait( bus_ready == 1'b1 );
+		@( negedge clk );
+		bus_burst = 1'b0;
 		bus_address = 21'h01007;
 		bus_valid = 1'b1;
 		@( negedge clk );
@@ -318,7 +330,7 @@ module tb_ssram_burst;
 		@( posedge bus_rdata_en );
 		#1;
 		if( bus_rdata !== 8'h17 ) $fatal(1, "single read after burst: %h", bus_rdata);
-		$display("PASS: one 8-byte SSRAM transaction and subsequent single-byte read");
+		$display("PASS: one 8-byte SSRAM transaction, upper 2MB burst and subsequent single-byte read");
 		$finish;
 	end
 endmodule
@@ -328,12 +340,12 @@ module tb_cache_ssram_burst;
 	reg clk_serial = 1'b0;
 	reg reset_n = 1'b0;
 	reg bus_valid = 1'b0;
-	reg [20:0] bus_address = 21'd0;
+	reg [21:0] bus_address = 22'd0;
 	wire bus_ready;
 	wire [7:0] bus_rdata;
 	wire bus_rdata_en;
 	wire sram_cs;
-	wire [20:0] sram_address;
+	wire [21:0] sram_address;
 	wire sram_write;
 	wire sram_valid;
 	wire [7:0] sram_wdata;
@@ -345,17 +357,15 @@ module tb_cache_ssram_burst;
 	wire sram_burst_rdata_en;
 	wire startup_busy;
 	wire sram_sclk;
-	wire sram_ce0_n;
-	wire sram_ce1_n;
-	wire sram_ce2_n;
-	wire sram_ce3_n;
+	wire sram_ce_n;
 	tri [3:0] sram_sio;
 	integer transactions = 0;
+	integer transactions_before;
 	integer byte_index;
 
 	always #11.64 clk = ~clk;
 	always #2.328 clk_serial = ~clk_serial;
-	always @( negedge sram_ce0_n ) transactions = transactions + 1;
+	always @( negedge sram_ce_n ) transactions = transactions + 1;
 
 	r800_cache u_cache (
 		.reset_n(reset_n), .clk(clk), .r800_active(1'b1),
@@ -376,12 +386,11 @@ module tb_cache_ssram_burst;
 		.bus_ready(sram_ready), .bus_rdata(sram_rdata), .bus_rdata_en(sram_rdata_en),
 		.bus_burst_rdata(sram_burst_rdata), .bus_burst_rdata_en(sram_burst_rdata_en),
 		.startup_busy(startup_busy), .sram_sclk(sram_sclk),
-		.sram_ce0_n(sram_ce0_n), .sram_ce1_n(sram_ce1_n),
-		.sram_ce2_n(sram_ce2_n), .sram_ce3_n(sram_ce3_n), .sram_sio(sram_sio)
+		.sram_ce_n(sram_ce_n), .sram_sio(sram_sio)
 	);
 
 	ssram_test_model u_chip (
-		.sclk(sram_sclk), .cs_n(sram_ce0_n), .sio(sram_sio)
+		.sclk(sram_sclk), .cs_n(sram_ce_n), .sio(sram_sio)
 	);
 
 	initial begin
@@ -398,21 +407,32 @@ module tb_cache_ssram_burst;
 			u_chip.mem[16'h1000 + byte_index] = 8'h10 + byte_index;
 		end
 		@( negedge clk );
-		bus_address = 21'h01003;
+		transactions_before = transactions;
+		bus_address = 22'h01003;
 		bus_valid = 1'b1;
 		@( posedge bus_rdata_en );
 		#1;
-		if( bus_rdata !== 8'h13 || transactions != 2 ) $fatal(1, "cache miss: data=%h transactions=%0d", bus_rdata, transactions);
+		if( bus_rdata !== 8'h13 || transactions != transactions_before + 1 ) $fatal(1, "cache miss: data=%h transactions=%0d", bus_rdata, transactions);
 		@( negedge clk );
 		bus_valid = 1'b0;
 		repeat(2) @( posedge clk );
 		@( negedge clk );
-		bus_address = 21'h01006;
+		bus_address = 22'h01006;
 		bus_valid = 1'b1;
 		@( posedge bus_rdata_en );
 		#1;
-		if( bus_rdata !== 8'h16 || transactions != 2 ) $fatal(1, "cache hit: data=%h transactions=%0d", bus_rdata, transactions);
-		$display("PASS: R800 cache miss fills one burst; following read hits without SRAM transaction");
+		if( bus_rdata !== 8'h16 || transactions != transactions_before + 1 ) $fatal(1, "cache hit: data=%h transactions=%0d", bus_rdata, transactions);
+		@( negedge clk );
+		bus_valid = 1'b0;
+		u_chip.mem[22'h201003] = 8'hA3;
+		repeat(2) @( posedge clk );
+		@( negedge clk );
+		bus_address = 22'h201003;
+		bus_valid = 1'b1;
+		@( posedge bus_rdata_en );
+		#1;
+		if( bus_rdata !== 8'hA3 || transactions != transactions_before + 2 ) $fatal(1, "upper 2MB alias: data=%h transactions=%0d", bus_rdata, transactions - transactions_before);
+		$display("PASS: R800 cache miss fills one burst; following read hits; upper 2MB uses a distinct tag");
 		$finish;
 	end
 endmodule

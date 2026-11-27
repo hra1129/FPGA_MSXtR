@@ -36,7 +36,7 @@ module ssram (
 	input			clk,
 	input			clk_serial,
 	input			bus_cs,
-	input	[20:0]	bus_address,
+	input	[21:0]	bus_address,
 	input			bus_write,
 	input			bus_valid,
 	input	[7:0]	bus_wdata,
@@ -91,11 +91,11 @@ module ssram (
 	reg				ff_req_toggle_clk;
 	reg				ff_req_toggle_200_d0;
 	reg				ff_req_toggle_200_d1;
-	reg		[20:0]	ff_req_address_clk;
+	reg		[21:0]	ff_req_address_clk;
 	reg				ff_req_write_clk;
 	reg		[7:0]	ff_req_wdata_clk;
 	reg				ff_req_burst_clk;
-	reg		[20:0]	ff_address;
+	reg		[21:0]	ff_address;
 	reg		[1:0]	ff_init_step;
 	reg		[2:0]	ff_init_bit;
 	reg		[11:0]	ff_init_gap_count;
@@ -302,7 +302,7 @@ module ssram (
 	always @( posedge clk ) begin
 		if( !n_reset ) begin
 			ff_req_toggle_clk <= 1'b0;
-			ff_req_address_clk <= 21'd0;
+			ff_req_address_clk <= 22'd0;
 			ff_req_write_clk <= 1'b0;
 			ff_req_wdata_clk <= 8'd0;
 			ff_req_burst_clk <= 1'b0;
@@ -326,7 +326,7 @@ module ssram (
 	always @( posedge clk_serial ) begin
 		if( !n_reset ) begin
 			ff_wdata	<= 8'd0;
-			ff_address	<= 21'd0;
+			ff_address	<= 22'd0;
 		end
 		else if( w_valid ) begin
 			ff_wdata	<= ff_req_wdata_clk;
@@ -453,8 +453,8 @@ module ssram (
 					ff_state	<= c_state_cmd;
 			end
 			c_state_cmd: begin
-				//	3rd nibble: address0 = A[23:20] (21-bit address, top 3 bits are 0)
-				ff_so		<= { 3'b000, ff_address[20] };
+				//	3rd nibble: address0 = A[23:20] (22-bit address, top 2 bits are 0)
+				ff_so		<= { 2'b00, ff_address[21:20] };
 				ff_state	<= c_state_address0;
 			end
 			c_state_address0: begin

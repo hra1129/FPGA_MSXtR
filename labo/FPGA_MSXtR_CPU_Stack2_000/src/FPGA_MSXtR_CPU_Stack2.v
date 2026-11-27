@@ -309,7 +309,7 @@ module fpga_msxtr_cpu_stack2 (
 	wire			w_device_mapper_ready;
 	wire	[7:0]	w_device_mapper_rdata;
 	wire			w_device_mapper_rdata_en;
-	wire	[6:0]	w_mapper_segment;				//	SRAM address [20:14]
+	wire	[7:0]	w_mapper_segment;				//	SRAM address [21:14]
 	wire			w_device_dos_mapper_cs;
 	wire			w_device_dos_mapper_ready;
 	wire	[7:0]	w_device_dos_mapper_rdata;
@@ -365,11 +365,11 @@ module fpga_msxtr_cpu_stack2 (
 	wire	[7:0]	w_device_ssram_rdata;
 	wire			w_device_ssram_rdata_en;
 	wire			w_ssram_startup_busy;
-	wire	[20:0]	w_ssram_address;				//	{ mapper_segment, device_address[13:0] }
+	wire	[21:0]	w_ssram_address;				//	{ mapper_segment, device_address[13:0] }
 	wire			w_cache_ssram_cs;
 	wire			w_cache_ssram_write;
 	wire			w_cache_ssram_valid;
-	wire	[20:0]	w_cache_ssram_address;
+	wire	[21:0]	w_cache_ssram_address;
 	wire	[7:0]	w_cache_ssram_wdata;
 	wire			w_cache_ssram_ready;
 	wire	[7:0]	w_cache_ssram_rdata;

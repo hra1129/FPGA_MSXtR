@@ -18,7 +18,7 @@
 //	  Write: [2 cmd nibbles][6 addr nibbles][2 data nibbles]  = 10 SCLK
 //	  Read:  [2 cmd nibbles][6 addr nibbles][3 dummy][2 data] = 13 SCLK
 //
-//	Memory size: 2MB (21-bit address, 8-bit data)
+//	Memory size: 4MB (22-bit address, 8-bit data)
 //
 //	Timing:
 //	  - Master drives SIO on SCLK falling edge
@@ -35,7 +35,7 @@ module ssram_test_model (
 	// ---------------------------------------------------------------
 	//	Parameters
 	// ---------------------------------------------------------------
-	parameter		MEM_SIZE	= 2048 * 1024;	//	2MB (21-bit address)
+	parameter		MEM_SIZE	= 4096 * 1024;	//	4MB (22-bit address)
 
 	// ---------------------------------------------------------------
 	//	Memory array
@@ -47,7 +47,7 @@ module ssram_test_model (
 	// ---------------------------------------------------------------
 	reg				quad_mode;
 	reg		[7:0]	cmd;
-	reg		[20:0]	addr;
+	reg		[21:0]	addr;
 	reg		[7:0]	wr_data;
 	reg		[7:0]	rd_data;
 	reg		[3:0]	sio_out;
@@ -66,7 +66,7 @@ module ssram_test_model (
 	initial begin
 		quad_mode	= 1'b0;
 		cmd			= 8'd0;
-		addr		= 21'd0;
+		addr		= 22'd0;
 		wr_data		= 8'd0;
 		rd_data		= 8'd0;
 		sio_out		= 4'bzzzz;
@@ -108,7 +108,7 @@ module ssram_test_model (
 	//	Quad mode count mapping:
 	//	  count  0: cmd[7:4]        (command upper nibble)
 	//	  count  1: cmd[3:0]        (command lower nibble)
-	//	  count  2: addr[20]        (address byte 2 upper nibble)
+	//	  count  2: addr[21:20]     (address byte 2 upper nibble)
 	//	  count  3: addr[19:16]     (address byte 2 lower nibble)
 	//	  count  4: addr[15:12]     (address byte 1 upper nibble)
 	//	  count  5: addr[11:8]      (address byte 1 lower nibble)
@@ -134,7 +134,7 @@ module ssram_test_model (
 				case( count )
 				0:	cmd[7:4]		<= sio;
 				1:	cmd[3:0]		<= sio;
-				2:	addr[20]		<= sio[0];
+				2:	addr[21:20]		<= sio[1:0];
 				3:	addr[19:16]		<= sio;
 				4:	addr[15:12]		<= sio;
 				5:	addr[11:8]		<= sio;
@@ -152,8 +152,8 @@ module ssram_test_model (
 				end
 				default: begin
 					if( (cmd == 8'h0B || cmd == 8'hEB) && count >= 15 && count[0] ) begin
-						addr <= addr + 21'd1;
-						rd_data <= mem[addr + 21'd1];
+						addr <= addr + 22'd1;
+						rd_data <= mem[addr + 22'd1];
 					end
 					if( cmd == 8'h02 && count > 8 ) begin
 						// Sequential write support
@@ -165,7 +165,7 @@ module ssram_test_model (
 							// Odd count (9, 11, 13, ...): capture lower nibble & commit
 							mem[addr]		<= { wr_data[7:4], sio };
 							$display( "[SRAM Model] Write: addr=0x%06X data=0x%02X", addr, { wr_data[7:4], sio } );
-							addr			<= addr + 21'd1;
+							addr			<= addr + 22'd1;
 						end
 					end
 				end

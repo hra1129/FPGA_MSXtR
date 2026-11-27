@@ -38,7 +38,7 @@ module r800_cache #(
 	input			clk,
 	input			r800_active,
 	input			bus_cs,
-	input	[20:0]	bus_address,
+	input	[21:0]	bus_address,
 	input			bus_write,
 	input			bus_valid,
 	input	[ 7:0]	bus_wdata,
@@ -46,7 +46,7 @@ module r800_cache #(
 	output	[ 7:0]	bus_rdata,
 	output			bus_rdata_en,
 	output			sram_cs,
-	output	[20:0]	sram_address,
+	output	[21:0]	sram_address,
 	output			sram_write,
 	output			sram_valid,
 	output	[ 7:0]	sram_wdata,
@@ -65,7 +65,7 @@ module r800_cache #(
 	localparam			c_valid_bank_bits	= 2;
 	localparam			c_valid_row_bits	= c_set_bits - c_valid_bank_bits;
 	localparam			c_valid_rows		= 1 << c_valid_row_bits;
-	localparam			c_tag_bits		= 18 - c_set_bits;
+	localparam			c_tag_bits		= 19 - c_set_bits;
 	localparam			c_idle			= 4'd0;
 	localparam			c_lookup		= 4'd1;
 	localparam			c_check			= 4'd2;
@@ -76,7 +76,7 @@ module r800_cache #(
 	localparam			c_response		= 4'd7;
 	localparam			c_release		= 4'd8;
 	reg		[ 3:0]					ff_state;
-	reg		[20:0]					ff_address;
+	reg		[21:0]					ff_address;
 	reg		[ 7:0]					ff_wdata;
 	reg								ff_write;
 	reg		[ 1:0]					ff_victim;
@@ -145,7 +145,7 @@ module r800_cache #(
 	assign w_valid_row				= w_set[c_valid_row_bits-1:0];
 	assign w_valid_fill_data		= ff_lookup_valid_row | (16'h0001 << {w_valid_bank, ff_victim});
 	assign cache_ready				= !ff_valid_clear_active;
-	assign w_tag					= ff_address[20:c_set_bits+3];
+	assign w_tag					= ff_address[21:c_set_bits+3];
 	assign w_hit[0]					= ff_lookup_valid[0] && w_lookup_line[0][63+c_tag_bits:64] == w_tag;
 	assign w_hit[1]					= ff_lookup_valid[1] && w_lookup_line[1][63+c_tag_bits:64] == w_tag;
 	assign w_hit[2]					= ff_lookup_valid[2] && w_lookup_line[2][63+c_tag_bits:64] == w_tag;
@@ -210,7 +210,7 @@ module r800_cache #(
 	assign sram_cs			= !r800_active ? bus_cs :
 										(!ff_valid_clear_active && bus_cs && (ff_state == c_write_issue || ff_state == c_fill_issue));
 	assign sram_address		= !r800_active ? bus_address :
-							  ff_write     ? ff_address : { ff_address[20:3], 3'd0 };
+							  ff_write     ? ff_address : { ff_address[21:3], 3'd0 };
 	assign sram_write		= !r800_active ? bus_write : ff_write;
 	assign sram_burst		= r800_active && !ff_valid_clear_active && ff_state == c_fill_issue;
 	assign sram_valid		= !r800_active ? bus_valid :
@@ -221,7 +221,7 @@ module r800_cache #(
 		if( !reset_n ) begin
 			ff_state			<= c_idle;
 			ff_active_d			<= 1'b0;
-			ff_address			<= 21'd0;
+			ff_address			<= 22'd0;
 			ff_wdata			<= 8'd0;
 			ff_write			<= 1'b0;
 			ff_victim			<= 2'd0;

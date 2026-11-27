@@ -2396,3 +2396,89 @@ disk2=yyyy2
 2. Muse くんのドライバーができるまでは、BASIC から RDSLT/WRSLT で 1 セクター読むテストで確認する。
 3. 未確認の懸念: 今の DOS ROM (元の FDC 用ドライバー) は 7FF2h〜7FF5h を FDC として触るので、起動時の振る舞いが変わる可能性がある (FDC の応答待ちで止まるなど)。
 4. 将来: SET ファイル (複数枚組、protect)。
+
+## 2026-11-27 朝 DOS ROM (gt_diskrom_fat16_v25.rom) が起動時に止まる原因の調査
+
+- FPGA 側 (dos_mapper / disk_if / address_decode / msx_slot / cz80 の読み出し待ち) を確認したが、原因らしいものはない。
+- ROM を解析し、openMSX (FS-A1ST の firmware の DOS 部分を差し替え) で起動を再現した。純正の a1stdosb.rom では BASIC の Ok まで進むが、この ROM は止まる。Muse くんの資料にも「ベースの mapfix ROM は改造前から openMSX でハングする」とある。
+- 原因 1: バンク 2 の末尾 (ROM 0xBFD0〜) にあるはずの `LD (7FF0),A; RET` が、ASCII8 型の切り替えコード (`F5 87 32 00 60 3C 32 00 68 F1 C9`) になっている。DOS2 INIT はカーネルを RAM にコピーするとき (バンク 1 の 4160h〜) `A=2; JP 7FD0h` でバンク 2 に切り替えるので、ここで暴走する。ただし 0xBFE0〜 (RAM 3EE0h) は FAT16 パッチの本体 (3CFAh から JP される) なので、直すなら 0xBFD0〜0xBFD3 の 4 バイト (`32 F0 7F C9`) だけにする。
+- 原因 2 (本命): RAM カーネルの FAT16/マッパー修正パッチが、RAM 3F00h〜3FFFh にあるはずのルーチンを呼んでいる (3F00h, 3F13h, 3F1Bh, 3F24h, 3F2Ch, 3FBBh)。しかしカーネルのコピーはイメージの 0x100〜0x3FFF → RAM 0000h〜3EFFh なので、3F00h 以降には何も置かれない。この ROM の中にもそのルーチンの本体は見当たらない。起動直後のデバイス関数ディスパッチ (RAM 01BDh、元の GT は `LD (IX+6),A`) の `CALL 3F24h` で、00 00 FF を実行して RST 38h に落ち、バンク 1 の FF 領域を滑って止まる。
+- バンク 1 の 5CF5h〜7FCFh が FF なのは GT 純正 (a1gtdos.rom) も同じで、問題ではない。
+- 結論: ROM (ベースの mapfix 版) の作り損ね。Muse くんに、RAM 3F00h〜 のルーチンをどこから持ってくる前提だったのか確認してもらう必要がある。
+
+### 次の作業
+
+1. Muse くんへ申し送り: 原因 1 (4 バイトの修正) と原因 2 (3F00h〜 のルーチンがない) の確認。
+2. 当面は make_rom_image.bat の DOS を a1stdosb.rom に戻せば BASIC は起動する。
+
+## 2026-11-27 朝 (続き) disk_if の実機確認
+
+- SD 直接モードで STATUS=60h / ERR=2 になったのは、SD カードが FAT32 (30277632 セクター) なので仕様どおりオフラインになったため。Pico のログは `[DISK] SD is not FAT12/FAT16 --> offline`。
+- イメージモードで `/DSK/2DD.DSK` (FS-A1GT System Disk 1、737280 バイト) のセクター 0 と 1 を BASIC から読み、STATUS=30h / ERR=0 で、DSK ファイルの先頭 128 バイトと一致した。MSX → disk_if → Pico → SD → MSX の経路は実機で動いている。
+
+### 次の作業
+
+1. ERR ファイル、書き込み、SD 直接モード (FAT16 の SD) の実機確認。
+2. DOS ROM (原因 1、原因 2) の修正版を Muse くんから受け取り、起動を確認する。
+
+## 2026-11-27 夜 Disk BASIC の FILES が Disk offline になる件 (ドライバーを引き取って修正)
+
+- Muse くんの dif4 (getb 修正済み) でも FILES が Disk offline になるので、ドライバーの修正を引き取った。
+- ドライバー一式は `controller/bios_image_tool/disk_driver/` に置いた。
+  - `driver.asm`: disk_if 用ドライバー (Muse くんの版を修正したもの)
+  - `build_dos_rom.py`: zma でアセンブルして `bios/gt_diskrom_fat16_v25.rom` のドライバー領域 (バンク 0 / バンク 3) を差し替える
+  - `test_driver.py`: z80 パッケージ上で ROM のドライバーを実行し、disk_if のモデルと 2DD の DSK で DSKCHG / GETDPB / DSKIO を確かめる (`python test_driver.py ..\bios\gt_diskrom_fat16_v25.rom <2DD.DSK> dos2`)
+  - 手元の zma (v1.0.23) で dif4 をバイト単位で再現できることを確認してから修正した。
+- 見つかった不具合 (test_driver.py で dif4 では再現、修正後は DOS2 / DOS1 とも PASS):
+  1. calc_clusters: 32bit 減算の途中で、予約領域の上位バイトを入れた E を `pop de` で上書きしていた。常に「reserved > total」と判定され、detect が必ず失敗していた (Disk offline の直接の原因)。
+  2. ensure_media: `bit 1,[ix+0]` / `ret nz` で Cy=0 を返すつもりだったが、BIT は Cy を変えない。書き込み (入口 Cy=1) と 2 回目以降の GETDPB (`cp 2` で Cy=1) が必ず失敗していた。
+  3. dskio_body: WA_HELPER (A, BC, HL を壊す) の前に BC / HL を保存していなかった。セクター数が 0 (=256)、転送先が作業領域になっていた。
+  4. dskchg_body: 純正ドライバーと同じく HL / BC を保存するようにした。
+  5. ページ 1 への転送 (p1_copy): エンジンへ飛ぶ前に `ld hl,pc_cont` でコピー先を上書きしていた。スタック上のエンジンから ROM の eng_sel を絶対 CALL していた。tR は RAM (3-0) と DOS ROM (3-2) が同じ基本スロットなので、基本スロットの切り替えでは RAM が見えない。純正ドライバーと同じく SECBUF + XFER (F36Eh) 方式に置き換えた。あわせて `ld de,512` による DE 破壊もなくした。
+- 新しい DOS ROM: md5 e91502cd828260d631536a04609e5ab6。msxtr.rom は md5 b979e1c9239a6ca209fbc33caf517562 で、旧版 (e:\bios\msxtr.rom) との差は 0x30000〜0x3FFFF の中だけ。旧版は `bios/gt_diskrom_fat16_v25_dif4.rom`、`e:\bios\msxtr_dif4.rom` に残した。
+- Pico 起動時の `[DISK] image read failed: sector 0 (9)` は、FIL が無効になったときの 1 回だけの開き直しが働いた結果で、直後に ready=1 になっている (今回の件とは無関係)。
+
+### 次の作業
+
+1. ~~新しい msxtr.rom を書き込み、FILES、LOAD、SAVE (書き込み) を実機で確認する。~~ → 2026-11-27 19:20 実機で FILES、SAVE "HELLO.BAS"、LOAD、LIST が動作することを確認 (イメージモード、/DSK/2DD.DSK)。
+2. ERR ファイル、SD 直接モード (FAT16 の SD) の確認。
+3. FAT16 は ROOTN > 255 で GETDPB が失敗する作りなので、FAT16 カーネル側の扱いを確認する。
+
+## 2026-11-27 夜 DOS ではないゲームディスクが起動しない件
+
+- 症状: FILES / SAVE / LOAD は動くが、DOS ではないゲームディスク (e:\dsk\2DD.DSK) が起動しない。
+- このディスクのブートセクターは `EB 59 53 ...` で始まる。BPB は標準 2DD だが、オフセット 2 が 90h ではない。C01E (Cy=1、ページ 0〜3 は RAM) で H.PHYD (FFA7h) を呼び、セクター 8 を D200h に読んで実行する。ローダーは、セクター 1 から 3 セクターを 0300h に読み、自前のファイル表を探す。
+- 原因: ドライバーの is_boot が、先頭を `EB xx 90` または `E9` に限定していた。そのため detect が失敗し (MBR の 55AAh もない)、DSKIO が Not ready (2) を返していた。純正の FDC ドライバーは、DSKIO でブートセクターを検証しない。
+- 修正 (disk_driver/driver.asm):
+  1. is_boot: オフセット 2 の 90h 検査をやめた (`EB xx` / `E9` を受け付ける)。
+  2. detect: セクター 0 がブートセクターとしても MBR としても成り立たないときは、標準 2DD (F9h、1440 セクター) とみなす (det_def / def_bpb)。SD 直接モードで FAT12/16 以外の SD は、Pico が READY=0 にするので、ここには来ない。
+- test_driver.py: 修正前の ROM ではこのディスクで FAIL、修正後は FSA1GT System Disk 1、このゲームディスク、セクター 0 を 0 で埋めたディスクとも、DOS2 / DOS1 で PASS。
+- DOS ROM の md5 は 15b1619fe9ec17acb40bda9771f49de8、msxtr.rom の md5 は 37ee63231b90f69854a62b785a65cece。e:\bios\msxtr.rom を差し替え、1 つ前の版は e:\bios\msxtr_fix1.rom に残した。
+
+### 次の作業
+
+1. 新しい msxtr.rom を書き込み、ゲームディスクが起動するか確認する。
+2. ERR ファイル、書き込み禁止 (SET の protect)、SD 直接モード (FAT16 の SD) の確認。
+3. FAT16 は ROOTN > 255 で GETDPB が失敗する作りなので、FAT16 カーネル側の扱いを確認する。
+
+## 2026-11-27 夜 リセット後の `[DISK] image read failed: sector 0 (9)`
+
+- 原因: BIOS 更新など (flashrom.c) の `sdcard_init_and_mount()` が f_mount をやり直すので、disk_emu が開いていた FIL が無効 (FR_INVALID_OBJECT = 9) になる。最初のアクセスで 1 回だけ開き直していたので、動作は継続していた。
+- 対策 (Pico): `disk_emu_reset()` を追加した。リセットボタンを離したとき (MSX のリセット解除の直前) に、SD をアンマウントしてから、今のモードに入り直し (イメージを開き直す / SD 直接モードなら SD を初期化し直す)、24h でメディア状態を送り直す。ディスクアクセス中のリセットで SD が中途半端な状態になっていても、ここで作り直される。MSX のリセット中は disk_if の BUSY が 0 になり、SEQ も照合するので、古い要求の結果が受け付けられることはない。
+- 実機確認 (ユーザー): ゲーム (Ys、幻影都市)、MSX-DOS TOOLS、MSX-DOS2 TOOLS が起動する。SD なしでも BASIC が起動する。BIOS 更新後にリセットしてもエラーが出ない。
+
+## 2026-11-27 夜 Mapper RAM を 4MB に拡張
+
+- 8MB のシリアル SRAM のうち、先頭 4MB (0x000000〜0x3FFFFF) を Mapper RAM に割り当てた。これまではセグメントレジスターの bit7 を捨てて 2MB (128 セグメント) にしていた。
+- 変更:
+  - memory_mapper.v: mapper_segment を [7:0] にした (256 セグメント)。
+  - FPGA_MSXtR_CPU_Stack2.v: w_mapper_segment を 8 ビット、w_ssram_address / w_cache_ssram_address を 22 ビットにした。
+  - r800_cache.v: アドレスを 22 ビットにし、タグを 11 ビットに広げた (c_tag_bits = 19 - c_set_bits)。
+  - ssram.v: アドレスを 22 ビットにし、コマンドの A[23:20] を `{2'b00, ff_address[21:20]}` にした。
+  - ssram_test_model.v: 4MB、22 ビットにした。
+- テスト (cr800/test_001): 4 チップ時代のポート (sram_ce0_n〜3_n) のままで読み込めなかった tb_ssram_burst / tb_cache_ssram_burst を、sram_ce_n に直した。上位 2MB (0x201000) へのバーストと、キャッシュで 0x001003 と 0x201003 が別タグになることの確認を追加した。tb_r800_muluw 以外はすべて PASS (MULUW の失敗は変更前から)。
+- ssram/test001、test002 の tb も 4 チップのポートのままで、変更前から読み込めない (今回は手を付けていない)。
+
+### 次の作業
+
+1. GOWIN で合成し、DOS2 起動時の RAM 容量表示 (4096KB) と、Pico のメニュー 6 (MapperRAM test、256 セグメント) を確認する。

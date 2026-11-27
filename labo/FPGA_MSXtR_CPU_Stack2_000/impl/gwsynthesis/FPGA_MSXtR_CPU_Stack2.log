@@ -111,7 +111,7 @@ Compiling module 'memory_mapper'("C:\Users\hra\Documents\github\HRA_product\FPGA
 Compiling module 'r800_cache'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache.v":34)
 Extracting RAM for identifier 'ff_valid'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache.v":88)
 Extracting RAM for identifier 'ff_plru'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache.v":89)
-Compiling module 'r800_cache_ram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache_ram.v":1)
+Compiling module 'r800_cache_ram(c_data_bits=75)'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache_ram.v":1)
 Extracting RAM for identifier 'memory'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache_ram.v":12)
 WARN  (EX3791) : Expression size 16 truncated to fit in target size 4("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\r800_cache.v":181)
 Compiling module 'ssram'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\ssram\ssram.v":34)

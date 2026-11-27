@@ -205,6 +205,7 @@ static void reset_button( void ) {
 			if( !fpga_set_slot1_rom_mode( s_dipsw_startup_state & 0x03 ) ) {
 				printf( "Failed to set SLOT#1 ROM mode; using physical cartridge slot.\r\n" );
 			}
+			disk_emu_reset();
 		}
 		fpga_msx_reset( reset_pressed );
 		vdp_logger_reset();

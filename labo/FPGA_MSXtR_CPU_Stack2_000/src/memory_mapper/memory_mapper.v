@@ -42,9 +42,9 @@
 //	The page input (CPU address [15:14]) selects the corresponding segment
 //	register, and its value is output to mapper_segment.
 //	The SerialSRAM address is composed as follows:
-//	  SRAM address [20:14] = mapper_segment (segment number: 0-127)
+//	  SRAM address [21:14] = mapper_segment (segment number: 0-255)
 //	  SRAM address [13: 0] = CPU address [13:0]
-//	This allows each 16KB page to be mapped to any of 128 segments (2MB).
+//	This allows each 16KB page to be mapped to any of 256 segments (4MB).
 // ----------------------------------------------------------------------------
 
 module memory_mapper (
@@ -61,7 +61,7 @@ module memory_mapper (
 	output			bus_rdata_en,
 	//	memory map output
 	input	[1:0]	page,				//	CPU address [15:14]
-	output	[6:0]	mapper_segment		//	SRAM address [20:14]
+	output	[7:0]	mapper_segment		//	SRAM address [21:14]
 );
 	reg		[7:0]	ff_page0_segment;
 	reg		[7:0]	ff_page1_segment;
@@ -116,9 +116,9 @@ module memory_mapper (
 	//	Mapper segment output (memory address translation)
 	//		page (CPU address [15:14]) selects the segment register
 	// ---------------------------------------------------------
-	assign mapper_segment	= ( page == 2'd0 ) ? ff_page0_segment[6:0] :
-							  ( page == 2'd1 ) ? ff_page1_segment[6:0] :
-							  ( page == 2'd2 ) ? ff_page2_segment[6:0] : ff_page3_segment[6:0];
+	assign mapper_segment	= ( page == 2'd0 ) ? ff_page0_segment :
+							  ( page == 2'd1 ) ? ff_page1_segment :
+							  ( page == 2'd2 ) ? ff_page2_segment : ff_page3_segment;
 
 	// ---------------------------------------------------------
 	//	Output assignment

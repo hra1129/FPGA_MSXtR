@@ -342,6 +342,17 @@ void disk_emu_init( void ) {
 }
 
 // ---------------------------------------------------------
+//	BIOS 更新などの f_mount で FIL が無効になっていることや、
+//	ディスクアクセス中にリセットされて SD が中途半端な状態のことがあるので、作り直す
+void disk_emu_reset( void ) {
+	image_close();
+	sdcard_unmount();
+	enter_mode( s_mode );
+	send_media( true );
+	disk_emu_print_status();
+}
+
+// ---------------------------------------------------------
 static uint8_t check_request( const fpga_disk_info_t *info ) {
 	if( info->drive != 0 || !s_ready ) {
 		return DISK_RESULT( DISK_ERR_NOT_READY );
