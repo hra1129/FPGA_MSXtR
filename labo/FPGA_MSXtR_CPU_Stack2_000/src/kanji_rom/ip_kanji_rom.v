@@ -116,6 +116,8 @@ module ip_kanji_rom #(
 	reg ff_cpu_read;
 	reg ff_cpu_setup;
 	reg ff_stream_valid;
+	reg ff_setup_pending;
+	reg ff_setup_read;
 	reg ff_stream_open;
 	reg ff_release_req;
 	reg ff_selected;
@@ -230,6 +232,8 @@ module ip_kanji_rom #(
 			ff_cpu_read <= 1'b0;
 			ff_cpu_setup <= 1'b0;
 			ff_stream_valid <= 1'b0;
+			ff_setup_pending <= 1'b0;
+			ff_setup_read <= 1'b0;
 			ff_stream_open <= 1'b0;
 			ff_release_req <= 1'b0;
 			ff_selected <= 1'b0;
@@ -260,6 +264,8 @@ module ip_kanji_rom #(
 			ff_cpu_read <= 1'b0;
 			ff_cpu_setup <= 1'b0;
 			ff_stream_valid <= 1'b0;
+			ff_setup_pending <= 1'b0;
+			ff_setup_read <= 1'b0;
 			ff_busy <= 1'b0;
 			ff_done <= 1'b0;
 			ff_rdata_en <= 1'b0;
@@ -279,6 +285,9 @@ module ip_kanji_rom #(
 			ff_jis2 <= bus_address[1];
 			ff_address <= KANJI_BASE + {6'd0, bus_address[1], bus_wdata[5:0],
 				bus_address[1] ? ff_jis2_address[10:5] : ff_jis1_address[10:5], 5'd0};
+			//	D8h/DAh written after D9h/DBh: set up the stream on the next read
+			ff_setup_pending <= !bus_address[0] && w_enabled;
+			ff_setup_read <= 1'b0;
 			if( bus_address[0] && w_enabled ) begin
 				ff_busy <= 1'b1;
 				ff_job <= JOB_SETUP;
@@ -344,7 +353,20 @@ module ip_kanji_rom #(
 					end
 				end
 				else if( !kanji_reset && !pico_owned && bus_cs && bus_valid && !bus_write ) begin
-					if( !w_enabled || !ff_stream_valid ) begin
+					if( w_enabled && !ff_stream_valid && ff_setup_pending && (bus_address[1] == ff_jis2) ) begin
+						//	The CPU drops bus_valid on bus_ready, so the read itself
+						//	is started from S_SETUP_DONE without looking at bus_valid.
+						ff_address <= KANJI_BASE + {6'd0, ff_jis2, ff_jis2 ? ff_jis2_address[16:5] : ff_jis1_address[16:5], 5'd0};
+						ff_setup_pending <= 1'b0;
+						ff_setup_read <= 1'b1;
+						ff_operation <= 2'd1;
+						ff_cpu_read <= 1'b1;
+						ff_cpu_setup <= 1'b1;
+						ff_busy <= 1'b1;
+						ff_job <= JOB_SETUP;
+						ff_state <= S_PROLOGUE;
+					end
+					else if( !w_enabled || !ff_stream_valid ) begin
 						ff_rdata <= 8'hFF;
 						ff_rdata_en <= 1'b1;
 						ff_state <= S_RELEASE;
@@ -511,9 +533,21 @@ module ip_kanji_rom #(
 			end
 			S_SETUP_DONE: begin
 				ff_stream_valid <= 1'b1;
-				ff_busy <= 1'b0;
 				ff_job <= JOB_NONE;
-				ff_state <= S_IDLE;
+				if( ff_setup_read ) begin
+					ff_setup_read <= 1'b0;
+					ff_cpu_setup <= 1'b0;
+					ff_crom_address <= 1'b1;
+					ff_crom_write <= 1'b0;
+					ff_crom_valid <= 1'b1;
+					ff_rd_dest <= DEST_CPU;
+					ff_next_state <= S_CPU_RD_END;
+					ff_state <= S_RD_A;
+				end
+				else begin
+					ff_busy <= 1'b0;
+					ff_state <= S_IDLE;
+				end
 			end
 			S_CPU_RD_END: begin
 				ff_rdata_en <= 1'b1;

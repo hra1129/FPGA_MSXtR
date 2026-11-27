@@ -2490,3 +2490,12 @@ disk2=yyyy2
 - tb を修正: MULUW の実行は BC、SP、ゼロの 3 回だけを期待する。SP の実行時に DE が 0003h のままであることも確認し、ED D3 / ED E3 が NOP であることを確かめる。
 - cr800/test_001 は全項目 PASS。RTL の変更はない。
 - cpu_test (make_tests.py) には、MULUB A,B/C/D/E、MULUW HL,BC/SP (各 48 ベクタ)、そのほかの ED xx (ED D3 / ED E3 を含む) の NOP が、すでに含まれている。追加はしていない。
+## 2026-11-27 夜 幻影都市デモディスクのメニューで文字が四角くなる件
+
+- 症状: ILLUSION.DSK のメニューの文字がすべて塗りつぶしの四角になる。CALL KANJI と、Pico からの字形の読み出しは正常。
+- 原因: ゲームの漢字表示ルーチン (ディスクイメージの 0xCDC1 付近) は、`OUT (C),H` で D9h (第 2 水準なら DBh) に上位を書き、続けて `DEC C` / `OUT (C),L` で D8h (DAh) に下位を書き、`INIR` で 32 バイト読む。ip_kanji_rom は奇数ポートへの書き込みでだけ読み出しの準備 (ConfigROM のアドレス設定) を始め、偶数ポートへの書き込みは準備を取り消すだけだった。このため、D9h → D8h の順に書くと準備されないままになり、読み出しが FFh になっていた。BASIC / BIOS は D8h → D9h の順なので、問題が出なかった。
+- 修正 (ip_kanji_rom.v): 偶数ポートに書いたら ff_setup_pending を立てる。準備ができていない状態で同じ水準の奇数ポートを読んだら、その場で現在のアドレスで準備をしてから読む (読み出しは準備が終わるまで待たせる)。ip_spi_rom のアドレス設定はレジスターへの書き込みだけで、00h を送り直せば最初からやり直しになるので、途中で打ち切っても問題ない。
+- テスト: kanji_rom/test_002 を新規に作成した (ip_kanji_rom + ip_spi_rom + Fast Read のフラッシュモデル)。D8→D9、D9→D8、D9→(間隔)→D8、DB→DA、D9→D8 のあとの DBh 読み出し (FFh) を確認する。修正前は D9→D8 で FFh となって FAIL、修正後は PASS。最初の 1 バイトの待ちは 99 → 100 クロックで、ほとんど変わらない。
+- kanji_rom/test_001 は、専用 SerialROM ピン時代のポート (srom_cs_n など) のままで、現在の ip_kanji_rom では読み込めない (今回は手を付けていない)。
+- 追記 (同日): 上記の修正を実機に入れたところ、漢字を表示するあたりでハングした。cz80_inst / cr800_inst は bus_ready=1 を見た時点で bus_valid を下げ、そのあとは bus_rdata_en だけを待つ。上記の修正では、準備が終わって S_IDLE に戻ってから bus_valid を見て読み出しを始めていたため、bus_valid がすでに下がっていて読み出しが始まらず、rdata_en が返らなかった。ff_setup_read を追加し、S_SETUP_DONE からそのまま 1 バイト目の読み出し (S_RD_A → S_CPU_RD_END) に進むように変更した。test_002 の CPU モデルも、bus_ready で bus_valid を下げるように変更した (前の修正のままだとタイムアウトで FAIL し、新しい修正では PASS)。
+- 実機確認 (同日): 幻影都市デモのメニューが正常に表示されるようになった。CALL KANJI と、Pico の KanjiROM glyph test (「漢」) も正常。
