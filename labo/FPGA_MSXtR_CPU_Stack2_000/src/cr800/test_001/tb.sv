@@ -774,17 +774,19 @@ module tb_r800_muluw;
 		if( reset_n && u_cpu.multiply_commit_final ) begin
 			case( multiply_results )
 			0: if( u_cpu.multiply_product !== 32'h00002468 ) $fatal(1, "MULUW BC expected 00002468, got %08h", u_cpu.multiply_product);
-			1: if( u_cpu.multiply_product !== 32'h0000369C ) $fatal(1, "MULUW DE expected 0000369C, got %08h", u_cpu.multiply_product);
-			2: if( u_cpu.multiply_product !== 32'h014B5A90 ) $fatal(1, "MULUW HL expected 014B5A90, got %08h", u_cpu.multiply_product);
-			3: if( u_cpu.multiply_product !== 32'h1233EDCC ) $fatal(1, "MULUW SP expected 1233EDCC, got %08h", u_cpu.multiply_product);
-			4: if( u_cpu.multiply_product !== 32'h00000000 ) $fatal(1, "MULUW zero expected 00000000, got %08h", u_cpu.multiply_product);
+			1: begin
+				if( u_cpu.multiply_product !== 32'h1233EDCC ) $fatal(1, "MULUW SP expected 1233EDCC, got %08h", u_cpu.multiply_product);
+				//	ED D3 / ED E3 are NOP on R800: DE must still hold the value loaded before them
+				if( {u_cpu.u_regs.reg_d0, u_cpu.u_regs.reg_e0} !== 16'h0003 ) $fatal(1, "ED D3/ED E3 must be NOP, DE=%04h", {u_cpu.u_regs.reg_d0, u_cpu.u_regs.reg_e0});
+			end
+			2: if( u_cpu.multiply_product !== 32'h00000000 ) $fatal(1, "MULUW zero expected 00000000, got %08h", u_cpu.multiply_product);
 			default: $fatal(1, "unexpected extra MULUW commit");
 			endcase
 			#1;
 			case( multiply_results )
-			0, 1: if( (u_cpu.f & 8'hD7) !== 8'h12 ) $fatal(1, "MULUW flags expected 12, got %02h", u_cpu.f & 8'hD7);
-			2, 3: if( (u_cpu.f & 8'hD7) !== 8'h13 ) $fatal(1, "MULUW overflow flags expected 13, got %02h", u_cpu.f & 8'hD7);
-			4: if( (u_cpu.f & 8'hD7) !== 8'h52 ) $fatal(1, "MULUW zero flags expected 52, got %02h", u_cpu.f & 8'hD7);
+			0: if( (u_cpu.f & 8'hD7) !== 8'h12 ) $fatal(1, "MULUW flags expected 12, got %02h", u_cpu.f & 8'hD7);
+			1: if( (u_cpu.f & 8'hD7) !== 8'h13 ) $fatal(1, "MULUW overflow flags expected 13, got %02h", u_cpu.f & 8'hD7);
+			2: if( (u_cpu.f & 8'hD7) !== 8'h52 ) $fatal(1, "MULUW zero flags expected 52, got %02h", u_cpu.f & 8'hD7);
 			endcase
 			multiply_results = multiply_results + 1;
 		end
@@ -830,8 +832,8 @@ module tb_r800_muluw;
 		repeat(3) @( posedge clk );
 		#1 reset_n = 1'b1;
 		wait( halt_n == 1'b0 );
-		if( multiply_results != 5 ) begin
-			$fatal(1, "expected 5 MULUW operations, got %0d", multiply_results);
+		if( multiply_results != 3 ) begin
+			$fatal(1, "expected 3 MULUW operations, got %0d", multiply_results);
 		end
 		if( {u_cpu.u_regs.reg_d0, u_cpu.u_regs.reg_e0, u_cpu.u_regs.reg_h0, u_cpu.u_regs.reg_l0} !== 32'h00000000 ) begin
 			$fatal(1, "MULUW zero expected DE:HL=00000000, got %04h%04h",
@@ -840,7 +842,7 @@ module tb_r800_muluw;
 		if( (u_cpu.f & 8'hD7) !== 8'h52 ) begin
 			$fatal(1, "MULUW zero flags expected masked=52, got %02h", u_cpu.f & 8'hD7);
 		end
-		$display("PASS: R800 MULUW BC/DE/HL/SP products and flags");
+		$display("PASS: R800 MULUW BC/SP products and flags; ED D3/ED E3 are NOP");
 		$finish;
 	end
 

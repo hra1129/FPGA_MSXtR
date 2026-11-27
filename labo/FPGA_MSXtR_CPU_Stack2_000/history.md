@@ -2482,3 +2482,11 @@ disk2=yyyy2
 ### 次の作業
 
 1. GOWIN で合成し、DOS2 起動時の RAM 容量表示 (4096KB) と、Pico のメニュー 6 (MapperRAM test、256 セグメント) を確認する。
+- 実機確認 (ユーザー): RAM 4MB で動作した。
+
+## 2026-11-27 夜 cr800/test_001 の tb_r800_muluw の失敗
+
+- 原因は RTL ではなくテストベンチだった。2026-11-24 の CPU Bugfix で、cr800 の MULUW は cpu_test の結果に合わせて ED C3 (HL,BC) / ED F3 (HL,SP) だけに限定し、ED D3 / ED E3 は NOP にした。tb_r800_muluw は、ED D3 を MULUW HL,DE、ED E3 を MULUW HL,HL として期待したままだった。
+- tb を修正: MULUW の実行は BC、SP、ゼロの 3 回だけを期待する。SP の実行時に DE が 0003h のままであることも確認し、ED D3 / ED E3 が NOP であることを確かめる。
+- cr800/test_001 は全項目 PASS。RTL の変更はない。
+- cpu_test (make_tests.py) には、MULUB A,B/C/D/E、MULUW HL,BC/SP (各 48 ベクタ)、そのほかの ED xx (ED D3 / ED E3 を含む) の NOP が、すでに含まれている。追加はしていない。
