@@ -267,3 +267,12 @@ ASCII8K 512KB メガROM `cpu_test.rom` を作成した。openMSX 上での検証
 2. ip_sdram を BL=2 / 16bit / tRCD=2 / PRECHARGE ALL 省略の形に改修し、シミュレーションで確認する。
 3. リフレッシュを 1 ラインあたり 9 回に増やし、BG やスプライトとの重なりをシミュレーションで確認する。
 4. TangPrimer25K のピン配置と PLL 構成を検討する。
+
+## 2026-11-28 R800 の乗算命令の非公式オペコード（Issue #1）
+
+- Issue #1（R800 スイートで、乗算命令の非公式オペコードが NOP 期待になっている）に対応した。根拠は Grauw「Uncovering the R800」（msx.org）の実機テスト。
+- make_tests.py の変更（R800 スイート）:
+  - ED E1 / ED E9 / ED F9 を、MULUB A,H / A,L / A,A として期待する（各 48 ベクタ）。
+  - ED F1 は (HL) を読まず、MULUB A,A と同じ結果になるものとして期待する。
+  - ED CB / D3 / DB / E3 / EB / FB は、実機では乗算器が動いて DE:HL が変化するが、結果の規則が分かっていない。このため R800 ではテストしない（Z80 では従来どおり NOP(U) を期待する）。
+- 生成結果: Z80 は 2267 テストで変わらず、R800 は 1911 テストになった。cpu_test.rom を再生成した。

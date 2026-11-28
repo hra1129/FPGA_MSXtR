@@ -99,6 +99,9 @@ z80test は 1 命令につき数千〜数万通りのレジスタ・フラグの
 - SLL (CB 30-37) は SLA と同じ動作を期待する。DD/FD CB 30-37 はテストしない。
 - DD/FD + HL を使わない命令は、2 バイトの NOP を期待する（Z80 ではプレフィックス無視）。
 - MULUB / MULUW をテストする。OUT (C),0 と LD R,A → LD A,R の組はテストしない。
+- MULUB の非公式形は実機（Grauw「Uncovering the R800」）に合わせ、ED E1 / E9 / F9 を A,H / A,L / A,A、
+  ED F1 を A,A として期待する。MULUW の非公式形（ED D3 / E3）とミラー（ED CB / DB / EB / FB）は、
+  結果の規則が分かっていないためテストしない。
 
 ## Z80 の扱い
 - SCF/CCF の X/Y は（Q レジスタ依存のため）比較しない。

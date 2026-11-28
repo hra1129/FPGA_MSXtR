@@ -2512,3 +2512,10 @@ disk2=yyyy2
   - cz80_inst.v: コアに渡す外部 /WAIT を state_count=11 で確定させる (ff_wait_n_l)。M1 の /RD・/MREQ の解除と、slot_d のタイムアウトラッチは、同じ値 (w_wait_n_next) で判定する。
 - テスト: cr800/test_001 に tb_r800_slot_wait を、cz80/test_002 に tb_cz80_slot_wait を追加した (/RD を見てから 40 クロック /WAIT を出し、その間は FFh を返すカートリッジのモデル)。修正前は、cr800 で /WAIT 中の /RD 解除が 24 回、cz80 で 27 回あり、FAIL した (cz80 は PC=0039h、つまり RST 38h に化けていた)。修正後は PASS。cr800/test_001、cr800/test_002 (19468 ベクタ)、cz80/test_002、cz80/test_003 (19352 ベクタ) は、すべて PASS。
 - 実機確認 (同日): Y8960 Cartridge を挿した状態で、CALL 命令が期待どおりに動くようになった。
+
+## 2026-11-28 R800 の MULUB 非公式形（Issue #1）
+
+- cr800.v: MULUB を ED C1〜F9（y=0〜7）のすべてで起動するようにした。オペランドは y=4 が H、y=5 が L、y=6 / 7 が A。ED F1 は (HL) を読まず、ED F9 と同じ A×A になる（Grauw「Uncovering the R800」の実機テスト）。
+- MULUW の非公式形（ED D3 / E3 とミラーの ED CB / DB / EB / FB）は、実機の結果の規則が分かっていないため、NOP のままにしている。
+- cpu_test の R800 スイートを同じ仕様に更新した（cpu_test/history.md を参照）。
+- テスト: cr800/test_002 は 19640 ベクタで PASS。修正前の RTL では、ED E1 / E9 / F1 / F9 の 4 テストが FAIL することを確認した。cr800/test_001 も全項目 PASS。

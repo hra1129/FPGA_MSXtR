@@ -9,7 +9,7 @@ Analyzing included file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\la
 Back to file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\bootrom\rom.v'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\bootrom\rom.v":55)
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cmcu\cmcu.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v'
-Undeclared symbol 'mc', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":994)
+Undeclared symbol 'mc', assumed default net type 'wire'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":997)
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800_alu.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800_inst.v'
 Analyzing Verilog file 'C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800_mcode.v'
@@ -83,14 +83,14 @@ Extracting RAM for identifier 'memory'("C:\Users\hra\Documents\github\HRA_produc
 Compiling module 'cr800'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":63)
 Compiling module 'cr800_mcode'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800_mcode.v":63)
 Compiling module 'cr800_alu'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800_alu.v":63)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":463)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":612)
-WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":615)
-WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":628)
-WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":631)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":466)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":615)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":618)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":631)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":634)
 Compiling module 'cr800_registers'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800_reg.v":55)
-WARN  (EX3791) : Expression size 3 truncated to fit in target size 1("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":994)
-WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":1128)
+WARN  (EX3791) : Expression size 3 truncated to fit in target size 1("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":997)
+WARN  (EX3791) : Expression size 4 truncated to fit in target size 3("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\cr800\cr800.v":1131)
 Compiling module 's2026'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\s2026\s2026.v":34)
 Compiling module 's2026_cpu_select'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\s2026\s2026_cpu_select.v":34)
 Compiling module 's2026_register'("C:\Users\hra\Documents\github\HRA_product\FPGA_MSXtR\labo\FPGA_MSXtR_CPU_Stack2_000\src\s2026\s2026_register.v":34)

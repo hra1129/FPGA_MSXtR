@@ -457,8 +457,11 @@ def ed_specs():
 			s = spec( name, ins, stat=st, nvec=32,
 				r800_fclr=( F_S | F_H | F_P ) if post else 0, r800_post=post )
 		else:
+			#	ED E1/E9/F9 は実機でも MULUB A,H/L/A として計算され、ED F1 は (HL) を読まずに
+			#	MULUB A,A と同じ結果になる (Grauw「Uncovering the R800」の実機テスト)。
 			mul = {0xC1: ( 'MULUB A,B', O_B ), 0xC9: ( 'MULUB A,C', O_C ), 0xD1: ( 'MULUB A,D', O_D ),
-				0xD9: ( 'MULUB A,E', O_E )}
+				0xD9: ( 'MULUB A,E', O_E ), 0xE1: ( 'MULUB A,H(U)', O_H ), 0xE9: ( 'MULUB A,L(U)', O_L ),
+				0xF1: ( 'MULUB A,(HL)(U)', O_A ), 0xF9: ( 'MULUB A,A(U)', O_A )}
 			if op in mul:
 				res.append( spec( 'NOP(U) ED%02X' % op, ins, nvec=4, r800=False ) )
 				s = spec( mul[op][0], ins, nvec=48, z80=False, r800_sim=[0xED, 0x00],
@@ -471,6 +474,10 @@ def ed_specs():
 				else:
 					s = spec( 'MULUW HL,SP', ins, nvec=48, z80=False, r800_sim=[0xED, 0x00],
 						r800_post=r800_muluw( O_SPL, O_SPH ) )
+			elif op in ( 0xCB, 0xD3, 0xDB, 0xE3, 0xEB, 0xFB ):
+				#	R800 では乗算器が動いて DE:HL が変化するが、結果の規則が分かっていないため
+				#	R800 ではテストしない (MULUW HL,DE/HL とそのミラー)
+				s = spec( 'NOP(U) ED%02X' % op, ins, nvec=2, r800=False )
 			else:
 				s = spec( 'NOP(U) ED%02X' % op, ins, nvec=2 )
 		if s:

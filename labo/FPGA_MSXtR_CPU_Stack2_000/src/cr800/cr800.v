@@ -340,11 +340,14 @@ module cr800 (
 	assign multiply_start = cen && !busack && !multiply_busy && mcycle == 3'd1 &&
 		tstate == 3'd2 && wait_n && iset == 2'b00 && ir == 8'hED &&
 		dinst[7:6] == 2'b11 &&
-		(((dinst[2:0] == 3'b001) && (dinst[5:3] <= 3'd3)) ||
+		((dinst[2:0] == 3'b001) ||
 		 ((dinst[2:0] == 3'b011) && (dinst[5:3] == 3'd0 || dinst[5:3] == 3'd6)));
-	assign multiply_pair_address_a = (dinst[2:0] == 3'b001) ? { 1'b0, dinst[4] } : dinst[5:4];
+	//	MULUB は実機に合わせて H(ED E1) / L(ED E9) / A(ED F9) も乗算する。
+	//	ED F1 は (HL) を読まず、ED F9 と同じ A×A になる (Grauw「Uncovering the R800」)。
+	assign multiply_pair_address_a = dinst[5:4];
 	assign multiply_pair_address_b = 2'd2;
-	assign multiply_byte_operand = dinst[3] ? multiply_data_a[7:0] : multiply_data_a[15:8];
+	assign multiply_byte_operand = (dinst[5:4] == 2'b11) ? acc :
+		dinst[3] ? multiply_data_a[7:0] : multiply_data_a[15:8];
 	assign multiply_word_operand = (dinst[5:4] == 2'b11) ? sp : multiply_data_a;
 	assign multiply_byte_product = { 8'd0, acc } * { 8'd0, multiply_byte_operand };
 	assign multiply_product_comb = (dinst[2:0] == 3'b001) ? { 16'd0, multiply_byte_product } :
