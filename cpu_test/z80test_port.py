@@ -234,10 +234,20 @@ def r800_unsupported( ops ):
 			if o[1] == 0xCB:
 				if 0x30 <= o[3] <= 0x37:
 					return 'SLL'
+				if ( o[3] & 7 ) != 6:
+					return 'DD/FD CB NOP'
 			elif o[1] not in ( 0xDD, 0xFD, 0xED ) and not hl_affected( o[1] ):
 				return 'DD/FD NOP'
 		if o[0] == 0xED and o[1] in ( 0xC1, 0xC9, 0xD1, 0xD9, 0xC3, 0xF3 ):
 			return 'MUL'
+		#	ED 63 hangs ( FS-A1GT ), ED 6B / 82 / 8A / 92 / 9A behave differently ( Grauw )
+		if o[0] == 0xED and o[1] in ( 0x63, 0x6B, 0x82, 0x8A, 0x92, 0x9A ):
+			return 'ED %02X' % o[1]
+		#	NEG / RETN mirrors are NOP, ED 71 is a 5 byte instruction
+		if o[0] == 0xED and ( o[1] & 0xC6 ) == 0x44 and o[1] not in ( 0x44, 0x45, 0x4D ):
+			return 'NEG/RETN mirror'
+		if o[0] == 0xED and o[1] == 0x71:
+			return 'ED 71'
 	return None
 
 
@@ -364,8 +374,12 @@ class zt_machine:
 				while o[i] in ( 0xDD, 0xFD ) and i < 3:
 					i += 1
 				if o[i] in ( 0x37, 0x3F ):
-					# Zilog : X/Y = ( Q xor F ) or A
-					f = ( m.f & 0xD7 ) | ( ( ( q ^ f0 ) | a0 ) & 0x28 )
+					if 'tr' in fix:
+						# FS-A1GT ( T9769 ) : Y = F.Y, X = ( F or A ).X
+						f = ( m.f & 0xD7 ) | ( f0 & 0x20 ) | ( ( f0 | a0 ) & 0x08 )
+					else:
+						# Zilog : X/Y = ( Q xor F ) or A
+						f = ( m.f & 0xD7 ) | ( ( ( q ^ f0 ) | a0 ) & 0x28 )
 					m.f = f
 					q = f
 				elif affects_flags( o ):
@@ -517,6 +531,11 @@ class zt_suite:
 			if bad:
 				raise RuntimeError( 'z80test %s %s: %s' % ( self.variant, t.name, ', '.join( bad ) ) )
 			crcs = [( crc, '' )] + alts
+			if self.variant == 'full' and t.label in ( 'scf', 'ccf' ):
+				# the Z80 in FS-A1GT ( T9769 ) has its own X/Y of SCF / CCF
+				tr, ev = self.ma.run( rec, fix | {'tr'} )
+				if not any( c == tr for c, l in crcs ):
+					crcs.append( ( tr, 'TR' ) )
 			if fix and 'q' in fix:
 				# a CPU without Q ( = the native model ) is accepted with a notice
 				nec, ev = self.ma.run( rec, ( fix - {'q'} ) or None )

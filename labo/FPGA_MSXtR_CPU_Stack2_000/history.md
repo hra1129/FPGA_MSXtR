@@ -2519,3 +2519,25 @@ disk2=yyyy2
 - MULUW の非公式形（ED D3 / E3 とミラーの ED CB / DB / EB / FB）は、実機の結果の規則が分かっていないため、NOP のままにしている。
 - cpu_test の R800 スイートを同じ仕様に更新した（cpu_test/history.md を参照）。
 - テスト: cr800/test_002 は 19640 ベクタで PASS。修正前の RTL では、ED E1 / E9 / F1 / F9 の 4 テストが FAIL することを確認した。cr800/test_001 も全項目 PASS。
+
+## 2026-11-28 R800 の NEG / RETN ミラーを NOP に
+
+- FS-A1GT の実機で、ED 4C / 54 / 5C（NEG のミラー）と ED 55 / 5D（RETN のミラー）が NOP として動作することを確認した。
+- cr800_mcode.v: ED 4C〜7C（y≠0）と ED 55〜7D（y≠0, 1）を ED 00（NOP）として解釈するようにした。
+- cpu_test の R800 スイートも同じ期待値に更新した。
+- テスト: cr800/test_002 19640 ベクタ エラー 0、cr800/test_001 全項目 PASS。
+
+## 2026-11-28 R800 の ED 63 / 6B について
+
+- 当初は「FS-A1GT の実機では ED 63 で停止する」と判断していたが、誤りだった。ED 63 は 6363h に H を書き込み、それが cpu_test.rom（ASCII8K）のバンク 0 レジスタに当たってバンクが切り替わり、暴走していた。
+- 実機の動作（診断 ROM ed63_test で確認）:
+  - ED 63 nn nn: 4 バイト命令。(nn) には書かず、6363h に H を書く。nn やほかのレジスタには依存しない。
+  - ED 6B nn nn: 4 バイト命令。メモリには書かず、HL = EB6Bh になる。cpu_test（RAM 上で実行）の 16 ベクタでも、すべて H = EBh だった。
+- cr800.v / cr800_mcode.v を実機に合わせた:
+  - ED 63: アドレスの上位・下位とも 63h にして、M4 / M5 で L → H の順に 6363h へ書く（結果として H が残る）。(nn) へのアクセスはない（r800_ed63）。
+  - ED 6B: M3 で終わる 4 バイト命令にした（(nn) は読まない）。M3 で HL に EB6Bh を書く（r800_ed6b_l。L は save_mux、H は regdih で EBh にし、regweh も立てる）。
+  - 実機の内部の動作は推測で、外から見える結果だけを合わせている。
+- テスト: cr800/test_003（新規）で、6363h = H、6362h / 6364h と (nn) が不変、(nn) へのバスアクセスが 0 回、ED 6B の直後の HL = EB6Bh、後続の命令が正しく実行されることを確認した（PASS）。cr800/test_002 は 19616 ベクタ（ED 6B を追加）でエラー 0。cr800/test_001 も全項目 PASS。
+- cpu_test にも ED 6B のベクタと ED 63 の専用テストを追加した（cpu_test/history.md を参照）。
+- 同じ一連の作業で、DD/FD CB d xx の z≠6（結果をレジスタにもコピーする非公式形）を、FS-A1GT の実機に合わせて 4 バイトの NOP にした（cr800.v の r800_xycb_nop）。
+- 実機確認 (同日): 新しい cpu_test.rom（4011 項目）で、FS-A1GT と FPGA MSXtR の両方が ALL OK（ERR 0）になった。

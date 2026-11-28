@@ -72,7 +72,8 @@ def sext( v ):
 # -----------------------------------------------------------------------------
 class spec:
 	def __init__( self, name, ins, stat=None, fmask=0xFF, vec=None, nvec=16, rel=False,
-			z80=True, r800=True, r800_fclr=0, r800_sim=None, r800_post=None, post=None ):
+			z80=True, r800=True, r800_fclr=0, r800_sim=None, r800_post=None, post=None,
+			r800_special=None ):
 		self.name = name
 		self.ins = ins							# list of int (fixed) / 'r' (random) / (and, or)
 		self.stat = list( stat or [] )
@@ -86,6 +87,7 @@ class spec:
 		self.r800_sim = r800_sim				# alternative instruction bytes for the R800 model
 		self.r800_post = r800_post				# function( isb, out ) : R800 correction
 		self.post = post						# function( isb, out ) : correction for both CPUs
+		self.r800_special = r800_special		# R800 : id of a directed test in the runner ( record 04 )
 
 	def length( self ):
 		return len( self.ins )
@@ -351,15 +353,17 @@ def idx_cb_spec( idx, op ):
 	m = '(%s+d)' % idx
 	cp = '' if z == 6 else ',' + R8_NAME[z] + '(U)'
 	ins = [IDX_PREFIX[idx], 0xCB, DISP, op]
+	#	R800: DD/FD CB d xx with z != 6 is a 4 byte NOP ( FS-A1GT )
+	nop4 = None if z == 6 else [0x00, 0x00, 0x00, 0x00]
 	if x == 0:
 		u = '(U)' if y == 6 and z == 6 else ''
 		return spec( '%s %s%s%s' % ( ROT_NAME[y], m, cp, u ), ins, stat=stat, nvec=16 if z == 6 else 6,
-			r800=( y != 6 ) )
+			r800=( y != 6 ), r800_sim=nop4 )
 	if x == 1:
 		return spec( 'BIT %d,%s%s' % ( y, m, '' if z == 6 else '(U)' ), ins, stat=stat,
-			nvec=16 if z == 6 else 4, r800_fclr=F_S | F_P )
+			nvec=16 if z == 6 else 4, r800_fclr=F_S | F_P, r800_sim=nop4 )
 	return spec( '%s %d,%s%s' % ( 'RES' if x == 2 else 'SET', y, m, cp ), ins, stat=stat,
-		nvec=8 if z == 6 else 4 )
+		nvec=8 if z == 6 else 4, r800_sim=nop4 )
 
 
 # -----------------------------------------------------------------------------
@@ -372,6 +376,14 @@ def r800_mulub( reg_off ):
 		out[O_H] = v >> 8
 		out[O_F] = ( isb[O_F] & ( F_N | F_H | F_X | F_Y ) ) | ( F_Z if v == 0 else 0 ) | ( F_C if v & 0xFF00 else 0 )
 	return post
+
+
+SPECIAL_ED63 = 0x00					# runner directed test : R800 ED 63 nn nn
+
+
+def r800_ed6b( isb, out ):
+	out[O_L] = 0x6B
+	out[O_H] = 0xEB
 
 
 def r800_muluw( lo, hi ):
@@ -407,18 +419,28 @@ def ed_specs():
 			elif z == 2:
 				s = spec( '%s HL,%s' % ( 'SBC' if q == 0 else 'ADC', RP_NAME[p] ), ins, nvec=48, r800_fclr=F_H )
 			elif z == 3:
+				#	R800 ( FS-A1GT ) : ED 63 nn nn writes H to 6363h and does not write (nn).
+				#	It is run by a directed test in the runner ( 6363h is a bank register of the
+				#	cartridge ). ED 6B nn nn does not read (nn), and sets HL to EB6Bh.
 				u = '(U)' if p == 2 else ''
 				if q == 0:
-					s = spec( 'LD (nn),%s%s' % ( RP_NAME[p], u ), ins + NN2 )
+					s = spec( 'LD (nn),%s%s' % ( RP_NAME[p], u ), ins + NN2, r800=p != 2,
+						r800_special=SPECIAL_ED63 if p == 2 else None )
+				elif p == 2:
+					s = spec( 'LD HL,(nn)(U)', ins + NN2, r800_sim=[0x00, 0x00, 0x00, 0x00],
+						r800_post=r800_ed6b )
 				else:
-					s = spec( 'LD %s,(nn)%s' % ( RP_NAME[p], u ), ins + NN2 )
+					s = spec( 'LD %s,(nn)' % RP_NAME[p], ins + NN2 )
 			elif z == 4:
-				s = spec( 'NEG' + ( '' if y == 0 else '(U)' ), ins, nvec=32 if y == 0 else 8 )
+				#	R800 executes the NEG / RETN mirrors as NOP ( FS-A1GT )
+				s = spec( 'NEG' + ( '' if y == 0 else '(U)' ), ins, nvec=32 if y == 0 else 8,
+					r800_sim=None if y == 0 else [0xED, 0x00] )
 			elif z == 5:
 				if y == 1:
 					s = spec( 'RETI', ins, vec=vec_ret, nvec=8 )
 				else:
-					s = spec( 'RETN' + ( '' if y == 0 else '(U)' ), ins, vec=vec_ret, nvec=8 )
+					s = spec( 'RETN' + ( '' if y == 0 else '(U)' ), ins, vec=vec_ret, nvec=8,
+						r800_sim=None if y == 0 else [0xED, 0x00] )
 			elif z == 6:
 				mode = [0, 0, 1, 2, 0, 0, 1, 2][y]
 				s = spec( 'IM %d' % mode + ( '' if y in ( 0, 2, 3 ) else '(U)' ), ins, nvec=4 )
@@ -477,6 +499,9 @@ def ed_specs():
 			elif op in ( 0xCB, 0xD3, 0xDB, 0xE3, 0xEB, 0xFB ):
 				#	R800 では乗算器が動いて DE:HL が変化するが、結果の規則が分かっていないため
 				#	R800 ではテストしない (MULUW HL,DE/HL とそのミラー)
+				s = spec( 'NOP(U) ED%02X' % op, ins, nvec=2, r800=False )
+			elif op in ( 0x82, 0x8A, 0x92, 0x9A ):
+				#	R800 : 3 byte instructions with an unknown function ( Grauw "Uncovering the R800" )
 				s = spec( 'NOP(U) ED%02X' % op, ins, nvec=2, r800=False )
 			else:
 				s = spec( 'NOP(U) ED%02X' % op, ins, nvec=2 )
@@ -739,6 +764,10 @@ def gen_suite( mc, cpu, cat, alu ):
 	count = 0
 	salt = 0x1234 if cpu == 'z80' else 0x5678
 	for i, s in enumerate( cat ):
+		if cpu == 'r800' and s.r800_special is not None:
+			data += b'\x04' + encode_name( s.name ) + bytes( [s.r800_special] )
+			count += 1
+			continue
 		if ( cpu == 'z80' and not s.z80 ) or ( cpu == 'r800' and not s.r800 ):
 			continue
 		seed = ( ( i + 1 ) * 0x9E37 + salt ) & 0xFFFF
@@ -766,10 +795,11 @@ def main():
 	alu = build_alu_catalog()
 	z80_data, z80_count = gen_suite( mc, 'z80', cat, alu )
 	r800_data, r800_count = gen_suite( mc, 'r800', cat, alu )
-	# z80test port ( Z80 : full, Q, MEMPTR / R800 : documented flags )
+	# z80test port ( Z80 : full, MEMPTR / R800 : documented flags )
+	#	the Q variant is not used : the Z80 in FS-A1GT ( T9769 ) does not follow the Zilog Q rule
 	z80_data = z80_data[:-1]
 	r800_data = r800_data[:-1]
-	for v, r800 in ( ( 'full', False ), ( 'ccf', False ), ( 'memptr', False ), ( 'doc', True ) ):
+	for v, r800 in ( ( 'full', False ), ( 'memptr', False ), ( 'doc', True ) ):
 		zs = z80test_port.zt_suite( v, os.path.join( HERE, 'zt_%s.bin' % v ), runner, ZT_REC, r800=r800 )
 		d, n = zs.generate()
 		print( 'z80test %-6s: %d tests' % ( v, n ) )

@@ -18,6 +18,7 @@ MSXVER			:= 0x002D
 CHGMOD			:= 0x005F
 CHGCLR			:= 0x0062
 RSLREG			:= 0x0138
+SNSMAT			:= 0x0141
 CHGCPU			:= 0x0180
 RG1SAV			:= 0xF3E0
 FORCLR			:= 0xF3E9
@@ -91,6 +92,7 @@ t_arow			:= WORK + 0x2C
 z80_count		:= WORK + 0x2D		; 2
 zt_got			:= WORK + 0x2F		; 4 ( z80test CRC, MSB first )
 zt_ncrc			:= WORK + 0x33
+skip_z80		:= WORK + 0x34		; 1: skip the Z80 suite ( [R] key at boot, turbo R only )
 name_buf		:= WORK + 0x40		; 32
 stat_buf		:= WORK + 0x60		; 96 (32 entries)
 flist_buf		:= WORK + 0xC0		; 16
@@ -126,6 +128,13 @@ main:
 			ld		h, 0x80
 			call	ENASLT
 			di
+			ld		a, 4
+			call	SNSMAT
+			di
+			cpl
+			rlca
+			and		a, 1
+			ld		[skip_z80], a
 			ld		a, [MSXVER]
 			cp		a, 3
 			ld		a, 0
@@ -183,7 +192,18 @@ main_total:
 			call	enter_test_map
 			xor		a, a
 			ld		[cpu_mode], a
+			ld		a, [is_turbor]
+			ld		b, a
+			ld		a, [skip_z80]
+			and		a, b
+			jr		z, main_z80
+			ld		hl, [z80_count]
+			ld		[done_cnt], hl
+			call	draw_status
+			jr		main_z80_done
+main_z80:
 			call	run_suite
+main_z80_done:
 
 			ld		a, [is_turbor]
 			or		a, a
@@ -439,9 +459,14 @@ run_suite:
 			jr		z, run_suite_alu
 			cp		a, 2
 			jr		z, run_suite_zt
+			cp		a, 4
+			jr		z, run_suite_special
 			cp		a, 3
 			jp		nz, bad_stream
 			call	zt_load
+			jr		run_suite
+run_suite_special:
+			call	special_test
 			jr		run_suite
 run_suite_zt:
 			call	zt_run
@@ -1125,6 +1150,188 @@ lb_hex32_loop:
 			inc		hl
 			djnz	lb_hex32_loop
 			ret
+
+; ----------------------------------------------------------------------------
+;	directed tests
+; ----------------------------------------------------------------------------
+;	[04][name 0][id]
+;	id 0 : R800 ED 63 nn nn ( FS-A1GT : writes H to 6363h, (nn) is not written )
+;		6363h is a bank register of this cartridge, so the instruction is run
+;		by a RAM routine with page 1 switched to RAM.
+ED63_A8			:= stat_buf + 0
+ED63_SSL		:= stat_buf + 1
+ED63_GOT		:= stat_buf + 2		; 6362h, 6363h, 6364h
+ED63_NN			:= stat_buf + 5		; 2
+ED63_HL			:= stat_buf + 7		; 2
+ED63_IN			:= stat_buf + 9		; 2
+ED63_PTR		:= stat_buf + 11	; 2
+
+special_test:
+			call	read_name
+			call	show_progress
+			call	rd_byte
+			or		a, a
+			jp		nz, bad_stream
+			call	test_begin
+			; page 1 <- RAM ( same slot as page 3 )
+			ld		a, [orig_a8]
+			ld		b, a
+			rrca
+			rrca
+			rrca
+			rrca
+			and		a, 0x0C
+			ld		c, a
+			ld		a, b
+			and		a, 0xF3
+			or		a, c
+			ld		[ED63_A8], a
+			ld		a, [orig_ssl]
+			ld		b, a
+			rrca
+			rrca
+			rrca
+			rrca
+			and		a, 0x0C
+			ld		c, a
+			ld		a, b
+			and		a, 0xF3
+			or		a, c
+			ld		[ED63_SSL], a
+			ld		hl, ed63_code
+			ld		de, THREAD_ADDR
+			ld		bc, ed63_code_end - ed63_code
+			ldir
+			ld		hl, ed63_hl_tbl
+special_test_loop:
+			ld		e, [hl]
+			inc		hl
+			ld		d, [hl]
+			inc		hl
+			ld		[ED63_PTR], hl
+			ex		de, hl
+			call	THREAD_ADDR
+			call	ed63_check
+			call	vec_next
+			ld		hl, [ED63_PTR]
+			ld		a, l
+			cp		a, ed63_hl_tbl_end & 0xFF
+			jr		nz, special_test_loop
+			ld		a, h
+			cp		a, ed63_hl_tbl_end >> 8
+			jr		nz, special_test_loop
+			jp		test_end
+
+ed63_check:
+			ld		a, [ED63_GOT + 0]
+			cp		a, 0x5A
+			jr		nz, ed63_check_ng
+			ld		a, [ED63_GOT + 2]
+			cp		a, 0x5A
+			jr		nz, ed63_check_ng
+			ld		a, [ED63_IN + 1]
+			ld		b, a
+			ld		a, [ED63_GOT + 1]
+			cp		a, b
+			jr		nz, ed63_check_ng
+			ld		hl, [ED63_NN]
+			ld		de, 0x5A5A
+			or		a, a
+			sbc		hl, de
+			jr		nz, ed63_check_ng
+			ld		hl, [ED63_HL]
+			ld		de, [ED63_IN]
+			or		a, a
+			sbc		hl, de
+			ret		z
+ed63_check_ng:
+			ld		hl, [vec_err]
+			ld		a, h
+			or		a, l
+			inc		hl
+			ld		[vec_err], hl
+			jr		nz, ed63_check_detail
+			call	lb_clear
+			ld		de, msg_ng
+			call	lb_str
+			call	lb_cpu
+			ld		de, name_buf
+			call	lb_str
+			call	emit_line
+ed63_check_detail:
+			call	lb_clear
+			ld		de, msg_in
+			call	lb_str
+			ld		hl, [ED63_IN]
+			call	lb_hex16
+			ld		de, msg_got
+			call	lb_str
+			ld		hl, ED63_GOT
+			ld		b, 3
+ed63_check_got:
+			ld		a, [hl]
+			call	lb_hex8
+			ld		a, 0x20
+			call	lb_chr
+			inc		hl
+			djnz	ed63_check_got
+			ld		hl, [ED63_NN]
+			call	lb_hex16
+			ld		a, 0x20
+			call	lb_chr
+			ld		hl, [ED63_HL]
+			call	lb_hex16
+			jp		emit_line
+
+;	copied to THREAD_ADDR ( position independent )
+;	input: hl = HL for ED 63
+ed63_code:
+			ld		[ED63_IN], hl
+			ld		a, [ram_exp]
+			or		a, a
+			jr		z, ed63_code_a8
+			ld		a, [ED63_SSL]
+			ld		[0xFFFF], a
+ed63_code_a8:
+			ld		a, [ED63_A8]
+			out		[PPI_SLOT], a
+			ld		hl, [0x6362]
+			push	hl
+			ld		a, [0x6364]
+			push	af
+			ld		a, 0x5A
+			ld		[0x6362], a
+			ld		[0x6363], a
+			ld		[0x6364], a
+			ld		hl, 0x5A5A
+			ld		[WIN_ADDR], hl
+			ld		hl, [ED63_IN]
+			defb	0xED, 0x63
+			defw	WIN_ADDR
+			ld		[ED63_HL], hl
+			ld		hl, [0x6362]
+			ld		[ED63_GOT + 0], hl
+			ld		a, [0x6364]
+			ld		[ED63_GOT + 2], a
+			ld		hl, [WIN_ADDR]
+			ld		[ED63_NN], hl
+			pop		af
+			ld		[0x6364], a
+			pop		hl
+			ld		[0x6362], hl
+			ld		a, [orig_a8]
+			out		[PPI_SLOT], a
+			ld		a, [ram_exp]
+			or		a, a
+			ret		z
+			ld		a, [orig_ssl]
+			ld		[0xFFFF], a
+			ret
+ed63_code_end:
+
+ed63_hl_tbl:
+			defw	0x8100, 0x1234, 0xFFFF, 0x00A5, 0x6363, 0x5A00
+ed63_hl_tbl_end:
 
 ; ----------------------------------------------------------------------------
 ;	screen

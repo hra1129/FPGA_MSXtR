@@ -147,6 +147,9 @@ module cr800 (
 	reg		[31:0]	multiply_product;
 	reg			multiply_commit_step;
 	wire			r800_idx_nop;
+	wire			r800_xycb_nop;
+	wire			r800_ed63;
+	wire			r800_ed6b_l;
 
 	// help registers
 	reg		[15:0]	tmpaddr;			// temporary address register
@@ -336,7 +339,7 @@ module cr800 (
 	assign t_res			= (tstate == tstates );
 	assign nextis_xy_fetch	= (xy_state != 2'b00 && !xy_ind && ((set_addr_to == axy) || 
 							  (mcycle == 3'd1 && ir == 8'hCB) || (mcycle == 3'd1 && ir == 8'h36)) );
-	assign save_mux			= exchangerp ? busb: (save_alu_r ? alu_q: di_reg);
+	assign save_mux			= r800_ed6b_l ? 8'h6B: (exchangerp ? busb: (save_alu_r ? alu_q: di_reg));
 	assign multiply_start = cen && !busack && !multiply_busy && mcycle == 3'd1 &&
 		tstate == 3'd2 && wait_n && iset == 2'b00 && ir == 8'hED &&
 		dinst[7:6] == 2'b11 &&
@@ -393,6 +396,12 @@ module cr800 (
 	endfunction
 
 	assign r800_idx_nop = (prefix == 2'b11) && (xy_state == 2'b00) && !func_hl_affected( dinst ) && (dinst != 8'h76);
+	//	R800: DD/FD CB d xx with xx[2:0] != 6 is a 4-byte NOP (FS-A1GT). It ends after the opcode fetch (M7).
+	assign r800_xycb_nop = (mcycle == 3'd7) && (iset == 2'b01) && (ir[2:0] != 3'b110);
+	//	R800: ED 63 nn nn ignores nn and writes L then H to 6363h, so only H remains (FS-A1GT).
+	assign r800_ed63 = (iset == 2'b10) && (ir == 8'h63);
+	//	R800: ED 6B nn nn does not read (nn) and loads 6Bh into L (FS-A1GT).
+	assign r800_ed6b_l = (iset == 2'b10) && (ir == 8'h6B) && (read_to_reg_r == 5'h15);
 
 	always @( posedge clk_n ) begin
 		if( !reset_n ) begin
@@ -540,6 +549,9 @@ module cr800 (
 						ff_a  <= 16'h0066;
 						pc <= 16'h0066;
 					end
+					else if( r800_xycb_nop ) begin
+						ff_a <= pc;
+					end
 					else if( mcycle == 3'd3 && intcycle == 1'b1 && istatus == 2'b10 ) begin
 						ff_a[15:8] <= i;
 						ff_a[7:0] <= tmpaddr[7:0];
@@ -569,7 +581,10 @@ module cr800 (
 						ade:
 							ff_a <= regbusc;
 						azi:
-							if( inc_wz == 1'b1 ) begin
+							if( r800_ed63 ) begin
+								ff_a <= 16'h6363;
+							end
+							else if( inc_wz == 1'b1 ) begin
 								ff_a <= tmpaddr + 16'd1;
 							end
 							else begin
@@ -884,13 +899,15 @@ module cr800 (
 		end
 	endfunction
 
-	assign regweh = multiply_commit ? 1'b1 : (!multiply_busy && func_regwe( tstate, save_alu_r, auto_wait_t1, alu_op_r, read_to_reg_r, exchangedh, incdec_16, wait_n, mcycle, ~read_to_reg_r[0] ));
+	//	ED 6B : H is written together with L ( HL = EB6Bh on FS-A1GT )
+	assign regweh = multiply_commit ? 1'b1 : (!multiply_busy && func_regwe( tstate, save_alu_r, auto_wait_t1, alu_op_r, read_to_reg_r, exchangedh, incdec_16, wait_n, mcycle, r800_ed6b_l | ~read_to_reg_r[0] ));
 	assign regwel = multiply_commit ? 1'b1 : (!multiply_busy && func_regwe( tstate, save_alu_r, auto_wait_t1, alu_op_r, read_to_reg_r, exchangedh, incdec_16, wait_n, mcycle,  read_to_reg_r[0] ));
 
 	assign regdih	= multiply_commit ? (multiply_commit_step ? multiply_product[31:24] : multiply_product[15:8]) :
 					  ( incdec_16[2] && ((tstate == 3'd2 && mcycle != 3'd1) || (tstate == 3'd3 && mcycle == 3'd1)) ) ? id16[15:8] :
 					  ( exchangedh && tstate == 3'd4 ) ? regbusa_r[15:8]:
-					  ( exchangedh && tstate == 3'd3 ) ? regbusb[15:8]: save_mux;
+					  ( exchangedh && tstate == 3'd3 ) ? regbusb[15:8]:
+					  r800_ed6b_l ? 8'hEB: save_mux;
 	assign regdil	= multiply_commit ? (multiply_commit_step ? multiply_product[23:16] : multiply_product[7:0]) :
 					  ( incdec_16[2] && ((tstate == 3'd2 && mcycle != 3'd1) || (tstate == 3'd3 && mcycle == 3'd1)) ) ? id16[ 7:0] :
 					  ( exchangedh && tstate == 3'd4 ) ? regbusa_r[7:0]:
@@ -1105,10 +1122,10 @@ module cr800 (
 								pre_xy_f_m <= mcycle;
 							end
 						end
-						else if( mcycle == 3'd7 ) begin
+						else if( mcycle == 3'd7 && !r800_xycb_nop ) begin
 							mcycle <= pre_xy_f_m + 3'd1;
 						end
-						else if( (mcycle == mcycles) || no_btr || (mcycle == 3'd2 && i_djnz && incdecz) ) begin
+						else if( (mcycle == mcycles) || no_btr || (mcycle == 3'd2 && i_djnz && incdecz) || r800_xycb_nop ) begin
 							ff_m1_n <= 1'b0;
 							mcycle <= 3'b001;
 							if( nmi_s && prefix == 2'd0 ) begin

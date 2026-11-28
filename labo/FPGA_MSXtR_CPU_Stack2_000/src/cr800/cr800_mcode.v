@@ -212,7 +212,9 @@ module cr800_mcode (
 	assign ddd		= ir[5:3];
 	assign sss		= ir[2:0];
 	assign dpair	= ir[5:4];
-	assign irb		= ir;
+	//	R800 executes the NEG mirrors (ED 4C/54/../7C) and the RETN mirrors (ED 55/5D/../7D) as NOP
+	assign irb		= ( iset == 2'b10 && ir[7:6] == 2'b01 && ir[2:1] == 2'b10 && ir[5:3] != 3'd0 &&
+						!( ir[0] == 1'b1 && ir[5:3] == 3'd1 ) ) ? 8'h00: ir;
 
 	// --------------------------------------------------------------------
 	//	Prefix instruction
@@ -392,8 +394,10 @@ module cr800_mcode (
 		// --------------------------------------------------------------------
 		default:
 			case( irb )
-			8'h4B, 8'h5B, 8'h6B, 8'h7B, 8'h43, 8'h53, 8'h63, 8'h73:
+			8'h4B, 8'h5B, 8'h7B, 8'h43, 8'h53, 8'h63, 8'h73:
 				func_mcycles = 3'd5;
+			8'h6B:
+				func_mcycles = 3'd3;							// R800: ED 6B does not read (nn)
 			8'hA0, 8'hA8, 8'hB0, 8'hB8, 8'hA1, 8'hA9, 8'hB1, 8'hB9, 8'h6F, 8'h67,
 			8'hA2, 8'hAA, 8'hB2, 8'hBA, 8'hA3, 8'hAB, 8'hB3, 8'hBB:
 				func_mcycles = 3'd4;
@@ -1082,8 +1086,10 @@ module cr800_mcode (
 		// --------------------------------------------------------------------
 		default:
 			case( irb )
-			8'h4B, 8'h5B, 8'h6B, 8'h7B:
+			8'h4B, 8'h5B, 8'h7B:
 				func_read_to_reg = ( mcycle == 3'd4 || mcycle == 3'd5 );
+			8'h6B:
+				func_read_to_reg = ( mcycle == 3'd3 );			// R800: L <= 6Bh
 			8'h4A, 8'h5A, 8'h6A, 8'h7A, 8'h42, 8'h52, 8'h62, 8'h72:
 				func_read_to_reg = ( mcycle == 3'd2 || mcycle == 3'd3 );
 			8'h6F, 8'h67:
@@ -1564,7 +1570,7 @@ module cr800_mcode (
 		// --------------------------------------------------------------------
 		default:
 			case( irb )
-			8'h4B, 8'h5B, 8'h6B, 8'h7B:
+			8'h4B, 8'h5B, 8'h7B:
 				if( mcycle == 3'd4 ) begin
 					if( ir[5:4] == 2'b11 ) begin
 						func_set_busa_to = 4'h8;
@@ -1580,6 +1586,13 @@ module cr800_mcode (
 					else begin
 						func_set_busa_to = { 1'b0, ir[5:4], 1'b0 };
 					end
+				end
+				else begin
+					func_set_busa_to = 4'h0;
+				end
+			8'h6B:
+				if( mcycle == 3'd3 ) begin
+					func_set_busa_to = 4'd5;						// L
 				end
 				else begin
 					func_set_busa_to = 4'h0;
@@ -2190,7 +2203,7 @@ module cr800_mcode (
 			// --------------------------------------------------------------------
 			default:
 				case( irb )
-				8'h4B, 8'h5B, 8'h6B, 8'h7B, 8'h43, 8'h53, 8'h63, 8'h73:
+				8'h4B, 8'h5B, 8'h7B, 8'h43, 8'h53, 8'h63, 8'h73:
 					func_set_addr_to = ( mcycle == 3'd3 || mcycle == 3'd4 ) ? azi: anone;
 				8'hA0, 8'hA8, 8'hB0, 8'hB8:
 					func_set_addr_to = ( mcycle == 3'd1 ) ? axy:
