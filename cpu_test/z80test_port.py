@@ -240,10 +240,11 @@ def r800_unsupported( ops ):
 				return 'DD/FD NOP'
 		if o[0] == 0xED and o[1] in ( 0xC1, 0xC9, 0xD1, 0xD9, 0xC3, 0xF3 ):
 			return 'MUL'
-		#	ED 63 hangs ( FS-A1GT ), ED 6B / 82 / 8A / 92 / 9A behave differently ( Grauw )
+		#	ED 63 writes H to 6363h, ED 6B sets HL to EB6Bh ( FS-A1GT, see r800_undocumented.md ),
+		#	ED 82 / 8A / 92 / 9A behave differently ( Grauw )
 		if o[0] == 0xED and o[1] in ( 0x63, 0x6B, 0x82, 0x8A, 0x92, 0x9A ):
 			return 'ED %02X' % o[1]
-		#	NEG / RETN mirrors are NOP, ED 71 is a 5 byte instruction
+		#	NEG / RETN mirrors are NOP, ED 71 on R800 executes A as the next opcode ( r800_undocumented.md )
 		if o[0] == 0xED and ( o[1] & 0xC6 ) == 0x44 and o[1] not in ( 0x44, 0x45, 0x4D ):
 			return 'NEG/RETN mirror'
 		if o[0] == 0xED and o[1] == 0x71:

@@ -1,8 +1,9 @@
 // -----------------------------------------------------------------------------
-//	cr800 : ED 63 nn nn / ED 6B nn nn ( undocumented on R800 )
+//	cr800 : ED 63 nn nn / ED 6B nn nn / ED 71 ( undocumented on R800 )
 //	FS-A1GT results:
 //		ED 63 nn nn : 4 bytes, (nn) is not written, H is written to 6363h
 //		ED 6B nn nn : 4 bytes, (nn) is not read, HL <= EB6Bh
+//		ED 71       : no I/O, 2 byte NOP
 // -----------------------------------------------------------------------------
 
 `timescale 1ps/1ps
@@ -25,6 +26,7 @@ module tb;
 	reg		[7:0]	mem [0:65535];
 	reg				finished = 1'b0;
 	integer			nn_access = 0;
+	integer			io_writes = 0;
 	integer			errors = 0;
 	integer			cycles = 0;
 	integer			a;
@@ -93,6 +95,9 @@ module tb;
 					if( bus_address[7:0] == 8'hFE ) begin
 						finished = 1'b1;
 					end
+					else begin
+						io_writes = io_writes + 1;
+					end
 				end
 				else begin
 					mem[bus_address] = bus_wdata;
@@ -148,6 +153,23 @@ module tb;
 		put( 8'hED );	put( 8'h6B );	put( 8'h00 );	put( 8'hD0 );
 		put( 8'h7D );
 		put( 8'h32 );	put( 8'h08 );	put( 8'hE0 );
+		//	LD DE,0 / LD BC,00A1h / LD A,33h / ED 71 / INC DE x4 / LD (E00Ah),DE / LD (E00Ch),SP / LD SP,F000h
+		put( 8'h11 );	put( 8'h00 );	put( 8'h00 );
+		put( 8'h01 );	put( 8'hA1 );	put( 8'h00 );
+		put( 8'h3E );	put( 8'h33 );
+		put( 8'hED );	put( 8'h71 );
+		put( 8'h13 );	put( 8'h13 );	put( 8'h13 );	put( 8'h13 );
+		put( 8'hED );	put( 8'h53 );	put( 8'h0A );	put( 8'hE0 );
+		put( 8'hED );	put( 8'h73 );	put( 8'h0C );	put( 8'hE0 );
+		put( 8'h31 );	put( 8'h00 );	put( 8'hF0 );
+		//	LD DE,0 / LD A,1 / OR A / LD A,CCh / ED 71 / INC DE x4 / LD (E00Eh),DE
+		put( 8'h11 );	put( 8'h00 );	put( 8'h00 );
+		put( 8'h3E );	put( 8'h01 );
+		put( 8'hB7 );
+		put( 8'h3E );	put( 8'hCC );
+		put( 8'hED );	put( 8'h71 );
+		put( 8'h13 );	put( 8'h13 );	put( 8'h13 );	put( 8'h13 );
+		put( 8'hED );	put( 8'h53 );	put( 8'h0E );	put( 8'hE0 );
 		//	OUT (FEh),A : end of test
 		put( 8'hD3 );	put( 8'hFE );
 
@@ -174,12 +196,22 @@ module tb;
 		check( 16'hE006, 8'h6B, "ED 6B : L = 6Bh" );
 		check( 16'hE007, 8'hEB, "ED 6B : H = EBh" );
 		check( 16'hE008, 8'h6B, "ED 6B : LD A,L right after" );
+		check( 16'hE00A, 8'h04, "ED 71 : A=33h, DE (L)" );
+		check( 16'hE00B, 8'h00, "ED 71 : A=33h, DE (H)" );
+		check( 16'hE00C, 8'h00, "ED 71 : A=33h, SP (L)" );
+		check( 16'hE00D, 8'hF0, "ED 71 : A=33h, SP (H)" );
+		check( 16'hE00E, 8'h04, "ED 71 : A=CCh, DE (L)" );
+		check( 16'hE00F, 8'h00, "ED 71 : A=CCh, DE (H)" );
+		if( io_writes != 0 ) begin
+			$display( "NG: ED 71 wrote I/O %0d times", io_writes );
+			errors = errors + 1;
+		end
 		if( nn_access != 0 ) begin
 			$display( "NG: (nn) was accessed %0d times", nn_access );
 			errors = errors + 1;
 		end
 		if( errors == 0 ) begin
-			$display( "PASS: R800 ED 63 / ED 6B" );
+			$display( "PASS: R800 ED 63 / ED 6B / ED 71" );
 		end
 		else begin
 			$display( "FAIL: %0d errors", errors );

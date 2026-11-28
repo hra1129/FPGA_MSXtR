@@ -213,8 +213,9 @@ module cr800_mcode (
 	assign sss		= ir[2:0];
 	assign dpair	= ir[5:4];
 	//	R800 executes the NEG mirrors (ED 4C/54/../7C) and the RETN mirrors (ED 55/5D/../7D) as NOP
-	assign irb		= ( iset == 2'b10 && ir[7:6] == 2'b01 && ir[2:1] == 2'b10 && ir[5:3] != 3'd0 &&
-						!( ir[0] == 1'b1 && ir[5:3] == 3'd1 ) ) ? 8'h00: ir;
+	//	R800 ED 71 does no I/O ( 2 byte NOP ). On FS-A1GT the next opcode is usually replaced by A, but not always.
+	assign irb		= ( ( iset == 2'b10 && ir[7:6] == 2'b01 && ir[2:1] == 2'b10 && ir[5:3] != 3'd0 &&
+						!( ir[0] == 1'b1 && ir[5:3] == 3'd1 ) ) || ( iset == 2'b10 && ir == 8'h71 ) ) ? 8'h00: ir;
 
 	// --------------------------------------------------------------------
 	//	Prefix instruction

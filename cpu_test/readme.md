@@ -106,7 +106,9 @@ z80test は 1 命令につき数千〜数万通りのレジスタ・フラグの
 - SLL (CB 30-37) は SLA と同じ動作を期待する。DD/FD CB 30-37 はテストしない。
 - DD/FD CB d xx の z≠6（結果をレジスタにもコピーする非公式形）は、FS-A1GT の実機に合わせて 4 バイトの NOP を期待する。
 - DD/FD + HL を使わない命令は、2 バイトの NOP を期待する（Z80 ではプレフィックス無視）。
-- MULUB / MULUW をテストする。OUT (C),0 と LD R,A → LD A,R の組はテストしない。
+- MULUB / MULUW をテストする。LD R,A → LD A,R の組はテストしない。
+- OUT (C),0（ED 71）はテストしない。FS-A1GT の実機では、直後のオペコードが A に置き換わることが多いが、
+  約 3% の確率で置き換わらず、結果が一定しないため。z80test の OUT (C),R も ED 71 を含むため対象外。
 - MULUB の非公式形は実機（Grauw「Uncovering the R800」）に合わせ、ED E1 / E9 / F9 を A,H / A,L / A,A、
   ED F1 を A,A として期待する。MULUW の非公式形（ED D3 / E3）とミラー（ED CB / DB / EB / FB）は、
   結果の規則が分かっていないためテストしない。
@@ -127,7 +129,9 @@ z80test は 1 命令につき数千〜数万通りのレジスタ・フラグの
 - ED 63 はページ 1 の 6363h に書き込むため、カートリッジ上で実行するとバンクが切り替わって暴走する。
   ed63_test.rom（ed63_test.asm / ed63_body.asm）は、ページ 1 を RAM に切り替えて ED 63 / 6B を実行し、
   6363h・(nn)・HL の変化を表示する診断 ROM。
-- ED 63 / ED 6B の実機の動作は [r800_undocumented.md](./r800_undocumented.md) にまとめてある。
+- ED 63 / ED 6B / ED 71 の実機の動作は [r800_undocumented.md](./r800_undocumented.md) にまとめてある。
+- ED 71 の診断 ROM は ed71_test.rom（Z80 と R800 の比較）、ed71b_test.rom（R800 で A・B・C・F を変えた 9 ケース）、
+  ed71c_test.rom（オペランドの出どころ）、ed71d_test.rom（置き換えが起きる確率）。
 
 ## Z80 の扱い
 - SCF/CCF の X/Y は（Q レジスタ依存のため）比較しない。

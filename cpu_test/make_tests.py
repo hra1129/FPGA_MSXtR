@@ -414,6 +414,8 @@ def ed_specs():
 			elif z == 1:
 				if y == 6:
 					s = spec( 'OUT (C),0(U)', ins, stat=[( O_C, 0x00, PSG_WRITE )], r800=False, post=cmos_out0 )
+					#	R800 ( FS-A1GT ) : ED 71 does no I/O, and the next opcode is usually ( not always )
+					#	replaced by A. It is not tested ( r800_undocumented.md ).
 				else:
 					s = spec( 'OUT (C),%s' % R8_NAME[y], ins, stat=[( O_C, 0x00, PSG_WRITE )] )
 			elif z == 2:
